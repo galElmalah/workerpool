@@ -327,8 +327,12 @@
   /* (§5.6) Scroll-driven chrome: the sticky bar turns glass and the compact title (18px) takes
      over from the large title (32px) as it scrolls under the bar (large-title pattern; no layout
      animation). Without scroll timelines the bar is permanently glass and the compact title hidden. */
-  .page-bar { background-color: var(--color-glass); border-color: var(--color-line-1); }
+  .page-bar { background-color: transparent; border-color: transparent; }
+  .page-bar[data-solid] { background-color: var(--color-glass); border-color: var(--color-line-1); animation: none !important; }
   .page-bar-title { opacity: 0; visibility: hidden; }
+  @supports not (animation-timeline: scroll()) {
+    .page-bar { background-color: var(--color-glass); border-color: var(--color-line-1); }
+  }
   @supports (animation-timeline: scroll()) {
     .page-bar { animation: bar-glass linear both; animation-timeline: scroll(root block); animation-range: 8px 56px; }
     .page-bar-title { visibility: visible; animation: bar-title linear both; animation-timeline: scroll(root block); animation-range: 40px 88px; }

@@ -51,7 +51,7 @@ export function makeTerrain(rng: Rng, o: TerrainOpts): Terrain {
     climbGain = o.climb.gain;
   }
   // rescale the rolling component to hit the remaining target gain
-  const want = Math.max(o.gain - climbGain, o.L * 0.002);
+  const want = o.gain <= 0 ? 0 : Math.max(o.gain - climbGain, o.L * 0.002);
   const saved = t.climb;
   delete t.climb;
   const g = ascent(t, o.L);

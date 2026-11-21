@@ -134,7 +134,7 @@ export function makeCourse(rng: Rng, o: CourseOpts): Course {
       mode: 'oval',
       L: 400,
       oval: { origin: o.origin, heading },
-      terrain: makeTerrain(rng, { L: 400, periodic: true, base: o.origin.alt, gain: 0.5 }),
+      terrain: makeTerrain(rng, { L: 400, periodic: true, base: o.origin.alt, gain: 0 }),
     };
   }
   if (o.kind === 'outback') {

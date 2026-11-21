@@ -101,6 +101,10 @@ export default function ChartGallery() {
     return out;
   }, [blocks]);
 
+  const baseRepeats: ProfileRepeat[] = [
+    { id: 'r1', startSec: RIDE_PLAN[1].startSec, endSec: RIDE_PLAN[6].startSec + RIDE_PLAN[6].durationSec, count: 3 },
+    { id: 'r2', startSec: RIDE_PLAN[8].startSec, endSec: RIDE_PLAN[17].startSec + RIDE_PLAN[17].durationSec, count: 5 },
+  ];
   const [cmpMode, setCmpMode] = useState<CompareMode>('week');
   const tiles = compareWeeks(data.weeks, cmpMode);
   const last12 = data.weeks.slice(-12);
@@ -225,7 +229,7 @@ export default function ChartGallery() {
               </div>
               <div>
                 <h3 className="mb-3 text-micro uppercase text-fg-3">Planned structure</h3>
-                <IntensityProfile blocks={baseBlocks} repeats={repeats} height={96} />
+                <IntensityProfile blocks={baseBlocks} repeats={baseRepeats} height={96} />
               </div>
             </div>
           </Card>

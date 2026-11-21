@@ -53,15 +53,15 @@ export function TabList({ children, className, 'aria-label': ariaLabel }: { chil
 }
 
 const tabCls =
-  'relative -mb-px inline-flex h-9 select-none items-center gap-1.5 text-label text-fg-2 transition-colors duration-(--dur-fast) ' +
+  'relative inline-flex h-9 select-none items-center gap-1.5 text-label text-fg-2 transition-colors duration-(--dur-fast) ' +
   'hover:text-fg-1 data-[selected]:text-fg-1 aria-[current=page]:text-fg-1 focus-visible:outline-offset-0 [&_svg]:size-3.5';
 
-function Indicator() {
+function Indicator({ inset }: { inset?: boolean }) {
   return (
     <motion.span
       layoutId="tab-indicator"
       transition={spring.snappy}
-      className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-fg-1"
+      className={cn('absolute inset-x-0 h-0.5 rounded-full bg-fg-1', inset ? 'bottom-0' : '-bottom-px')}
       aria-hidden
     />
   );
@@ -70,7 +70,7 @@ function Indicator() {
 export function Tab({ value, children, count, disabled }: { value: string; children: ReactNode; count?: number; disabled?: boolean }) {
   const ctx = useContext(Ctx);
   return (
-    <BaseTabs.Tab value={value} disabled={disabled} className={tabCls}>
+    <BaseTabs.Tab value={value} disabled={disabled} className={cn(tabCls, '-mb-px')}>
       {children}
       {count != null && <span className="font-mono text-mono-sm text-fg-3">{count}</span>}
       {ctx.value === value && <Indicator />}
@@ -105,9 +105,9 @@ export function NavTabs({ items, className, 'aria-label': ariaLabel }: { items: 
     <LayoutGroup id={group}>
       <nav aria-label={ariaLabel} className={cn('relative flex items-center gap-5 overflow-x-auto border-b border-line-1 scrollbar-none', className)}>
         {items.map((it) => (
-          <Link key={it.to} to={it.to} className={tabCls} aria-current={active === it ? 'page' : undefined}>
+          <Link key={it.to} to={it.to} className={cn(tabCls, 'shrink-0')} aria-current={active === it ? 'page' : undefined}>
             {it.label}
-            {active === it && <Indicator />}
+            {active === it && <Indicator inset />}
           </Link>
         ))}
       </nav>

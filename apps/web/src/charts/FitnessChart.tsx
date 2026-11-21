@@ -370,7 +370,7 @@ function FitnessInner({
         <svg
           width={L.width}
           height={L.height}
-          className="block touch-pan-y select-none overflow-visible outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+          className="block touch-pan-y select-none overflow-visible rounded-xs focus-visible:outline-offset-4"
           role="group"
           aria-roledescription="chart"
           aria-label="Fitness, fatigue and form. Use arrow keys to inspect days."

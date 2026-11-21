@@ -39,7 +39,7 @@ export function IntensityPips({ intensity, size = 'sm', className, mono }: Inten
       {hs.map((h, i) => (
         <span
           key={i}
-          className={cn('rounded-[1px]', size === 'sm' ? 'w-[3px]' : 'w-1', i < meta.level ? (mono ? 'bg-fg-1' : FILL[i]) : 'bg-surface-3 light:bg-gray-6')}
+          className={cn('rounded-[1px]', size === 'sm' ? 'w-[3px]' : 'w-1', i < meta.level ? (mono ? 'bg-fg-1' : FILL[i]) : 'bg-gray-7')}
           style={{ height: h }}
         />
       ))}
@@ -104,7 +104,7 @@ export function IntensityPicker({ value, onValueChange, allowRace = true, classN
                   animate={{ scaleY: 1 }}
                   transition={{ ...spring.snappy, delay: filled ? idx * 0.02 : 0 }}
                   style={{ height: hs[idx], originY: 1 }}
-                  className={cn('w-1 rounded-[1px] transition-colors duration-(--dur-fast)', filled ? FILL[idx] : 'bg-surface-3 light:bg-gray-6')}
+                  className={cn('w-1 rounded-[1px] transition-colors duration-(--dur-fast)', filled ? FILL[idx] : 'bg-gray-7')}
                 />
               )}
             </Radio.Root>

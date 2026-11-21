@@ -142,7 +142,7 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
       <svg
         width={width}
         height={L.top + height + L.bottom}
-        className="block touch-pan-y select-none overflow-visible outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+        className="block touch-pan-y select-none overflow-visible rounded-xs focus-visible:outline-offset-4"
         role="group"
         aria-roledescription="chart"
         aria-label="Week over week change"
@@ -192,7 +192,7 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
                 rx={1.5}
                 initial={{ y: zeroY, height: 0 }}
                 animate={{ y: top + (v < 0 ? 0.5 : 0), height: h - (v < 0 ? 1 : 0) }}
-                transition={{ ...spring.smooth, delay }}
+                transition={{ ...spring.gentle, delay }}
                 style={style}
               />
               {clipped && <path d={`M${xc(i) - 3} ${yv + (v > 0 ? 5 : -5)} l3 ${v > 0 ? -4 : 4} l3 ${v > 0 ? 4 : -4}`} style={{ fill: 'none', stroke: T.bg, strokeWidth: 1.5 }} />}

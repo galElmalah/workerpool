@@ -959,7 +959,7 @@ function StreamInner({
       </div>
       <div
         ref={surfRef}
-        className="relative touch-pan-y select-none outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+        className="relative touch-pan-y select-none rounded-xs focus-visible:outline-offset-4"
         style={{ height: H, cursor: 'crosshair' }}
         tabIndex={0}
         role="application"

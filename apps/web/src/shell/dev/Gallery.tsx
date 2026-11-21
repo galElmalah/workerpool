@@ -471,7 +471,7 @@ function DataDisplay() {
         </div>
         <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
           <Card title="Activities" eyebrow="Table" padding="none" spotlight={false} actions={<IconButton label="More" icon={<Ellipsis />} size="sm" />}>
-            <Table rows={ACTIVITIES_TABLE} columns={cols} rowKey={(r) => r.id} selectedKey="a1" onRowClick={() => {}} stickyTop="0px" defaultSort={{ key: 'date', dir: 'desc' }} totals={{ date: 'Total', dur: formatDuration(ACTIVITIES_TABLE.reduce((a, r) => a + r.dur, 0), 'hms'), load: formatLoad(ACTIVITIES_TABLE.reduce((a, r) => a + r.load, 0)) }} />
+            <Table surface="surface-1" rows={ACTIVITIES_TABLE} columns={cols} rowKey={(r) => r.id} selectedKey="a1" onRowClick={() => {}} stickyTop="0px" defaultSort={{ key: 'date', dir: 'desc' }} totals={{ date: 'Total', dur: formatDuration(ACTIVITIES_TABLE.reduce((a, r) => a + r.dur, 0), 'hms'), load: formatLoad(ACTIVITIES_TABLE.reduce((a, r) => a + r.load, 0)) }} />
           </Card>
           <div className="flex flex-col gap-4">
             <Card title="This week" eyebrow="Meters">
@@ -616,7 +616,7 @@ function Domain() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel className="flex flex-col gap-6">
           <Demo label="SportGlyph — 14 / 16 / 20 / 24 · indoor dot">
-            <div className="grid grid-cols-5 gap-x-4 gap-y-5 sm:grid-cols-10">
+            <div className="grid grid-cols-5 gap-x-4 gap-y-5">
               {SPORTS.map((s) => (
                 <div key={s} className="flex flex-col items-center gap-2 text-fg-1">
                   <SportGlyph sport={s} size={24} />

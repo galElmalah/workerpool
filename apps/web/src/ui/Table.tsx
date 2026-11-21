@@ -51,6 +51,8 @@ export interface TableProps<T> {
   'aria-label'?: string;
   /** Turn off row reorder animation for very long tables. */
   animateRows?: boolean;
+  /** Surface the table sits on (sticky header background). Default 'canvas'. */
+  surface?: 'canvas' | 'surface-1' | 'surface-2';
 }
 
 const hide = { sm: 'max-sm:hidden', md: 'max-md:hidden', lg: 'max-lg:hidden', xl: 'max-xl:hidden' };
@@ -69,6 +71,7 @@ export function Table<T>({
   empty,
   className,
   animateRows = true,
+  surface = 'canvas',
   ...aria
 }: TableProps<T>) {
   const [inner, setInner] = useState<SortState | null>(defaultSort ?? null);
@@ -112,8 +115,9 @@ export function Table<T>({
                   style={{ width: c.width, top: stickyTop }}
                   aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   className={cn(
-                    'sticky z-(--z-sticky) h-9 border-b border-line-1 bg-canvas px-3 align-middle text-micro font-[600] uppercase text-fg-3 first:pl-4 last:pr-4',
+                    'sticky z-(--z-sticky) h-9 border-b border-line-1 px-3 align-middle text-micro font-[600] uppercase text-fg-3 first:pl-4 last:pr-4',
                     al === 'right' ? 'text-right' : al === 'center' ? 'text-center' : 'text-left',
+                    surface === 'canvas' ? 'bg-canvas' : surface === 'surface-1' ? 'bg-surface-1' : 'bg-surface-2',
                     c.hideBelow && hide[c.hideBelow],
                     c.className,
                   )}

@@ -40,7 +40,11 @@ export function Card({
   onPointerMove,
   ...rest
 }: CardProps) {
-  const pad = padding === 'none' ? '' : padding === 'sm' ? 'p-3' : 'p-4 xl:p-5';
+  const hasHead = !!(title || actions || eyebrow);
+  // Explicit sides so responsive paddings never override each other.
+  const px = padding === 'sm' ? 'px-3' : 'px-4 xl:px-5';
+  const pt = padding === 'sm' ? 'pt-3' : 'pt-4 xl:pt-5';
+  const pb = padding === 'sm' ? 'pb-3' : 'pb-4 xl:pb-5';
   return (
     <div
       className={cn(
@@ -63,7 +67,7 @@ export function Card({
       {...rest}
     >
       {(title || actions || eyebrow) && (
-        <div className={cn('flex items-start justify-between gap-3', pad, padding !== 'none' && 'pb-0')}>
+        <div className={cn('flex items-start justify-between gap-3', px, pt, padding === 'none' && pb)}>
           <div className="min-w-0">
             {eyebrow && <div className="mb-1 text-micro uppercase text-fg-3">{eyebrow}</div>}
             {title && <h3 className="truncate text-title-3 text-fg-1">{title}</h3>}
@@ -71,7 +75,7 @@ export function Card({
           {actions && <div className="-my-1 -mr-1 flex shrink-0 items-center gap-1">{actions}</div>}
         </div>
       )}
-      <div className={cn(pad, (title || actions || eyebrow) && padding !== 'none' && 'pt-3')}>{children}</div>
+      <div className={cn(padding !== 'none' && [px, pb, hasHead ? 'pt-3' : pt])}>{children}</div>
       {footer && <div className={cn('border-t border-line-1', padding === 'none' ? '' : 'px-4 py-3 xl:px-5')}>{footer}</div>}
     </div>
   );

@@ -263,7 +263,7 @@ function WeeklyInner({
       <svg
         width={width}
         height={plotB + L.bottom}
-        className="block touch-pan-y select-none overflow-visible outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+        className="block touch-pan-y select-none overflow-visible rounded-xs focus-visible:outline-offset-4"
         role="group"
         aria-roledescription="chart"
         aria-label={`Weekly ${acc.name.toLowerCase()}. Arrow keys move between weeks, Enter opens the week.`}
@@ -307,12 +307,12 @@ function WeeklyInner({
                   rx={3}
                   initial={{ y: plotB, height: 0 }}
                   animate={{ y: y(planned) - 0.5, height: Math.max(0, plotB - y(planned)) }}
-                  transition={{ ...spring.smooth, delay }}
+                  transition={{ ...spring.gentle, delay }}
                   style={{ fill: 'none', stroke: T.line3, strokeDasharray: '3 2' }}
                 />
               )}
               {stack === 'total' ? (
-                <motion.rect x={x} width={barW} rx={2} initial={{ y: plotB, height: 0 }} animate={{ y: y(done), height: plotB - y(done) }} transition={{ ...spring.smooth, delay }} style={{ fill: T.accent }} />
+                <motion.rect x={x} width={barW} rx={2} initial={{ y: plotB, height: 0 }} animate={{ y: y(done), height: plotB - y(done) }} transition={{ ...spring.gentle, delay }} style={{ fill: T.accent }} />
               ) : (
                 segs.map((sg, k) => {
                   const gap = k === 0 ? 0 : 1.5;
@@ -329,7 +329,7 @@ function WeeklyInner({
                         rx={1.5}
                         initial={{ y: plotB, height: 0 }}
                         animate={{ y: y1, height: Math.max(0, y0 - y1) }}
-                        transition={{ ...spring.smooth, delay }}
+                        transition={{ ...spring.gentle, delay }}
                         style={{ fill: hi ? T.accent : r.fill }}
                       />
                       {r.pattern && !hi && (
@@ -339,7 +339,7 @@ function WeeklyInner({
                           rx={1.5}
                           initial={{ y: plotB, height: 0 }}
                           animate={{ y: y1, height: Math.max(0, y0 - y1) }}
-                          transition={{ ...spring.smooth, delay }}
+                          transition={{ ...spring.gentle, delay }}
                           style={{ fill: r.pattern === 'hatch' ? defs.hatchFgDense : defs.dotsFg }}
                         />
                       )}
@@ -354,7 +354,7 @@ function WeeklyInner({
                   rx={1.5}
                   initial={{ y: y(done), height: 0, opacity: 0 }}
                   animate={{ y: y(projected), height: Math.max(0, y(done) - y(projected) - 1.5), opacity: 1 }}
-                  transition={{ ...spring.smooth, delay: delay + 0.12 }}
+                  transition={{ ...spring.gentle, delay: delay + 0.12 }}
                   style={{ fill: defs.hatchFg, stroke: T.fg3, strokeDasharray: '3 2' }}
                 />
               )}

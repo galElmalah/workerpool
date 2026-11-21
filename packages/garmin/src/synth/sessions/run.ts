@@ -3,7 +3,7 @@ import { D, HRZ, PC, RAMP, SB, T } from '../structure';
 import { draft, fmtHm, scaleMin, type SessionCtx, type SessionDraft } from './common';
 
 export function runEasy(c: SessionCtx, baseMin = 45, strides = false, treadmill = false): SessionDraft {
-  const min = scaleMin(baseMin, c.vol / 0.85, 0.55, 1.2);
+  const min = Math.max(strides ? 35 : 30, scaleMin(baseMin, c.vol / 0.85, 0.55, 1.2));
   const sub = treadmill ? 'treadmill' : 'road_run';
   if (!strides) {
     return draft(

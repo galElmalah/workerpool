@@ -37,12 +37,6 @@ export interface Summary {
   secAboveThreshold: number;
 }
 
-/** Σ of interpolated values over block k (no noise); closed form 3a + 2b for full blocks. */
-function blockSum(c: Float64Array, base: Base, k: number, m: number): number {
-  const a = c[k]!;
-  const b = k + 1 < base.n ? c[k + 1]! : a;
-  return m === DT ? 3 * a + 2 * b : m * a + ((b - a) * ((m * (m - 1)) / 2)) / DT;
-}
 
 function exactMax(c: Float64Array, base: Base, m: Model, ch: 'hr' | 'power'): number {
   const nz = noiseFor(m, ch);
@@ -65,48 +59,82 @@ function exactMax(c: Float64Array, base: Base, m: Model, ch: 'hr' | 'power'): nu
   return best;
 }
 
+/** Σ over recorded seconds of the interpolated channel, optionally only where both block ends > 0. */
+function chanSum(c: Float64Array, rec: Uint8Array, n: number, dur: number, positiveOnly: boolean): { sum: number; cnt: number } {
+  let sum = 0;
+  let cnt = 0;
+  for (let k = 0; k < n; k++) {
+    if (!rec[k]) continue;
+    const len = Math.min(DT, dur - k * DT);
+    if (len <= 0) continue;
+    const a = c[k]!;
+    const z = k + 1 < n ? c[k + 1]! : a;
+    if (positiveOnly && (a <= 0 || z <= 0)) continue;
+    sum += len === DT ? 3 * a + 2 * z : len * a + ((z - a) * ((len * (len - 1)) / 2)) / DT;
+    cnt += len;
+  }
+  return { sum, cnt };
+}
+
+/** Recorded seconds where the interpolated channel is ≥ lim. */
+function countAbove(c: Float64Array, rec: Uint8Array, n: number, dur: number, lim: number, strict: boolean): number {
+  let cnt = 0;
+  for (let k = 0; k < n; k++) {
+    if (!rec[k]) continue;
+    const len = Math.min(DT, dur - k * DT);
+    if (len <= 0) continue;
+    const a = c[k]!;
+    const z = k + 1 < n ? c[k + 1]! : a;
+    const okA = strict ? a > lim : a >= lim;
+    const okZ = strict ? z > lim : z >= lim;
+    if (okA && okZ) cnt += len;
+    else if (okA || okZ)
+      for (let j = 0; j < len; j++) {
+        const v = a + ((z - a) * j) / DT;
+        if (strict ? v > lim : v >= lim) cnt++;
+      }
+  }
+  return cnt;
+}
+
 export function summarize(m: Model, b: Base, thr: Thr): Summary {
-  let recorded = 0;
-  let hrSum = 0;
+  const n = b.n;
+  const rec = b.rec;
+  const dur = b.dur;
+  const hrS = chanSum(b.hr, rec, n, dur, false);
+  const recorded = hrS.cnt;
+  const hrSum = hrS.sum;
   let pSum = 0;
   let cadSum = 0;
   let cadN = 0;
   let movingSec = 0;
   let above = 0;
-  const blockMeans: number[] = [];
-  for (let k = 0; k < b.n; k++) {
-    const len = k * DT + DT <= b.dur ? DT : blockLen(b, k);
-    if (!b.rec[k] || len === 0) continue;
-    recorded += len;
-    hrSum += blockSum(b.hr, b, k, len);
-    if (b.power) {
-      const s = blockSum(b.power, b, k, len);
-      pSum += s;
-      blockMeans.push(s / len);
-      const a = b.power[k]!;
-      const bb = k + 1 < b.n ? b.power[k + 1]! : a;
-      if (m.family === 'bike' ? (a + bb) / 2 > 1.04 * thr.ftp : (a + bb) / 2 > 1.04 * thr.rowW) above += len;
-    }
-    if (b.cad) {
-      const a = b.cad[k]!;
-      const bb = k + 1 < b.n ? b.cad[k + 1]! : a;
-      if (a > 0 && bb > 0) {
-        cadSum += blockSum(b.cad, b, k, len);
-        cadN += len;
-      }
-    }
-    if (b.speed && m.family !== 'row') {
-      const a = b.speed[k]!;
-      const bb = k + 1 < b.n ? b.speed[k + 1]! : a;
-      if (a >= 0.5 && bb >= 0.5) movingSec += len;
-      else if (a >= 0.5 || bb >= 0.5) for (let j = 0; j < len; j++) if (a + ((bb - a) * j) / DT >= 0.5) movingSec++;
-      if (m.family === 'run' && (a + bb) / 2 > 1.02 * thr.runMps) above += len;
-    } else if (b.power) {
-      const a = b.power[k]!;
-      const bb = k + 1 < b.n ? b.power[k + 1]! : a;
-      for (let j = 0; j < len; j++) if (a + ((bb - a) * j) / DT > 0) movingSec++;
+  let blockMeans: Float64Array | null = null;
+  let nb = 0;
+  if (b.power) {
+    const pw = b.power;
+    pSum = chanSum(pw, rec, n, dur, false).sum;
+    blockMeans = new Float64Array(n);
+    const lim = 1.04 * (m.family === 'bike' ? thr.ftp : thr.rowW);
+    for (let k = 0; k < n; k++) {
+      if (!rec[k]) continue;
+      const len = Math.min(DT, dur - k * DT);
+      if (len <= 0) continue;
+      const a = pw[k]!;
+      const z = k + 1 < n ? pw[k + 1]! : a;
+      blockMeans[nb++] = len === DT ? (3 * a + 2 * z) / DT : a;
+      if ((a + z) / 2 > lim) above += len;
     }
   }
+  if (b.cad) {
+    const cs = chanSum(b.cad, rec, n, dur, true);
+    cadSum = cs.sum;
+    cadN = cs.cnt;
+  }
+  if (b.speed && m.family !== 'row') {
+    movingSec = countAbove(b.speed, rec, n, dur, 0.5, false);
+    if (m.family === 'run') above += countAbove(b.speed, rec, n, dur, 1.02 * thr.runMps, true);
+  } else if (b.power) movingSec = countAbove(b.power, rec, n, dur, 0, true);
   if (!b.speed && !b.power) movingSec = recorded;
 
   const s: Summary = {
@@ -126,13 +154,13 @@ export function summarize(m: Model, b: Base, thr: Thr): Summary {
     s.avgPower = Math.round(pSum / recorded);
     s.maxPower = exactMax(b.power, b, m, 'power');
     // NP from 5 s block means, 30 s rolling window = 6 blocks
-    if (blockMeans.length >= 6) {
+    if (blockMeans && nb >= 6) {
       let w = 0;
       for (let i = 0; i < 6; i++) w += blockMeans[i]!;
       let q = (w / 6) * (w / 6);
       let acc = q * q;
       let c = 1;
-      for (let i = 6; i < blockMeans.length; i++) {
+      for (let i = 6; i < nb; i++) {
         w += blockMeans[i]! - blockMeans[i - 6]!;
         q = (w / 6) * (w / 6);
         acc += q * q;

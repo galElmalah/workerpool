@@ -163,7 +163,7 @@ function WellInner({ days, metrics = [], loads, baselineDays = 60, rollingDays =
 
   return (
     <div className="relative">
-      <svg width={width} height={totalH} className="block touch-pan-y select-none overflow-visible outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus" role="group" aria-roledescription="chart" aria-label="Wellness small multiples" tabIndex={0} {...handlers}>
+      <svg width={width} height={totalH} className="block touch-pan-y select-none overflow-visible rounded-xs focus-visible:outline-offset-4" role="group" aria-roledescription="chart" aria-label="Wellness small multiples" tabIndex={0} {...handlers}>
         <ChartDefs ids={defs} />
         {panels.map(({ s, top, bot, Y, lo, hi }, pi) => {
           const ln = line<number | null>().defined((v) => v != null).x((_, i) => X(ms[i])).y((v) => Y(v!)).curve(curveMonotoneX);

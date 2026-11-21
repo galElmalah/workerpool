@@ -54,7 +54,7 @@ export function Ticker({ value, format = defaultFormat, className, from }: Ticke
 /** One digit column: 0–9 stacked, clipped to 1em. */
 function Digit({ d }: { d: number }) {
   return (
-    <span className="relative inline-block h-[1em] w-[1ch] overflow-hidden align-[-0.12em]" aria-hidden>
+    <span className="relative -mr-[0.04em] inline-block h-[1em] w-[1ch] overflow-hidden align-[-0.12em]" aria-hidden>
       <motion.span
         className="absolute inset-x-0 top-0 flex flex-col"
         initial={false}

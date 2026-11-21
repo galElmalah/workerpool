@@ -48,6 +48,8 @@ export interface WorkoutCardModel {
   skipReason?: string | null;
 }
 
+const SEP = `${NBSP}·${NBSP}`;
+
 export type CardDensity = 'full' | 'compact' | 'chip';
 
 /** Pick a density from the available cell width (product.md §3.3). */
@@ -87,6 +89,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
   const missed = state === 'missed';
   const dist = m.distanceM ? distanceParts(m.distanceM, m.sport, units) : null;
   const rail = s.rail ?? (m.isKey ? 'bg-accent' : null);
+  const hasSpark = !!m.sparkline && m.sparkline.length > 1;
   const label = `${m.title}, ${formatDuration(m.durationSec, 'short')}, ${s.label}${m.isKey ? ', key workout' : ''}`;
 
   const body =
@@ -121,7 +124,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
             {formatDuration(m.durationSec)}
             {density === 'full' && dist && (
               <>
-                {' · '}
+                {SEP}
                 {dist.value}
                 {NBSP}
                 {dist.unit}
@@ -129,21 +132,22 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
             )}
             {density === 'full' && m.load != null && (
               <>
-                {' · '}
+                {SEP}
                 {formatLoad(m.load)}
                 <span className="font-sans text-fg-3">{NBSP}load</span>
               </>
             )}
           </span>
-          {m.intensity && <IntensityPips intensity={m.intensity} />}
+          {m.intensity && !(density === 'full' && hasSpark) && <IntensityPips intensity={m.intensity} />}
         </div>
         {s.microLabel && density === 'full' && <span className="pl-6 text-micro uppercase text-fg-3">{s.microLabel}</span>}
         {state === 'excused' && m.skipReason && density === 'full' && (
           <span className="pl-6 text-micro uppercase text-fg-3">Skipped · {m.skipReason}</span>
         )}
-        {density === 'full' && m.sparkline && m.sparkline.length > 1 && (
-          <div className="pl-6">
-            <MiniProfile values={m.sparkline} height={16} />
+        {density === 'full' && hasSpark && (
+          <div className="flex items-end gap-2 pl-6">
+            <MiniProfile values={m.sparkline!} height={16} className="min-w-0 flex-1" />
+            {m.intensity && <IntensityPips intensity={m.intensity} />}
           </div>
         )}
         {density === 'full' && m.compliance?.ratio != null && m.kind !== 'planned' && (

@@ -149,7 +149,7 @@ function HeatInner({ days, today, weeks: weeksWanted = 52, onDayClick, sync: ext
   const H = top + 7 * step;
   return (
     <div className="relative">
-      <svg width={labelW + weeks * step} height={H + 18} className="block select-none outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus" role="group" aria-roledescription="calendar heatmap" aria-label="Daily training load heatmap" tabIndex={0} {...handlers} style={{ cursor: onDayClick ? 'pointer' : 'default' }}>
+      <svg width={labelW + weeks * step} height={H + 18} className="block select-none rounded-xs focus-visible:outline-offset-4" role="group" aria-roledescription="calendar heatmap" aria-label="Daily training load heatmap" tabIndex={0} {...handlers} style={{ cursor: onDayClick ? 'pointer' : 'default' }}>
         {months.map((m) => (
           <text key={m.x} x={m.x} y={10} style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }} aria-hidden>
             {m.label}

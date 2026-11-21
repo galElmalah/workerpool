@@ -45,7 +45,7 @@ export function Segmented<T extends string>({ value, onValueChange, options, siz
         aria-label={aria['aria-label']}
         className={cn(
           'relative inline-flex items-center gap-0.5 rounded-md border border-line-1 bg-surface-2 p-0.5',
-          block && 'flex w-full',
+          block ? 'flex w-full' : 'w-fit',
           className,
         )}
       >

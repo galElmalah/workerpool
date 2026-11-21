@@ -152,7 +152,7 @@ export function PageHeader({
 
   return (
     <header className={className}>
-      <div className="page-bar sticky top-0 z-(--z-sticky) border-b backdrop-blur-glass backdrop-saturate-140" style={compact ? { animation: 'none' } : undefined}>
+      <div className="page-bar sticky top-0 z-(--z-sticky) border-b backdrop-blur-glass backdrop-saturate-140" data-solid={compact || undefined}>
         <div className={cn(containerCls(width), 'flex h-(--header-h) items-center gap-2')}>
           {back && <IconButton label="Back" icon={<ArrowLeft />} size="sm" onClick={onBack} className="-ml-1.5" />}
           <div className="flex min-w-0 flex-1 items-center gap-2">

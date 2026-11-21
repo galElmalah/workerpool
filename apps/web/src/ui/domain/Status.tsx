@@ -73,7 +73,7 @@ export function FormZoneLabel({ zone, className, withScale = true }: { zone: For
         {withScale && (
           <span className="inline-flex items-center gap-0.5" aria-hidden>
             {[0, 1, 2, 3, 4].map((i) => (
-              <span key={i} className={cn('h-2 w-1 rounded-[1px]', i === m.pos ? 'bg-fg-1' : 'bg-surface-3 light:bg-gray-6', i === 2 && i !== m.pos && 'bg-line-3')} />
+              <span key={i} className={cn('h-2 w-1 rounded-[1px]', i === m.pos ? 'bg-fg-1' : 'bg-gray-7', i === 2 && i !== m.pos && 'bg-line-3')} />
             ))}
           </span>
         )}

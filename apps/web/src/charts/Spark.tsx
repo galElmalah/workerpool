@@ -90,7 +90,7 @@ export function SparkBars({ values, planned, height = 20, barWidth = 4, gap = 2,
           <g key={i}>
             <rect x={x} y={height - 1} width={barWidth} height={1} style={{ fill: T.line2 }} />
             {p > v && <rect x={x + 0.5} y={height - h(p) + 0.5} width={barWidth - 1} height={Math.max(0, h(p) - h(v) - 1)} rx={1} style={{ fill: 'none', stroke: T.line3 }} />}
-            <motion.rect x={x} width={barWidth} rx={1} initial={false} animate={{ y: height - h(v), height: h(v) }} transition={spring.smooth} style={{ fill: T.accent }} />
+            <motion.rect x={x} width={barWidth} rx={1} initial={false} animate={{ y: height - h(v), height: h(v) }} transition={spring.gentle} style={{ fill: T.accent }} />
             {todayIndex === i && <rect x={x - 1} y={height + 1.5} width={barWidth + 2} height={1.5} rx={0.75} style={{ fill: T.fg1 }} />}
           </g>
         );

@@ -83,7 +83,9 @@ export function StatTile({
           {value == null ? <span className="text-fg-4">—</span> : <Ticker value={value} format={format} />}
           {unit && <span className={cn('font-[450] tracking-normal text-fg-3', unitSize[size])}>{unit}</span>}
         </div>
-        {sparkline && sparkline.length > 1 && <MiniProfile values={sparkline} height={24} className="mb-1 w-20 shrink-0" tone={signal ? 'accent' : 'fg'} />}
+        {sparkline && sparkline.length > 1 && <div className="mb-1.5 w-20 shrink-0">
+            <MiniProfile values={sparkline} height={24} tone={signal ? 'accent' : 'fg'} />
+          </div>}
       </div>
       <div className="h-5">
         <AnimatePresence mode="wait" initial={false}>

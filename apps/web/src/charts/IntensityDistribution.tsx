@@ -121,7 +121,7 @@ function IDInner({ items, width, height, target = { easy: 0.8, moderate: 0.05, h
   const showEvery = Math.max(1, Math.ceil(44 / band));
   return (
     <div className="relative">
-      <svg width={width} height={L.top + height + L.bottom} className="block touch-pan-y select-none overflow-visible outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus" role="group" aria-roledescription="chart" aria-label="Intensity distribution per week" tabIndex={0} {...handlers}>
+      <svg width={width} height={L.top + height + L.bottom} className="block touch-pan-y select-none overflow-visible rounded-xs focus-visible:outline-offset-4" role="group" aria-roledescription="chart" aria-label="Intensity distribution per week" tabIndex={0} {...handlers}>
         <ChartDefs ids={defs} />
         {[0, 0.5, 1].map((f) => (
           <g key={f} aria-hidden>
@@ -144,8 +144,8 @@ function IDInner({ items, width, height, target = { easy: 0.8, moderate: 0.05, h
                 base += f;
                 return (
                   <g key={b.k}>
-                    <motion.rect x={xc(i) - barW / 2} width={barW} rx={1.5} initial={{ y: y(0), height: 0 }} animate={{ y: y1, height: Math.max(0, y0 - y1) }} transition={{ ...spring.smooth, delay: delay + k * 0.04 }} style={{ fill: T.zone(b.zone) }} />
-                    {b.k === 'hard' && <motion.rect x={xc(i) - barW / 2} width={barW} rx={1.5} initial={{ y: y(0), height: 0 }} animate={{ y: y1, height: Math.max(0, y0 - y1) }} transition={{ ...spring.smooth, delay: delay + k * 0.04 }} style={{ fill: defs.hatchOnAccent }} />}
+                    <motion.rect x={xc(i) - barW / 2} width={barW} rx={1.5} initial={{ y: y(0), height: 0 }} animate={{ y: y1, height: Math.max(0, y0 - y1) }} transition={{ ...spring.gentle, delay: delay + k * 0.04 }} style={{ fill: T.zone(b.zone) }} />
+                    {b.k === 'hard' && <motion.rect x={xc(i) - barW / 2} width={barW} rx={1.5} initial={{ y: y(0), height: 0 }} animate={{ y: y1, height: Math.max(0, y0 - y1) }} transition={{ ...spring.gentle, delay: delay + k * 0.04 }} style={{ fill: defs.hatchOnAccent }} />}
                   </g>
                 );
               })}
