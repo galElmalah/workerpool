@@ -2,6 +2,7 @@
  * App chrome: rail (desktop/tablet) or glass bottom bar (mobile), the `main` view-transition
  * surface, global shortcuts, palette wiring and focus management after navigation.
  */
+import { useGarminStatusSync, useSettingsSync } from '@/lib/queries/shared';
 import { Outlet, useRouter, useRouterState, type ErrorComponentProps } from '@tanstack/react-router';
 import { ArrowLeft, Compass, RotateCcw } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -61,6 +62,8 @@ export function RootLayout() {
 
 export function AppShell() {
   const router = useRouter();
+  useSettingsSync();
+  useGarminStatusSync();
   const mobile = useIsMobile();
   const wide = useIsWide();
   const [pref, setPref] = useLocalStorage<'expanded' | 'collapsed'>('cadence.rail', 'expanded');

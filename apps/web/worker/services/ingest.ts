@@ -12,7 +12,7 @@
  *    written on creation; the title is overwritten only while it still equals the previously
  *    ingested upstream title (`upstream_title`), so a rename by the athlete survives syncs.
  */
-import type { ActivityStreams, Lap, LocalDate, Sport, StrengthSet, SubSport, ThresholdSnapshot, ZoneTime } from '@cadence/core/domain';
+import type { ActivityStreams, IntensityClass, Lap, LocalDate, Sport, StrengthSet, SubSport, ThresholdSnapshot, ZoneTime } from '@cadence/core/domain';
 import { SPORT_META } from '@cadence/core/domain';
 import {
   bestEfforts,
@@ -155,7 +155,7 @@ export interface AnalyzeInput {
   strengthSets?: StrengthSet[];
   rpe?: number;
   loadManual?: number;
-  intensityOverride?: string;
+  intensityOverride?: IntensityClass;
   hrTimeInZoneSec?: number[];
   powerTimeInZoneSec?: number[];
   thresholds: ThresholdSnapshot;
@@ -190,7 +190,7 @@ function reducedPeaks(prep: PreparedStreams, sport: Sport, subSport: SubSport | 
   return peaks;
 }
 
-function elevationGainOf(alt: Float64Array | undefined): number | undefined {
+export function elevationGainOf(alt: Float64Array | undefined): number | undefined {
   if (!present(alt)) return undefined;
   let gain = 0;
   let ref = NaN;
@@ -243,7 +243,7 @@ export function analyzeActivity(input: AnalyzeInput): { columns: Record<string, 
     },
     options: {
       pauses: stored ? pausesOf(stored.t) : undefined,
-      intensityClass: input.intensityOverride as never,
+      intensityClass: input.intensityOverride,
       peaks: false, // computed below on the reduced ladder (much cheaper than the full ladder)
     },
   });
@@ -306,7 +306,7 @@ interface ExistingRow {
   upstream_title: string | null;
   rpe: number | null;
   load_manual: number | null;
-  intensity_override: string | null;
+  intensity_override: IntensityClass | null;
   local_date: string;
   has_streams: number;
   paired_workout_id: string | null;
@@ -380,7 +380,8 @@ export const ingestActivity: IngestActivity = async (env, input) => {
 
   // ── merge: explicit summary wins field by field over the FIT session
   const rawStreams = input.streams ?? fit?.streams;
-  const startedAt = pick(s.startedAt, fit?.startedAt);
+  const startedRaw = pick(s.startedAt, fit?.startedAt);
+  const startedAt = startedRaw && Number.isFinite(Date.parse(startedRaw)) ? new Date(Date.parse(startedRaw)).toISOString() : startedRaw;
   const sport: Sport = pick(s.sport, fit?.sport) ?? 'other';
   const subSport = pick<SubSport>(s.subSport, fit?.subSport);
   const lastT = rawStreams?.t?.length ? rawStreams.t[rawStreams.t.length - 1] - rawStreams.t[0] : undefined;
@@ -392,13 +393,18 @@ export const ingestActivity: IngestActivity = async (env, input) => {
   const laps = input.laps ?? fit?.laps ?? [];
   const strengthSets = input.strengthSets ?? fit?.strengthSets;
 
-  // ── existing row
+  // ── existing row: by Garmin id; otherwise (or for a FIT uploaded before the Garmin sync saw it)
+  // by start instant + sport. Manual entries never dedupe.
   let existing: ExistingRow | null = null;
   if (s.garminActivityId) {
     existing = await db.prepare(`SELECT ${EXISTING_COLS} FROM activities WHERE garmin_activity_id = ?`).bind(s.garminActivityId).first<ExistingRow>();
-  } else if (input.source !== 'manual') {
+  }
+  if (!existing && input.source !== 'manual') {
     existing = await db
-      .prepare(`SELECT ${EXISTING_COLS} FROM activities WHERE started_at = ? AND sport = ? AND garmin_activity_id IS NULL ORDER BY deleted_at IS NULL DESC LIMIT 1`)
+      .prepare(
+        `SELECT ${EXISTING_COLS} FROM activities WHERE started_at = ? AND sport = ?${s.garminActivityId ? ' AND garmin_activity_id IS NULL' : ''}
+         ORDER BY deleted_at IS NULL DESC LIMIT 1`,
+      )
       .bind(startedAt, sport)
       .first<ExistingRow>();
   }
@@ -471,12 +477,14 @@ export const ingestActivity: IngestActivity = async (env, input) => {
     volume_kg: columns.volume_kg ?? fs.volumeKg,
     laps,
     strength_sets: strengthSets ?? null,
-    summary_hash: s.editHash ?? null,
+    summary_hash: s.editHash,
     upstream_title: upstreamTitle,
     updated_at: now,
   };
   if (existing) {
     delete upstream.source;
+    // Identity fields this ingest does not know about are kept (e.g. a FIT re-upload of a synced activity).
+    for (const k of ['garmin_activity_id', 'garmin_type_key', 'summary_hash']) if (upstream[k] === undefined) delete upstream[k];
     if (existing.upstream_title === null || existing.title === existing.upstream_title) upstream.title = upstreamTitle;
   } else {
     const u = input.user ?? {};
@@ -528,7 +536,7 @@ interface RecomputeRow {
   avg_cadence: number | null;
   rpe: number | null;
   load_manual: number | null;
-  intensity_override: string | null;
+  intensity_override: IntensityClass | null;
   has_streams: number;
   laps: string;
   strength_sets: string | null;

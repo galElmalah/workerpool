@@ -209,11 +209,13 @@ export interface WindowData {
   daily: Map<LocalDate, number>;
 }
 
+const none = <T>(): Promise<T[]> => Promise.resolve([]);
+
 /**
  * Everything a calendar / week view needs for [from, to] (expanded to whole ISO weeks) in one
  * round trip (two when a paired item lies outside the window).
  */
-export async function loadWindow(env: Env, from: LocalDate, to: LocalDate, opts: { wellnessFrom?: LocalDate } = {}): Promise<WindowData & { roundTrips: number }> {
+export async function loadWindow(env: Env, from: LocalDate, to: LocalDate, opts: { wellnessFrom?: LocalDate; eventsTo?: LocalDate; /** Skip events, day notes and wellness. */ lite?: boolean } = {}): Promise<WindowData & { roundTrips: number }> {
   const { env: benv, db } = batchedEnv(env);
   const start = weekStart(from);
   const end = weekEnd(to);
@@ -222,11 +224,11 @@ export async function loadWindow(env: Env, from: LocalDate, to: LocalDate, opts:
     getToday(benv),
     listWorkouts(benv.DB, { from: prior, to: end }),
     listActivities(benv.DB, { from: prior, to: end }),
-    listEvents(benv.DB, { from: start, to: end }),
+    opts.lite ? none<Event>() : listEvents(benv.DB, { from: start, to: opts.eventsTo && opts.eventsTo > end ? opts.eventsTo : end }),
     listPhases(benv.DB, { from: start, to: end }),
     listMarkers(benv.DB, { from: prior, to: end }),
-    listDayNotes(benv.DB, { from: start, to: end }),
-    listWellness(benv.DB, { from: opts.wellnessFrom ?? start, to: end }),
+    opts.lite ? none<DayNote>() : listDayNotes(benv.DB, { from: start, to: end }),
+    opts.lite ? none<WellnessDay>() : listWellness(benv.DB, { from: opts.wellnessFrom ?? start, to: end }),
     listWeekNotes(benv.DB, { from: isoWeekOf(prior), to: isoWeekOf(end) }),
     dailyLoads(benv.DB),
   ]);
@@ -306,6 +308,6 @@ function roundWeek(w: WeekSummary): WeekSummary {
 }
 
 export async function weekSummaries(env: Env, q: { from: LocalDate; to: LocalDate }): Promise<WeekSummary[]> {
-  const data = await loadWindow(env, q.from, q.to);
+  const data = await loadWindow(env, q.from, q.to, { lite: true });
   return computeWeeks(data).weeks;
 }

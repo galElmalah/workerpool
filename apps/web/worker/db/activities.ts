@@ -255,3 +255,167 @@ export async function listPeaks(
     return o;
   });
 }
+
+// ───────────────────────────── list page (filters + cursor) ─────────────────────────────
+
+export interface ActivitySearch {
+  from?: LocalDate;
+  to?: LocalDate;
+  sport?: Sport;
+  q?: string;
+  key?: boolean;
+  intensity?: IntensityClass;
+  limit: number;
+  /** Opaque: `${startedAt}|${id}` of the last row of the previous page. */
+  cursor?: string;
+}
+
+export interface ActivityTotals {
+  count: number;
+  durationSec: number;
+  movingSec: number;
+  distanceM: number;
+  load: number;
+  elevationGainM: number;
+}
+
+function searchWhere(q: ActivitySearch): { sql: string; params: unknown[] } {
+  const extra: string[] = [];
+  const params: unknown[] = [];
+  if (q.q?.trim()) {
+    const like = `%${q.q.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`;
+    extra.push("(title LIKE ? ESCAPE '\\' OR post_note LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\')");
+    params.push(like, like, like);
+  }
+  if (q.key !== undefined) extra.push(q.key ? 'is_key = 1' : 'is_key = 0');
+  if (q.intensity) {
+    extra.push('COALESCE(intensity_override, intensity_auto) = ?');
+    params.push(q.intensity);
+  }
+  return where({ from: q.from, to: q.to, sport: q.sport }, extra, params);
+}
+
+/** Newest first, keyset-paginated, plus totals over the whole filtered set. */
+export async function searchActivities(
+  db: D1Database,
+  q: ActivitySearch,
+): Promise<{ items: Activity[]; nextCursor?: string; totals: ActivityTotals }> {
+  const base = searchWhere(q);
+  let pageSql = base.sql;
+  const pageParams = [...base.params];
+  if (q.cursor) {
+    const i = q.cursor.lastIndexOf('|');
+    if (i > 0) {
+      pageSql += ' AND (started_at < ? OR (started_at = ? AND id < ?))';
+      const at = q.cursor.slice(0, i);
+      pageParams.push(at, at, q.cursor.slice(i + 1));
+    }
+  }
+  const [page, totals] = await db.batch<Record<string, unknown>>([
+    db
+      .prepare(`SELECT ${ACTIVITY_COLUMNS} FROM activities WHERE ${pageSql} ORDER BY started_at DESC, id DESC LIMIT ?`)
+      .bind(...pageParams, q.limit + 1),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS count, COALESCE(SUM(duration_sec), 0) AS durationSec, COALESCE(SUM(moving_sec), 0) AS movingSec,
+         COALESCE(SUM(distance_m), 0) AS distanceM, COALESCE(SUM(load), 0) AS load, COALESCE(SUM(elevation_gain_m), 0) AS elevationGainM
+         FROM activities WHERE ${base.sql}`,
+      )
+      .bind(...base.params),
+  ]);
+  const rows = page.results;
+  const items = rows.slice(0, q.limit).map(rowToActivity);
+  const t = (totals.results[0] ?? {}) as Record<string, number>;
+  const out: { items: Activity[]; nextCursor?: string; totals: ActivityTotals } = {
+    items,
+    totals: {
+      count: t.count ?? 0,
+      durationSec: Math.round(t.durationSec ?? 0),
+      movingSec: Math.round(t.movingSec ?? 0),
+      distanceM: Math.round(t.distanceM ?? 0),
+      load: Math.round((t.load ?? 0) * 10) / 10,
+      elevationGainM: Math.round(t.elevationGainM ?? 0),
+    },
+  };
+  if (rows.length > q.limit) {
+    const last = items[items.length - 1];
+    out.nextCursor = `${last.startedAt}|${last.id}`;
+  }
+  return out;
+}
+
+/** Most recent earlier activity of the same sport within ±25 % of the (moving) duration. */
+export async function findPreviousSimilar(db: D1Database, a: Activity): Promise<Activity | null> {
+  const d = a.movingSec > 0 ? a.movingSec : a.durationSec;
+  const row = await db
+    .prepare(
+      `SELECT ${ACTIVITY_COLUMNS} FROM activities
+       WHERE deleted_at IS NULL AND sport = ? AND started_at < ? AND id <> ?
+         AND (CASE WHEN moving_sec > 0 THEN moving_sec ELSE duration_sec END) BETWEEN ? AND ?
+       ORDER BY started_at DESC LIMIT 1`,
+    )
+    .bind(a.sport, a.startedAt, a.id, d * 0.75, d * 1.25)
+    .first<ActivityRow>();
+  return row ? rowToActivity(row) : null;
+}
+
+/** Columns the athlete edits (PATCH). `undefined` = leave alone, `null` = clear. */
+export async function updateActivityUserFields(db: D1Database, id: string, cols: Record<string, unknown>): Promise<void> {
+  const keys = Object.keys(cols).filter((k) => cols[k] !== undefined);
+  if (!keys.length) return;
+  const vals = keys.map((k) => {
+    const v = cols[k];
+    if (v === null) return null;
+    if (typeof v === 'boolean') return v ? 1 : 0;
+    if (typeof v === 'object') return JSON.stringify(v);
+    return v;
+  });
+  await db
+    .prepare(`UPDATE activities SET ${keys.map((k) => `${k} = ?`).join(', ')}, updated_at = ? WHERE id = ?`)
+    .bind(...vals, new Date().toISOString(), id)
+    .run();
+}
+
+/** Raw rows of selected columns for analytics (non-deleted, filtered by date/sport). */
+export async function selectActivityFields<T = Record<string, unknown>>(
+  db: D1Database,
+  q: { from?: LocalDate; to?: LocalDate; sport?: Sport },
+  cols: string,
+): Promise<T[]> {
+  const { sql, params } = where(q);
+  const { results } = await db.prepare(`SELECT ${cols} FROM activities WHERE ${sql} ORDER BY started_at`).bind(...params).all<T>();
+  return results;
+}
+
+/** Per-day totals (consistency heatmap). */
+export async function dailyTotals(
+  db: D1Database,
+  q: { from: LocalDate; to: LocalDate },
+): Promise<Array<{ date: LocalDate; load: number; durationSec: number; count: number; key: number }>> {
+  const { sql, params } = where(q);
+  const { results } = await db
+    .prepare(
+      `SELECT local_date AS date, SUM(load) AS load, SUM(CASE WHEN moving_sec > 0 THEN moving_sec ELSE duration_sec END) AS durationSec,
+       COUNT(*) AS count, MAX(is_key) AS key FROM activities WHERE ${sql} GROUP BY local_date ORDER BY local_date`,
+    )
+    .bind(...params)
+    .all<{ date: string; load: number; durationSec: number; count: number; key: number }>();
+  return results;
+}
+
+/** Totals by sport over a period (compare). */
+export async function sportTotals(
+  db: D1Database,
+  q: { from: LocalDate; to: LocalDate },
+): Promise<Array<{ sport: Sport; count: number; durationSec: number; distanceM: number; load: number; elevationGainM: number }>> {
+  const { sql, params } = where(q);
+  const { results } = await db
+    .prepare(
+      `SELECT sport, COUNT(*) AS count, SUM(CASE WHEN moving_sec > 0 THEN moving_sec ELSE duration_sec END) AS durationSec,
+       COALESCE(SUM(distance_m), 0) AS distanceM, SUM(load) AS load, COALESCE(SUM(elevation_gain_m), 0) AS elevationGainM
+       FROM activities WHERE ${sql} GROUP BY sport ORDER BY sport`,
+    )
+    .bind(...params)
+    .all<{ sport: Sport; count: number; durationSec: number; distanceM: number; load: number; elevationGainM: number }>();
+  return results;
+}

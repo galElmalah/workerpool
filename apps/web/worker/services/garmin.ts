@@ -9,7 +9,8 @@
  *    `demo:now` instant stored in `sync_state` (moved by `POST /demo/advance`). The mock module and
  *    the synth generator are loaded with dynamic imports so they never enter production paths.
  */
-import type { LocalDate } from '@cadence/core/domain';
+import { z } from 'zod';
+import { LocalDate as LocalDateSchema, type LocalDate } from '@cadence/core/domain';
 import { addDays, todayIn } from '@cadence/core/time';
 import {
   GarminAuthError,
@@ -18,14 +19,19 @@ import {
   GarminError,
   GarminHttpError,
   GarminRateLimitError,
+  experimentalCompleteMfa,
+  experimentalPasswordLogin,
+  memoryTokenStore,
+  parseGarminTokensJson,
   type FetchLike,
   type GarminCredentials,
+  type PendingMfaLogin,
   type TokenStore,
 } from '@cadence/garmin';
 import type { GarminMock } from '@cadence/garmin/mock';
 import { getSettings } from '../db/settings';
-import { casGarminCredentials, getGarminAuth, overwriteGarminCredentials } from '../db/garmin';
-import { getState, putState } from '../db/sync';
+import { casGarminCredentials, deleteGarminAuth, getGarminAuth, overwriteGarminCredentials, upsertGarminAuth } from '../db/garmin';
+import { clearQueue, deleteState, deleteStatePrefix, getState, logSync, putState } from '../db/sync';
 import { isDemo } from '../env';
 import { decryptJson, encryptJson } from '../lib/crypto';
 import { ApiError } from '../lib/http';
@@ -291,4 +297,144 @@ export function toApiError(e: unknown): ApiError {
 
 export function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
+}
+
+// ───────────────────────────── connect / disconnect ─────────────────────────────
+
+export const ConnectInput = z.object({
+  /** Garmin Personal API key (read access). */
+  apiKey: z.string().trim().min(4).optional(),
+  /** Expiry the athlete chose for the key (warned about 14 days ahead). */
+  keyExpiresOn: LocalDateSchema.optional(),
+  /** Contents of python-garminconnect's garmin_tokens.json (write access). */
+  tokensJson: z.union([z.string().min(2), z.record(z.string(), z.unknown())]).optional(),
+  /** EXPERIMENTAL in-Worker SSO login (single attempt; usually blocked from Cloudflare). */
+  email: z.string().trim().min(3).optional(),
+  password: z.string().min(1).optional(),
+  mfaCode: z.string().trim().min(4).max(12).optional(),
+  /** DEMO mode only: connect to the built-in fake Garmin. */
+  demo: z.boolean().optional(),
+  /** Run the initial 14-day sync in the background (default true). */
+  initialSync: z.boolean().optional(),
+});
+export type ConnectInput = z.infer<typeof ConnectInput>;
+
+const MFA_PENDING_KEY = 'garmin:mfa_pending';
+const MFA_TTL_MS = 10 * 60_000;
+
+export interface ConnectResult {
+  state: 'connected' | 'needs_mfa';
+  displayName?: string;
+  capabilities: { read: boolean; write: boolean };
+}
+
+/**
+ * Validate new credentials against Garmin (token exchange + profile), merge them with what is
+ * stored (an API key and a DI token set are independent), encrypt and store. Partial connects
+ * are fine: read-only with an API key, writes with DI tokens.
+ */
+export async function connectGarmin(env: Env, input: ConnectInput): Promise<ConnectResult> {
+  const started = Date.now();
+  try {
+    const row = await getGarminAuth(env.DB);
+    let existing: GarminCredentials = {};
+    if (row) {
+      try {
+        existing = await decryptCredentials(env, row.credentialsEnc);
+      } catch {
+        existing = {};
+      }
+    }
+    const transport = await garminTransport(env);
+    const incoming: GarminCredentials = {};
+
+    if (input.demo) {
+      if (!isDemo(env) || !transport.mock) throw new ApiError(400, 'bad_request', 'The demo Garmin account is only available in demo mode.');
+      incoming.personal = { apiKey: DEMO_API_KEY };
+      incoming.di = transport.mock.issueDiTokens();
+    }
+    if (input.apiKey) incoming.personal = { apiKey: input.apiKey, ...(input.keyExpiresOn ? { keyExpiresOn: input.keyExpiresOn } : {}) };
+    if (input.tokensJson !== undefined) {
+      try {
+        incoming.di = parseGarminTokensJson(input.tokensJson);
+      } catch (e) {
+        throw new ApiError(400, 'garmin_tokens_invalid', errorMessage(e));
+      }
+    }
+    if (input.email && input.password) {
+      const res = await experimentalPasswordLogin({
+        fetch: transport.fetch,
+        ...(transport.baseUrls ? { baseUrls: transport.baseUrls } : {}),
+        username: input.email,
+        password: input.password,
+        ...(transport.mock ? { delayMs: 0, sleep: async () => {} } : {}),
+      });
+      if (res.status === 'mfa_required') {
+        await putState(env.DB, MFA_PENDING_KEY, { enc: await encryptJson(env, res.pending), at: Date.now() });
+        await logSync(env.DB, { kind: 'auth', status: 'running', summary: 'Garmin asked for a verification code' });
+        return { state: 'needs_mfa', capabilities: { read: !!existing.personal || !!existing.di, write: !!existing.di } };
+      }
+      incoming.di = res.di;
+    } else if (input.mfaCode) {
+      const p = await getState<{ enc: string; at: number }>(env.DB, MFA_PENDING_KEY);
+      if (!p || Date.now() - p.at > MFA_TTL_MS) throw new ApiError(400, 'garmin_mfa_expired', 'The sign-in attempt expired; sign in again.');
+      const pending = await decryptJson<PendingMfaLogin>(env, p.enc);
+      const res = await experimentalCompleteMfa({
+        fetch: transport.fetch,
+        ...(transport.baseUrls ? { baseUrls: transport.baseUrls } : {}),
+        pending,
+        code: input.mfaCode,
+      });
+      await deleteState(env.DB, MFA_PENDING_KEY);
+      incoming.di = res.di;
+    }
+    if (!incoming.personal && !incoming.di) {
+      throw new ApiError(400, 'bad_request', 'Provide a Personal API key, garmin_tokens.json, or email + password.');
+    }
+
+    const merged: GarminCredentials = { ...existing, ...incoming };
+    const store = memoryTokenStore(merged);
+    const client = makeClient(transport, store);
+    let displayName: string | undefined;
+    if (incoming.personal || (merged.personal && !merged.di)) displayName = (await client.getProfile()).displayName;
+    if (merged.di) displayName = (await client.verifyDiToken()).displayName ?? displayName;
+    const caps = await client.capabilities();
+    const finalCreds = store.current ?? merged;
+    await upsertGarminAuth(env.DB, {
+      credentialsEnc: await encryptCredentials(env, finalCreds),
+      ...(displayName ? { displayName } : {}),
+      state: 'connected',
+      lastError: null,
+    });
+    await deleteState(env.DB, MFA_PENDING_KEY);
+    await logSync(env.DB, {
+      kind: 'auth',
+      status: 'ok',
+      summary: `Connected to Garmin${displayName ? ` as ${displayName}` : ''} (${caps.write ? 'read + write' : 'read only'})`,
+      durationMs: Date.now() - started,
+    });
+    const out: ConnectResult = { state: 'connected', capabilities: { read: caps.read, write: caps.write } };
+    if (displayName) out.displayName = displayName;
+    return out;
+  } catch (e) {
+    const err = toApiError(e);
+    await logSync(env.DB, { kind: 'auth', status: 'error', summary: `Garmin connect failed: ${err.message}`, detail: errorMessage(e) });
+    throw err;
+  }
+}
+
+/** Delete the stored credentials and every Garmin sync cursor/queue (sync history is kept). */
+export async function disconnectGarmin(env: Env): Promise<void> {
+  const row = await getGarminAuth(env.DB);
+  await deleteGarminAuth(env.DB);
+  await deleteStatePrefix(env.DB, 'garmin:');
+  await deleteState(env.DB, 'lock:sync');
+  await clearQueue(env.DB, 'inc');
+  await clearQueue(env.DB, 'bf');
+  if (row) await logSync(env.DB, { kind: 'auth', status: 'ok', summary: 'Disconnected from Garmin; stored credentials deleted' });
+}
+
+export async function mfaPending(env: Env): Promise<boolean> {
+  const p = await getState<{ at: number }>(env.DB, MFA_PENDING_KEY);
+  return !!p && Date.now() - p.at <= MFA_TTL_MS;
 }

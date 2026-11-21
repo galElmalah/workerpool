@@ -15,6 +15,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { z } from 'zod';
+import { requiredAuthRedirect } from '@/lib/queries/shared';
 import { vtTypes } from '@/motion/vt-types';
 import { PageSkeleton } from '@/ui/Skeleton';
 import { AppShell, BareShell, RootLayout, RouteError, NotFound } from './AppShell';
@@ -56,7 +57,18 @@ const parse =
 // ───────────── tree ─────────────
 const rootRoute = createRootRoute({ component: RootLayout, notFoundComponent: NotFound });
 
-const appRoute = createRoute({ getParentRoute: () => rootRoute, id: '_app', component: AppShell });
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: '_app',
+  component: AppShell,
+  // Single-user gate: first visit → /welcome (set a passphrase), signed out → /login.
+  beforeLoad: async ({ location }) => {
+    if (location.pathname.startsWith('/dev/')) return;
+    const to = await requiredAuthRedirect();
+    if (to === '/welcome') throw redirect({ to: '/welcome', replace: true });
+    if (to === '/login') throw redirect({ to: '/login', search: { redirect: location.href }, replace: true });
+  },
+});
 const bareRoute = createRoute({ getParentRoute: () => rootRoute, id: '_bare', component: BareShell });
 
 const indexRoute = createRoute({

@@ -128,9 +128,10 @@ export async function listTemplates(
     params.push(q.folder);
   }
   if (q.ids) {
-    if (!q.ids.length) return [];
-    where.push(`id IN (${placeholders(q.ids.length)})`);
-    params.push(...q.ids.slice(0, 90));
+    const ids = q.ids.slice(0, 90);
+    if (!ids.length) return [];
+    where.push(`id IN (${placeholders(ids.length)})`);
+    params.push(...ids);
   }
   for (const word of (q.q ?? '').trim().toLowerCase().split(/\s+/).filter(Boolean).slice(0, 6)) {
     where.push(`(lower(title) LIKE ? OR lower(coalesce(description, '')) LIKE ? OR lower(tags) LIKE ? OR lower(coalesce(folder, '')) LIKE ?)`);
