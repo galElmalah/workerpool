@@ -9,7 +9,7 @@ export { WowDeltaBars, wowItems, compareWeeks } from './WowDeltaBars';
 export type { WowDeltaBarsProps, WowItem, CompareMode, CompareTile } from './WowDeltaBars';
 export { IntensityDistribution, ZoneBars, classifyIntensity, weeksToSplits, zoneFill } from './IntensityDistribution';
 export type { IntensityDistributionProps, IntensitySplit, IntensityClassLabel, ZoneBarsProps } from './IntensityDistribution';
-export { EffortCurve, PowerCurve, PaceCurve, valueAt } from './PowerCurve';
+export { EffortCurve, PowerCurve, PaceCurve, valueAt, effortsToPoints } from './PowerCurve';
 export type { EffortCurveProps, CurveSeries } from './PowerCurve';
 export { StreamChart, streamStats } from './StreamChart';
 export type { StreamChartProps, StreamSelection, StreamTrack, StreamXAxis, StreamSmoothing } from './StreamChart';

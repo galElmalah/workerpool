@@ -89,7 +89,13 @@ export function runTempo(c: SessionCtx, hmPace = false): SessionDraft {
   const v = c.variant % 4;
   let title: string;
   let intensity: SessionDraft['intensity'] = 'threshold';
-  if (hmPace) {
+  if (hmPace && c.week.rel === 8) {
+    title = '3×3 km @ HM pace';
+    b.rep(3, [b.s('active', D(3000), PC(97, 100), { label: 'HM pace' }), b.s('recovery', T(120), PC(60, 70))]);
+  } else if (hmPace && c.week.rel === 9) {
+    title = '8 km @ HM pace';
+    b.add('active', D(8000), PC(96, 99), { label: 'HM pace', cue: 'Race rehearsal: gels, shoes, breakfast' });
+  } else if (hmPace) {
     title = '2×5 km @ HM pace';
     b.rep(2, [b.s('active', D(5000), PC(96, 99), { label: 'HM pace' }), b.s('recovery', T(180), PC(60, 70))]);
   } else if (v === 0) {

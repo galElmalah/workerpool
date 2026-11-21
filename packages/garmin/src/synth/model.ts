@@ -250,7 +250,7 @@ function stepsUnstructured(h: Header, p: SynthPlannedSession | undefined, family
   if (p?.tags.includes('race') && p.plannedDistanceM) {
     const x = raceX(family, p.plannedDistanceM, p.tags) * (1 + exec.bias * 0.5);
     let v: number;
-    if (family === 'run') v = x * thr.runMps;
+    if (family === 'run') v = x * ctx.thrNext.runMps;
     else if (family === 'swim_ow') v = x * thr.cssMps * OW_FACTOR;
     else v = bikeSpeed(x * thr.ftp, 0, BIKE_TT, 9) * 0.955;
     out.push({ dur: r5(p.plannedDistanceM / v), x0: x, x1: x, role: 'active', kind: 'move', lap: false });
@@ -398,6 +398,12 @@ function toSegments(steps: NomStep[], family: Family, h: Header, p: SynthPlanned
       done += remaining;
       remaining = 0;
     }
+  }
+  // real recordings stop at an arbitrary second, not on the 5 s grid
+  const tail = rng.int(0, 4);
+  if (tail && segs.length) {
+    segs[segs.length - 1]!.dur += tail;
+    t += tail;
   }
   let laps: LapSpec[] | null = null;
   if (structured) {

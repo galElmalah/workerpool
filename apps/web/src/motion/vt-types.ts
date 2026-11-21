@@ -36,6 +36,9 @@ const histIndex = (l?: ParsedLocation): number | undefined => {
   return typeof s?.__TSR_index === 'number' ? s.__TSR_index : undefined;
 };
 
+/** Top-level destinations (rail / bottom bar): hopping between sections is lateral, not back. */
+const ROOTS = /^\/(today|calendar|trends|activities|library|journal|settings\/[^/]+)\/?$/;
+
 /** Routes between which a workout card may morph (list → detail). */
 const MORPH_PAIR = /^\/(calendar|today|workouts|activities|library|week|journal|dev\/morph)(\/|$)/;
 
@@ -62,7 +65,9 @@ export function vtTypes({ fromLocation: f, toLocation: t, pathChanged, hrefChang
 
   const fi = histIndex(f);
   const ti = histIndex(t);
+  const section = (p: string) => p.split('/')[1] ?? '';
   if (fi !== undefined && ti !== undefined && ti < fi) types.push('back');
+  else if (ROOTS.test(t.pathname) && section(t.pathname) !== section(f.pathname)) types.push('lateral'); // rail hop
   else {
     const df = depth(f.pathname);
     const dt = depth(t.pathname);

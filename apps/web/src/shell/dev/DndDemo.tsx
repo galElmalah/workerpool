@@ -59,7 +59,7 @@ export function DndDemo() {
 
   return (
     <DndContext {...dnd.contextProps}>
-      <div className="overflow-x-auto rounded-lg border border-line-2 bg-line-1">
+      <div data-dnd-demo className="overflow-x-auto rounded-lg border border-line-2 bg-line-1">
         <div className="grid min-w-[56rem] grid-cols-7 gap-px">
           {DAYS.map((d) => (
             <DayDrop key={d} id={d} className={cn('flex min-h-44 flex-col gap-1.5 bg-canvas p-1.5', d > TODAY && 'bg-surface-1/40')}>

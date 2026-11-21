@@ -198,6 +198,7 @@ export function DayDrop({ id, children, className, data }: { id: string; childre
   return (
     <div
       ref={setNodeRef}
+      data-day={id}
       data-over={isOver || undefined}
       className={cn(
         'relative transition-[background-color,box-shadow] duration-(--dur-fast) ease-out',

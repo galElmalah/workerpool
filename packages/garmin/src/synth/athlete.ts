@@ -322,7 +322,10 @@ function raceNotes(season: Season, acts: SynthActivity[], sums: Summary[]): void
   tri(season.sprintDate, false);
   const tenK = byDate(season.tenKDate).find((x) => x.a.title.includes('10K'));
   if (tenK) {
-    tenK.a.postNote = `${fmtDuration(tenK.a.durationSec)} — ${fmtPaceKm(tenK.a.avgSpeedMps!)}/km, negative split. Cold and windy, happy with that.`;
+    const sub40 = tenK.a.durationSec < 2400;
+    tenK.a.postNote = sub40
+      ? `${fmtDuration(tenK.a.durationSec)} — ${fmtPaceKm(tenK.a.avgSpeedMps!)}/km. SUB-40! Negative split, legs still had a bit.`
+      : `${fmtDuration(tenK.a.durationSec)} — ${fmtPaceKm(tenK.a.avgSpeedMps!)}/km. Not sub-40 (headwind on the river section) but way better than last winter.`;
     tenK.a.rpe = 9;
     tenK.a.feel = 4;
   }
@@ -379,7 +382,14 @@ function buildWeekNotes(seed: number, s: Season, plan: SynthPlannedSession[], ac
     const hoursDone = wa.reduce((a, x) => a + x.durationSec, 0) / 3600;
     const keyPlanned = wp.filter((p) => p.isKey).length;
     const keyDone = wp.filter((p) => p.isKey && p.activityId !== undefined).length;
-    const body = weekReflection({ rng, block: w.block, recovery: w.recovery, past: past || false, hoursDone, hoursPlanned, keyDone, keyPlanned, sick, travel, rel: w.rel });
+    let body = weekReflection({ rng, block: w.block, recovery: w.recovery, past: past || false, hoursDone, hoursPlanned, keyDone, keyPlanned, sick, travel, rel: w.rel });
+    if (w.block === 'race' && past) {
+      const legs = wa.filter((x) => x.localDate === s.aRaceDate && x.title.startsWith('Costa Brava'));
+      if (legs.length) {
+        const tt = (Date.parse(legs[legs.length - 1]!.startedAt) - Date.parse(legs[0]!.startedAt)) / 1000 + legs[legs.length - 1]!.durationSec;
+        body = tt < 5 * 3600 ? `RACE WEEK. ${fmtDuration(tt)} — sub-5 in the bag, the season’s work paid off. Now: nothing for a few days.` : `RACE WEEK. ${fmtDuration(tt)}. Not the sub-5, but a proper race. Rest, then rethink the run.`;
+      }
+    }
     if (!body) continue;
     const note: { isoWeek: string; body: string; targetHours?: number; targetLoad?: number } = { isoWeek: isoWeekOf(w.monday), body: current ? `This week: ${body}` : body };
     if (!past || rng.chance(0.6)) {

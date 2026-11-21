@@ -86,7 +86,10 @@ interface BlockInfo {
 
 const MESO = [0.94, 1.0, 1.07, 0.7];
 
-function blockFor(rel: number): BlockInfo {
+function blockFor(relIn: number): BlockInfo {
+  // histories longer than one season repeat the previous season's structure
+  let rel = relIn;
+  while (rel < -45) rel += 52;
   if (rel <= -40) return { block: 'offseason', type: 'transition', label: 'Off-season', pos: -1, base: 0.46 };
   if (rel <= -24) {
     const g = Math.floor((rel + 39) / 4);

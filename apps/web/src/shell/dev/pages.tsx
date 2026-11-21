@@ -31,7 +31,7 @@ export function MorphListPage() {
       <Section title="Chips" variant="micro">
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-7">
           {MOCK_WORKOUTS.slice(0, 7).map((w) => (
-            <WorkoutCard key={w.id} model={w} density="chip" link={{ to: '/dev/morph/$id', params: { id: w.id } }} />
+            <WorkoutCard key={w.id} model={w} morphId={`chip-${w.id}`} density="chip" link={{ to: '/dev/morph/$id', params: { id: w.id } }} />
           ))}
         </div>
       </Section>

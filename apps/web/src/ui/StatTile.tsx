@@ -87,9 +87,10 @@ export function StatTile({
             <MiniProfile values={sparkline} height={24} tone={signal ? 'accent' : 'fg'} />
           </div>}
       </div>
+      {delta !== undefined && (
       <div className="h-5">
         <AnimatePresence mode="wait" initial={false}>
-          {delta !== undefined && (
+          {(
             <motion.div
               key={String(delta)}
               initial={{ opacity: 0, y: 4 }}
@@ -101,6 +102,7 @@ export function StatTile({
           )}
         </AnimatePresence>
       </div>
+      )}
     </Comp>
   );
 }

@@ -7,7 +7,7 @@ import { useCallback, useId, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { scaleLinear, scaleLog } from 'd3-scale';
 import { curveMonotoneX, line } from 'd3-shape';
-import type { PeakPoint } from '@cadence/core';
+import type { BestEffort, PeakPoint } from '@cadence/core';
 import { ChartDefs, useChartDefs } from './core/ChartDefs';
 import { ChartFrame } from './core/ChartFrame';
 import { AxisY, Grid, linearTicks, type Tick } from './core/Axis';
@@ -322,4 +322,12 @@ export function PaceCurve({ per = 1000, ...rest }: Omit<EffortCurveProps, 'forma
     return out;
   };
   return <EffortCurve {...rest} zeroBased={false} yTickValues={ticks} format={(v) => fmtPace(v, per)} unit={per === 1000 ? '/km' : per === 100 ? '/100m' : '/500m'} />;
+}
+
+/** BestEffort[] (fixed distances) → PeakPoint[] (duration → speed m/s) for PaceCurve. */
+export function effortsToPoints(efforts: BestEffort[]): PeakPoint[] {
+  return [...efforts]
+    .filter((e) => e.timeSec > 0)
+    .sort((a, b) => a.timeSec - b.timeSec)
+    .map((e) => ({ durationSec: e.timeSec, value: e.distanceM / e.timeSec, startSec: e.startSec }));
 }
