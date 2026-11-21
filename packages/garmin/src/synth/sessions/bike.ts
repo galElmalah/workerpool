@@ -186,8 +186,8 @@ export function bikeOpeners(c: SessionCtx, min = 45): SessionDraft {
 /** Long outdoor ride; the flavour depends on the training block. */
 export function bikeLong(c: SessionCtx): SessionDraft {
   const blk = c.week.block;
-  const baseMin = blk === 'offseason' || blk === 'genprep' ? 160 : blk === 'runbase' || blk === 'hmbuild' || blk === 'transition' ? 140 : 185;
-  const min = scaleMin(baseMin, c.vol / (blk === 'genprep' || blk === 'offseason' ? 0.66 : 0.9), 0.55, 1.15);
+  const runFocus = blk === 'runbase' || blk === 'hmbuild' || blk === 'transition';
+  const min = scaleMin(runFocus ? 140 : 180, c.vol / (runFocus ? 0.75 : 0.9), 0.55, 1.15);
   const rides = ['Banyoles loop', 'Coast loop', 'Gavarres loop', 'Rocacorba'];
   const where = rides[c.variant % rides.length]!;
   const tags = ['long', 'endurance'];

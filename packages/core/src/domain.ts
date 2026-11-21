@@ -253,6 +253,8 @@ export const PlannedWorkout = z.object({
   skipReason: z.enum(SKIP_REASONS).optional(),
   /** Derived server-side on read (never stored). */
   compliance: Compliance.optional(),
+  /** ≤ 48 values 0..1: planned intensity profile for the calendar card (derived from structure). */
+  sparkline: z.array(z.number()).optional(),
   garmin: GarminLink,
   createdAt: IsoInstant,
   updatedAt: IsoInstant,
@@ -265,6 +267,7 @@ export const PlannedWorkoutInput = PlannedWorkout.omit({
   createdAt: true,
   updatedAt: true,
   compliance: true,
+  sparkline: true,
   garmin: true,
   pairedActivityId: true,
 }).partial({ isKey: true, intensity: true, tags: true, environment: true, status: true });
@@ -301,6 +304,8 @@ export const Activity = z.object({
   id: z.string(),
   source: z.enum(['garmin', 'upload', 'manual', 'demo']),
   garminActivityId: z.string().optional(),
+  /** Raw Garmin activityType.typeKey, kept so unmapped types are not lost as 'other'. */
+  garminTypeKey: z.string().optional(),
   startedAt: IsoInstant,
   utcOffsetMin: z.number().int(), // local = UTC + offset
   localDate: LocalDate,

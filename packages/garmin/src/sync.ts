@@ -259,8 +259,9 @@ export function startBackfill(sinceDate?: LocalDate): BackfillCursor {
 /**
  * Resumable backfill step: up to `maxRequests` list pages, newest → oldest.
  * Persist `nextCursor` (small JSON) and call again (Queue/Workflow step) until
- * `done`. Pages overlap by 2 items so a deletion during the backfill cannot make
- * us skip an activity; the overlap is de-duplicated with `lastPageIds`.
+ * `done`. Pages overlap by up to 2 items (≤ pageSize/3) so deletions during the
+ * backfill cannot make us skip an activity; the overlap and offset shifts caused
+ * by new uploads are de-duplicated with `lastPageIds`.
  */
 export async function runBackfillStep(
   client: GarminClient,
@@ -268,7 +269,7 @@ export async function runBackfillStep(
   opts: BackfillStepOptions = {},
 ): Promise<BackfillStepResult> {
   const pageSize = opts.pageSize ?? 100;
-  const overlap = Math.min(BACKFILL_OVERLAP, pageSize - 1);
+  const overlap = Math.min(BACKFILL_OVERLAP, Math.floor(pageSize / 3));
   let c: BackfillCursor = cursor ? { ...cursor, lastPageIds: [...cursor.lastPageIds] } : startBackfill(opts.sinceDate);
   const items: NormalizedActivity[] = [];
   const maxRequests = Math.max(1, opts.maxRequests ?? 1);

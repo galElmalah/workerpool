@@ -67,7 +67,7 @@ const cap =
   'inline-flex h-5 min-w-5 items-center justify-center rounded-xs px-1 font-mono text-mono-sm leading-none text-fg-2';
 
 export function Kbd({ keys, children, className, tone = 'default' }: KbdProps) {
-  const capCls = cn(cap, tone === 'default' ? 'border border-line-2 bg-surface-3' : 'bg-transparent text-current opacity-70');
+  const capCls = cn(cap, tone === 'default' ? 'border border-line-2 bg-surface-3' : 'border border-current/25 bg-transparent !text-current opacity-70');
   if (!keys)
     return (
       <kbd className={cn(capCls, className)}>

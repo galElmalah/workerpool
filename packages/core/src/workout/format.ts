@@ -65,9 +65,9 @@ export function fmtPrime(sec: number): string {
   return r ? `${m}′${pad2(r)}″` : `${m}′`;
 }
 
-/** Pace seconds (per unit) → "4:30" or "1:45.5" (tenths kept when present). */
-export function fmtPace(secPerUnit: number): string {
-  const t = Math.round(secPerUnit * 10) / 10;
+/** Pace seconds (per unit) → "4:30"; with `tenths`, "1:45.5" when the tenth is non-zero. */
+export function fmtPace(secPerUnit: number, tenths = false): string {
+  const t = tenths ? Math.round(secPerUnit * 10) / 10 : Math.round(secPerUnit);
   const m = Math.floor(t / 60);
   const r = t - m * 60;
   const whole = Math.floor(r + 1e-9);

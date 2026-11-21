@@ -343,7 +343,7 @@ function FitnessInner({
   const yTicks = linearTicks([0, target.yMax], [L.top1, L.top0], 4, (v) => fmtNum(v));
   const formTicks = linearTicks(formDom, [L.form1, L.form0], 3, (v) => fmtNum(v)).filter((t) => t.pos > L.form0 + 4 && t.pos < L.form1 - 4);
   const xTicksRaw = dateTicks(toX, target.x0, target.x1, L.plotW);
-  const xTicks = thinTicks(L.compact ? xTicksRaw.filter((_, i) => i % 2 === 0) : xTicksRaw);
+  const xTicks = thinTicks(xTicksRaw);
 
   // End labels (last visible point)
   const last = vis[1];

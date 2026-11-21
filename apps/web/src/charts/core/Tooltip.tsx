@@ -128,6 +128,6 @@ export function CrosshairRule({ x, y0, y1 }: { x: number; y0: number; y1: number
 }
 
 /** 6px datum dot with a 2px canvas-coloured ring. */
-export function CrosshairDot({ x, y, tone = 'fg1', ring = T.canvas }: { x: number; y: number; tone?: Tone; ring?: string }) {
+export function CrosshairDot({ x, y, tone = 'fg1', ring = T.bg }: { x: number; y: number; tone?: Tone; ring?: string }) {
   return <circle cx={x} cy={y} r={4} pointerEvents="none" style={{ fill: toneStroke[tone], stroke: ring, strokeWidth: 2 }} />;
 }

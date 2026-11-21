@@ -300,16 +300,19 @@ export function mockRide(seed = 3, ftp = 290, durationSec = 9000): { streams: Ac
     d += v;
     const hrTarget = 92 + (pw / ftp) * 72 + i / 400;
     h += (hrTarget - h) * (hrTarget > h ? 0.028 : 0.018);
-    const f = (d / total) % 1;
-    const th = f * Math.PI * 2;
-    const rad = 0.105 * (1 + 0.22 * Math.sin(3 * th + 0.4) + 0.08 * Math.cos(5 * th));
     const dropout = i >= dropAt && i < dropAt + 25;
     power[i] = dropout ? null : pw;
     hr[i] = Math.round(h + r.normal() * 0.6);
     speed[i] = stopped ? 0 : +v.toFixed(2);
     cadence[i] = dropout ? null : pw < 5 ? 0 : Math.round(82 + (pct - 0.7) * 22 + r.normal() * 2.5);
-    altitude[i] = +elev(f).toFixed(1);
     distance[i] = Math.round(d);
+  }
+  // Second pass: place the samples on a closed loop whose length is the ridden distance.
+  for (let i = 0; i < n; i++) {
+    const f = Math.min(1, (distance[i] ?? 0) / d);
+    const th = f * Math.PI * 2;
+    const rad = 0.105 * (1 + 0.22 * Math.sin(3 * th + 0.4) + 0.08 * Math.cos(5 * th));
+    altitude[i] = +elev(f).toFixed(1);
     lat[i] = +(47.05 + rad * Math.sin(th) * 0.72).toFixed(6);
     lng[i] = +(8.3 + rad * Math.cos(th)).toFixed(6);
   }

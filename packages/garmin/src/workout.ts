@@ -971,8 +971,8 @@ export function fromGarminWorkout(json: unknown, thresholds: ThresholdSnapshot =
       if (raw.type === 'RepeatGroupDTO' || str(raw.stepType, 'stepTypeKey') === 'repeat') {
         const count = Math.max(1, Math.round(num(raw, 'numberOfIterations', 'endConditionValue') ?? 1));
         const children = toNodes(asArray(raw.workoutSteps), depth + 1);
-        if (depth >= 1) {
-          // inner repeats may only hold plain steps: unroll anything deeper
+        if (depth >= 2) {
+          // the domain allows outer → inner repeat only: unroll anything deeper into the inner one
           for (let i = 0; i < count; i++)
             for (const c of children) out.push(c.kind === 'step' ? { ...c, id: `${c.id}_${i}` } : c);
           continue;

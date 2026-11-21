@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 
 export const T = {
   canvas: 'var(--color-canvas)',
+  /** The surface the chart sits on (set `--chart-bg` on a card; defaults to canvas). Used for rings/halos. */
+  bg: 'var(--chart-bg, var(--color-canvas))',
   s1: 'var(--color-surface-1)',
   s2: 'var(--color-surface-2)',
   s3: 'var(--color-surface-3)',

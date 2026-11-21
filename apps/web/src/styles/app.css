@@ -182,8 +182,7 @@
 @layer base {
   html { background: var(--color-canvas); color: var(--color-fg-1); font-family: var(--font-sans);
          font-size: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-         text-rendering: optimizeLegibility; -webkit-tap-highlight-color: transparent;
-         scrollbar-gutter: stable; }
+         text-rendering: optimizeLegibility; -webkit-tap-highlight-color: transparent; }
   body { min-height: 100dvh; background: var(--color-canvas);
          font-size: var(--text-body); line-height: var(--text-body--line-height);
          letter-spacing: var(--text-body--letter-spacing); font-weight: 420;

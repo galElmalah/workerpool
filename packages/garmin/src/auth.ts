@@ -10,7 +10,6 @@
  *
  * Everything takes an injected `fetch`; only Web APIs are used.
  */
-import { z } from 'zod';
 import { GarminAuthError, GarminBlockedError, GarminHttpError, GarminRateLimitError } from './errors';
 import { base64UrlDecodeToString, isObject } from './util';
 
@@ -64,11 +63,14 @@ export function memoryTokenStore(initial: GarminCredentials | null = null): Toke
   return store;
 }
 
-const GarminTokensJson = z.object({
-  di_token: z.string().min(10),
-  di_refresh_token: z.string().min(4),
-  di_client_id: z.string().min(3).optional(),
-});
+function readTokensJson(raw: unknown): { di_token: string; di_refresh_token: string; di_client_id?: string } | undefined {
+  if (!isObject(raw)) return undefined;
+  const { di_token, di_refresh_token, di_client_id } = raw;
+  if (typeof di_token !== 'string' || di_token.length < 10) return undefined;
+  if (typeof di_refresh_token !== 'string' || di_refresh_token.length < 4) return undefined;
+  if (di_client_id !== undefined && di_client_id !== null && (typeof di_client_id !== 'string' || di_client_id.length < 3)) return undefined;
+  return typeof di_client_id === 'string' ? { di_token, di_refresh_token, di_client_id } : { di_token, di_refresh_token };
+}
 
 /**
  * Validate the pasted contents of `garmin_tokens.json`. Accepts the JSON text or
@@ -84,19 +86,19 @@ export function parseGarminTokensJson(input: string | unknown): DiCredentials {
       throw new GarminAuthError('garmin_tokens.json is not valid JSON', 'di', 'needs_reauth');
     }
   }
-  const parsed = GarminTokensJson.safeParse(raw);
-  if (!parsed.success) {
+  const parsed = readTokensJson(raw);
+  if (!parsed) {
     throw new GarminAuthError(
       'garmin_tokens.json must contain di_token, di_refresh_token and di_client_id (python-garminconnect ≥ 0.3.0 format)',
       'di',
       'needs_reauth',
     );
   }
-  const clientId = parsed.data.di_client_id ?? jwtClaim(parsed.data.di_token, 'client_id');
+  const clientId = parsed.di_client_id ?? jwtClaim(parsed.di_token, 'client_id');
   if (typeof clientId !== 'string' || !clientId) {
     throw new GarminAuthError('garmin_tokens.json has no di_client_id', 'di', 'needs_reauth');
   }
-  return { di_token: parsed.data.di_token, di_refresh_token: parsed.data.di_refresh_token, di_client_id: clientId };
+  return { di_token: parsed.di_token, di_refresh_token: parsed.di_refresh_token, di_client_id: clientId };
 }
 
 // ───────────────────────────── JWT helpers ─────────────────────────────

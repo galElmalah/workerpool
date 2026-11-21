@@ -146,8 +146,8 @@ export function runHills(c: SessionCtx): SessionDraft {
 
 export function runLong(c: SessionCtx, opts: { hmPace?: boolean; trail?: boolean } = {}): SessionDraft {
   const blk = c.week.block;
-  const baseMin = blk === 'offseason' || blk === 'genprep' ? 80 : blk === 'runbase' || blk === 'hmbuild' ? 95 : 95;
-  const min = scaleMin(baseMin, c.vol / (blk === 'genprep' || blk === 'offseason' ? 0.66 : blk === 'runbase' || blk === 'hmbuild' ? 0.72 : 0.9), 0.6, 1.15);
+  const runFocus = blk === 'runbase' || blk === 'hmbuild';
+  const min = scaleMin(100, c.vol / (runFocus ? 0.75 : 0.9), 0.6, 1.15);
   if (opts.trail) {
     return draft(
       {

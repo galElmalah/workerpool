@@ -50,7 +50,7 @@ function templateFor(w: WeekInfo): Slot[] {
       return [
         S(1, '18:30', strengthA),
         S(2, '07:15', (c) => runEasy(c, 40, true)),
-        S(2, '18:30', (c) => bikeEnduranceIndoor(c, 60)),
+        ...(w.index % 2 === 0 ? [S(2, '18:30', (c) => bikeEnduranceIndoor(c, 50))] : []),
         S(3, '07:00', swimEndurance),
         S(3, '18:45', rowUt2),
         S(4, '18:30', runHills),
@@ -65,10 +65,10 @@ function templateFor(w: WeekInfo): Slot[] {
         S(2, '18:30', bikeSweetSpot),
         S(3, '07:00', (c) => runEasy(c, 45, true)),
         S(3, '18:45', (c) => (w.index % 2 === 0 ? rowUt2(c) : rowPieces(c))),
-        S(4, '06:30', (c) => bikeEnduranceIndoor(c, 60)),
+        ...(w.pos === 2 ? [S(4, '06:30', (c) => bikeEnduranceIndoor(c, 50))] : []),
         S(4, '18:30', runTempo),
         S(5, '06:45', swimEndurance),
-        S(5, '18:30', strengthB),
+        ...(w.index % 2 === 0 ? [S(5, '18:30', strengthB)] : []),
         S(6, '09:30', bikeLong),
         S(7, '09:00', (c) => runLong(c, { trail: w.pos === 1 && w.index % 3 === 0 })),
       ];
@@ -79,7 +79,7 @@ function templateFor(w: WeekInfo): Slot[] {
         S(2, '18:30', (c) => (w.index % 2 === 0 ? bikeThreshold(c) : bikeSweetSpot(c))),
         S(3, '07:00', (c) => runEasy(c, 50, true)),
         S(3, '18:45', (c) => (w.index % 2 === 0 ? rowPieces(c) : rowUt2(c))),
-        S(4, '06:30', (c) => bikeEnduranceIndoor(c, 60)),
+        ...(w.pos >= 1 ? [S(4, '06:30', (c) => bikeEnduranceIndoor(c, 55))] : []),
         S(4, '18:30', (c) => (w.rel >= -15 ? runTrack(c) : runTempo(c))),
         S(5, '07:00', (c) => (summer && w.index % 2 === 0 ? swimOpenWater(c) : swimEndurance(c))),
         ...(w.index % 2 === 1 ? [S(5, '18:30', strengthB)] : []),
@@ -149,7 +149,7 @@ function templateFor(w: WeekInfo): Slot[] {
         S(7, '09:30', (c) => runEasy(c, 30)),
       ];
     case 'vacation':
-      return [S(2, '09:00', (c) => hike(c, 240, 'Vall de Núria')), S(4, '08:00', (c) => runEasy({ ...c, vol: 0.8 }, 40)), S(6, '08:30', (c) => hike(c, 300, 'Puigmal'))];
+      return [S(2, '09:00', (c) => hike(c, 180, 'Vall de Núria')), S(4, '08:00', (c) => runEasy({ ...c, vol: 0.8 }, 40)), S(6, '08:30', (c) => hike(c, 240, 'Puigmal'))];
     case 'transition':
       return [
         S(1, '18:30', strengthA),

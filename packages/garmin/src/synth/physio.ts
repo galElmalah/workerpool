@@ -9,15 +9,17 @@ import { clamp } from './util';
 
 /** Fraction of heart-rate reserve (rest→LTHR) at steady state for relative intensity x. */
 export function hrFrac(x: number): number {
-  if (x <= 0) return 0.3;
-  if (x <= 1) return 0.3 + 0.7 * x;
+  if (x <= 0) return 0.24;
+  if (x <= 0.9) return 0.24 + 0.715 * x;
+  if (x <= 1) return 0.8835 + 1.165 * (x - 0.9);
   return 1 + 0.45 * (x - 1);
 }
 
 /** Inverse of hrFrac. */
 export function hrFracInv(g: number): number {
-  if (g <= 0.3) return 0;
-  if (g <= 1) return (g - 0.3) / 0.7;
+  if (g <= 0.24) return 0;
+  if (g <= 0.8835) return (g - 0.24) / 0.715;
+  if (g <= 1) return 0.9 + (g - 0.8835) / 1.165;
   return 1 + (g - 1) / 0.45;
 }
 
@@ -62,8 +64,8 @@ const G = 9.81;
 
 /** Steady speed (m/s) for power P (W) on a grade (rise/run). Newton on the cubic, warm-started. */
 export function bikeSpeed(P: number, grade: number, ph: BikePhys, guess = 8): number {
-  const theta = Math.atan(grade);
-  const fGrav = ph.massKg * G * (Math.sin(theta) + ph.crr * Math.cos(theta));
+  const inv = 1 / Math.sqrt(1 + grade * grade); // cos(atan(g)); sin = g · cos
+  const fGrav = ph.massKg * G * inv * (grade + ph.crr);
   const k = 0.5 * ph.rho * ph.cda;
   if (P <= 0) {
     // coasting: k v^2 = -fGrav
@@ -91,9 +93,8 @@ export function bikeSpeed(P: number, grade: number, ph: BikePhys, guess = 8): nu
 
 /** Minetti (2002) energy-cost factor Cr(i)/Cr(0) for running on grade i. */
 export function minettiFactor(i: number): number {
-  const g = clamp(i, -0.45, 0.45);
-  const cr = 155.4 * g ** 5 - 30.4 * g ** 4 - 43.3 * g ** 3 + 46.3 * g ** 2 + 19.5 * g + 3.6;
-  return cr / 3.6;
+  const g = i < -0.45 ? -0.45 : i > 0.45 ? 0.45 : i;
+  return (((((155.4 * g - 30.4) * g - 43.3) * g + 46.3) * g + 19.5) * g + 3.6) / 3.6;
 }
 
 /** Running cadence (steps/min) for a speed. */

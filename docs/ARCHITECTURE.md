@@ -108,12 +108,13 @@ Changing a threshold triggers a recompute of affected activities' metrics from s
 ## API surface (`/api`, JSON, camelCase, zod-validated; errors `{ error: { code, message } }`)
 
 Exported as a typed Hono app (`AppType`) so the SPA uses `hc<AppType>` end-to-end types.
+Module ownership and cross-module function signatures: `apps/web/worker/CONTRACT.md`.
 
 | Area | Endpoints |
 |---|---|
 | auth | `GET auth/status` → `{ configured, authenticated }` · `POST auth/setup` · `POST auth/login` · `POST auth/logout` |
 | calendar | `GET calendar?from&to` → `CalendarResponse` (weeks fully covering the range, one extra prior week computed for WoW) |
-| workouts | `GET workouts?from&to` · `POST workouts` · `GET/PATCH/DELETE workouts/:id` · `POST workouts/:id/duplicate {date}` · `POST workouts/:id/repeat {weeks}` · `POST workouts/:id/skip {reason}` · `POST workouts/:id/pair {activityId}` · `DELETE workouts/:id/pair` · `POST workouts/:id/push` · `DELETE workouts/:id/push` · `POST workouts/quick {date,text}` (quick-add grammar) · `POST workouts/estimate {sport,structure}` (planned totals preview) |
+| workouts | `GET workouts?from&to` · `POST workouts` · `GET/PATCH/DELETE workouts/:id` · `POST workouts/:id/duplicate {date}` · `POST workouts/:id/repeat {weeks}` · `POST workouts/:id/skip {reason}` · `POST workouts/:id/pair {activityId}` · `DELETE workouts/:id/pair` · `POST workouts/quick {date,text}` (quick-add grammar) · `POST workouts/estimate {sport,structure}` (planned totals preview) |
 | bulk | `POST calendar/copy-week {from,to,progressionPct}` · `POST calendar/shift {fromDate,days}` · `POST calendar/restore {workouts}` (undo support: re-insert deleted items verbatim) |
 | activities | `GET activities?from&to&sport&q&limit&cursor` · `GET activities/:id` → `ActivityDetail` · `GET activities/:id/streams` → `ActivityStreams` · `PATCH activities/:id` (`ActivityPatch`) · `DELETE activities/:id` · `POST activities/manual` · `POST activities/upload` (FIT body) |
 | templates | `GET/POST templates` · `GET/PATCH/DELETE templates/:id` · `POST templates/:id/schedule {date}` · `POST templates/from-workout/:id` |
@@ -124,7 +125,7 @@ Exported as a typed Hono app (`AppType`) so the SPA uses `hc<AppType>` end-to-en
 | journal | `GET journal?cursor&type&q` → unified feed of day notes, workout notes, week reflections |
 | search | `GET search?q` → workouts, activities, templates, dates (command palette) |
 | settings | `GET/PATCH settings` · `GET/POST thresholds` · `DELETE thresholds/:id` · `GET zones?date` (computed zone tables per sport) |
-| garmin | `GET garmin/status` · `POST garmin/connect {apiKey?, tokensJson?}` · `DELETE garmin/connect` · `POST garmin/sync` · `POST garmin/backfill {months}` · `GET sync/log` |
+| garmin | `GET garmin/status` · `POST garmin/connect {apiKey?, tokensJson?}` · `DELETE garmin/connect` · `POST garmin/sync` · `POST garmin/backfill {months}` · `POST/DELETE garmin/push/:workoutId` · `GET sync/log` |
 | data | `GET export/json` · `GET activities/:id/export.csv` |
 | demo | `POST demo/seed` · `POST demo/reset` (only when `DEMO_MODE=1`) |
 

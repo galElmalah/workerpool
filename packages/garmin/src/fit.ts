@@ -17,7 +17,7 @@ import { compact, round, toIsoInstant, utcDate } from './util';
 
 export interface FitSummary {
   durationSec?: number; // elapsed
-  movingSec?: number; // timer (or moving when present)
+  movingSec?: number; // total_moving_time, else timer time
   distanceM?: number;
   elevationGainM?: number;
   elevationLossM?: number;
@@ -252,7 +252,7 @@ function fillFromMessages(messages: Record<string, M[] | undefined>, r: FitParse
     const work = n(session, 'totalWork');
     r.summary = compact<FitSummary>({
       durationSec: n(session, 'totalElapsedTime'),
-      movingSec: n(session, 'totalTimerTime', 'totalMovingTime'),
+      movingSec: n(session, 'totalMovingTime', 'totalTimerTime'),
       distanceM: n(session, 'totalDistance'),
       elevationGainM: n(session, 'totalAscent'),
       elevationLossM: n(session, 'totalDescent'),
@@ -359,7 +359,7 @@ function fillFromMessages(messages: Record<string, M[] | undefined>, r: FitParse
           index: i,
           startSec: st === undefined ? 0 : round((st - lapStart) / 1000, 1),
           durationSec: round(n(lap, 'totalElapsedTime', 'totalTimerTime') ?? 0, 1),
-          movingSec: n(lap, 'totalTimerTime'),
+          movingSec: n(lap, 'totalMovingTime', 'totalTimerTime'),
           distanceM: dist,
           avgHr: n(lap, 'avgHeartRate'),
           maxHr: n(lap, 'maxHeartRate'),

@@ -411,7 +411,9 @@ export function makeStep(partial: Omit<Step, 'kind' | 'id'> & { id?: string }): 
   return { kind: 'step', ...partial, id: partial.id ?? newId('s') } as Step;
 }
 
-/** Convenience repeat constructor with a fresh id. */
+/** Convenience repeat constructor with a fresh id (steps-only repeats can also nest). */
+export function makeRepeat(count: number, steps: Step[], label?: string): Repeat & InnerRepeat;
+export function makeRepeat(count: number, steps: (Step | InnerRepeat)[], label?: string): Repeat;
 export function makeRepeat(count: number, steps: (Step | InnerRepeat)[], label?: string): Repeat {
   return { kind: 'repeat', id: newId('r'), count, ...(label ? { label } : {}), steps };
 }

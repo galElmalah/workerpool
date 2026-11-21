@@ -4,7 +4,7 @@
 import { INTENSITY_META } from '../domain';
 import type { IntensityClass, Sport, ThresholdSnapshot, WorkoutStructure } from '../domain';
 import { estimateWorkout } from './estimate';
-import { ifKind, levelForIF, levelForRpe } from './tables';
+import { ifKind, levelForRpe } from './tables';
 import type { Level } from './tables';
 import { listSteps } from './structure';
 
@@ -45,8 +45,12 @@ export function intensityFromIF(intensityFactor: number, sport: Sport = 'bike'):
 
 /** Minimum cumulative active time (s) at ≥ level for that level to define the workout. */
 export const LEVEL_MIN_SEC: Record<3 | 4 | 5, number> = { 5: 4 * 60, 4: 10 * 60, 3: 15 * 60 };
-/** Minimum time above recovery (s) for an Endurance classification. */
+/**
+ * Minimum time above recovery (s) for an Endurance classification: 45′ (§4.3); swim 20′
+ * (ours — pool sessions are short and CSS-relative intensity is compressed).
+ */
 export const ENDURANCE_MIN_SEC = 45 * 60;
+export const SWIM_ENDURANCE_MIN_SEC = 20 * 60;
 
 export interface PlannedIntensity {
   intensity: IntensityClass;
@@ -87,12 +91,8 @@ export function classifyPlannedIntensity(structure: WorkoutStructure, sport: Spo
       return { intensity: c, level: l, reason: `${INTENSITY_META[c].label} · ${Math.round(atOrAbove[l - 1] / 60)}′ at L${l}+`, activeSecAtOrAbove: atOrAbove };
     }
   }
-  if (aboveRecovery >= ENDURANCE_MIN_SEC)
+  if (aboveRecovery >= (sport === 'swim' ? SWIM_ENDURANCE_MIN_SEC : ENDURANCE_MIN_SEC))
     return { intensity: 'endurance', level: 2, reason: `Endurance · ${Math.round(aboveRecovery / 60)}′ above recovery`, activeSecAtOrAbove: atOrAbove };
   return { intensity: 'recovery', level: 1, reason: `Recovery · ${Math.round(aboveRecovery / 60)}′ above recovery`, activeSecAtOrAbove: atOrAbove };
 }
 
-/** Level of a step-level IF (re-exported from tables for convenience). */
-export function levelOf(sport: Sport, intensityFactor: number): Level {
-  return levelForIF(sport, intensityFactor);
-}

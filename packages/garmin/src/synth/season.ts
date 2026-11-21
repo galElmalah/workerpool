@@ -84,21 +84,21 @@ interface BlockInfo {
   base: number;
 }
 
-const MESO = [0.94, 1.0, 1.07, 0.64];
+const MESO = [0.94, 1.0, 1.07, 0.7];
 
 function blockFor(rel: number): BlockInfo {
-  if (rel <= -40) return { block: 'offseason', type: 'transition', label: 'Off-season', pos: -1, base: 0.5 };
+  if (rel <= -40) return { block: 'offseason', type: 'transition', label: 'Off-season', pos: -1, base: 0.46 };
   if (rel <= -24) {
     const g = Math.floor((rel + 39) / 4);
-    return { block: 'genprep', type: 'base', label: `General prep ${g + 1}`, pos: (rel + 39) % 4, base: [0.6, 0.64, 0.68, 0.72][g]! };
+    return { block: 'genprep', type: 'base', label: `General prep ${g + 1}`, pos: (rel + 39) % 4, base: [0.54, 0.58, 0.62, 0.66][g]! };
   }
   if (rel <= -12) {
     const g = Math.floor((rel + 23) / 4);
-    return { block: 'base', type: 'base', label: `Base ${g + 1}`, pos: (rel + 23) % 4, base: [0.76, 0.8, 0.84][g]! };
+    return { block: 'base', type: 'base', label: `Base ${g + 1}`, pos: (rel + 23) % 4, base: [0.72, 0.77, 0.82][g]! };
   }
   if (rel <= -8) return { block: 'build1', type: 'build', label: 'Build 1', pos: rel + 11, base: 0.9 };
   if (rel <= -4) return { block: 'build2', type: 'build', label: 'Build 2', pos: rel + 7, base: 0.95 };
-  if (rel <= -2) return { block: 'peak', type: 'peak', label: 'Peak', pos: -1, base: rel === -3 ? 1.0 : 0.93 };
+  if (rel <= -2) return { block: 'peak', type: 'peak', label: 'Peak', pos: -1, base: rel === -3 ? 0.96 : 0.9 };
   if (rel === -1) return { block: 'taper', type: 'taper', label: 'Taper', pos: -1, base: 0.62 };
   if (rel === 0) return { block: 'race', type: 'race', label: 'Race week', pos: -1, base: 0.42 };
   if (rel === 1) return { block: 'post_recovery', type: 'recovery', label: 'Recovery', pos: -1, base: 0.3 };
