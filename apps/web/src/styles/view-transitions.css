@@ -1,0 +1,107 @@
+/* ───────────────────────────────────────────────────────────────────────────────
+   Route-level morphs — design.md §5.2 / §5.4 (a)(b)(f).
+   Types are emitted by src/motion/vt-types.ts through TanStack's defaultViewTransition:
+     forward | back | lateral     path depth / history direction
+     page-next | page-prev        same view, later / earlier date (calendar paging)
+     zoom-in | zoom-out           calendar month ⇄ week ⇄ day
+     morph                        a shared workout card (wk-card/glyph/title) is in flight
+     reduced                      prefers-reduced-motion or the in-app motion setting
+   Browsers without :active-view-transition-type() get a plain startViewTransition, so the
+   untyped defaults below MUST look right on their own (a soft crossfade of `main`).
+   Shared-name registry (design.md §9.10): main, nav-pill, wk-card, wk-glyph, wk-title,
+   cal-focus, w-<id> (class cal-item), page-title.
+   ─────────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  main[data-vt-main] { view-transition-name: main; }   /* rail and bottom bar stay static */
+
+  ::view-transition-group(*) { animation-duration: var(--dur-spring-smooth); animation-timing-function: var(--ease-spring-smooth); }
+  ::view-transition-old(main) { animation: vt-fade-out 160ms var(--ease-in) both; }
+  ::view-transition-new(main) { animation: vt-fade-in 240ms var(--ease-out) 40ms both; }
+  /* The root snapshot (rail, bars) is identical before/after: skip its crossfade so chrome never flickers. */
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+  /* Nav pill glides between rail items with the default `smooth` spring. */
+  ::view-transition-group(nav-pill) { animation-duration: var(--dur-spring-smooth); animation-timing-function: var(--ease-spring-smooth); }
+  ::view-transition-old(nav-pill) { animation: none; opacity: 0; }
+  ::view-transition-new(nav-pill) { animation: none; }
+
+  html:active-view-transition-type(lateral) {
+    &::view-transition-old(main) { animation: vt-fade-out 140ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-rise-in 360ms var(--ease-out) 40ms both; }
+  }
+  html:active-view-transition-type(forward) {
+    &::view-transition-old(main) { animation: vt-out-left 180ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-in-right 380ms var(--ease-out) 40ms both; }
+  }
+  html:active-view-transition-type(back) {
+    &::view-transition-old(main) { animation: vt-out-right 180ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-in-left 380ms var(--ease-out) 40ms both; }
+  }
+  html:active-view-transition-type(page-next) {
+    &::view-transition-old(main) { animation: vt-out-up 200ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-in-up 400ms var(--ease-out) 30ms both; }
+  }
+  html:active-view-transition-type(page-prev) {
+    &::view-transition-old(main) { animation: vt-out-down 200ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-in-down 400ms var(--ease-out) 30ms both; }
+  }
+
+  /* (a) Workout card → page morph (and back). While a card morphs, `main` only crossfades so the
+     card is the single moving thing. */
+  html:active-view-transition-type(morph) {
+    &::view-transition-old(main) { animation: vt-fade-out 140ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-fade-in 280ms var(--ease-out) 100ms both; }
+    &::view-transition-group(wk-card), &::view-transition-group(wk-glyph), &::view-transition-group(wk-title) {
+      animation-duration: var(--dur-spring-smooth); animation-timing-function: var(--ease-spring-smooth); }
+    &::view-transition-image-pair(wk-card) { overflow: hidden; border-radius: var(--radius-lg); }
+    &::view-transition-old(wk-card) { animation: vt-fade-out 120ms var(--ease-in) both; height: 100%; object-fit: none; object-position: 0 0; }
+    &::view-transition-new(wk-card) { animation: vt-fade-in 220ms var(--ease-out) 60ms both; height: 100%; object-fit: none; object-position: 0 0; }
+    /* Text and glyph: keep aspect, scale from the left edge. */
+    &::view-transition-old(wk-title), &::view-transition-new(wk-title),
+    &::view-transition-old(wk-glyph), &::view-transition-new(wk-glyph) { height: 100%; width: auto; object-fit: contain; object-position: left center; }
+    &::view-transition-old(wk-title) { animation: vt-fade-out 160ms var(--ease-in) both; }
+    &::view-transition-new(wk-title) { animation: vt-fade-in 240ms var(--ease-out) 80ms both; }
+  }
+
+  /* (b) Calendar zoom: the focused week/day is the hero, everything else scales away. */
+  html:active-view-transition-type(zoom-in) {
+    &::view-transition-old(main) { animation: vt-zoom-out-old 240ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-fade-in 320ms var(--ease-out) 80ms both; }
+    &::view-transition-group(cal-focus), &::view-transition-group(.cal-item) {
+      animation-duration: var(--dur-spring-gentle); animation-timing-function: var(--ease-spring-gentle); }
+  }
+  html:active-view-transition-type(zoom-out) {
+    &::view-transition-old(main) { animation: vt-fade-out 200ms var(--ease-in) both; }
+    &::view-transition-new(main) { animation: vt-zoom-in-new 360ms var(--ease-out) both; }
+    &::view-transition-group(cal-focus), &::view-transition-group(.cal-item) {
+      animation-duration: var(--dur-spring-gentle); animation-timing-function: var(--ease-spring-gentle); }
+  }
+  html:active-view-transition-type(zoom-in), html:active-view-transition-type(zoom-out) {
+    &::view-transition-old(cal-focus), &::view-transition-new(cal-focus) { height: 100%; object-fit: none; object-position: 0 0; }
+  }
+
+  html:active-view-transition-type(reduced) {
+    &::view-transition-group(*) { animation-duration: 0s; }
+    &::view-transition-old(*), &::view-transition-new(*) { animation: vt-fade-in 120ms linear both; }
+    &::view-transition-old(*) { animation-name: vt-fade-out; }
+  }
+}
+
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in  { from { opacity: 0; } }
+@keyframes vt-rise-in   { from { opacity: 0; transform: translateY(8px); } }
+@keyframes vt-out-left  { to   { opacity: 0; transform: translateX(-24px); } }
+@keyframes vt-in-right  { from { opacity: 0; transform: translateX(24px); } }
+@keyframes vt-out-right { to   { opacity: 0; transform: translateX(24px); } }
+@keyframes vt-in-left   { from { opacity: 0; transform: translateX(-24px); } }
+@keyframes vt-out-up    { to   { opacity: 0; transform: translateY(-32px); } }
+@keyframes vt-in-up     { from { opacity: 0; transform: translateY(32px); } }
+@keyframes vt-out-down  { to   { opacity: 0; transform: translateY(32px); } }
+@keyframes vt-in-down   { from { opacity: 0; transform: translateY(-32px); } }
+@keyframes vt-zoom-out-old { to { opacity: 0; transform: scale(1.06); filter: blur(4px); } }
+@keyframes vt-zoom-in-new  { from { opacity: 0; transform: scale(1.06); filter: blur(4px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) { animation-duration: 0s !important; }
+  ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 120ms !important; animation-name: vt-fade-in !important; animation-delay: 0s !important; }
+  ::view-transition-old(*) { animation-name: vt-fade-out !important; }
+}

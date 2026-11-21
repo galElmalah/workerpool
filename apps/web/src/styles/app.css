@@ -1,15 +1,23 @@
 @import "tailwindcss";
+@import "./view-transitions.css";
 
-/* Dark is the default. Light overrides live on <html data-theme="light">.
-   data-theme MUST be on <html> because the semantic aliases below resolve on :root. */
+/* ───────────────────────────────────────────────────────────────────────────────
+   Cadence design tokens — design.md §2–§4 (normative). Dark is the default.
+   Light overrides live on <html data-theme="light">. data-theme MUST be on <html>
+   because the semantic aliases below resolve on :root.
+   ─────────────────────────────────────────────────────────────────────────────── */
 @custom-variant light (&:where([data-theme=light], [data-theme=light] *));
 @custom-variant dark  (&:where(:root:not([data-theme=light]), :root:not([data-theme=light]) *));
+/* Fine pointer + real hover only (design.md §7: hover states only on hover-capable devices). */
+@custom-variant hocus (&:is(:hover, :focus-visible));
 
 @theme static {
   /* Wipe Tailwind defaults so ad-hoc colors, shadows, radii, sizes and eases cannot be used. */
   --color-*: initial;
   --shadow-*: initial;
+  --inset-shadow-*: initial;
   --drop-shadow-*: initial;
+  --text-shadow-*: initial;
   --radius-*: initial;
   --text-*: initial;
   --ease-*: initial;
@@ -74,6 +82,14 @@
   --color-z6: oklch(0.850 0.221 150 / 0.85);
   --color-z7: oklch(0.850 0.221 150 / 1);
 
+  /* Grayscale sport ramp for stacked charts / mix bars (product.md §3.6.4). */
+  --color-ramp-1: var(--color-gray-12);
+  --color-ramp-2: var(--color-gray-11);
+  --color-ramp-3: var(--color-gray-10);
+  --color-ramp-4: var(--color-gray-9);
+  --color-ramp-5: var(--color-gray-8);
+  --color-ramp-6: var(--color-gray-7);
+
   /* Type */
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
@@ -85,13 +101,13 @@
   --text-title-1: 2rem;     --text-title-1--line-height: 2.5rem; --text-title-1--letter-spacing: -0.025em; --text-title-1--font-weight: 620;
   --text-title-2: 1.5rem;   --text-title-2--line-height: 2rem;   --text-title-2--letter-spacing: -0.02em;  --text-title-2--font-weight: 600;
   --text-title-3: 1.125rem; --text-title-3--line-height: 1.625rem;--text-title-3--letter-spacing: -0.012em;--text-title-3--font-weight: 600;
-  --text-body-lg: 1rem;     --text-body-lg--line-height: 1.5rem; --text-body-lg--letter-spacing: -0.006em;
-  --text-body: 0.875rem;    --text-body--line-height: 1.25rem;   --text-body--letter-spacing: -0.003em;
-  --text-body-sm: 0.8125rem;--text-body-sm--line-height: 1.125rem;
+  --text-body-lg: 1rem;     --text-body-lg--line-height: 1.5rem; --text-body-lg--letter-spacing: -0.006em; --text-body-lg--font-weight: 420;
+  --text-body: 0.875rem;    --text-body--line-height: 1.25rem;   --text-body--letter-spacing: -0.003em;    --text-body--font-weight: 420;
+  --text-body-sm: 0.8125rem;--text-body-sm--line-height: 1.125rem;--text-body-sm--font-weight: 420;
   --text-label: 0.75rem;    --text-label--line-height: 1rem;     --text-label--letter-spacing: 0.005em;    --text-label--font-weight: 520;
   --text-micro: 0.6875rem;  --text-micro--line-height: 0.875rem; --text-micro--letter-spacing: 0.06em;     --text-micro--font-weight: 600;
-  --text-mono: 0.8125rem;   --text-mono--line-height: 1.125rem;
-  --text-mono-sm: 0.6875rem;--text-mono-sm--line-height: 0.875rem;--text-mono-sm--letter-spacing: 0.01em;
+  --text-mono: 0.8125rem;   --text-mono--line-height: 1.125rem;  --text-mono--font-weight: 450;
+  --text-mono-sm: 0.6875rem;--text-mono-sm--line-height: 0.875rem;--text-mono-sm--letter-spacing: 0.01em;  --text-mono-sm--font-weight: 450;
 
   /* Spacing / radius / containers / breakpoints */
   --spacing: 0.25rem;
@@ -117,7 +133,11 @@
   --ease-spring-bouncy: linear(0, 0.0707, 0.2291, 0.4151, 0.5925, 0.7422, 0.8576, 0.9392, 0.9919, 1.0218, 1.0354, 1.0384, 1.035, 1.0287, 1.0215, 1.0148, 1.0092, 1.005, 1.002, 1.0001, 0.9991, 1, 1);
 
   --animate-sheen: sheen 1.8s linear infinite;
-  @keyframes sheen { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+  --animate-dot-pulse: dot-pulse 1.2s var(--ease-in-out) infinite;
+  --animate-live: live 2.4s var(--ease-out) infinite;
+  @keyframes sheen { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  @keyframes dot-pulse { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+  @keyframes live { 0% { transform: scale(1); opacity: 0.7; } 70%, 100% { transform: scale(2.6); opacity: 0; } }
 }
 
 /* Durations (not a Tailwind namespace; use `duration-(--dur-fast)`). Spring durations pair with the linear() curves above. */
@@ -125,6 +145,8 @@
   --dur-fast: 140ms; --dur-base: 240ms; --dur-slow: 420ms;
   --dur-spring-snappy: 400ms; --dur-spring-smooth: 500ms; --dur-spring-gentle: 900ms; --dur-spring-bouncy: 700ms;
   --z-sticky: 10; --z-rail: 20; --z-drag: 40; --z-popover: 50; --z-toast: 60; --z-palette: 70;
+  /* Shell geometry (read by the shell + sticky offsets in pages). */
+  --rail-w: 0px; --header-h: 52px; --bottom-bar-h: 0px;
   color-scheme: dark;
   interpolate-size: allow-keywords; /* Chromium-only progressive enhancement */
 }
@@ -156,15 +178,164 @@
   --inset-shadow-hairline: inset 0 1px 0 0 rgb(255 255 255 / 0.6);
 }
 
+/* ───────────────────────────── base layer ───────────────────────────── */
 @layer base {
   html { background: var(--color-canvas); color: var(--color-fg-1); font-family: var(--font-sans);
-         font-size: 100%; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-  body { font-size: var(--text-body); line-height: var(--text-body--line-height); font-variant-numeric: tabular-nums; }
-  :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: inherit; }
+         font-size: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+         text-rendering: optimizeLegibility; -webkit-tap-highlight-color: transparent;
+         scrollbar-gutter: stable; }
+  body { min-height: 100dvh; background: var(--color-canvas);
+         font-size: var(--text-body); line-height: var(--text-body--line-height);
+         letter-spacing: var(--text-body--letter-spacing); font-weight: 420;
+         font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
   ::selection { background: var(--color-accent-a5); color: var(--color-fg-1); }
+  h1, h2, h3, h4 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  /* Calm native controls. */
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary { cursor: default; }
+  a { color: inherit; text-decoration: none; }
+  input, textarea, select, button { font: inherit; letter-spacing: inherit; color: inherit; }
+  input::placeholder, textarea::placeholder { color: var(--color-fg-4); }
+  :disabled, [data-disabled] { cursor: not-allowed; }
+  [hidden] { display: none !important; }
+
+  /* Scrollbars: thin, monochrome, quiet until hovered. */
+  * { scrollbar-width: thin; scrollbar-color: var(--color-gray-6) transparent; }
+  *:hover { scrollbar-color: var(--color-gray-8) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-gray-6); border-radius: 9999px;
+                              border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--color-gray-8); }
 }
 
+/* Reduced motion: OS setting or the in-app preference (<html data-motion="reduced">). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important;
+                           transition-duration: 1ms !important; scroll-behavior: auto !important; }
+}
+:root[data-motion="reduced"] *, :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after {
+  animation-duration: 1ms !important; animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important; scroll-behavior: auto !important;
+}
+
+/* ───────────────────────────── utilities ───────────────────────────── */
 @utility bg-hatch-accent { background-image: repeating-linear-gradient(135deg, var(--color-accent) 0 1.5px, transparent 1.5px 5px); }
 @utility bg-hatch-fg     { background-image: repeating-linear-gradient(135deg, var(--color-fg-3) 0 1px, transparent 1px 5px); }
-@utility glass { background: var(--color-glass); backdrop-filter: blur(var(--blur-glass)) saturate(1.4); }
+@utility bg-hatch-faint  { background-image: repeating-linear-gradient(135deg, var(--color-line-2) 0 1px, transparent 1px 6px); }
+@utility bg-dots-fg      { background-image: radial-gradient(var(--color-fg-3) 0.75px, transparent 1px); background-size: 4px 4px; }
+@utility glass { background: var(--color-glass); backdrop-filter: blur(var(--blur-glass)) saturate(1.4); -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.4); }
 @utility num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+/* Dense grids: focus ring inside the cell. */
+@utility focus-inset { &:focus-visible { outline-offset: -2px; } }
+/* Fields: 2px ring drawn inside the control. */
+@utility focus-field { &:focus-visible, &:focus-within:has(:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: -1px; } }
+@utility scrollbar-none { scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
+@utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+@utility tracking-tightest { letter-spacing: -0.045em; }
+
+/* ───────────────────────────── components (shared CSS) ───────────────────────────── */
+@layer components {
+  /* (l) Pointer-tracked spotlight on cards — design.md §5.4l. Set --mx/--my via onSpotlightMove. */
+  .spotlight { position: relative; isolation: isolate; }
+  .spotlight::before {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, -100%), var(--spot, var(--color-line-3)), transparent 70%);
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    opacity: 0; transition: opacity var(--dur-base) var(--ease-out); }
+  .spotlight::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+    background: radial-gradient(320px circle at var(--mx, 50%) var(--my, -100%), rgb(255 255 255 / 0.035), transparent 60%);
+    opacity: 0; transition: opacity var(--dur-base) var(--ease-out); }
+  .spotlight:focus-visible { --mx: 50%; --my: 0%; }
+  .spotlight-accent { --spot: var(--color-accent-a5); }
+  :root[data-theme=light] .spotlight::after {
+    background: radial-gradient(320px circle at var(--mx, 50%) var(--my, -100%), rgb(0 0 0 / 0.03), transparent 60%); }
+  @media (hover: hover) {
+    .spotlight:hover::before, .spotlight:hover::after { opacity: 1; }
+  }
+  .spotlight:focus-visible::before, .spotlight:focus-within::before { opacity: 1; }
+
+  /* Skeleton sheen (static under reduced motion via the global rule). */
+  .skeleton { background-color: var(--color-surface-2); background-image: linear-gradient(90deg, transparent 30%, rgb(255 255 255 / 0.045) 50%, transparent 70%);
+              background-size: 200% 100%; animation: var(--animate-sheen); }
+  :root[data-theme=light] .skeleton { background-image: linear-gradient(90deg, transparent 30%, rgb(255 255 255 / 0.7) 50%, transparent 70%); }
+  :root[data-motion=reduced] .skeleton { animation: none; background-image: none; }
+  @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; background-image: none; } }
+
+  /* Floating popups (popover, select, menu, combobox, date picker): origin-aware scale .96 → 1. */
+  .ui-popup {
+    background: var(--color-glass); backdrop-filter: blur(var(--blur-glass)) saturate(1.4); -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
+    border: 1px solid var(--color-line-3); box-shadow: var(--inset-shadow-hairline); color: var(--color-fg-1);
+    transform-origin: var(--transform-origin);
+    transition: transform var(--dur-spring-smooth) var(--ease-spring-smooth), opacity var(--dur-base) var(--ease-out);
+    outline: none; }
+  .ui-popup[data-starting-style] { opacity: 0; transform: scale(0.96); }
+  .ui-popup[data-ending-style] { opacity: 0; transform: scale(0.98); transition: transform 140ms var(--ease-in), opacity 140ms var(--ease-in); }
+  .ui-popup[data-instant] { transition: none; }
+
+  .ui-tooltip {
+    background: var(--color-glass); backdrop-filter: blur(var(--blur-glass)) saturate(1.4); -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
+    border: 1px solid var(--color-line-3); color: var(--color-fg-1); transform-origin: var(--transform-origin);
+    transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
+  .ui-tooltip[data-starting-style], .ui-tooltip[data-ending-style] { opacity: 0; transform: scale(0.96); }
+  .ui-tooltip[data-instant] { transition: none; }
+
+  /* Toasts — design.md §5.4i. Stack via Base UI --toast-index / --toast-offset-y. */
+  .ui-toast {
+    --gap: 8px; --peek: 7px;
+    --scale: calc(max(0, 1 - (var(--toast-index) * 0.04)));
+    --shrink: calc(1 - var(--scale));
+    --height: var(--toast-frontmost-height, var(--toast-height));
+    --offset-y: calc(var(--toast-offset-y) * -1 + (var(--toast-index) * var(--gap) * -1) + var(--toast-swipe-movement-y));
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: calc(1000 - var(--toast-index));
+    transform-origin: bottom center; height: var(--height);
+    transform: translateX(var(--toast-swipe-movement-x)) translateY(calc(var(--toast-swipe-movement-y) - (var(--toast-index) * var(--peek)) - (var(--shrink) * var(--height)))) scale(var(--scale));
+    transition: transform var(--dur-spring-smooth) var(--ease-spring-smooth), opacity var(--dur-base) var(--ease-out), height var(--dur-fast) var(--ease-out);
+  }
+  .ui-toast::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: calc(var(--gap) + 1px); }
+  .ui-toast[data-expanded] { transform: translateX(var(--toast-swipe-movement-x)) translateY(var(--offset-y)); height: var(--toast-height); }
+  .ui-toast[data-starting-style] { opacity: 0; transform: translateY(16px) scale(0.98); }
+  .ui-toast[data-limited] { opacity: 0; pointer-events: none; }
+  .ui-toast[data-ending-style] { opacity: 0; transition: transform 160ms var(--ease-in), opacity 160ms var(--ease-in); }
+  .ui-toast[data-ending-style]:not([data-limited]):not([data-swipe-direction]) { transform: translateY(calc(var(--offset-y, 0px) + 8px)); }
+  .ui-toast[data-ending-style][data-swipe-direction=down] { transform: translateY(calc(var(--toast-swipe-movement-y) + 150%)); }
+  .ui-toast[data-ending-style][data-swipe-direction=left] { transform: translateX(calc(var(--toast-swipe-movement-x) - 150%)) translateY(var(--offset-y)); }
+  .ui-toast[data-ending-style][data-swipe-direction=right] { transform: translateX(calc(var(--toast-swipe-movement-x) + 150%)) translateY(var(--offset-y)); }
+  .ui-toast-content { transition: opacity var(--dur-base) var(--ease-out); }
+  .ui-toast-content[data-behind] { opacity: 0; }
+  .ui-toast-content[data-expanded] { opacity: 1; }
+  .ui-toast-countdown { transform-origin: left center; animation: toast-countdown var(--toast-timeout, 6000ms) linear forwards; }
+  .ui-toast:hover .ui-toast-countdown, .ui-toast:focus-within .ui-toast-countdown,
+  [data-toast-paused] .ui-toast-countdown { animation-play-state: paused; }
+  @keyframes toast-countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+  /* Command palette — design.md §5.4j. */
+  .ui-palette-backdrop { background: var(--color-scrim); transition: opacity var(--dur-base) var(--ease-out); }
+  .ui-palette-backdrop[data-starting-style], .ui-palette-backdrop[data-ending-style] { opacity: 0; }
+  .ui-palette {
+    transition: transform var(--dur-spring-smooth) var(--ease-spring-smooth), opacity var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out); }
+  .ui-palette[data-starting-style] { opacity: 0; transform: translateY(-8px) scale(0.96); filter: blur(4px); }
+  .ui-palette[data-ending-style] { opacity: 0; transform: translateY(-4px) scale(0.98); filter: blur(2px);
+    transition: transform 140ms var(--ease-in), opacity 140ms var(--ease-in), filter 140ms var(--ease-in); }
+
+  /* Small enters for non-Base-UI elements (chips, inline confirms). */
+  .enter-pop { transition: transform var(--dur-spring-snappy) var(--ease-spring-snappy), opacity var(--dur-fast) var(--ease-out);
+               @starting-style { transform: scale(0.9); opacity: 0; } }
+
+  /* (§5.6) Scroll-driven chrome: the sticky bar turns glass and the compact title (18px) takes
+     over from the large title (32px) as it scrolls under the bar (large-title pattern; no layout
+     animation). Without scroll timelines the bar is permanently glass and the compact title hidden. */
+  .page-bar { background-color: var(--color-glass); border-color: var(--color-line-1); }
+  .page-bar-title { opacity: 0; visibility: hidden; }
+  @supports (animation-timeline: scroll()) {
+    .page-bar { animation: bar-glass linear both; animation-timeline: scroll(root block); animation-range: 8px 56px; }
+    .page-bar-title { visibility: visible; animation: bar-title linear both; animation-timeline: scroll(root block); animation-range: 40px 88px; }
+    .page-hero-title { transform-origin: left center; animation: hero-title linear both; animation-timeline: scroll(root block); animation-range: 0 88px; }
+    @keyframes bar-glass { from { background-color: transparent; border-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; } to { background-color: var(--color-glass); border-color: var(--color-line-1); } }
+    @keyframes bar-title { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes hero-title { to { opacity: 0.2; transform: scale(0.94); } }
+  }
+}

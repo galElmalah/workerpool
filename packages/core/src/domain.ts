@@ -427,6 +427,7 @@ export const ActivityDetail = Activity.extend({
   peaks: z.object({
     power: z.array(PeakPoint).optional(),
     hr: z.array(PeakPoint).optional(),
+    speed: z.array(PeakPoint).optional(), // m/s
     efforts: z.array(BestEffort).optional(),
   }),
   strengthSets: z.array(StrengthSet).optional(),
@@ -628,7 +629,7 @@ export const FitnessDay = z.object({
   fitness: z.number(), // 42-day EWMA (end of day)
   fatigue: z.number(), // 7-day EWMA (end of day)
   form: z.number(), // yesterday's fitness − fatigue
-  formPct: z.number().nullable(), // form / fitness
+  formPct: z.number().nullable(), // form as PERCENT of fitness (−24 = −24 %)
   formZone: FormZone.nullable(),
   ramp: z.number().nullable(), // fitness − fitness 7 days earlier
   projected: z.boolean(),
@@ -671,12 +672,12 @@ export const WeekSummary = z.object({
   keyDone: z.number().int(),
   /** Seconds of done time by intensity bucket. */
   intensitySec: z.object({ easy: z.number(), moderate: z.number(), hard: z.number() }),
-  /** Mean clamped compliance ratio over past planned workouts, null when none. */
+  /** Mean clamped compliance over past planned workouts in PERCENT (0–100), null when none. */
   compliancePct: z.number().nullable(),
   fitness: z.number(), // at week end (projected for current/future)
   fatigue: z.number(),
   form: z.number(),
-  formPct: z.number().nullable(),
+  formPct: z.number().nullable(), // percent
   formZone: FormZone.nullable(),
   fitnessDelta: z.number(), // vs previous week end
   wowSec: z.number().nullable(),
