@@ -9,7 +9,7 @@ import { CH, noiseKey, tri } from './noise';
 import { rngFor } from './prng';
 import { coursePos, courseP, metersPerDegLat, type LatLng } from './routes';
 import { altGrade } from './terrain';
-import { DT, type Base } from './simulate';
+import type { Base } from './simulate';
 import { round, upperIndex } from './util';
 
 export interface Rendered {
@@ -39,10 +39,10 @@ export function render(m: Model, b: Base): Rendered {
   const dur = m.dur;
   // recorded seconds
   const t: number[] = [];
-  for (let s = 0; s < dur; s++) if (b.rec[Math.floor(s / DT)]) t.push(s);
+  for (let s = 0; s < dur; s++) if (b.rec[Math.floor(s / b.dt)]) t.push(s);
   const N = t.length;
   const fam = m.family;
-  const buf = new Float64Array(5);
+  const buf = new Float64Array(10);
 
   /** Render a grid channel to 1 Hz with noise and a rounding function. */
   const chan = (c: Float64Array, ch: 'power' | 'hr' | 'cad' | 'speed' | 'temp', digits: number, min = 0): (number | null)[] => {

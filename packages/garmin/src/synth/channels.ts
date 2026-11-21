@@ -1,10 +1,10 @@
 /**
  * The exact 1 Hz value formulas shared by the renderer and the summary pass:
- * value(t) = linear interpolation of the 5 s grid + zero-sum block noise.
+ * value(t) = linear interpolation of the coarse (5/10 s) grid + zero-sum block noise.
  */
 import type { Model } from './model';
 import { blockZ, CH, noiseKey } from './noise';
-import { DT, type Base } from './simulate';
+import type { Base } from './simulate';
 
 export interface ChannelNoise {
   key: number;
@@ -28,11 +28,11 @@ export function noiseFor(m: Model, ch: keyof typeof CH): ChannelNoise {
   }
 }
 
-const zbuf = new Float64Array(5);
+const zbuf = new Float64Array(10);
 
-/** Samples in block k (seconds 5k … min(5k+4, dur−1)). */
+/** Samples in block k (seconds dt·k … min(dt·k + dt − 1, dur − 1)). */
 export function blockLen(base: Base, k: number): number {
-  return Math.max(0, Math.min(DT, base.dur - k * DT));
+  return Math.max(0, Math.min(base.dt, base.dur - k * base.dt));
 }
 
 /** Fill `out[0..m)` with the channel's 1 Hz values in block k (unrounded). */
@@ -41,9 +41,10 @@ export function blockValues(c: Float64Array, base: Base, k: number, nz: ChannelN
   if (m === 0) return 0;
   const a = c[k]!;
   const b = k + 1 < base.n ? c[k + 1]! : a;
-  if (nz.sd > 0) blockZ(nz.key, k, m, zbuf);
+  const dt = base.dt;
+  if (nz.sd > 0) blockZ(nz.key, k * dt, m, zbuf);
   for (let j = 0; j < m; j++) {
-    const v = a + ((b - a) * j) / DT;
+    const v = a + ((b - a) * j) / dt;
     if (nz.sd === 0) out[j] = v;
     else if (nz.mul) out[j] = v * (1 + nz.sd * zbuf[j]!);
     else out[j] = v === 0 ? 0 : v + nz.sd * zbuf[j]!;

@@ -160,7 +160,6 @@ function stepsFromStructure(p: SynthPlannedSession, family: Family, ctx: ModelCt
   const thr = ctx.thr;
   const out: NomStep[] = [];
   const flat = flatten(p.structure!);
-  let activeIdx = 0;
   const testKind = p.tags.find((t) => t.startsWith('test:'))?.slice(5);
   for (const fs of flat) {
     const st = fs.step;
@@ -218,9 +217,7 @@ function stepsFromStructure(p: SynthPlannedSession, family: Family, ctx: ModelCt
     if (distM) ns.distM = distM;
     if (st.label) ns.label = st.label;
     out.push(ns);
-    if (st.role === 'active') activeIdx++;
   }
-  void activeIdx;
   return out;
 }
 
@@ -357,7 +354,7 @@ function toSegments(steps: NomStep[], family: Family, h: Header, p: SynthPlanned
     }
   }
   if (family === 'bike' && !indoor && total >= 7000 && !p?.tags.includes('race') && rng.chance(0.62)) {
-    stops.push({ at: total * rng.range(0.5, 0.66), dur: r5(rng.range(600, 1500)), kind: 'pause' });
+    stops.push({ at: total * rng.range(0.5, 0.66), dur: Math.round(rng.range(600, 1500) / 10) * 10, kind: 'pause' });
   }
   if (family === 'hike' && total > 5400) stops.push({ at: total * rng.range(0.42, 0.55), dur: r5(rng.range(900, 1800)), kind: 'stop' });
   stops.sort((a, b) => a.at - b.at);
@@ -374,7 +371,8 @@ function toSegments(steps: NomStep[], family: Family, h: Header, p: SynthPlanned
     while (remaining > 0) {
       const st = stops[si];
       if (st && s.kind === 'move' && st.at >= moved && st.at < moved + remaining) {
-        const first = r5(st.at - moved);
+        let first = r5(st.at - moved);
+        if (st.kind === 'pause' && (t + first) % 10 !== 0) first += 5;
         const firstDur = Math.min(remaining, first);
         if (firstDur > 0 && firstDur < remaining) {
           const f0 = done / s.dur;
@@ -444,7 +442,7 @@ function buildPoolSwim(p: SynthPlannedSession | undefined, ctx: ModelCtx, exec: 
         continue;
       }
       if (st.measure.type !== 'distance') continue;
-      let [x0, x1] = targetX(st.target, st.role, 'swim_pool', ctx.thr);
+      const [x0, x1] = targetX(st.target, st.role, 'swim_pool', ctx.thr);
       let x = (x0 + x1) / 2;
       if (testKind === 'css' && st.label === '400 TT') {
         const v200 = ctx.thrNext.cssMps * 1.065;
@@ -461,8 +459,6 @@ function buildPoolSwim(p: SynthPlannedSession | undefined, ctx: ModelCtx, exec: 
       };
       if (st.swim?.sendOffSec) r.sendOff = st.swim.sendOffSec;
       reps.push(r);
-      void x1;
-      void x0;
     }
   }
   // execution

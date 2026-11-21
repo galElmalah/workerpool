@@ -151,8 +151,10 @@ export function PageHeader({
   const compact = variant === 'compact';
 
   return (
-    <header className={className}>
-      <div className="page-bar sticky top-0 z-(--z-sticky) border-b backdrop-blur-glass backdrop-saturate-140" data-solid={compact || undefined}>
+    // Fragment, not a wrapper: the sticky bar must be a direct child of the page so it stays
+    // pinned for the whole scroll (a sticky element can't leave its parent box).
+    <>
+      <div className="page-bar glass-blur sticky top-0 z-(--z-sticky) border-b" data-solid={compact || undefined}>
         <div className={cn(containerCls(width), 'flex h-(--header-h) items-center gap-2')}>
           {back && <IconButton label="Back" icon={<ArrowLeft />} size="sm" onClick={onBack} className="-ml-1.5" />}
           <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -190,7 +192,7 @@ export function PageHeader({
         </div>
       </div>
       {!compact && (
-        <div className={cn(containerCls(width), 'pt-6 pb-6 md:pt-8')}>
+        <header className={cn(containerCls(width), 'pt-6 pb-6 md:pt-8', className)}>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" style={vt(!!morph, 'card')}>
             <div className="page-hero-title flex min-w-0 flex-col gap-2">
               {eyebrow && <div className="text-micro uppercase text-fg-3">{eyebrow}</div>}
@@ -209,8 +211,8 @@ export function PageHeader({
             {aside && <div className="shrink-0">{aside}</div>}
           </div>
           {toolbar && <div className="mt-4 flex items-center gap-2 sm:hidden">{toolbar}</div>}
-        </div>
+        </header>
       )}
-    </header>
+    </>
   );
 }

@@ -25,11 +25,11 @@ export function tri(key: number, i: number): number {
   return u(key, 2 * i) + u(key, 2 * i + 1) - 1;
 }
 
-/** Zero-sum noise for block k with m (1..5) samples, scaled to sd ≈ 1. */
-export function blockZ(key: number, k: number, m: number, out: Float64Array): void {
+/** Zero-sum noise for the m samples starting at second t0, scaled to sd ≈ 1. */
+export function blockZ(key: number, t0: number, m: number, out: Float64Array): void {
   let s = 0;
   for (let j = 0; j < m; j++) {
-    const v = tri(key, k * 5 + j) * 2.45;
+    const v = tri(key, t0 + j) * 2.45;
     out[j] = v;
     s += v;
   }

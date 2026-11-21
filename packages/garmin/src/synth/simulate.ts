@@ -12,10 +12,13 @@ import { courseP } from './routes';
 import { altGrade } from './terrain';
 import { clamp, rowSpeedFromPower } from './util';
 
+/** Fine grid step (s); steady activities use a 10 s grid (see chooseDt). */
 export const DT = 5;
 
 export interface Base {
-  /** Number of grid samples (τ_k = 5k, k = 0..n−1). */
+  /** Grid step in seconds (5 or 10). */
+  dt: number;
+  /** Number of grid samples (τ_k = dt·k, k = 0..n−1). */
   n: number;
   dur: number;
   rec: Uint8Array;
@@ -29,8 +32,22 @@ export interface Base {
   grade?: Float64Array;
 }
 
-export function gridSize(dur: number): number {
-  return Math.max(2, Math.ceil((dur - 1) / DT) + 1);
+export function gridSize(dur: number, dt: number = DT): number {
+  return Math.max(2, Math.ceil((dur - 1) / dt) + 1);
+}
+
+/**
+ * 10 s grid when nothing in the activity is shorter than 30 s and every auto-pause boundary
+ * falls on the 10 s grid (they are generated that way); otherwise 5 s.
+ */
+export function chooseDt(m: Model): number {
+  const segs = m.segs;
+  for (let i = 0; i < segs.length; i++) {
+    const g = segs[i]!;
+    if (g.kind === 'pause' && (g.start % 10 !== 0 || g.dur % 10 !== 0)) return DT;
+    if (i < segs.length - 1 && g.dur < 30) return DT;
+  }
+  return 10;
 }
 
 /** Reusable scratch buffers so the summary pass over a whole season allocates almost nothing. */
@@ -52,13 +69,15 @@ export class BasePool {
 }
 
 export function simulate(m: Model, thr: Thr, hrOffset: number, pool?: BasePool): Base {
-  const n = gridSize(m.dur);
+  const DT = chooseDt(m);
+  const n = gridSize(m.dur, DT);
   const f64 = (name: string) => (pool ? pool.f64(name, n) : new Float64Array(n));
   const rng = rngFor(m.seed, 'sim', m.header.id);
   const fam = m.family;
   const hasPower = fam === 'bike' || fam === 'row';
   const moving = fam === 'bike' || fam === 'run' || fam === 'swim_ow' || fam === 'row' || fam === 'walk' || fam === 'hike';
   const b: Base = {
+    dt: DT,
     n,
     dur: m.dur,
     rec: pool ? pool.rec(n) : new Uint8Array(n),
@@ -102,6 +121,7 @@ export function simulate(m: Model, thr: Thr, hrOffset: number, pool?: BasePool):
   let ou = 0;
   let surge = 0;
   let surgeP = 0;
+  let coast = 0;
   let si = 0;
   const segs = m.segs;
   // course state at current distance
@@ -141,12 +161,17 @@ export function simulate(m: Model, thr: Thr, hrOffset: number, pool?: BasePool):
             // coasting on proper descents, decided per 400 m stretch so it is persistent
             if (g < -0.035 && ((Math.floor(d / 400) * 2654435761) >>> 0) % 10 < 7) P = 0;
             // occasional surges: town sign sprints, roundabouts, short kickers
+            // freewheeling through corners, junctions and short dips
+            if (coast > 0) {
+              coast--;
+              P = 0;
+            } else if ((seg.role !== 'active' || x < 0.85) && rng.chance((g < -0.01 ? 0.15 : 0.032) * (DT / 5))) coast = DT === 5 ? rng.int(1, 2) : 1;
             if (surge > 0) {
               surge--;
               P = Math.max(P, surgeP);
             } else if (seg.role !== 'active' || x < 0.85) {
-              if (rng.chance(0.003)) {
-                surge = rng.int(1, 2);
+              if (rng.chance(0.003 * (DT / 5))) {
+                surge = DT === 5 ? rng.int(1, 2) : 1;
                 surgeP = thr.ftp * rng.range(1.25, 2.3);
               }
             }
