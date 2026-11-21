@@ -579,7 +579,7 @@ export const RECOMPUTE_COLS = `id, local_date, sport, sub_sport, duration_sec, m
 
 /** Persist recomputed columns for one activity (single statement). */
 export function recomputeStmt(db: D1Database, id: string, columns: Record<string, unknown>): D1PreparedStatement {
-  const cols = { ...columns, updated_at: new Date().toISOString() };
+  const cols: Record<string, unknown> = { ...columns, updated_at: new Date().toISOString() };
   delete cols.has_streams;
   return upsertStmt(db, id, cols, false);
 }
