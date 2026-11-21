@@ -30,19 +30,19 @@ interface AuthState {
   epoch: number;
 }
 
-let cached: { db: D1Database; state: AuthState; at: number } | null = null;
+let cached: { state: AuthState; at: number } | null = null;
 
 export async function readAuthState(db: D1Database, fresh = false): Promise<AuthState> {
-  if (!fresh && cached && cached.db === db && Date.now() - cached.at < EPOCH_TTL_MS) return cached.state;
+  if (!fresh && cached && Date.now() - cached.at < EPOCH_TTL_MS) return cached.state;
   const row = await first<{ session_epoch: number }>(db, 'SELECT session_epoch FROM auth WHERE id = 1');
   const state: AuthState = row ? { configured: true, epoch: row.session_epoch } : { configured: false, epoch: 0 };
-  cached = { db, state, at: Date.now() };
+  cached = { state, at: Date.now() };
   return state;
 }
 
 /** Called after setup / passphrase change so this isolate sees the new epoch immediately. */
-export function rememberAuthState(db: D1Database, state: AuthState): void {
-  cached = { db, state, at: Date.now() };
+export function rememberAuthState(state: AuthState): void {
+  cached = { state, at: Date.now() };
 }
 
 function sessionSecret(env: Env): string {
