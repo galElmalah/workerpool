@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+/* Dark is the default. Light overrides live on <html data-theme="light">.
+   data-theme MUST be on <html> because the semantic aliases below resolve on :root. */
+@custom-variant light (&:where([data-theme=light], [data-theme=light] *));
+@custom-variant dark  (&:where(:root:not([data-theme=light]), :root:not([data-theme=light]) *));
+
+@theme static {
+  /* Wipe Tailwind defaults so ad-hoc colors, shadows, radii, sizes and eases cannot be used. */
+  --color-*: initial;
+  --shadow-*: initial;
+  --drop-shadow-*: initial;
+  --radius-*: initial;
+  --text-*: initial;
+  --ease-*: initial;
+
+  /* Absolute */
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Neutral ramp (dark) */
+  --color-gray-1: oklch(0 0 0);
+  --color-gray-2: oklch(0.164 0 0);
+  --color-gray-3: oklch(0.196 0 0);
+  --color-gray-4: oklch(0.226 0 0);
+  --color-gray-5: oklch(0.256 0 0);
+  --color-gray-6: oklch(0.285 0 0);
+  --color-gray-7: oklch(0.325 0 0);
+  --color-gray-8: oklch(0.402 0 0);
+  --color-gray-9: oklch(0.549 0 0);
+  --color-gray-10: oklch(0.600 0 0);
+  --color-gray-11: oklch(0.741 0 0);
+  --color-gray-12: oklch(0.940 0 0);
+
+  /* Semantic neutrals */
+  --color-canvas: var(--color-gray-1);
+  --color-surface-1: var(--color-gray-2);
+  --color-surface-2: var(--color-gray-3);
+  --color-surface-3: var(--color-gray-4);
+  --color-surface-active: var(--color-gray-5);
+  --color-fg-1: var(--color-gray-12);
+  --color-fg-2: var(--color-gray-11);
+  --color-fg-3: var(--color-gray-10);
+  --color-fg-4: var(--color-gray-9);
+  --color-line-1: rgb(255 255 255 / 0.06);
+  --color-line-2: rgb(255 255 255 / 0.10);
+  --color-line-3: rgb(255 255 255 / 0.16);
+  --color-glass: rgb(14 14 14 / 0.72);
+  --color-scrim: rgb(0 0 0 / 0.60);
+  --color-focus: var(--color-gray-12);
+
+  /* Accent: Signal Green (dark) */
+  --color-accent: oklch(0.850 0.221 150);
+  --color-accent-hover: oklch(0.900 0.182 150);
+  --color-accent-press: oklch(0.790 0.210 150);
+  --color-accent-ink: oklch(0.850 0.221 150);
+  --color-on-accent: #000000;
+  --color-accent-a1: oklch(0.850 0.221 150 / 0.06);
+  --color-accent-a2: oklch(0.850 0.221 150 / 0.10);
+  --color-accent-a3: oklch(0.850 0.221 150 / 0.16);
+  --color-accent-a4: oklch(0.850 0.221 150 / 0.24);
+  --color-accent-a5: oklch(0.850 0.221 150 / 0.40);
+  --color-accent-a6: oklch(0.850 0.221 150 / 0.64);
+  --color-accent-a7: oklch(0.850 0.221 150 / 0.85);
+
+  /* Intensity zones = accent opacity ladder */
+  --color-z1: oklch(0.850 0.221 150 / 0.14);
+  --color-z2: oklch(0.850 0.221 150 / 0.26);
+  --color-z3: oklch(0.850 0.221 150 / 0.40);
+  --color-z4: oklch(0.850 0.221 150 / 0.55);
+  --color-z5: oklch(0.850 0.221 150 / 0.70);
+  --color-z6: oklch(0.850 0.221 150 / 0.85);
+  --color-z7: oklch(0.850 0.221 150 / 1);
+
+  /* Type */
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-stat-xl: 4.5rem;   --text-stat-xl--line-height: 1;      --text-stat-xl--letter-spacing: -0.045em; --text-stat-xl--font-weight: 560;
+  --text-stat-lg: 3rem;     --text-stat-lg--line-height: 1;      --text-stat-lg--letter-spacing: -0.04em;  --text-stat-lg--font-weight: 560;
+  --text-stat-md: 2rem;     --text-stat-md--line-height: 2.25rem;--text-stat-md--letter-spacing: -0.03em;  --text-stat-md--font-weight: 560;
+  --text-stat-sm: 1.25rem;  --text-stat-sm--line-height: 1.5rem; --text-stat-sm--letter-spacing: -0.015em; --text-stat-sm--font-weight: 560;
+  --text-title-1: 2rem;     --text-title-1--line-height: 2.5rem; --text-title-1--letter-spacing: -0.025em; --text-title-1--font-weight: 620;
+  --text-title-2: 1.5rem;   --text-title-2--line-height: 2rem;   --text-title-2--letter-spacing: -0.02em;  --text-title-2--font-weight: 600;
+  --text-title-3: 1.125rem; --text-title-3--line-height: 1.625rem;--text-title-3--letter-spacing: -0.012em;--text-title-3--font-weight: 600;
+  --text-body-lg: 1rem;     --text-body-lg--line-height: 1.5rem; --text-body-lg--letter-spacing: -0.006em;
+  --text-body: 0.875rem;    --text-body--line-height: 1.25rem;   --text-body--letter-spacing: -0.003em;
+  --text-body-sm: 0.8125rem;--text-body-sm--line-height: 1.125rem;
+  --text-label: 0.75rem;    --text-label--line-height: 1rem;     --text-label--letter-spacing: 0.005em;    --text-label--font-weight: 520;
+  --text-micro: 0.6875rem;  --text-micro--line-height: 0.875rem; --text-micro--letter-spacing: 0.06em;     --text-micro--font-weight: 600;
+  --text-mono: 0.8125rem;   --text-mono--line-height: 1.125rem;
+  --text-mono-sm: 0.6875rem;--text-mono-sm--line-height: 0.875rem;--text-mono-sm--letter-spacing: 0.01em;
+
+  /* Spacing / radius / containers / breakpoints */
+  --spacing: 0.25rem;
+  --radius-xs: 4px; --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
+  --radius-xl: 20px; --radius-2xl: 28px; --radius-full: 9999px;
+  --container-prose: 45rem;   /* 720 */
+  --container-palette: 40rem; /* 640 */
+  --container-page: 75rem;    /* 1200 */
+  --breakpoint-sm: 40rem; --breakpoint-md: 48rem; --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem; --breakpoint-2xl: 96rem;
+
+  /* Depth (inset only; no drop shadows) */
+  --inset-shadow-hairline: inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+  --blur-glass: 20px;
+
+  /* Easing: cubic-bezier + springs as linear() generated by motion-dom 14.14 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring-snappy: linear(0, 0.2531, 0.5773, 0.7868, 0.8991, 0.9541, 0.9797, 0.9912, 0.9963, 0.9984, 0.9993, 1, 1);
+  --ease-spring-smooth: linear(0, 0.0958, 0.2832, 0.4752, 0.6371, 0.7605, 0.8484, 0.9078, 0.9463, 0.9702, 0.9845, 0.9926, 0.997, 0.9992, 1.0002, 1, 1);
+  --ease-spring-gentle: linear(0, 0.0426, 0.1386, 0.255, 0.3732, 0.4831, 0.5803, 0.6633, 0.7326, 0.7894, 0.8352, 0.8718, 0.9008, 0.9236, 0.9413, 0.9551, 0.9658, 0.974, 0.9803, 0.9851, 0.9887, 0.9915, 0.9936, 0.9952, 0.9964, 0.9973, 0.998, 0.9985, 0.9989, 1);
+  --ease-spring-bouncy: linear(0, 0.0707, 0.2291, 0.4151, 0.5925, 0.7422, 0.8576, 0.9392, 0.9919, 1.0218, 1.0354, 1.0384, 1.035, 1.0287, 1.0215, 1.0148, 1.0092, 1.005, 1.002, 1.0001, 0.9991, 1, 1);
+
+  --animate-sheen: sheen 1.8s linear infinite;
+  @keyframes sheen { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+}
+
+/* Durations (not a Tailwind namespace; use `duration-(--dur-fast)`). Spring durations pair with the linear() curves above. */
+:root {
+  --dur-fast: 140ms; --dur-base: 240ms; --dur-slow: 420ms;
+  --dur-spring-snappy: 400ms; --dur-spring-smooth: 500ms; --dur-spring-gentle: 900ms; --dur-spring-bouncy: 700ms;
+  --z-sticky: 10; --z-rail: 20; --z-drag: 40; --z-popover: 50; --z-toast: 60; --z-palette: 70;
+  color-scheme: dark;
+  interpolate-size: allow-keywords; /* Chromium-only progressive enhancement */
+}
+
+/* Light theme */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-gray-1: oklch(1 0 0);       --color-gray-2: oklch(0.985 0 0);  --color-gray-3: oklch(0.967 0 0);
+  --color-gray-4: oklch(0.949 0 0);   --color-gray-5: oklch(0.928 0 0);  --color-gray-6: oklch(0.907 0 0);
+  --color-gray-7: oklch(0.876 0 0);   --color-gray-8: oklch(0.802 0 0);  --color-gray-9: oklch(0.640 0 0);
+  --color-gray-10: oklch(0.556 0 0);  --color-gray-11: oklch(0.500 0 0); --color-gray-12: oklch(0.209 0 0);
+  --color-surface-1: var(--color-gray-1);  /* light: cards are white on a gray-2 canvas */
+  --color-canvas: var(--color-gray-2);
+  --color-line-1: rgb(0 0 0 / 0.06); --color-line-2: rgb(0 0 0 / 0.10); --color-line-3: rgb(0 0 0 / 0.16);
+  --color-glass: rgb(255 255 255 / 0.72);
+  --color-scrim: rgb(0 0 0 / 0.24);
+  --color-accent: oklch(0.640 0.175 150);
+  --color-accent-hover: oklch(0.600 0.165 150);
+  --color-accent-press: oklch(0.559 0.154 150);
+  --color-accent-ink: oklch(0.501 0.138 150);
+  --color-accent-a1: oklch(0.640 0.175 150 / 0.06); --color-accent-a2: oklch(0.640 0.175 150 / 0.10);
+  --color-accent-a3: oklch(0.640 0.175 150 / 0.16); --color-accent-a4: oklch(0.640 0.175 150 / 0.24);
+  --color-accent-a5: oklch(0.640 0.175 150 / 0.40); --color-accent-a6: oklch(0.640 0.175 150 / 0.64);
+  --color-accent-a7: oklch(0.640 0.175 150 / 0.85);
+  --color-z1: oklch(0.640 0.175 150 / 0.14); --color-z2: oklch(0.640 0.175 150 / 0.26);
+  --color-z3: oklch(0.640 0.175 150 / 0.40); --color-z4: oklch(0.640 0.175 150 / 0.55);
+  --color-z5: oklch(0.640 0.175 150 / 0.70); --color-z6: oklch(0.640 0.175 150 / 0.85);
+  --color-z7: oklch(0.640 0.175 150 / 1);
+  --inset-shadow-hairline: inset 0 1px 0 0 rgb(255 255 255 / 0.6);
+}
+
+@layer base {
+  html { background: var(--color-canvas); color: var(--color-fg-1); font-family: var(--font-sans);
+         font-size: 100%; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body { font-size: var(--text-body); line-height: var(--text-body--line-height); font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: inherit; }
+  ::selection { background: var(--color-accent-a5); color: var(--color-fg-1); }
+}
+
+@utility bg-hatch-accent { background-image: repeating-linear-gradient(135deg, var(--color-accent) 0 1.5px, transparent 1.5px 5px); }
+@utility bg-hatch-fg     { background-image: repeating-linear-gradient(135deg, var(--color-fg-3) 0 1px, transparent 1px 5px); }
+@utility glass { background: var(--color-glass); backdrop-filter: blur(var(--blur-glass)) saturate(1.4); }
+@utility num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }

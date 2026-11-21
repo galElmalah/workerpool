@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local development. Generate real values with: openssl rand -base64 32
+SESSION_SECRET=dev-session-secret-change-me
+ENCRYPTION_KEY=dev-encryption-key-change-me
+DEMO_MODE=1
