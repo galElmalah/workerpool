@@ -222,3 +222,13 @@ export async function queueSize(db: D1Database, name: string): Promise<number> {
 export async function clearQueue(db: D1Database, name: string): Promise<void> {
   await deleteStatePrefix(db, `q:${name}:`);
 }
+
+/** Mark `running` entries of `kind` as interrupted (call while holding the lock for that work). */
+export async function failStaleRunning(db: D1Database, kind: SyncLogEntry['kind']): Promise<number> {
+  const res = await run(
+    db,
+    `UPDATE sync_log SET status = 'error', summary = summary || ' (interrupted)' WHERE kind = ? AND status = 'running'`,
+    kind,
+  );
+  return res.meta.changes ?? 0;
+}

@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { api, json } from './helpers';
 import { getDemoMock } from '../worker/services/garmin';
+
+// Syncs generate + parse FIT files in workerd; keep headroom when the whole suite runs in parallel.
+vi.setConfig({ testTimeout: 60_000 });
+
 
 describe('demo seed job (2 months, real pipeline through the mock)', () => {
   let progress: any;

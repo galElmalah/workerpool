@@ -40,6 +40,7 @@ import {
   deleteState,
   enqueue,
   extendLock,
+  failStaleRunning,
   getState,
   insertSyncLog,
   logSync,
@@ -325,6 +326,8 @@ export interface BackfillState {
   wellness: boolean;
   lastError?: string;
   steps: number;
+  /** sync_log entry created at start (status running → final status). */
+  logId?: string;
 }
 
 export interface BackfillProgress {
@@ -382,6 +385,10 @@ function monthsBefore(d: LocalDate, months: number): LocalDate {
 export async function createBackfill(env: Env, opts: { months: number; wellness?: boolean; today?: LocalDate }): Promise<BackfillState> {
   const today = opts.today ?? (await syncToday(env));
   const sinceDate = monthsBefore(today, opts.months);
+  const prev = await getBackfill(env);
+  if (prev?.logId && (prev.phase === 'list' || prev.phase === 'activities' || prev.phase === 'wellness')) {
+    await updateSyncLog(env.DB, prev.logId, { status: 'ok', summary: `Backfill restarted after ${prev.done} activities` });
+  }
   await clearQueue(env.DB, Q_BACKFILL);
   const state: BackfillState = {
     id: crypto.randomUUID(),
@@ -401,8 +408,9 @@ export async function createBackfill(env: Env, opts: { months: number; wellness?
     wellness: opts.wellness ?? true,
     steps: 0,
   };
+  const entry = await insertSyncLog(env.DB, { kind: 'backfill', status: 'running', summary: `Backfill running: ${formatMonths(opts.months)} of history (since ${sinceDate})` });
+  state.logId = entry.id;
   await putState(env.DB, K.backfill, state);
-  await logSync(env.DB, { kind: 'backfill', status: 'running', summary: `Backfill started: ${formatMonths(opts.months)} of history (since ${sinceDate})` });
   return state;
 }
 
@@ -413,8 +421,14 @@ export async function cancelBackfill(env: Env): Promise<BackfillState | undefine
   if (s.phase === 'done' || s.phase === 'cancelled') return s;
   const next: BackfillState = { ...s, phase: 'cancelled', finishedAt: new Date().toISOString() };
   await putState(env.DB, K.backfill, next);
-  await logSync(env.DB, { kind: 'backfill', status: 'ok', summary: `Backfill cancelled after ${s.done} activities` });
+  await finishBackfillLog(env, next, { status: 'ok', summary: `Backfill cancelled after ${s.done} activities` });
   return next;
+}
+
+async function finishBackfillLog(env: Env, s: BackfillState, entry: { status: SyncLogEntry['status']; summary: string }): Promise<void> {
+  const durationMs = Date.parse(s.finishedAt ?? new Date().toISOString()) - Date.parse(s.startedAt);
+  if (s.logId) await updateSyncLog(env.DB, s.logId, { ...entry, durationMs });
+  else await logSync(env.DB, { kind: 'backfill', ...entry, durationMs });
 }
 
 const formatMonths = (m: number) => (m === 1 ? '1 month' : `${m} months`);
@@ -498,11 +512,9 @@ export async function backfillStep(env: Env, client: GarminClient, budget: Budge
   }
   if (s.phase === 'done' && !s.finishedAt) {
     s.finishedAt = new Date().toISOString();
-    await logSync(env.DB, {
-      kind: 'backfill',
+    await finishBackfillLog(env, s, {
       status: s.failed ? 'error' : 'ok',
       summary: `Backfill complete: ${s.done} activities${s.wellness ? `, ${s.wellnessDays} days of wellness` : ''}${s.failed ? `, ${s.failed} failed` : ''}`,
-      durationMs: Date.parse(s.finishedAt) - Date.parse(s.startedAt),
     });
   }
   await putState(env.DB, K.backfill, s);
@@ -639,6 +651,7 @@ export async function runSync(env: Env, opts: SyncOptions): Promise<SyncReport> 
   }
   const lease = await acquireLock(env.DB, LOCK_NAME, LOCK_TTL_MS);
   if (!lease) return { ...report, status: 'skipped', skippedBecause: 'locked', summary: 'Another sync is running' };
+  await failStaleRunning(env.DB, 'pull_activities'); // we hold the lock: any running entry is a dead run
   const log = await insertSyncLog(env.DB, { kind: 'pull_activities', status: 'running', summary: 'Syncing with Garmin…' });
   let client: GarminClient | null = null;
   let budget: Budget | undefined;

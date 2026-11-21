@@ -321,7 +321,6 @@ export async function startDemoSeed(env: Env, input: DemoSeedInput): Promise<Dem
     throw e;
   }
   await saveJob(env, job);
-  await logSync(env.DB, { kind: 'backfill', status: 'running', summary: `Demo seed started: ${job.planned} planned workouts, ${job.total} activities to import` });
   return progressOf(job, await getBackfill(env));
 }
 

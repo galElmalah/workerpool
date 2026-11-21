@@ -63,7 +63,8 @@ export const garminRoutes = new Hono<AppEnv>()
   .post('/garmin/backfill', zValidator('json', BackfillInput, validationHook), async (c) => {
     const { months, wellness } = c.req.valid('json');
     await createBackfill(c.env, { months, ...(wellness !== undefined ? { wellness } : {}) });
-    const p = await runBackfillStepNow(c.env);
+    // A light first step (list + a few activities) so the UI shows progress right away.
+    const p = await runBackfillStepNow(c.env, { maxActivities: 5 });
     return c.json(p ?? backfillProgress((await getBackfill(c.env))!));
   })
   .post('/garmin/backfill/step', async (c) => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createExecutionContext, createScheduledController, waitOnExecutionContext } from 'cloudflare:test';
 import worker from '../worker/index';
@@ -8,6 +8,10 @@ import { putWellnessManual, getWellness } from '../worker/db/furniture';
 import { insertThreshold, listThresholds } from '../worker/db/thresholds';
 import { getDemoMock, setDemoConfig, setDemoNow } from '../worker/services/garmin';
 import { applyGarminThresholds, runSync } from '../worker/services/sync';
+
+// Syncs generate + parse FIT files in workerd; keep headroom when the whole suite runs in parallel.
+vi.setConfig({ testTimeout: 60_000 });
+
 
 const TODAY = '2026-11-20';
 const NOW = Date.parse(`${TODAY}T21:00:00Z`);

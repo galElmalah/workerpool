@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { api, json } from './helpers';
 import { queueSize } from '../worker/db/sync';
 import { getDemoMock, setDemoConfig, setDemoNow } from '../worker/services/garmin';
+
+// Syncs generate + parse FIT files in workerd; keep headroom when the whole suite runs in parallel.
+vi.setConfig({ testTimeout: 60_000 });
+
 
 const TODAY = '2026-11-20';
 const NOW = Date.parse(`${TODAY}T21:00:00Z`);
@@ -47,7 +51,7 @@ describe('backfill', () => {
     let p = await json('/garmin/backfill', { method: 'POST', body: { months: 3, wellness: false } });
     for (let i = 0; p.running && i < 10; i++) p = await json('/garmin/backfill/step', { method: 'POST' });
     expect(p).toMatchObject({ phase: 'done', listed: 0, created: 0, done: 0 });
-  });
+  }, 60_000);
 
   it('cancel stops the job and clears its queue', async () => {
     await env.DB.prepare('DELETE FROM activities').run();
@@ -57,7 +61,7 @@ describe('backfill', () => {
     expect(await queueSize(env.DB, 'bf')).toBe(0);
     const res = await api('/garmin/backfill/step', { method: 'POST' });
     expect((await res.json<any>()).phase).toBe('cancelled');
-  });
+  }, 60_000);
 
   it('sync log pages newest first with a cursor', async () => {
     const all = await json('/sync/log?limit=200');

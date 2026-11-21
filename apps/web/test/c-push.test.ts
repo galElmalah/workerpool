@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { addDays } from '@cadence/core/time';
 import { STARTER_TEMPLATES, instantiateTemplate } from '@cadence/core/workout';
@@ -8,6 +8,10 @@ import { getWorkout, updateWorkouts } from '../worker/db/workouts';
 import { createWorkout } from '../worker/services/planning';
 import { DEMO_API_KEY, getDemoMock, setDemoConfig, setDemoNow, syncToday } from '../worker/services/garmin';
 import { markWorkoutDirty, unpushWorkout } from '../worker/services/push';
+
+// Syncs generate + parse FIT files in workerd; keep headroom when the whole suite runs in parallel.
+vi.setConfig({ testTimeout: 60_000 });
+
 
 const TODAY = '2026-11-20';
 const NOW = Date.parse(`${TODAY}T08:00:00Z`);
