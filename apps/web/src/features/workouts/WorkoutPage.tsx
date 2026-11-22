@@ -35,7 +35,6 @@ import {
   TagInput,
   Textarea,
   toast,
-  useAutosave,
   usePaletteSource,
   GarminStateIcon,
 } from '@/ui';
@@ -49,7 +48,7 @@ import { links } from '@/shell/links';
 import { useShortcut } from '@/shell/shortcuts';
 import { spring } from '@/motion/tokens';
 import { Builder, GarminLine } from './builder/Builder';
-import { axisLabelFor, chartBlocks, useThresholdsOn } from './model';
+import { axisLabelFor, chartBlocks, useDebouncedSave, useThresholdsOn } from './model';
 import { StepsReadable, TotalsTiles } from './parts';
 import { useActivitiesBetween, useActivity, useGarminPush, useGarminRemove, usePair, useRepeatWeekly, useSaveToLibrary, useSkip, useWorkout, type SkipReason } from './queries';
 
@@ -114,8 +113,9 @@ function WorkoutView({ w, edit }: { w: PlannedWorkout; edit: boolean }) {
     if (!edit && w.structure !== lastServer.current) setDraft(w.structure ?? { steps: [] });
     lastServer.current = w.structure;
   }, [w.structure, edit]);
-  const autosave = useAutosave(draft, (s) => (edit ? patch({ structure: s.steps.length ? s : (null as never) }, scope) : undefined), { delay: 700, enabled: edit });
-  const shownStatus = autosave !== 'idle' ? autosave : status;
+  const initialDraft = useMemo(() => draft, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useDebouncedSave(draft, edit ? initialDraft : draft, (s) => patch({ structure: s.steps.length ? s : (null as never) }, scope).catch(() => undefined));
+  const shownStatus = status;
 
   const structure = edit ? draft : (w.structure ?? { steps: [] });
   const estimate = useMemo(() => estimateWorkout(structure, w.sport, thresholds), [structure, w.sport, thresholds]);

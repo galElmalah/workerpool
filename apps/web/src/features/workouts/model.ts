@@ -3,6 +3,7 @@
  * for the text ⇄ visual sync, per-sport step presets and target catalogues.
  */
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { SPORT_META, type LocalDate, type Sport, type Step, type StepRole, type SubSport, type Target, type Threshold, type ThresholdSnapshot, type WorkoutStructure, type StructureNode } from '@cadence/core';
 import { resolveThresholds } from '@cadence/core/metrics';
 import { makeRepeat, makeStep, type AnyNode, type ProfileBlock as CoreBlock, type WorkoutEstimate } from '@cadence/core/workout';
@@ -239,4 +240,15 @@ export function presetNode(p: Preset, sport: Sport): AnyNode {
 
 export function strengthStep(exercise = 'Back squat'): Step {
   return makeStep({ role: 'active', measure: { type: 'reps', n: 8 }, strength: { exercise, sets: 3, reps: 8, restSec: 90 } });
+}
+
+/** Debounced save of an edited value; never fires for `skip` (the value loaded from the server). */
+export function useDebouncedSave<T>(value: T, skip: T, save: (v: T) => unknown, delay = 700): void {
+  const fn = useRef(save);
+  fn.current = save;
+  useEffect(() => {
+    if (value === skip) return;
+    const t = setTimeout(() => void fn.current(value), delay);
+    return () => clearTimeout(t);
+  }, [value, skip, delay]);
 }

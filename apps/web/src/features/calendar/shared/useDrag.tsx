@@ -4,7 +4,7 @@
  * bouncy settle, optimistic move + undo toast. Alt-drag copies. Space picks up from the keyboard
  * (Enter stays "open").
  */
-import { DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragOverlayProps } from '@dnd-kit/core';
+import { DragOverlay, type DragEndEvent, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragOverlayProps } from '@dnd-kit/core';
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateLong } from '@/lib/format';
@@ -14,6 +14,7 @@ import { WorkoutCard } from '@/ui/domain/WorkoutCard';
 import type { CardActions } from './actions';
 import type { CalDensity } from './CardItem';
 import type { CalendarModel } from './data';
+import { recordDrop } from './flip';
 import { calStore, useCal } from './store';
 
 export function useCalendarDrag(model: CalendarModel, actions: CardActions) {
@@ -65,7 +66,15 @@ export function useCalendarDrag(model: CalendarModel, actions: CardActions) {
   const preview = useCal((s) => s.preview);
   const previewCard = preview ? (model.findCard(preview.key)?.card ?? null) : null;
   const active = dnd.activeId ? (model.findCard(dnd.activeId)?.card ?? null) : null;
-  return { sensors, dnd, preview, previewCard, active };
+  const contextProps = {
+    ...dnd.contextProps,
+    onDragEnd: (e: DragEndEvent) => {
+      const r = e.active.rect.current.translated;
+      if (r && e.over) recordDrop(String(e.active.id), r);
+      dnd.contextProps.onDragEnd?.(e);
+    },
+  };
+  return { sensors, dnd: { ...dnd, contextProps }, preview, previewCard, active };
 }
 
 /** The lifted card, portaled to <body> so virtual-row transforms can't offset it. */

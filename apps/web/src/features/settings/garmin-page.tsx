@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, call } from '@/lib/api';
 import { cn } from '@/lib/cn';
-import { formatDateMedium, formatNumber } from '@/lib/format';
+import { formatDateMedium, formatDayMonth, formatMonthYear, formatNumber } from '@/lib/format';
 import { invalidateTraining, qk } from '@/lib/query';
 import { useGarminStatus, useSettings, useSyncNow } from '@/lib/queries/shared';
 import { Odometer } from '@/motion/Ticker';
@@ -137,7 +137,7 @@ function Connected({ s, today }: { s: Status; today?: string }) {
             <Stat label="Activities">
               <Odometer value={s.counts.activities} />
             </Stat>
-            <Stat label="History back to">{s.counts.oldestGarminDate ? formatDateMedium(s.counts.oldestGarminDate, true) : '—'}</Stat>
+            <Stat label="History back to">{s.counts.oldestGarminDate ? formatMonthYear(s.counts.oldestGarminDate) : '—'}</Stat>
             <Stat label="Workouts on watch">{formatNumber(s.counts.workoutsSynced)}</Stat>
             <Stat label="Waiting / failed">
               {formatNumber(s.counts.workoutsPending)} / {formatNumber(s.counts.workoutsError)}
@@ -325,7 +325,7 @@ function BackfillCard({ s }: { s: Status }) {
               <Stat label="Imported">
                 <Odometer value={p.created + p.updated} />
               </Stat>
-              <Stat label="Oldest reached">{p.oldestDate ? formatDateMedium(p.oldestDate, true) : '—'}</Stat>
+              <Stat label="Oldest reached">{p.oldestDate ? formatDayMonth(p.oldestDate) + ' ' + p.oldestDate.slice(0, 4) : '—'}</Stat>
               <Stat label="Wellness days">{formatNumber(p.wellnessDays)}</Stat>
               <Stat label="Failed">{formatNumber(p.failed)}</Stat>
             </div>

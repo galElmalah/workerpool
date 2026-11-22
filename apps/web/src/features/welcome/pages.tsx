@@ -643,7 +643,7 @@ function StepThresholds({ onBack, onFinish }: { onBack: () => void; onFinish: (h
                 </div>
               )}
               <span className="text-body-sm text-fg-3">
-                {initial && v == null ? `${meta.explain.split('.')[0]}. Skipped: ${meta.fallback.charAt(0).toLowerCase() + meta.fallback.slice(1)}.` : init?.basis && !edited ? `Estimated from your ${init.basis}.` : init?.source === 'garmin' && !edited ? `${meta.explain} From your Garmin profile.` : meta.explain}
+                {initial && v == null ? `${meta.explain.split('.')[0]}. Skipped: ${meta.fallback.charAt(0).toLowerCase() + meta.fallback.slice(1)}.` : init?.basis && !edited ? `Estimated from your ${init.basis.replace(/\s*\(UNVERIFIED[^)]*\)/i, '')}.` : init?.source === 'garmin' && !edited ? `${meta.explain} From your Garmin profile.` : meta.explain}
               </span>
             </motion.div>
           );

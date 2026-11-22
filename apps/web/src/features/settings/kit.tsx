@@ -251,39 +251,41 @@ export function BigThresholdInput({
           bad && 'border-dashed !border-fg-1',
         )}
       >
-        <input
-          id={id}
-          value={text}
-          inputMode={meta.value === 'pace' ? 'text' : 'decimal'}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder={meta.value === 'pace' ? (meta.paceSport === 'swim' ? '1:45' : '4:30') : '—'}
-          aria-invalid={bad || undefined}
-          aria-label={typeof label === 'string' ? label : meta.label}
-          onFocus={(e) => {
-            setEditing(true);
-            e.currentTarget.select();
-          }}
-          onChange={(e) => setText(e.currentTarget.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-            if (e.key === 'Escape') {
-              setText(thresholdText(meta, value, units));
-              setBad(false);
-              e.currentTarget.blur();
-            }
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-              e.preventDefault();
-              stepBy(e.key === 'ArrowUp' ? 1 : -1, e.shiftKey);
-            }
-          }}
-          className={cn(
-            'min-w-0 bg-transparent py-1 tabular-nums text-fg-1 outline-none placeholder:text-fg-4',
-            size === 'lg' ? 'text-stat-lg' : 'text-stat-md',
-          )}
-          style={{ width: `${Math.max(1, (text || (meta.value === 'pace' ? '0:00' : '—')).length) * 0.88 + 0.3}ch` }}
-        />
+        <span className="inline-grid">
+          <span aria-hidden className={cn('invisible col-start-1 row-start-1 whitespace-pre py-1 pr-0.5 tabular-nums', size === 'lg' ? 'text-stat-lg' : 'text-stat-md')}>
+            {text || (meta.value === 'pace' ? (meta.paceSport === 'swim' ? '1:45' : '4:30') : '—')}
+          </span>
+          <input
+            id={id}
+            value={text}
+            inputMode={meta.value === 'pace' ? 'text' : 'decimal'}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={meta.value === 'pace' ? (meta.paceSport === 'swim' ? '1:45' : '4:30') : '—'}
+            aria-invalid={bad || undefined}
+            aria-label={typeof label === 'string' ? label : meta.label}
+            onFocus={(e) => {
+              setEditing(true);
+              e.currentTarget.select();
+            }}
+            onChange={(e) => setText(e.currentTarget.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+              if (e.key === 'Escape') {
+                setText(thresholdText(meta, value, units));
+                setBad(false);
+                e.currentTarget.blur();
+              }
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                stepBy(e.key === 'ArrowUp' ? 1 : -1, e.shiftKey);
+              }
+            }}
+            size={1}
+            className={cn('col-start-1 row-start-1 w-0 min-w-full bg-transparent py-1 tabular-nums text-fg-1 outline-none placeholder:text-fg-4', size === 'lg' ? 'text-stat-lg' : 'text-stat-md')}
+          />
+        </span>
         <span className={cn('shrink-0 text-fg-3', size === 'lg' ? 'text-title-3' : 'text-body')}>{thresholdUnit(meta, units)}</span>
       </div>
       {bad && <span className="text-body-sm text-fg-1">{meta.value === 'pace' ? 'Use m:ss, e.g. 4:30' : 'Enter a number'}</span>}

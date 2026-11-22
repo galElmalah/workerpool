@@ -110,7 +110,7 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
   const lvl = Math.min(7, Math.max(1, meta?.level ?? 1));
   return (
     <RowShell id={step.id} selected={selected} className={cn(hovered && !selected && 'border-line-3')}>
-      <div className="flex min-h-11 items-center gap-1 py-1 pr-1 pl-0.5" onPointerEnter={() => b.setHovered(step.id)} onPointerLeave={() => b.setHovered(null)}>
+      <div className="flex min-h-11 flex-wrap items-center gap-1 py-1 pr-1 pl-0.5 sm:flex-nowrap" onPointerEnter={() => b.setHovered(step.id)} onPointerLeave={() => b.setHovered(null)}>
         {grip}
         <span aria-hidden className={cn('h-5 w-1 shrink-0 rounded-full', ZONE_BG[lvl - 1])} />
         <Menu
@@ -118,7 +118,7 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
           align="start"
           items={STEP_ROLES.map((r) => ({ label: roleLabel(r), checked: step.role === r, onSelect: () => patch({ role: r as StepRole }) }))}
           trigger={
-            <button type="button" className="ml-1 inline-flex h-7 w-[6.75rem] shrink-0 items-center justify-between gap-1 rounded-sm px-1.5 text-micro uppercase text-fg-2 transition-colors hover:bg-surface-3 hover:text-fg-1 max-sm:w-[4.75rem]">
+            <button type="button" className="ml-1 inline-flex h-7 w-[6.75rem] shrink-0 items-center justify-between gap-1 rounded-sm px-1.5 text-micro uppercase text-fg-2 transition-colors hover:bg-surface-3 hover:text-fg-1">
               <span className="truncate">{roleLabel(step.role)}</span>
               <ChevronDown className="size-3 shrink-0 opacity-60" />
             </button>
@@ -126,7 +126,7 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
         />
         <MeasureToggle step={step} onChange={(measure) => patch({ measure })} />
         <MeasureField step={step} sport={b.sport} units={b.units} onChange={(measure) => patch({ measure })} />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 max-sm:order-last max-sm:basis-full max-sm:pl-7">
           <TargetChip step={step} sport={b.sport} th={b.th} units={b.units} onChange={patch} />
         </div>
         {b.sport === 'swim' && <SwimChip step={step} onChange={patch} />}

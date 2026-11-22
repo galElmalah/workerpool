@@ -330,7 +330,7 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ ...spring.smooth, delay: Math.min(i * 0.03, 0.24) }}
-              className={cn('relative grid min-w-0 grid-cols-[56px_1fr] items-start gap-x-3 gap-y-2 px-3 py-3 md:grid-cols-[72px_1fr_168px] md:px-4', isToday && 'bg-surface-2')}
+              className={cn('relative grid min-w-0 grid-cols-[56px_1fr] items-start gap-x-3 gap-y-2 px-3 py-3 md:grid-cols-[72px_1fr_200px] md:px-4', isToday && 'bg-surface-2')}
             >
               {isToday && <span className="absolute inset-y-0 left-0 w-0.5 bg-accent" aria-hidden />}
               <div className="flex flex-col pt-1">
@@ -360,7 +360,8 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
                   {plan > load && <span className="absolute inset-y-0 left-0 rounded-full border border-dashed border-line-3 bg-hatch-faint" style={{ width: `${(plan / max) * 100}%` }} />}
                   <motion.span className="absolute inset-y-0 left-0 origin-left rounded-full bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ ...spring.gentle, delay: Math.min(i * 0.012, 0.24) }} style={{ width: `${(load / max) * 100}%` }} />
                 </div>
-                <span className="w-16 text-right font-mono text-mono-sm text-fg-2">
+                <span className="w-24 text-right font-mono text-mono-sm text-fg-2">
+                  {d.activities.length > 0 && <span className="text-fg-3">{fmtH(d.activities.reduce((a, x) => a + (x.movingSec || x.durationSec), 0))} · </span>}
                   {load ? fmtInt(load) : '—'}
                   {plan > 0 && mode !== 'past' ? <span className="text-fg-4"> /{fmtInt(plan)}</span> : null}
                 </span>
@@ -736,8 +737,8 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
           valueLabel={<span className="font-mono text-mono text-fg-1">{formatSigned(p)}%</span>}
         />
         <div className="grid grid-cols-2 gap-4 border-t border-line-1 pt-4 sm:grid-cols-3">
-          <PreviewStat label="Copied hours" value={addSec / 3600} fmt={(v) => fmtH(v * 3600)} sub={`from ${fmtH(s.plannedSec)}`} />
-          <PreviewStat label="Copied Load" value={addLoad} fmt={fmtInt} sub={`from ${fmtInt(s.plannedLoad)}`} accent />
+          <PreviewStat label="Copied hours ≈" value={addSec / 3600} fmt={(v) => fmtH(v * 3600)} sub={`from ${fmtH(s.plannedSec)}`} />
+          <PreviewStat label="Copied Load ≈" value={addLoad} fmt={fmtInt} sub={`from ${fmtInt(s.plannedLoad)}`} accent />
           {haveSec > 0 ? (
             <PreviewStat label={`W${Number(nextWeek.slice(6))} total after`} value={(addSec + haveSec) / 3600} fmt={(v) => fmtH(v * 3600)} sub={`${fmtInt(addLoad + haveLoad)} Load · adds to the existing plan`} />
           ) : (

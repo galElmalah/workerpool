@@ -15,7 +15,6 @@ import {
   WeeklyBars,
   WowDeltaBars,
   createHoverSync,
-  weeksToSplits,
   type ChartEvent,
   type ChartPhase,
   type FitnessSelection,
@@ -45,6 +44,7 @@ import {
   useApiToday,
   useConsistency,
   useFitness,
+  useIntensity,
   useWeekly,
   wowSentence,
   type CompareKey,
@@ -109,6 +109,11 @@ export function OverviewPage() {
     return [...set];
   }, [weekly.data, nWeeks]);
   const weekSync = useMemo(() => createHoverSync<string>(), []);
+  const intensity = useIntensity(Math.min(104, nWeeks));
+  const intensityItems = useMemo(
+    () => (intensity.data?.weeks ?? []).filter((w) => w.easy + w.moderate + w.hard > 0).map((w) => ({ key: w.isoWeek, label: formatDayMonth(w.startDate), easy: w.easy, moderate: w.moderate, hard: w.hard })),
+    [intensity.data],
+  );
 
   const first = weeks[0];
   const last = weeks[weeks.length - 1];
@@ -153,7 +158,7 @@ export function OverviewPage() {
       <section className="grid gap-6 lg:grid-cols-12">
         <WowSection all={all} weeks={weeks} metric={metric} compare={compare} sync={weekSync} loading={!weekly.data} onMetric={(m) => set({ metric: m })} onOpen={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
         <ChartCard className="lg:col-span-5" title="Intensity distribution" to="/trends/intensity" question={`Easy, moderate and hard time per week${sport ? ' (all sports)' : ''}. Polarized, pyramidal or drifting into the grey zone?`}>
-          <IntensityDistribution items={weeksToSplits(weeks.filter((w) => w.doneSec > 0))} loading={!weekly.data} sync={weekSync} height={168} onItemClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
+          <IntensityDistribution items={intensityItems} loading={!intensity.data} sync={weekSync} height={168} onItemClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
         </ChartCard>
       </section>
 
@@ -363,7 +368,7 @@ function WowTile({
             <span className="truncate font-mono text-mono-sm text-fg-3">
               {plan.label ?? (
                 <>
-                  {plan.fmt(plan.done)} <span className="text-fg-4">of</span> {plan.fmt(plan.total)} planned{plan.target ? ` · target ${plan.fmt(plan.target)}` : ''}
+                  <span className="text-fg-4">on track for</span> {plan.fmt(plan.total)}{plan.target ? ` · target ${plan.fmt(plan.target)}` : ''}
                 </>
               )}
             </span>
@@ -501,7 +506,13 @@ function WowSection({ all, weeks, metric, compare, sync, loading, onMetric, onOp
     return { key: w.isoWeek, label: formatDayMonth(w.startDate), value: b && b > 0 ? v / b - 1 : null, detail: b != null ? `${fmtM(metric, v)} vs ${fmtM(metric, b)}` : undefined };
   });
   void offset;
-  const sentence = wowSentence(METRIC_NAME[metric], items.map((i) => i.value), fmtPct);
+  const vals = items.map((i) => i.value).filter((v): v is number => v != null);
+  const lastV = vals.at(-1);
+  const above = vals.filter((v) => v > 0.02).length;
+  const sentence =
+    compare === 'prev' || lastV == null
+      ? wowSentence(METRIC_NAME[metric], items.map((i) => i.value), fmtPct)
+      : `Last week's ${METRIC_NAME[metric].toLowerCase()} was ${fmtPct(lastV)} ${compare === 'avg' ? 'against the 4 weeks before it' : 'against the same week last year'}; ${above} of ${vals.length} weeks came in above.`;
   const name = { prev: 'the week before', avg: 'the previous 4-week average', year: 'the same week last year' }[compare];
   return (
     <ChartCard

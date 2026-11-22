@@ -171,7 +171,7 @@ export function targetAbsolute(t: Target | undefined, sport: Sport, th: Threshol
       if (!th.lthr) return null;
       const Z: Record<number, [number, number]> = { 1: [0, 81], 2: [81, 89], 3: [90, 93], 4: [94, 99], 5: [100, 106] };
       const [a, b] = Z[t.zone] ?? [0, 0];
-      return `${rng(String(r0((a / 100) * th.lthr)), String(r0((b / 100) * th.lthr)))} bpm`;
+      return a === 0 ? `< ${r0((b / 100) * th.lthr)} bpm` : `${rng(String(r0((a / 100) * th.lthr)), String(r0((b / 100) * th.lthr)))} bpm`;
     }
     case 'ramp':
       if (t.basis === 'power_pct' && powerThr) return `${r0((t.from / 100) * powerThr)}→${r0((t.to / 100) * powerThr)} W`;

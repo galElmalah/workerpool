@@ -34,7 +34,6 @@ import {
   TagInput,
   Textarea,
   toast,
-  useAutosave,
 } from '@/ui';
 import { cn } from '@/lib/cn';
 import { formatDateMedium, formatDayShort } from '@/lib/format';
@@ -43,7 +42,7 @@ import { useDeleteWorkouts } from '@/lib/queries/training';
 import { links } from '@/shell/links';
 import { spring } from '@/motion/tokens';
 import { Builder } from '@/features/workouts/builder/Builder';
-import { SPORT_ORDER, useThresholdsOn } from '@/features/workouts/model';
+import { SPORT_ORDER, useDebouncedSave, useThresholdsOn } from '@/features/workouts/model';
 import { TemplateMini, TotalsTiles } from '@/features/workouts/parts';
 import {
   useCreateTemplate,
@@ -203,7 +202,7 @@ export function LibraryPage() {
 
 function FilterRow({ id, value, onChange, options }: { id: string; value: string; onChange: (v: string) => void; options: { value: string; label: string; icon?: React.ReactNode }[] }) {
   return (
-    <div role="radiogroup" aria-label={id === 'sport' ? 'Sport' : 'Intensity'} className="flex flex-wrap gap-1">
+    <div role="radiogroup" aria-label={id === 'sport' ? 'Sport' : 'Intensity'} className="flex gap-1 max-sm:-mx-4 max-sm:w-[calc(100%+2rem)] max-sm:overflow-x-auto max-sm:px-4 sm:flex-wrap [&>button]:shrink-0">
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -334,7 +333,8 @@ function TemplateView({ t }: { t: Template }) {
       toast.error(`Couldn’t save: ${(e as Error).message}`);
     }
   };
-  const auto = useAutosave(draft, (s) => patch({ structure: s.steps.length ? s : null }), { delay: 700 });
+  const initial = useMemo(() => draft, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useDebouncedSave(draft, initial, (s) => patch({ structure: s.steps.length ? s : null }));
   const estimate = useMemo(() => estimateWorkout(draft, t.sport, thresholds), [draft, t.sport, thresholds]);
   const totals = draft.steps.length
     ? { durationSec: estimate.durationSec, distanceM: estimate.distanceM, load: estimate.load, intensityFactor: estimate.intensityFactor }
@@ -376,7 +376,7 @@ function TemplateView({ t }: { t: Template }) {
           }
           actions={
             <>
-              <SaveIndicator status={auto !== 'idle' ? auto : status} className="max-sm:hidden" />
+              <SaveIndicator status={status} className="max-sm:hidden" />
               <ButtonLink size="sm" variant="secondary" icon={<Plus />} {...links.newWorkout({ from: t.id, sport: t.sport })}>
                 <span className="max-sm:hidden">New workout</span>
               </ButtonLink>
@@ -470,9 +470,9 @@ function Instances({ t, today }: { t: Template; today: LocalDate }) {
               <li key={w.id}>
                 <Link {...links.workout(w.id)} className="flex h-10 items-center gap-3 rounded-md px-3 text-body transition-colors hover:bg-surface-1">
                   <ComplianceGlyph state={w.compliance?.state ?? 'planned'} />
-                  <span className="w-24 shrink-0 font-mono text-mono text-fg-2">{formatDayShort(w.date)}</span>
+                  <span className="w-28 shrink-0 font-mono text-mono text-fg-2">{formatDateMedium(w.date)}</span>
                   <span className="min-w-0 flex-1 truncate text-fg-1">{w.title}</span>
-                  <span className={cn('font-mono text-mono-sm', w.date >= today ? 'text-fg-2' : 'text-fg-3')}>{w.date >= today ? 'upcoming' : formatDateMedium(w.date)}</span>
+                  <span className={cn('text-micro uppercase', w.date >= today ? 'text-fg-2' : 'text-fg-3')}>{w.date >= today ? 'Upcoming' : w.pairedActivityId ? 'Done' : w.status === 'skipped' ? 'Skipped' : 'Missed'}</span>
                 </Link>
               </li>
             ))}

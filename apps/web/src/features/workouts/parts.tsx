@@ -82,8 +82,9 @@ export function StepsReadable({
           className={cn('flex min-h-10 items-center gap-3 rounded-md px-3 py-1.5 transition-colors duration-(--dur-fast)', hovered === n.id ? 'bg-surface-2' : 'hover:bg-surface-1')}
         >
           <span aria-hidden className={cn('h-5 w-1 shrink-0 rounded-full', ZONE_BG[(meta.get(n.id)?.level ?? 1) - 1])} />
-          <span className="w-20 shrink-0 text-micro uppercase text-fg-3 max-sm:w-16">{roleLabel(n.role)}</span>
+          <span className="w-20 shrink-0 text-micro uppercase text-fg-3 max-sm:hidden">{roleLabel(n.role)}</span>
           <span className="min-w-0 flex-1 text-body text-fg-1">
+            <span className="block text-micro uppercase text-fg-3 sm:hidden">{roleLabel(n.role)}</span>
             {describeStep(n, sport, units.system, thresholds)}
             {n.cue && <span className="block text-body-sm text-fg-3">{n.cue}</span>}
           </span>

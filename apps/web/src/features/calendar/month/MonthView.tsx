@@ -240,9 +240,13 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
     scrollToDate(addDays(d, 7));
   };
 
+  const onCopyWeek = useCallback((isoWeek: string, a: HTMLElement) => setBulk({ kind: 'copy', isoWeek, anchor: a }), []);
+  const onShiftWeek = useCallback(
+    (from: string, a: HTMLElement) => setBulk({ kind: 'shift', from: today && weekStart(today) === from ? today : from, anchor: a }),
+    [today],
+  );
   const focusWeekStart = focus?.kind === 'week' ? focus.start : null;
   const focusDayDate = focus?.kind === 'day' ? focus.date : null;
-  const todayWeek = today ? weekStart(today) : null;
   const affected = dnd.affected.size ? dnd.affected : null;
 
   return (
@@ -310,7 +314,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
                       key={it.key}
                       index={it.index}
                       measureRef={virtualizer.measureElement}
-                      style={{ transform: `translateY(${it.start}px)` }}
+                      y={it.start}
                       week={week}
                       layout={layout}
                       density={density}
@@ -321,8 +325,8 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
                       affected={affected && [...affected].some((d) => d >= start && d <= end) ? affected : null}
                       focusWeek={focusWeekStart === start}
                       focusDay={focusDayDate && focusDayDate >= start && focusDayDate <= end ? focusDayDate : null}
-                      onCopyWeek={(isoWeek, a) => setBulk({ kind: 'copy', isoWeek, anchor: a })}
-                      onShift={(from, a) => setBulk({ kind: 'shift', from: from === todayWeek && today ? today : from, anchor: a })}
+                      onCopyWeek={onCopyWeek}
+                      onShift={onShiftWeek}
                     />
                   );
                 })}

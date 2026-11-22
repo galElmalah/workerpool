@@ -6,8 +6,7 @@
 import { DndContext, useDroppable } from '@dnd-kit/core';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { Moon, Pilcrow, Plus, RotateCcw, TriangleAlert } from 'lucide-react';
-import { LayoutGroup } from 'motion/react';
-import { memo, useCallback, useEffect, useState, type MouseEvent } from 'react';
+import { memo, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { flushSync } from 'react-dom';
 import type { LocalDate } from '@cadence/core/domain';
 import { addDays, addWeeks, isoWeekOf, isoWeekStart, weekStart } from '@cadence/core/time';
@@ -18,7 +17,7 @@ import type { CalendarCard } from '@/lib/queries/training';
 import { vtName } from '@/motion/morph';
 import { links } from '@/shell/links';
 import { Button } from '@/ui/Button';
-import { calendarCollision, Settle } from '@/ui/dnd';
+import { calendarCollision } from '@/ui/dnd';
 import { MiniProfile } from '@/ui/domain/MiniProfile';
 import { WorkoutCard } from '@/ui/domain/WorkoutCard';
 import { ContextMenu, type MenuEntry } from '@/ui/Menu';
@@ -28,6 +27,7 @@ import { useCardActions, type CardActions } from '../shared/actions';
 import { CopyWeekPopover, SelectionBar, ShiftPopover, type BulkState } from '../shared/Bulk';
 import { CardItem } from '../shared/CardItem';
 import { useCalendarModel, useCalendarPages, weekIndexOf, type DayData } from '../shared/data';
+import { useFlip } from '../shared/flip';
 import { EventBanner, MarkerGlyphs, RangeBands, ReadinessDot } from '../shared/DayParts';
 import { focusDay, onGridTab, useCalendarKeys } from '../shared/keys';
 import { cardMenu, dayMenu } from '../shared/menu';
@@ -78,6 +78,8 @@ const WeekColumn = memo(function WeekColumn({ day, cards, copyGhost, today, week
   const { setNodeRef, isOver } = useDroppable({ id: date });
   const isCursor = useCal((s) => s.cursor === date || (s.cursor == null && date === today));
   const composing = useCal((s) => s.composer === date);
+  const listRef = useRef<HTMLDivElement>(null);
+  useFlip(listRef, affected);
   const future = today != null && date > today;
   const onClick = (e: MouseEvent) => {
     if ((e.target as Element).closest('[data-card],a,button,input')) return;
@@ -118,10 +120,9 @@ const WeekColumn = memo(function WeekColumn({ day, cards, copyGhost, today, week
               <Moon className="size-3" /> Rest
             </span>
           )}
-          <LayoutGroup id={`w-${date}`}>
-            <div className="flex flex-col gap-2">
+          <div ref={listRef} className="flex flex-col gap-2">
               {cards.map((c) => (
-                <Settle key={c.key} id={c.key} layout={affected}>
+                <div key={c.key} data-flip={c.key}>
                   <CardItem
                     card={c}
                     date={date}
@@ -137,11 +138,10 @@ const WeekColumn = memo(function WeekColumn({ day, cards, copyGhost, today, week
                       ) : undefined
                     }
                   />
-                </Settle>
+                </div>
               ))}
               {copyGhost && <WorkoutCard model={copyGhost.model} density="full" ghost />}
-            </div>
-          </LayoutGroup>
+          </div>
           {composing ? (
             <QuickAdd date={date} actions={actions} />
           ) : (

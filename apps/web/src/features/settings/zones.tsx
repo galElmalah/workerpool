@@ -175,7 +175,7 @@ export function SettingsZonesPage() {
                             {thresholdText(meta, sg.value, units)} {thresholdUnit(meta, units)}
                           </span>
                           <span className="text-body-sm text-fg-3">
-                            from {sg.basis}
+                            from {sg.basis.replace(/\s*\(UNVERIFIED[^)]*\)/i, '')}
                             {sg.current ? ` · now ${thresholdText(meta, sg.current, units)}` : ''}
                           </span>
                         </span>

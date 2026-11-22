@@ -6,7 +6,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { ArrowUpRight, Copy, Star, Trash2, Watch } from 'lucide-react';
 import { motion } from 'motion/react';
-import { memo, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import { memo, useMemo, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import { addDays } from '@cadence/core/time';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/format';
@@ -140,12 +140,27 @@ function QuickActions({ card, date, actions }: { card: CalendarCard; date: strin
   );
 }
 
-export const CardItem = memo(function CardItem({ card, date, density, actions, zoomName, trailing, hideSpark }: CardItemProps) {
-  const [hover, setHover] = useState(false);
-  const selected = useCal((s) => s.selection.has(card.key));
+/**
+ * The draggable / focusable shell. dnd-kit re-renders every hook consumer whenever a draggable
+ * or droppable registers (i.e. every time a virtual row mounts), so the hook lives here and the
+ * card face arrives as a memoized `children` element that React can skip.
+ */
+const DragShell = memo(function DragShell({
+  card,
+  date,
+  actions,
+  rounded,
+  children,
+}: {
+  card: CalendarCard;
+  date: string;
+  actions: CardActions;
+  rounded: string;
+  children: ReactNode;
+}) {
   const focused = useCal((s) => s.cardKey === card.key);
+  const selected = useCal((s) => s.selection.has(card.key));
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id: card.key, disabled: !card.draggable, data: { dayId: date } });
-
   const onClick = (e: MouseEvent) => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) {
       e.preventDefault();
@@ -159,65 +174,76 @@ export const CardItem = memo(function CardItem({ card, date, density, actions, z
     }
     actions.open(card);
   };
-  const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      e.stopPropagation();
-      actions.open(card);
-    }
-  };
-
-  const zoomStyle: CSSProperties | undefined = zoomName ? vtName(`w-${card.key}`, 'cal-item') : undefined;
-  const model =
-    hideSpark || card.model.compliance?.state === 'planned'
-      ? { ...card.model, sparkline: hideSpark ? null : card.model.sparkline, compliance: card.model.compliance?.state === 'planned' ? null : card.model.compliance }
-      : card.model;
-
   return (
     <div
-      className="relative"
-      data-card={card.key}
-      onPointerEnter={() => setHover(true)}
-      onPointerLeave={() => setHover(false)}
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      role="link"
+      tabIndex={focused ? 0 : -1}
+      aria-roledescription={card.draggable ? 'draggable workout' : undefined}
+      aria-label={`${card.model.title}${card.model.isKey ? ', key' : ''}`}
+      aria-selected={selected || undefined}
+      data-dragging={isDragging || undefined}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          actions.open(card);
+          return;
+        }
+        listeners?.onKeyDown?.(e);
+      }}
+      onFocus={() => calStore.get().cardKey !== card.key && calStore.set({ cardKey: card.key, cursor: date })}
+      className={cn(
+        'relative block outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
+        rounded,
+        card.draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
+        selected && 'ring-1 ring-fg-1 ring-offset-1 ring-offset-canvas',
+        isDragging && '[&>.face]:invisible',
+      )}
     >
-      <div
-        ref={setNodeRef}
-        {...listeners}
-        {...attributes}
-        role="link"
-        tabIndex={focused ? 0 : -1}
-        aria-roledescription={card.draggable ? 'draggable workout' : undefined}
-        aria-label={`${card.model.title}${card.model.isKey ? ', key' : ''}`}
-        aria-selected={selected || undefined}
-        onClick={onClick}
-        onKeyDown={(e) => {
-          onKeyDown(e);
-          if (!e.defaultPrevented) listeners?.onKeyDown?.(e);
-        }}
-        onFocus={() => calStore.get().cardKey !== card.key && calStore.set({ cardKey: card.key, cursor: date })}
-        className={cn(
-          'cal-card block rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
-          card.draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
-          density === 'chip' || density === 'mini' ? 'rounded-sm' : 'rounded-md',
-        )}
-      >
+      {children}
+      {isDragging && <span className={cn('absolute inset-0 border border-dashed border-line-3 bg-hatch-faint opacity-70', rounded)} aria-hidden />}
+    </div>
+  );
+});
+
+export const CardItem = memo(function CardItem({ card, date, density, actions, zoomName, trailing, hideSpark }: CardItemProps) {
+  const [hover, setHover] = useState(false);
+  const zoomStyle: CSSProperties | undefined = zoomName ? vtName(`w-${card.key}`, 'cal-item') : undefined;
+  const face = useMemo(() => {
+    const model =
+      hideSpark || card.model.compliance?.state === 'planned'
+        ? { ...card.model, sparkline: hideSpark ? null : card.model.sparkline, compliance: card.model.compliance?.state === 'planned' ? null : card.model.compliance }
+        : card.model;
+    return (
+      <div className="face">
         {density === 'mini' ? (
           <MiniChip card={card} />
         ) : density === 'compact' && !trailing ? (
-          <CompactCard card={card} ghost={isDragging} selected={selected} style={zoomStyle} />
+          <CompactCard card={card} style={zoomStyle} />
         ) : (
           <WorkoutCard
             model={model}
             density={density}
-            ghost={isDragging}
-            selected={selected}
             style={zoomStyle}
-            className={cn('w-full', card.draggable || card.activity ? 'hover:border-line-3 hover:bg-surface-3' : '', density === 'compact' && '!gap-0.5 !py-1.5')}
+            className={cn('w-full', 'hover:border-line-3 hover:bg-surface-3', density === 'compact' && '!gap-0.5 !py-1.5')}
             trailing={trailing}
           />
         )}
       </div>
-      {hover && !isDragging && density !== 'mini' && <QuickActions card={card} date={date} actions={actions} />}
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card, density, zoomName, trailing, hideSpark]);
+
+  return (
+    <div className="relative" data-card={card.key} onPointerEnter={() => setHover(true)} onPointerLeave={() => setHover(false)}>
+      <DragShell card={card} date={date} actions={actions} rounded={density === 'chip' || density === 'mini' ? 'rounded-sm' : 'rounded-md'}>
+        {face}
+      </DragShell>
+      {hover && density !== 'mini' && <QuickActions card={card} date={date} actions={actions} />}
     </div>
   );
 });
