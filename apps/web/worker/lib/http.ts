@@ -12,6 +12,8 @@ export class ApiError extends Error {
     public readonly status: ContentfulStatusCode,
     public readonly code: string,
     message: string,
+    /** Seconds until a retry can succeed (sent as a `Retry-After` header on 429/503). */
+    public readonly retryAfterSec?: number,
   ) {
     super(message);
   }
@@ -30,6 +32,7 @@ const HTTP_CODES: Partial<Record<number, string>> = { 400: 'bad_request', 401: '
  */
 export function errorResponse(c: Context, err: unknown): Response {
   if (err instanceof ApiError) {
+    if (err.retryAfterSec !== undefined) c.header('Retry-After', String(Math.max(1, Math.ceil(err.retryAfterSec))));
     return c.json<ApiErrorBody>({ error: { code: err.code, message: err.message } }, err.status);
   }
   if (err instanceof HTTPException && err.status < 500) {

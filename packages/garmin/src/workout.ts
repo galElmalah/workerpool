@@ -358,7 +358,14 @@ function convertTarget(target: Target | undefined, ctx: Ctx): TargetResult {
     case 'pace':
       return paceTarget(target.lowMps, target.highMps, ctx);
     case 'pace_pct': {
-      const base = sport === 'swim' ? th.swimCssMps : sport === 'run' || sport === 'walk' || sport === 'hike' ? th.runThresholdMps : undefined;
+      const base =
+        sport === 'swim'
+          ? th.swimCssMps
+          : sport === 'run' || sport === 'walk' || sport === 'hike'
+            ? th.runThresholdMps
+            : sport === 'row' && th.rowThresholdW
+              ? Math.cbrt(th.rowThresholdW / 2.8) // Concept2: P = 2.80 · v³
+              : undefined;
       if (!base) return { note: `${pct(target.low)}–${pct(target.high)} threshold pace` };
       return paceTarget(base * frac(target.low), base * frac(target.high), ctx);
     }

@@ -41,7 +41,7 @@ async function writeThrottle(db: D1Database, t: Throttle): Promise<void> {
 async function assertNotLocked(db: D1Database): Promise<Throttle> {
   const t = await readThrottle(db);
   const wait = Math.ceil((t.lockedUntil - Date.now()) / 1000);
-  if (wait > 0) throw new ApiError(429, 'too_many_attempts', `Too many attempts. Try again in ${wait} s.`);
+  if (wait > 0) throw new ApiError(429, 'too_many_attempts', `Too many attempts. Try again in ${wait} s.`, wait);
   return t;
 }
 

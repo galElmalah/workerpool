@@ -55,8 +55,10 @@ function needs(t: Target, sport: Sport, th: ThresholdSnapshot | undefined): stri
     return `% power targets need ${sport === 'row' ? 'a rowing threshold' : 'an FTP'} to convert to watts`;
   if ((t.type === 'hr_pct_lthr' || (t.type === 'ramp' && t.basis === 'hr_pct_lthr')) && !th.lthr) return '%LTHR targets need an LTHR to convert to bpm';
   if (t.type === 'pace_pct' || (t.type === 'ramp' && t.basis === 'pace_pct')) {
-    const thr = sport === 'swim' ? th.swimCssMps : sport === 'run' ? th.runThresholdMps : undefined;
-    if (!thr) return '% pace targets need a threshold pace to convert';
+    // Rowing pace comes from the rowing threshold power (Concept2: P = 2.80 · v³); walk/hike use the run threshold.
+    const thr =
+      sport === 'swim' ? th.swimCssMps : sport === 'row' ? th.rowThresholdW : sport === 'run' || sport === 'walk' || sport === 'hike' ? th.runThresholdMps : undefined;
+    if (!thr) return sport === 'row' ? '% pace targets need a rowing threshold to convert' : '% pace targets need a threshold pace to convert';
   }
   return undefined;
 }

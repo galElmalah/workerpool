@@ -197,7 +197,7 @@ export function buildWeekSummaries(input: BuildWeeksInput): WeekSummary[] {
       t.doneDistanceM += a.distanceM ?? 0;
       t.doneCount++;
       t.elevationGainM += a.elevationGainM ?? 0;
-      const split = activityIntensitySplit(sec, a.intensityOverride ?? a.intensityAuto ?? a.intensity, input.zoneSeconds?.get(a.id));
+      const split = activityIntensitySplit(sec, a.intensity ?? a.intensityOverride ?? a.intensityAuto, input.zoneSeconds?.get(a.id));
       intensitySec.easy += split.easy;
       intensitySec.moderate += split.moderate;
       intensitySec.hard += split.hard;

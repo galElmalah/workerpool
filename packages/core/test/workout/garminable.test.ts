@@ -45,4 +45,14 @@ describe('garminSupport', () => {
     expect(many.warnings.some((x) => x.includes('60 steps'))).toBe(true);
     expect(garminSupport('swim', st('- 400m free', 'swim'), { subSport: 'open_water' }).warnings[0]).toMatch(/open-water/);
   });
+  it('rowing: % pace targets use the rowing threshold; no pace warning without pace targets', () => {
+    const paced = st('4x\n  - 2000m 95%\n  - r 5m', 'row');
+    const withThr = garminSupport('row', paced, { thresholds: { rowThresholdW: 220 } });
+    expect(withThr.warnings.some((w) => /pace targets/.test(w))).toBe(false);
+    const noThr = garminSupport('row', paced, { thresholds: {} });
+    expect(noThr.warnings.some((w) => /rowing threshold/.test(w))).toBe(true);
+    const hr = garminSupport('row', st('- 20m z2\n- 10m rpe5', 'row'), { thresholds: {} });
+    expect(hr.warnings.some((w) => /pace targets/.test(w))).toBe(false);
+    expect(garminSupport('hike', st('- 1h 70%', 'hike'), { thresholds: { runThresholdMps: 4 } }).warnings.some((w) => /pace targets/.test(w))).toBe(false);
+  });
 });

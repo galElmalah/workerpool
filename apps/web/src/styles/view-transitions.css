@@ -23,6 +23,11 @@
   ::view-transition-group(nav-pill) { animation-duration: var(--dur-spring-smooth); animation-timing-function: var(--ease-spring-smooth); }
   ::view-transition-old(nav-pill) { animation: none; opacity: 0; }
   ::view-transition-new(nav-pill) { animation: none; }
+  /* The pill's group paints ABOVE the root snapshot, which holds the rail item's icon + label, so
+     an opaque pill blanked the active item for the whole transition (very visible during the 900ms
+     calendar zoom). Blend it so the light label (dark theme) / dark label (light theme) shows through. */
+  html:not([data-theme=light])::view-transition-new(nav-pill) { mix-blend-mode: lighten; }
+  html[data-theme=light]::view-transition-new(nav-pill) { mix-blend-mode: darken; }
 
   html:active-view-transition-type(lateral) {
     &::view-transition-old(main) { animation: vt-fade-out 140ms var(--ease-in) both; }
