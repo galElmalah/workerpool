@@ -74,7 +74,7 @@ function PlanVsActual({ a, w }: { a: ActivityDetail; w: PlannedWorkout }) {
           {blocks.length > 0 ? (
             <div style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
               <div className="mb-1 text-micro uppercase text-fg-3">Planned structure</div>
-              <IntensityProfile blocks={blocks} height={96} showAxis />
+              <IntensityProfile blocks={blocks} height={96} showAxis axisLabel={w.sport === 'bike' ? '%FTP' : w.sport === 'run' ? '% threshold pace' : w.sport === 'swim' ? '% CSS' : '% threshold'} />
             </div>
           ) : (
             <p className="text-body-sm text-fg-3">Unstructured session — compared on totals.</p>

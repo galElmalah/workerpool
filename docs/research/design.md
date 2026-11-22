@@ -983,7 +983,7 @@ General component rules:
 7. **Spacing from the allowed steps only**, radii from `xs…2xl` only, and inner radius = outer − padding.
 8. **Timing from `src/motion/tokens.ts` / `--ease-spring-*` only.** No inline `duration: 0.3` or ad-hoc cubic-beziers. `smooth` is the default. `bouncy` is only for drop settle, star and completion check.
 9. **Route changes are View Transitions** through TanStack `defaultViewTransition` + `vtTypes`. Never pass `viewTransition` ad hoc except `{ types: [...] }` overrides, never use React `<ViewTransition>`, and never call `document.startViewTransition` yourself.
-10. **Shared-element names are a registry:** `main`, `nav-pill`, `wk-card`, `wk-glyph`, `wk-title`, `cal-focus`, `w-<id>` (class `cal-item`). Add new names to this list in this doc. Every name must be unique on the page.
+10. **Shared-element names are a registry:** `main`, `nav-pill`, `wk-card`, `wk-glyph`, `wk-title`, `cal-focus`, `w-<id>` (class `cal-item`), `settings-nav`, `settings-pill`. Add new names to this list in this doc. Every name must be unique on the page.
 11. **In-page morphs use Motion** `layout` / `layoutId`, never on an element that has a `view-transition-name`.
 12. **No modals.** The command palette is the only overlay. Popovers are only for pickers ≤ 320px. Destructive actions = immediate + undo toast. Creating or editing anything = a full page.
 13. **Animate transform/opacity/clip-path only.** No per-frame `setState`. Pointer effects write CSS vars or MotionValues.

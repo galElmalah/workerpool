@@ -43,12 +43,21 @@ const OVERLAY_SCRIPT = `
     .demo-ripple { position: fixed; z-index: 2147483646; pointer-events: none; width: 44px; height: 44px; margin: -22px 0 0 -22px;
       border-radius: 50%; border: 1.5px solid rgba(255,255,255,.9); animation: demo-ripple .55s cubic-bezier(.2,.7,.2,1) forwards; }
     @keyframes demo-ripple { from { transform: scale(.25); opacity: .9 } to { transform: scale(1); opacity: 0 } }
-    #demo-caption { position: fixed; left: 50%; bottom: 36px; z-index: 2147483645; pointer-events: none; transform: translate(-50%, 12px);
-      opacity: 0; transition: opacity .35s ease, transform .45s cubic-bezier(.2,.8,.2,1); max-width: min(980px, 86vw);
+    #demo-caption { position: fixed; left: var(--demo-cx, 50%); bottom: 36px; z-index: 2147483645; pointer-events: none; transform: translate(-50%, 12px);
+      opacity: 0; transition: opacity .35s ease, transform .45s cubic-bezier(.2,.8,.2,1); max-width: min(var(--demo-cw, 980px), 86vw);
       padding: 14px 22px; border-radius: 16px; background: rgba(10,10,10,.78); backdrop-filter: blur(18px) saturate(1.4);
       border: 1px solid rgba(255,255,255,.14); color: #fff; font: 500 19px/1.3 'Geist Variable', system-ui, sans-serif;
       letter-spacing: -0.01em; text-align: center; }
     #demo-caption.on { opacity: 1; transform: translate(-50%, 0); }
+    #demo-caption.top { bottom: auto; top: 30px; transform: translate(-50%, -12px); }
+    #demo-caption.top.on { transform: translate(-50%, 0); }
+    #demo-keys { position: fixed; right: 28px; bottom: 30px; z-index: 2147483645; pointer-events: none; display: flex; gap: 6px;
+      opacity: 0; transform: translateY(8px) scale(.96); transition: opacity .2s ease, transform .3s cubic-bezier(.2,.8,.2,1); }
+    #demo-keys.on { opacity: 1; transform: none; }
+    #demo-keys kbd { min-width: 34px; height: 34px; padding: 0 10px; display: grid; place-items: center; border-radius: 9px; background: rgba(18,18,18,.88);
+      border: 1px solid rgba(255,255,255,.2); box-shadow: inset 0 -2px 0 rgba(255,255,255,.08); color: #fff; font: 600 15px/1 'Geist Mono Variable', ui-monospace, monospace; }
+    #demo-fade { position: fixed; inset: 0; z-index: 2147483643; pointer-events: none; background: #000; opacity: 0; transition: opacity .6s ease; }
+    #demo-fade.on { opacity: 1; }
     #demo-caption small { display: block; margin-top: 4px; font: 400 14.5px/1.35 'Geist Variable', system-ui, sans-serif; color: rgba(255,255,255,.66); letter-spacing: 0; }
     #demo-card { position: fixed; inset: 0; z-index: 2147483644; pointer-events: none; display: grid; place-items: center; background: #000;
       opacity: 0; transition: opacity .5s ease; color: #fff; text-align: center; }
@@ -65,6 +74,17 @@ const OVERLAY_SCRIPT = `
     document.documentElement.appendChild(cur);
     const cap = document.createElement('div'); cap.id = 'demo-caption'; document.documentElement.appendChild(cap);
     const card = document.createElement('div'); card.id = 'demo-card'; document.documentElement.appendChild(card);
+    const keys = document.createElement('div'); keys.id = 'demo-keys'; document.documentElement.appendChild(keys);
+    const fade = document.createElement('div'); fade.id = 'demo-fade'; document.documentElement.appendChild(fade);
+    if (window.__demoFadeOn) fade.classList.add('on');
+    let keysTimer = 0;
+    window.__demoKeys = (list) => {
+      clearTimeout(keysTimer); keys.innerHTML = '';
+      for (const k of list) { const e = document.createElement('kbd'); e.textContent = k; keys.append(e); }
+      keys.classList.add('on'); keysTimer = setTimeout(() => keys.classList.remove('on'), 1300);
+    };
+    window.__demoFade = (on) => { window.__demoFadeOn = on; fade.classList.toggle('on', !!on); };
+    window.__demoCursor = (on) => { cur.style.opacity = on ? '1' : '0'; };
     const pos = (x, y) => { cur.style.transform = 'translate(' + x + 'px,' + y + 'px)'; };
     pos(window.__demoX ?? -40, window.__demoY ?? -40);
     addEventListener('mousemove', (e) => { window.__demoX = e.clientX; window.__demoY = e.clientY; pos(e.clientX, e.clientY); }, true);
@@ -72,8 +92,12 @@ const OVERLAY_SCRIPT = `
       const r = document.createElement('div'); r.className = 'demo-ripple'; r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
       document.documentElement.appendChild(r); setTimeout(() => r.remove(), 600);
     }, true);
-    window.__demoCaption = (title, sub) => {
+    window.__demoCaption = (title, sub, opts) => {
       if (!title) { cap.classList.remove('on'); return; }
+      const o = opts || {};
+      cap.classList.toggle('top', o.pos === 'top');
+      cap.style.setProperty('--demo-cx', o.x != null ? o.x + 'px' : '50%');
+      cap.style.setProperty('--demo-cw', (o.maxWidth || 980) + 'px');
       cap.innerHTML = ''; cap.append(title);
       if (sub) { const s = document.createElement('small'); s.textContent = sub; cap.append(s); }
       cap.classList.add('on');
@@ -91,7 +115,7 @@ const OVERLAY_SCRIPT = `
 
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-export async function createRecorder({ outDir, width = 1600, height = 900, fps = 30, headless = true, quality = 92 }) {
+export async function createRecorder({ outDir, width = 1600, height = 900, fps = 30, headless = true, quality = 92, timezoneId, locale, mouse: startMouse }) {
   const { chromium } = loadPlaywright();
   const framesDir = path.join(outDir, 'frames');
   await rm(framesDir, { recursive: true, force: true });
@@ -102,7 +126,7 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
     args: ['--force-color-profile=srgb', '--disable-lcd-text', '--enable-gpu-rasterization', '--hide-scrollbars'],
     ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
   });
-  const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, colorScheme: 'dark', reducedMotion: 'no-preference' });
+  const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, colorScheme: 'dark', reducedMotion: 'no-preference', ...(timezoneId ? { timezoneId } : {}), ...(locale ? { locale } : {}) });
   await context.addInitScript(OVERLAY_SCRIPT);
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
@@ -110,7 +134,10 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
   const frames = []; // { file, t }
   let recording = false;
   let writes = Promise.resolve();
-  let mouse = { x: width / 2, y: height / 2 };
+  let mouse = startMouse ? { ...startMouse } : { x: width / 2, y: height / 2 };
+  const captionDefaults = {};
+  const marks = [];
+  let startedAt = 0;
 
   cdp.on('Page.screencastFrame', ({ data, metadata, sessionId }) => {
     cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
@@ -127,8 +154,19 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
     get frameCount() {
       return frames.length;
     },
+    /** Current cursor position (to hand over to the next segment). */
+    get mouse() {
+      return { ...mouse };
+    },
+    /** Place the cursor without animating (before start(), e.g. to continue from the previous segment). */
+    async placeCursor(x, y) {
+      mouse = { x, y };
+      await page.mouse.move(x, y);
+    },
     async start() {
+      await page.mouse.move(mouse.x, mouse.y).catch(() => {});
       recording = true;
+      startedAt = Date.now();
       await cdp.send('Page.startScreencast', { format: 'jpeg', quality, maxWidth: width, maxHeight: height, everyNthFrame: 1 });
     },
     async stop() {
@@ -145,6 +183,7 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
       const steps = Math.max(8, Math.round(ms / 16));
       for (let i = 1; i <= steps; i++) {
         const k = ease(i / steps);
+        if (i === 1) await page.mouse.move(from.x, from.y).catch(() => {});
         await page.mouse.move(from.x + (x - from.x) * k, from.y + (y - from.y) * k);
         await page.waitForTimeout(ms / steps);
       }
@@ -196,21 +235,69 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
         await page.waitForTimeout(ms / steps);
       }
     },
-    caption: (title, sub) => page.evaluate(([t, s]) => window.__demoCaption?.(t, s), [title ?? '', sub ?? '']),
-    async titleCard(kicker, title, sub, ms = 2600) {
+    /**
+     * Caption pill. opts: { pos: 'bottom' | 'top', x: centre in px (default: page centre), maxWidth }.
+     * Changing text while one is showing crossfades through a short hide so the eye catches the new line.
+     */
+    async caption(title, sub, opts = {}) {
+      const showing = await page.evaluate(() => document.getElementById('demo-caption')?.classList.contains('on')).catch(() => false);
+      if (showing && title) {
+        await page.evaluate(() => window.__demoCaption?.('')).catch(() => {});
+        await page.waitForTimeout(320);
+      }
+      await page.evaluate(([t, s, o]) => window.__demoCaption?.(t, s, o), [title ?? '', sub ?? '', { ...captionDefaults, ...opts }]).catch(() => {});
+    },
+    /** Defaults merged into every caption (e.g. { x: 916 } to centre over the content column). */
+    captionDefaults(opts) {
+      Object.assign(captionDefaults, opts);
+    },
+    /** Press a key or chord (Playwright syntax, e.g. 'Control+k'), showing a keycap chip bottom-right. */
+    async press(key, { show = true, label, after = 450 } = {}) {
+      if (show) {
+        const caps = label ?? key.split('+').map((k) => ({ Control: 'Ctrl', Meta: '⌘', Shift: '⇧', Alt: '⌥', Enter: '↵', Escape: 'Esc', ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓' })[k] ?? (k.length === 1 ? k.toUpperCase() : k));
+        await page.evaluate((l) => window.__demoKeys?.(l), Array.isArray(caps) ? caps : [caps]).catch(() => {});
+        await page.waitForTimeout(160);
+      }
+      await page.keyboard.press(key);
+      await page.waitForTimeout(after);
+    },
+    /** Fade the whole frame to / from black (used to join segments). */
+    async fade(on, ms = 650) {
+      await page.evaluate((v) => window.__demoFade?.(v), on).catch(() => {});
+      await page.waitForTimeout(ms);
+    },
+    async cursor(on) {
+      await page.evaluate((v) => window.__demoCursor?.(v), on).catch(() => {});
+    },
+    /** Seconds since start() — for logging beat timestamps. */
+    elapsed() {
+      return startedAt ? (Date.now() - startedAt) / 1000 : 0;
+    },
+    /** Record a named beat at the current time (written next to the video as beats.json). */
+    mark(label) {
+      const t = api.elapsed();
+      marks.push({ t: Math.round(t * 10) / 10, label });
+      console.log(`  [${t.toFixed(1).padStart(6)}s] ${label}`);
+    },
+    marks,
+    /** Full-frame title card. { keep: true } leaves it up (for an end card); { instant } skips the fade-in. */
+    async titleCard(kicker, title, sub, ms = 2600, { keep = false } = {}) {
+      await api.cursor(false);
       await page.evaluate(([k, t, s]) => window.__demoCard?.(k, t, s), [kicker, title, sub]);
       await page.waitForTimeout(ms);
+      if (keep) return;
       await page.evaluate(() => window.__demoCard?.('', '', ''));
       await page.waitForTimeout(550);
+      await api.cursor(true);
     },
 
     /** Assemble frames (real timestamps → constant frame rate) into an H.264 MP4. */
-    async encode(outFile) {
+    async encode(outFile, { crf = 18, tail = 0.5 } = {}) {
       if (frames.length < 2) throw new Error('nothing recorded');
       const lines = ['ffconcat version 1.0'];
       for (let i = 0; i < frames.length; i++) {
         const next = frames[i + 1];
-        const d = next ? Math.max(0.001, next.t - frames[i].t) : 0.5;
+        const d = next ? Math.max(0.001, next.t - frames[i].t) : tail;
         lines.push(`file '${frames[i].file}'`, `duration ${d.toFixed(4)}`);
       }
       lines.push(`file '${frames[frames.length - 1].file}'`);
@@ -218,7 +305,7 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
       await writeFile(list, lines.join('\n'));
       await run(
         'ffmpeg',
-        ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-vf', `fps=${fps},format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', '17',
+        ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-vf', `fps=${fps},format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf), '-r', String(fps),
           '-movflags', '+faststart', outFile],
         { maxBuffer: 1 << 26 },
       );

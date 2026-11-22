@@ -219,7 +219,7 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
             ))}
           </g>
         )}
-        <text x={L.left - 8} y={L.top - 8} textAnchor="end" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }} aria-hidden>
+        <text x={0} y={L.top - 8} textAnchor="start" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }} aria-hidden>
           {axisLabel}
         </text>
       </svg>

@@ -77,7 +77,7 @@ export function compareWeeks(weeks: WeekSummary[], mode: CompareMode = 'week'): 
     { id: 'fitness', label: 'Fitness', current: fc, previous: fp, delta: fc - fp, deltaKind: 'abs', unit: '' },
     { id: 'form', label: 'Form', current: lastOf(cur)?.form ?? 0, previous: lastOf(prev)?.form ?? 0, delta: (lastOf(cur)?.form ?? 0) - (lastOf(prev)?.form ?? 0), deltaKind: 'abs', unit: '' },
     { id: 'key', label: 'Key sessions', current: k[0], previous: k[1], delta: kp[0] ? k[0] / kp[0] - (kp[1] ? k[1] / kp[1] : 0) : null, deltaKind: 'pct', unit: `/ ${kp[0]}` },
-    { id: 'compliance', label: 'Compliance', current: cmp(cur) * 100, previous: cmp(prev) * 100, delta: cmp(prev) ? cmp(cur) / cmp(prev) - 1 : null, deltaKind: 'pct', unit: '%' },
+    { id: 'compliance', label: 'Compliance', current: cmp(cur), previous: cmp(prev), delta: cmp(prev) ? cmp(cur) / cmp(prev) - 1 : null, deltaKind: 'pct', unit: '%' },
   ];
 }
 

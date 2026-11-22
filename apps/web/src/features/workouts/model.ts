@@ -72,9 +72,9 @@ export function chartBlocks(est: Pick<WorkoutEstimate, 'profile'>, structure: Wo
 
 export function axisLabelFor(sport: Sport): string {
   if (sport === 'bike') return '%FTP';
-  if (sport === 'swim') return '%CSS';
-  if (sport === 'run' || sport === 'row') return '%THR';
-  return '%THR';
+  if (sport === 'swim') return '% CSS';
+  if (sport === 'run') return '% threshold pace';
+  return '% threshold';
 }
 
 // ───────────────────────── id reconciliation ─────────────────────────

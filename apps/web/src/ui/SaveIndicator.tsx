@@ -43,23 +43,27 @@ export function SaveIndicator({ status, className, errorText = "Couldn't save" }
 /**
  * Debounced autosave: calls `save(value)` `delay` ms after the last change and reports the status.
  * "saved" relaxes to "idle" after 2.4s. Errors stay until the next change.
+ * Only real changes after mount are saved: the mount value (and any value seen while
+ * `enabled` is false, e.g. data arriving from the server) is the baseline, so StrictMode's
+ * double-invoked effects or enabling the hook never send the initial value back.
  */
 export function useAutosave<T>(value: T, save: (v: T) => Promise<unknown> | void, opts?: { delay?: number; enabled?: boolean }): SaveStatus {
   const [status, setStatus] = useState<SaveStatus>('idle');
-  const first = useRef(true);
+  const baseline = useRef(value);
   const saveRef = useRef(save);
   saveRef.current = save;
   const delay = opts?.delay ?? 600;
   const enabled = opts?.enabled ?? true;
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
+    if (!enabled) {
+      baseline.current = value;
       return;
     }
-    if (!enabled) return;
+    if (Object.is(value, baseline.current)) return;
     let cancelled = false;
     let relax: ReturnType<typeof setTimeout> | undefined;
     const t = setTimeout(async () => {
+      baseline.current = value;
       setStatus('saving');
       try {
         await saveRef.current(value);

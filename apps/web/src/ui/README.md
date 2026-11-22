@@ -133,6 +133,8 @@ Rules that matter most:
 | `nav-pill` | active rail / bottom-bar item (shell) |
 | `wk-card`, `wk-glyph`, `wk-title` | the clicked `WorkoutCard` (just-in-time via `morph.set`) **and** the detail page hero (`<PageHeader morph glyph={…}>`) |
 | `cal-focus`, `w-<id>` (class `cal-item`) | calendar zoom (calendar agent): focused week/day + its items, `vtName('cal-focus')`, `vtName(\`w-${id}\`, 'cal-item')` |
+| `settings-nav` | the settings section nav (stays put while settings sub-pages cross-fade) |
+| `settings-pill` | the active item's pill in the settings section nav (slides between sub-pages) |
 
 Every name must be unique on screen: if a list renders the same workout twice, give the second a different
 `morphId`. To morph from your own element: spread `morphSourceProps(id)` and style parts with `vt(useIsMorphTarget(id), 'card'|'glyph'|'title')`.

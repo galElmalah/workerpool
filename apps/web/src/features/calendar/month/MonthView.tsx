@@ -38,7 +38,7 @@ import { COLS, GUTTER, WeekRow, type MonthLayout } from './WeekRow';
 
 const HALF = 520; // weeks each side of the anchor: effectively infinite
 const ROWS = HALF * 2 + 1;
-const EST: Record<MonthLayout, number> = { xl: 200, lg: 176, md: 168, sm: 118 };
+const EST: Record<MonthLayout, number> = { xl: 164, lg: 156, md: 160, sm: 110 };
 const WEEKDAYS = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'];
 
 /** Remembered position for Back navigation (card → page → back lands where you were). */
@@ -103,7 +103,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [layout]);
-  const density: CalDensity = dayW < 72 ? 'mini' : dayW >= 184 ? 'full' : dayW >= 96 ? 'compact' : 'chip';
+  const density: CalDensity = dayW < 72 ? 'mini' : dayW >= 184 ? 'full' : dayW >= 84 ? 'compact' : 'chip';
 
   // ── remember position for Back ──
   useEffect(() => {
@@ -113,6 +113,33 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
       if (top) saved = { href, row: top.index, within: Math.max(0, off - top.start), base };
     };
   }, [virtualizer, href, base]);
+  // The router's own scroll restoration re-applies the old raw scrollTop after we mount, which no
+  // longer matches once rows are re-measured; re-pin the remembered row (and the anchor row on a
+  // fresh load) a few times while the view transition and first measurements settle.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const row = restore ? restore.row : Math.max(0, anchorRow - 1);
+    const within = restore ? restore.within : 0;
+    const pin = () => {
+      const off = virtualizer.getOffsetForIndex(row, 'start')?.[0];
+      if (off != null && Math.abs(el.scrollTop - (off + within)) > 2) el.scrollTop = off + within;
+    };
+    let cancelled = false;
+    const stop = () => (cancelled = true);
+    el.addEventListener('wheel', stop, { once: true, passive: true });
+    el.addEventListener('pointerdown', stop, { once: true });
+    el.addEventListener('keydown', stop, { once: true });
+    const timers = [0, 60, 180, 400].map((ms) => setTimeout(() => !cancelled && pin(), ms));
+    return () => {
+      timers.forEach(clearTimeout);
+      el.removeEventListener('wheel', stop);
+      el.removeEventListener('pointerdown', stop);
+      el.removeEventListener('keydown', stop);
+    };
+    // mount only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── scrolling to a date (today jump: teleport to ±4 weeks, then a capped tween) ──
   const scrollToDate = useCallback(

@@ -10,7 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Flag, Plus, RotateCw, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, call } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatIsoWeekRange, formatLoad, monthShort } from '@/lib/format';
@@ -228,10 +228,11 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
                 type="button"
                 title={`${p.label}${p.weeklyLoadTarget ? ` · ${p.weeklyLoadTarget}/wk` : ''}`}
                 onClick={() => onPhase(p.id)}
+                aria-label={p.label}
                 className={cn('absolute inset-y-0 overflow-hidden rounded-xs px-1.5 text-left text-micro uppercase whitespace-nowrap outline-none focus-visible:outline-2 focus-visible:outline-focus', PHASE_STYLE[p.type])}
                 style={{ left: `calc(${(a / n) * 100}% + 1px)`, width: `calc(${((b - a + 1) / n) * 100}% - 2px)` }}
               >
-                <span className="leading-6">{p.label}</span>
+                <FitLabel full={p.label} short={shortPhaseLabel(p)} />
               </button>
             );
           })}
@@ -417,4 +418,39 @@ function WeekTargetEditor({ weeks, phases, today }: { weeks: WeekSummary[]; phas
 
 function addWeekIso(w: IsoWeek, n: number): IsoWeek {
   return isoWeekOf(addDays(isoWeekStart(w), n * 7));
+}
+
+/** Short form for a phase band too narrow for its label: word initials ("General Prep" → "GP"), else the type initial. */
+function shortPhaseLabel(p: Phase): string {
+  const words = p.label.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 1) return words.slice(0, 3).map((w) => w[0]!.toUpperCase()).join('');
+  return (words[0]?.[0] ?? PHASE_LABEL[p.type][0]!).toUpperCase();
+}
+
+/** Shows `full` only when it fits its (padded) parent; otherwise `short` (the parent carries the full label as tooltip). */
+function FitLabel({ full, short }: { full: string; short: string }) {
+  const measure = useRef<HTMLSpanElement>(null);
+  const [fits, setFits] = useState(true);
+  useLayoutEffect(() => {
+    const m = measure.current;
+    const host = m?.parentElement;
+    if (!m || !host) return;
+    const check = () => {
+      const cs = getComputedStyle(host);
+      const room = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      setFits(m.offsetWidth <= room + 0.5);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(host);
+    return () => ro.disconnect();
+  }, [full]);
+  return (
+    <>
+      <span ref={measure} className="invisible absolute leading-6" aria-hidden>
+        {full}
+      </span>
+      <span className="leading-6">{fits ? full : short}</span>
+    </>
+  );
 }

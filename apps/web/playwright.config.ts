@@ -5,6 +5,8 @@ const PERSIST = process.env.E2E_PERSIST ?? '.wrangler/e2e';
 
 export default defineConfig({
   testDir: './e2e',
+  // seeds a small demo dataset (2 months) once the webServer is up
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,

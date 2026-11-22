@@ -68,7 +68,7 @@ function CompactCard({ card, ghost, selected, style }: { card: CalendarCard; gho
       data-morph-id={m.id}
       aria-label={`${m.title}, ${formatDuration(m.durationSec, 'short')}, ${s.label}`}
       className={cn(
-        'relative flex min-w-0 flex-col gap-0.5 overflow-hidden rounded-md py-1.5 pr-2 pl-2.5 transition-[background-color,border-color,opacity] duration-(--dur-fast)',
+        'relative flex min-w-0 flex-col overflow-hidden rounded-md py-1.5 pr-1.5 pl-2.5 transition-[background-color,border-color,opacity] duration-(--dur-fast)',
         s.card,
         'hover:border-line-3 hover:bg-surface-3',
         s.dim && 'opacity-55',
@@ -78,20 +78,17 @@ function CompactCard({ card, ghost, selected, style }: { card: CalendarCard; gho
       style={{ ...style, ...vt(on, 'card') }}
     >
       {rail && !ghost && <span className={cn('absolute inset-y-1.5 left-0 w-[3px] rounded-r-full', rail)} aria-hidden />}
-      <div className="flex min-w-0 items-center gap-1.5">
-        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className="shrink-0 text-fg-1" />
-        <span className={cn('min-w-0 flex-1 truncate text-body-sm font-[520] text-fg-1', s.title)} style={vt(on, 'title')}>
-          {m.title}
-        </span>
-        {m.isKey && <KeyStar pressed readOnly size="sm" />}
-      </div>
-      <div className="flex min-w-0 items-center gap-1.5">
-        <span className={cn('truncate font-mono text-mono-sm text-fg-2', state === 'missed' && 'line-through')}>
-          {formatDuration(m.durationSec)}
-        </span>
-        <span className="ml-auto flex shrink-0 items-center gap-1">
+      {/* title gets the full width (2 lines); glyph · duration · status share the line below */}
+      <span className={cn('line-clamp-2 min-w-0 text-body-sm leading-4 font-[520] break-words text-fg-1', s.title)} style={vt(on, 'title')}>
+        {m.title}
+      </span>
+      <div className="flex min-w-0 items-center gap-1 pt-0.5">
+        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className="shrink-0 text-fg-2" />
+        <span className={cn('shrink-0 font-mono text-mono-sm text-fg-2', state === 'missed' && 'line-through')}>{formatDuration(m.durationSec)}</span>
+        <span className="ml-auto flex min-w-0 items-center gap-1">
+          {m.isKey && <KeyStar pressed readOnly size="sm" />}
           {m.compliance && state !== 'planned' && <ComplianceGlyph state={state} size={11} />}
-          {m.intensity && <IntensityPips intensity={m.intensity} />}
+          {m.intensity && !(m.isKey && m.compliance && state !== 'planned') && <IntensityPips intensity={m.intensity} />}
         </span>
       </div>
     </div>

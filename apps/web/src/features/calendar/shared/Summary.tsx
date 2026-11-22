@@ -145,7 +145,7 @@ function Stat({ value, of, unit, label, delta, caution }: { value: string; of?: 
 /** Compact two-up stat: micro label + delta, value / planned, progress line. */
 function MiniStat({ label, value, of, delta, caution, line }: { label: string; value: string; of?: string; delta?: ReactNode; caution?: boolean; line: ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-0.5">
       <div className="flex h-3.5 items-center justify-between gap-1">
         <span className="text-micro uppercase text-fg-3">{label}</span>
         {delta && <span className={cn('-mr-0.5 rounded-xs px-0.5', caution && 'ring-1 ring-accent')}>{delta}</span>}
@@ -167,9 +167,11 @@ function SportLines({ s, max = 4 }: { s: WeekSummary; max?: number }) {
     <div className="grid grid-cols-2 gap-x-2 gap-y-1">
       {list.map((x) => {
         const dist = DIST_SPORTS.has(x.sport) && (x.plannedDistanceM > 0 || x.doneDistanceM > 0);
-        const dec = (m: number) => (x.sport === 'swim' ? undefined : m < 10_000 ? 1 : 0);
-        const done = distanceParts(x.doneDistanceM, x.sport, units, dec(x.doneDistanceM));
-        const plan = distanceParts(x.plannedDistanceM, x.sport, units, dec(x.plannedDistanceM));
+        // swims over 1 km read in km so a line never wraps ("4.8/4.8 km", not "4,800/4,800 m")
+        const fmtSport = x.sport === 'swim' && Math.max(x.doneDistanceM, x.plannedDistanceM) >= 1000 ? 'run' : x.sport;
+        const dec = (m: number) => (fmtSport === 'swim' ? undefined : m < 10_000 ? 1 : 0);
+        const done = distanceParts(x.doneDistanceM, fmtSport, units, dec(x.doneDistanceM));
+        const plan = distanceParts(x.plannedDistanceM, fmtSport, units, dec(x.plannedDistanceM));
         return (
           <span key={x.sport} className="flex min-w-0 items-center gap-1 font-mono text-mono-sm text-fg-2" title={`${x.sport}: done ${formatDuration(x.doneSec)} of ${formatDuration(x.plannedSec)} planned`}>
             <SportGlyph sport={x.sport} size={14} className="shrink-0 text-fg-3" />
@@ -253,7 +255,7 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
       <span className="shrink-0 font-mono text-mono-sm text-fg-3">
         E<span className="text-fg-2">{pctInt(it.easy, itT)}</span> M<span className="text-fg-2">{pctInt(it.moderate, itT)}</span> H<span className="text-fg-2">{pctInt(it.hard, itT)}</span>
       </span>
-      <SplitBar easy={it.easy} moderate={it.moderate} hard={it.hard} height={3} className="min-w-6 flex-1" />
+      <SplitBar easy={it.easy} moderate={it.moderate} hard={it.hard} height={3} className="min-w-3 flex-1" />
     </span>
   );
   const spark = <DaySpark values={s.dailyLoad} planned={plannedDaily(week).map((p, i) => p + s.dailyLoad[i]!)} todayIndex={todayIndex} />;
@@ -347,31 +349,34 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
 
   if (variant === 'narrow')
     return (
-      <div data-summary className={cn('flex min-w-0 flex-col gap-2 p-2.5', className)}>
-        <div className="flex items-center justify-between gap-1">
+      <div data-summary className={cn('flex min-w-0 flex-col gap-1.5 px-2.5 py-2', className)}>
+        <div className="flex h-5 items-center justify-between gap-1">
           <WeekLabel week={week} phase={undefined} />
           <span className="flex items-center gap-1">
             {note}
-            <WeekMenu week={week} handlers={handlers} />
+            <WeekMenu week={week} handlers={handlers} className="-mr-1.5" />
           </span>
         </div>
-        <div className="flex flex-col gap-1">
-          {hoursStat}
-          {hoursLine}
-        </div>
-        <div className="flex flex-col gap-1">
-          {loadStat}
-          {loadLine}
-        </div>
+        <MiniStat label={future ? 'Hours · plan' : 'Hours'} value={formatDuration(future ? s.plannedSec : s.doneSec)} of={future ? undefined : formatDuration(s.plannedSec)} delta={future ? undefined : hours} line={hoursLine} />
+        <MiniStat label={future ? 'Load · plan' : 'Load'} value={formatLoad(future ? s.plannedLoad : s.doneLoad)} of={future ? undefined : formatLoad(s.plannedLoad)} delta={future ? undefined : load} caution={caution} line={loadLine} />
         <FormLine s={s} compact />
       </div>
     );
 
   return (
-    <div data-summary className={cn('flex min-w-0 flex-col gap-2 px-2.5 py-3', className)}>
-      <div className="flex items-center justify-between gap-2">
-        <WeekLabel week={week} phase={week.phase} />
-        <span className="flex shrink-0 items-center gap-1.5">
+    <div data-summary className={cn('flex min-w-0 flex-col gap-1.5 px-2.5 py-2', className)}>
+      <div className="flex h-5 items-center gap-2">
+        <Link
+          {...links.week(week.isoWeek)}
+          onClick={(e) => e.stopPropagation()}
+          title={week.phase ? `${week.phase.phase.label} · week ${week.phase.index} of ${week.phase.count}` : undefined}
+          className="font-mono text-mono-sm font-[600] text-fg-1 outline-none transition-colors hover:text-accent-ink"
+        >
+          {formatIsoWeek(week.isoWeek)}
+        </Link>
+        <FormZoneLabel zone={s.formZone} withScale={false} className={cn('shrink-0 !text-micro uppercase', s.isProjected ? 'text-fg-3' : 'text-fg-2')} />
+        {s.isProjected && <span className="font-mono text-mono-sm text-fg-3 italic">proj.</span>}
+        <span className="ml-auto flex shrink-0 items-center gap-1">
           {note}
           <WeekMenu week={week} handlers={handlers} className="-mr-1.5" />
         </span>
@@ -380,18 +385,29 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
         <MiniStat label={future ? 'Hours · plan' : 'Hours'} value={formatDuration(future ? s.plannedSec : s.doneSec)} of={future ? undefined : formatDuration(s.plannedSec)} delta={future ? undefined : hours} line={hoursLine} />
         <MiniStat label={future ? 'Load · plan' : 'Load'} value={formatLoad(future ? s.plannedLoad : s.doneLoad)} of={future ? undefined : formatLoad(s.plannedLoad)} delta={future ? undefined : load} caution={caution} line={loadLine} />
       </div>
-      <div className="flex flex-col gap-1.5 pt-0.5">
-        <SportLines s={s} />
-        {mix.some((m) => m.value > 0) && <SportMixBar segments={mix} height={3} />}
+      <SportLines s={s} />
+      <div className="flex h-3.5 items-center gap-2">
+        {keyLine}
+        {split}
+        <span className="ml-auto shrink-0">{spark}</span>
       </div>
-      {(keyLine || split) && (
-        <div className="flex items-center gap-3">
-          {keyLine}
-          {split}
-        </div>
-      )}
-      <div className="border-t border-line-1 pt-2">
-        <FormLine s={s} trailing={spark} />
+      <div
+        className={cn('flex items-baseline gap-2 font-mono text-mono-sm whitespace-nowrap', s.isProjected ? 'text-fg-3' : 'text-fg-2')}
+        title={`End of week${s.isProjected ? ' (projected)' : ''}: fitness ${Math.round(s.fitness)}, fatigue ${Math.round(s.fatigue)}, form ${Math.round(s.form)}`}
+      >
+        <span>
+          <span className="font-sans text-micro uppercase text-fg-3">Fit </span>
+          <span className={s.isProjected ? 'text-fg-2' : 'text-fg-1'}>{Math.round(s.fitness)}</span>
+          <span className="text-fg-3"> {formatSigned(s.fitnessDelta, 0)}</span>
+        </span>
+        <span>
+          <span className="font-sans text-micro uppercase text-fg-3">Fat </span>
+          <span className={s.isProjected ? 'text-fg-2' : 'text-fg-1'}>{Math.round(s.fatigue)}</span>
+        </span>
+        <span>
+          <span className="font-sans text-micro uppercase text-fg-3">Form </span>
+          <span className={s.isProjected ? 'text-fg-2' : 'text-fg-1'}>{formatSigned(s.form, 0)}</span>
+        </span>
       </div>
     </div>
   );

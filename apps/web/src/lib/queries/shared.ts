@@ -124,12 +124,18 @@ function useIsSyncing(): boolean {
   return qc.isMutating({ mutationKey: SYNC_KEY }) > 0;
 }
 
-/** Route guard helper: resolves where an unauthenticated visitor must go, or null when signed in. */
+/**
+ * Route guard helper: resolves where a visitor must go, or null when signed in and onboarded.
+ * A signed-in user whose settings say `onboarded: false` finishes onboarding first (/welcome
+ * resumes at the right step and sends onboarded users back to the app, so there is no loop).
+ */
 export async function requiredAuthRedirect(): Promise<'/welcome' | '/login' | null> {
   try {
     const s = await queryClient.ensureQueryData(authQuery);
     if (!s.configured) return '/welcome';
     if (!s.authenticated) return '/login';
+    const settings = await queryClient.ensureQueryData(settingsQuery).catch(() => null);
+    if (settings && settings.onboarded === false) return '/welcome';
     return null;
   } catch {
     return null; // offline: let the page render its own error state
