@@ -58,6 +58,7 @@ import type { IngestInput } from './ingest.types';
 import { decryptCredentials, errorMessage, getGarminClient, mfaPending, syncNow, syncToday, toApiError } from './garmin';
 import { isDemo } from '../env';
 import { pushPending } from './push';
+import { rePairDates } from './pairing';
 
 // ───────────────────────────── constants & state keys ─────────────────────────────
 
@@ -224,13 +225,18 @@ function activityRepo(env: Env): ActivitySyncRepository & { deleted: number } {
       (await listKnownGarminActivities(env.DB, ms)).map((k) => ({ garminActivityId: k.garminActivityId, startMs: k.startMs, editHash: k.editHash })),
     upsert: (items) => enqueueActivities(env, Q_INCREMENTAL, items),
     markDeleted: async (ids) => {
+      const dates: LocalDate[] = [];
       for (const id of ids) {
         const row = await getActivityByGarminId(env.DB, id);
         if (row && !row.deleted) {
+          const day = await env.DB.prepare('SELECT local_date FROM activities WHERE id = ?').bind(row.id).first<{ local_date: string }>();
           await softDeleteActivity(env.DB, row.id);
+          if (day) dates.push(day.local_date);
           repo.deleted++;
         }
       }
+      // softDeleteActivity released the paired workouts; let them pair with another activity of that day.
+      await rePairDates(env, dates);
     },
   };
   return repo;
