@@ -7,15 +7,14 @@
  * Planned, Done and Target are always labelled separately; projections are marked "proj.".
  */
 import { Link, useNavigate } from '@tanstack/react-router';
-import { CalendarClock, CopyPlus, Ellipsis, NotebookPen, Pilcrow, Star } from 'lucide-react';
+import { ArrowRight, CalendarClock, CopyPlus, Ellipsis, NotebookPen, Pilcrow, Star, TriangleAlert } from 'lucide-react';
 import { memo, type ReactNode } from 'react';
 import type { Sport, WeekSummary } from '@cadence/core/domain';
-import { SparkBars, SportMixBar, SplitBar } from '@/charts';
+import { SportMixBar, SplitBar } from '@/charts';
 import { cn } from '@/lib/cn';
-import { distanceParts, formatDuration, formatIsoWeek, formatLoad, formatSigned, NBSP } from '@/lib/format';
+import { distanceParts, formatDuration, formatIsoWeek, formatLoad, formatPercent, formatSigned, NBSP } from '@/lib/format';
 import { useUnits } from '@/lib/units';
 import { links } from '@/shell/links';
-import { DeltaBadge } from '@/ui/domain/DeltaBadge';
 import { SportGlyph } from '@/ui/domain/SportGlyph';
 import { FormZoneLabel } from '@/ui/domain/Status';
 import { IconButton } from '@/ui/Button';
@@ -28,6 +27,51 @@ const DIST_SPORTS = new Set<Sport>(['bike', 'run', 'swim', 'row', 'walk', 'hike'
 export interface SummaryMenuHandlers {
   onCopyWeek?: (isoWeek: string, anchor: HTMLElement) => void;
   onShift?: (from: string, anchor: HTMLElement) => void;
+}
+
+/**
+ * Static twins of DeltaBadge / SparkBars for virtualized rows: no Motion components (each one
+ * mounts a projection node that forces a document-scroll read), same encodings.
+ */
+function Delta({ value, caution, flatBelow = 0.03 }: { value: number | null | undefined; caution?: boolean; flatBelow?: number }) {
+  if (value == null || !Number.isFinite(value)) return <span className="font-mono text-mono-sm text-fg-4">—</span>;
+  const dir = Math.abs(value) < flatBelow ? 'flat' : value > 0 ? 'up' : 'down';
+  const text = dir === 'flat' ? '±0%' : formatPercent(value, { signed: true });
+  return (
+    <span className={cn('inline-flex items-center gap-0.5 whitespace-nowrap text-mono-sm', caution || dir === 'up' ? 'font-[600] text-fg-1' : dir === 'down' ? 'text-fg-2' : 'text-fg-3')}>
+      {caution ? (
+        <TriangleAlert className="size-3 shrink-0" aria-hidden />
+      ) : (
+        <ArrowRight className={cn('size-3 shrink-0', dir === 'up' && '-rotate-45', dir === 'down' && 'rotate-45')} strokeWidth={2} aria-hidden />
+      )}
+      <span className="num">{text}</span>
+      <span className="sr-only">{dir === 'up' ? 'increase' : dir === 'down' ? 'decrease' : 'no change'} week over week</span>
+    </span>
+  );
+}
+
+function DaySpark({ values, planned, todayIndex }: { values: number[]; planned: number[]; todayIndex?: number }) {
+  const h = 14;
+  const bw = 4;
+  const gap = 2;
+  const m = Math.max(1, ...values, ...planned);
+  const y = (v: number) => (v > 0 ? Math.max(1.5, (v / m) * h) : 0);
+  return (
+    <svg width={values.length * (bw + gap) - gap} height={h + 3} className="block overflow-visible" role="img" aria-label={`Daily load ${values.map((v) => Math.round(v)).join(', ')}`}>
+      {values.map((v, i) => {
+        const x = i * (bw + gap);
+        const p = planned[i] ?? 0;
+        return (
+          <g key={i}>
+            <rect x={x} y={h - 1} width={bw} height={1} className="fill-line-2" />
+            {p > v && <rect x={x + 0.5} y={h - y(p) + 0.5} width={bw - 1} height={Math.max(0, y(p) - y(v) - 1)} rx={1} className="fill-none stroke-line-3" />}
+            {v > 0 && <rect x={x} y={h - y(v)} width={bw} height={y(v)} rx={1} className="fill-accent" />}
+            {todayIndex === i && <rect x={x - 1} y={h + 1.5} width={bw + 2} height={1.5} rx={0.75} className="fill-fg-1" />}
+          </g>
+        );
+      })}
+    </svg>
+  );
 }
 
 /** Done / planned progress with a ghost "projected" segment and a target tick. */
@@ -192,8 +236,8 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
   if (!s) return <SummarySkeleton variant={variant} className={className} />;
   const future = todayIndex == null && !!week.summary && s.isProjected && s.doneSec === 0;
   const caution = !future && (s.wowLoad ?? 0) > 0.15;
-  const hours = <DeltaBadge value={s.wowSec} size="sm" flatBelow={0.03} />;
-  const load = <DeltaBadge value={s.wowLoad} size="sm" flatBelow={0.03} warning={caution} />;
+  const hours = <Delta value={s.wowSec} />;
+  const load = <Delta value={s.wowLoad} caution={caution} />;
   const it = s.intensitySec;
   const itT = it.easy + it.moderate + it.hard;
   const mix = s.bySport.map((x) => ({ sport: x.sport, value: s.doneSec > 0 ? x.doneSec : x.plannedSec }));
@@ -212,7 +256,7 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
       <SplitBar easy={it.easy} moderate={it.moderate} hard={it.hard} height={3} className="min-w-6 flex-1" />
     </span>
   );
-  const spark = <SparkBars values={s.dailyLoad} planned={plannedDaily(week).map((p, i) => p + s.dailyLoad[i]!)} todayIndex={todayIndex} barWidth={4} gap={2} height={14} ariaLabel="Daily load" />;
+  const spark = <DaySpark values={s.dailyLoad} planned={plannedDaily(week).map((p, i) => p + s.dailyLoad[i]!)} todayIndex={todayIndex} />;
   const hoursStat = future ? (
     <Stat value={formatDuration(s.plannedSec)} unit="h planned" label="planned hours" />
   ) : (
