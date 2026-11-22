@@ -385,7 +385,7 @@ export function SettingsSportsPage() {
               ['3', 'Distance', 'when only distance was planned'],
             ].map(([n, t, d]) => (
               <div key={n} className="flex gap-3">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-line-3 font-mono text-mono-sm text-fg-2">{n}</span>
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-line-3 text-mono-sm text-fg-2">{n}</span>
                 <div className="flex flex-col">
                   <span className="text-body text-fg-1">{t}</span>
                   <span className="text-body-sm text-fg-3">{d}</span>

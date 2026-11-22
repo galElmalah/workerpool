@@ -45,7 +45,7 @@ export function StrengthTable() {
           ['Tonnage', Math.round(tonnage), 'kg'],
         ].map(([l, v, u]) => (
           <div key={l as string} className="bg-surface-1 px-4 py-3">
-            <div className="text-micro uppercase text-fg-3">{l}</div>
+            <div className="text-micro text-fg-3">{l}</div>
             <div className="text-stat-sm text-fg-1">
               <Ticker value={v as number} />
               {u && <span className="ml-1 text-body-sm text-fg-3">{u}</span>}
@@ -55,7 +55,7 @@ export function StrengthTable() {
       </div>
       <div className="overflow-x-auto">
         <div className="min-w-[640px]">
-          <div className="grid grid-cols-[20px_minmax(10rem,1fr)_4rem_4rem_6rem_4rem_4.5rem_3rem_56px] items-center gap-1 border-b border-line-1 px-1 pb-1.5 text-micro uppercase text-fg-3">
+          <div className="grid grid-cols-[20px_minmax(10rem,1fr)_4rem_4rem_6rem_4rem_4.5rem_3rem_56px] items-center gap-1 border-b border-line-1 px-1 pb-1.5 text-micro text-fg-3">
             <span />
             <span className="pl-1.5">Exercise</span>
             <span className="text-right">Sets</span>

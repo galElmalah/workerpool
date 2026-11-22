@@ -412,7 +412,7 @@ function TplNotes({ t, patch }: { t: Template; patch: (p: Record<string, unknown
       <div className="flex flex-col gap-4">
         <Textarea value={desc} minRows={3} onChange={(e) => setDesc(e.currentTarget.value)} onBlur={() => desc.trim() !== (t.description ?? '') && void patch({ description: desc.trim() || null })} placeholder="Purpose, cues, fuelling…" className="bg-surface-1" />
         <div className="flex flex-col gap-1.5">
-          <span className="text-micro uppercase text-fg-3">Tags</span>
+          <span className="text-micro text-fg-3">Tags</span>
           <TagInput value={t.tags} onValueChange={(tags) => void patch({ tags })} aria-label="Tags" />
         </div>
       </div>
@@ -436,7 +436,7 @@ function ScheduleCard({ t, today }: { t: Template; today: LocalDate }) {
     );
   return (
     <Card padding="md" className="flex flex-col gap-3 self-start">
-      <span className="text-micro uppercase text-fg-3">Schedule</span>
+      <span className="text-micro text-fg-3">Schedule</span>
       <MonthGrid value={dates.at(-1) ?? null} today={today} min={today} onSelect={(d) => setDates((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d].sort()))} />
       <div className="flex min-h-7 flex-wrap gap-1">
         <AnimatePresence initial={false}>
@@ -470,9 +470,9 @@ function Instances({ t, today }: { t: Template; today: LocalDate }) {
               <li key={w.id}>
                 <Link {...links.workout(w.id)} className="flex h-10 items-center gap-3 rounded-md px-3 text-body transition-colors hover:bg-surface-1">
                   <ComplianceGlyph state={w.compliance?.state ?? 'planned'} />
-                  <span className="w-28 shrink-0 font-mono text-mono text-fg-2">{formatDateMedium(w.date)}</span>
+                  <span className="w-28 shrink-0 text-mono text-fg-2">{formatDateMedium(w.date)}</span>
                   <span className="min-w-0 flex-1 truncate text-fg-1">{w.title}</span>
-                  <span className={cn('text-micro uppercase', w.date >= today ? 'text-fg-2' : 'text-fg-3')}>{w.date >= today ? 'Upcoming' : w.pairedActivityId ? 'Done' : w.status === 'skipped' ? 'Skipped' : 'Missed'}</span>
+                  <span className={cn('text-micro ', w.date >= today ? 'text-fg-2' : 'text-fg-3')}>{w.date >= today ? 'Upcoming' : w.pairedActivityId ? 'Done' : w.status === 'skipped' ? 'Skipped' : 'Missed'}</span>
                 </Link>
               </li>
             ))}
@@ -487,7 +487,7 @@ function Instances({ t, today }: { t: Template; today: LocalDate }) {
             {done.slice(0, 16).reverse().map((w) => (
               <Link key={w.id} {...links.workout(w.id)} role="listitem" title={`${formatDayShort(w.date)} · ${Math.round(w.compliance!.ratio * 100)}%`} className="flex flex-col items-center gap-1">
                 <span className="w-6 rounded-xs bg-accent" style={{ height: Math.max(4, Math.min(1.5, w.compliance!.ratio) * 40), opacity: w.compliance!.state === 'on_target' ? 1 : 0.5 }} />
-                <span className="font-mono text-mono-sm text-fg-3">{Math.round(w.compliance!.ratio * 100)}</span>
+                <span className="text-mono-sm text-fg-3">{Math.round(w.compliance!.ratio * 100)}</span>
               </Link>
             ))}
           </div>

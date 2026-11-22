@@ -47,7 +47,7 @@ export function TrendsWellnessPage() {
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-            <span className="truncate text-micro uppercase text-fg-3">{s.label}</span>
+            <span className="truncate text-micro text-fg-3">{s.label}</span>
             <span className="text-stat-md text-fg-1">{s.v == null ? '—' : s.fmt(s.v)}</span>
             <span className="flex min-h-5 flex-wrap items-center gap-1.5 text-body-sm text-fg-3">
               <DeltaBadge value={s.v != null && s.p ? s.v / s.p - 1 : null} size="sm" />
@@ -70,7 +70,7 @@ function Readout({ sync, list }: { sync: HoverSync<string>; list: (WellnessDay &
   const day = d ? list.find((x) => x.date === d) : list.at(-1);
   if (!day) return null;
   return (
-    <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line-1 pt-3 font-mono text-mono-sm text-fg-3">
+    <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-line-1 pt-3 text-mono-sm text-fg-3">
       <span className="font-sans text-label text-fg-1">{formatDateMedium(day.date)}</span>
       <span>HRV <span className="text-fg-1">{day.hrvMs ?? '—'}</span></span>
       <span>RHR <span className="text-fg-1">{day.restingHr ?? '—'}</span></span>

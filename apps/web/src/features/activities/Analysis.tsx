@@ -143,8 +143,8 @@ function SelectionPanel({ a, s, sel, side, onClear, onZoom }: { a: ActivityDetai
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div key={sel ? 'sel' : 'all'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6, transition: tween('fast', 'in') }} transition={spring.smooth} className="flex items-center gap-2">
             {sel ? <span className="size-2 rounded-full bg-accent" aria-hidden /> : null}
-            <span className="text-micro uppercase text-fg-2">{sel ? 'Selection' : 'Whole activity'}</span>
-            {sel && <span className="font-mono text-mono-sm text-fg-3">{formatDuration(sel.startSec, 'hms')}–{formatDuration(sel.endSec, 'hms')}</span>}
+            <span className="text-micro text-fg-2">{sel ? 'Selection' : 'Whole activity'}</span>
+            {sel && <span className="text-mono-sm text-fg-3">{formatDuration(sel.startSec, 'hms')}–{formatDuration(sel.endSec, 'hms')}</span>}
           </motion.div>
         </AnimatePresence>
         <AnimatePresence>
@@ -159,7 +159,7 @@ function SelectionPanel({ a, s, sel, side, onClear, onZoom }: { a: ActivityDetai
       <div className={cn('grid gap-x-4 gap-y-3', side ? 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-2' : 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-8')}>
         {rows.map((r) => (
           <div key={r.label} className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-micro uppercase text-fg-3">{r.label}</span>
+            <span className="truncate text-micro text-fg-3">{r.label}</span>
             <span className={cn('flex items-baseline gap-1 text-stat-sm', r.accent ? 'text-accent-ink' : 'text-fg-1')}>
               {r.value == null ? '—' : <Ticker value={r.value} format={r.format} />}
               {r.unit && <span className="text-label font-[450] text-fg-3">{r.unit}</span>}
@@ -197,8 +197,8 @@ export function LapsSection({ a }: { a: ActivityDetail }) {
   return <LapTable a={a} />;
 }
 
-const th = 'h-9 border-b border-line-1 px-3 text-micro font-[600] uppercase text-fg-3 first:pl-4 last:pr-4';
-const td = 'h-10 border-b border-line-1 px-3 font-mono text-mono first:pl-4 last:pr-4';
+const th = 'h-9 border-b border-line-1 px-3 text-micro font-[600] text-fg-3 first:pl-4 last:pr-4';
+const td = 'h-10 border-b border-line-1 px-3 text-mono first:pl-4 last:pr-4';
 
 function useLapInteraction() {
   const [selected, setSelected] = useState<number | null>(null);
@@ -263,7 +263,7 @@ function LapTable({ a }: { a: ActivityDetail }) {
                   <td className={cn(td, 'relative text-left font-sans text-label')}>
                     <span className={cn('absolute inset-y-2 left-0 w-[3px] rounded-r-full', sel ? 'bg-accent' : k === 'work' ? 'bg-fg-1' : k === 'rest' ? 'bg-hatch-fg' : 'bg-transparent')} aria-hidden />
                     <span className={dim ? 'text-fg-3' : 'text-fg-1'}>{l.index + 1}</span>
-                    {k === 'work' && <span className="ml-2 text-micro uppercase text-fg-3">Work</span>}
+                    {k === 'work' && <span className="ml-2 text-micro text-fg-3">Work</span>}
                   </td>
                   <td className={cn(td, dim ? 'text-fg-3' : 'text-fg-1')}>{formatDuration(l.durationSec, 'hms')}</td>
                   <td className={cn(td, 'text-fg-2')}>{l.distanceM ? (pb.meters >= 500 && a.sport !== 'row' ? formatNumber(l.distanceM / 1000, 2) + ' km' : formatNumber(l.distanceM, 0) + ' m') : '—'}</td>
@@ -387,7 +387,7 @@ function StrengthSection({ a }: { a: ActivityDetail }) {
                 <td className={cn(td, 'text-left')}>
                   <span className="flex flex-wrap gap-1 py-2">
                     {g.sets.map((s, i) => (
-                      <span key={i} className="rounded-xs border border-line-2 bg-surface-2 px-1.5 font-mono text-mono-sm text-fg-1">
+                      <span key={i} className="rounded-xs border border-line-2 bg-surface-2 px-1.5 text-mono-sm text-fg-1">
                         {s.reps}
                         {s.weightKg ? <span className="text-fg-3"> × {formatNumber(kg(s.weightKg), 1, { trim: true })}</span> : null}
                       </span>
@@ -453,13 +453,13 @@ export function ZonesSection({ a }: { a: ActivityDetail }) {
     <Section
       id="zones"
       title="Time in zones"
-      description={basis ? <>Zones from <span className="font-mono text-fg-1">{basis}</span> on this date.</> : undefined}
+      description={basis ? <>Zones from <span className="text-fg-1">{basis}</span> on this date.</> : undefined}
       actions={opts.length > 1 ? <Segmented size="sm" aria-label="Zone model" value={kind} onValueChange={setKind} options={opts} /> : undefined}
     >
       <div className="grid gap-6 rounded-lg border border-line-2 bg-surface-1 p-4 md:p-5 lg:grid-cols-[minmax(0,1fr)_260px]">
         <ZoneBars key={kind} zones={zones} formatRange={fmtRange} />
         <div className="flex flex-col gap-4 lg:border-l lg:border-line-1 lg:pl-6">
-          <span className="text-micro uppercase text-fg-3">Easy · Moderate · Hard</span>
+          <span className="text-micro text-fg-3">Easy · Moderate · Hard</span>
           <SplitBar easy={sp.easy} moderate={sp.moderate} hard={sp.hard} height={8} />
           <div className="grid grid-cols-3 gap-2">
             {(['easy', 'moderate', 'hard'] as const).map((k) => (
@@ -467,8 +467,8 @@ export function ZonesSection({ a }: { a: ActivityDetail }) {
                 <span className="text-stat-sm text-fg-1">
                   <Ticker value={(sp[k] / total) * 100} format={(n) => `${Math.round(n)}%`} />
                 </span>
-                <span className="text-micro uppercase text-fg-3">{k}</span>
-                <span className="font-mono text-mono-sm text-fg-3">{formatDuration(sp[k], 'hms')}</span>
+                <span className="text-micro text-fg-3">{k}</span>
+                <span className="text-mono-sm text-fg-3">{formatDuration(sp[k], 'hms')}</span>
               </div>
             ))}
           </div>
@@ -486,7 +486,7 @@ const EFFORT_LABEL: Record<number, string> = { 400: '400 m', 500: '500 m', 1000:
 
 function Badge({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-xs bg-accent-a2 px-1.5 py-px text-micro uppercase text-accent-ink">
+    <span className="inline-flex items-center gap-1 rounded-xs bg-accent-a2 px-1.5 py-px text-micro text-accent-ink">
       <Award className="size-3" aria-hidden />
       {children}
     </span>

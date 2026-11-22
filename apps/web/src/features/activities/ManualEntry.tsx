@@ -60,7 +60,7 @@ export function ManualEntry({ today, onDone }: { today?: LocalDate; onDone: () =
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="text-title-3 text-fg-1">Log an activity</h2>
         <span className="flex items-baseline gap-1.5">
-          <span className="text-micro uppercase text-fg-3">Est. load</span>
+          <span className="text-micro text-fg-3">Est. load</span>
           <span className="text-stat-sm text-accent-ink"><Ticker value={load} format={(n) => String(Math.round(n))} /></span>
         </span>
       </div>

@@ -69,8 +69,8 @@ export function StepsReadable({
       n.kind === 'repeat' ? (
         <li key={n.id} className="flex flex-col gap-0.5">
           <div className="flex h-8 items-center gap-2 px-3">
-            <span className="font-mono text-mono text-fg-1">{n.count}×</span>
-            <span className="text-micro uppercase text-fg-3">{n.label ?? 'Repeat'}</span>
+            <span className="text-mono text-fg-1">{n.count}×</span>
+            <span className="text-micro text-fg-3">{n.label ?? 'Repeat'}</span>
           </div>
           <ul className="ml-4 flex flex-col gap-0.5 border-l border-line-2 pl-2">{render(n.steps as AnyNode[], depth + 1)}</ul>
         </li>
@@ -82,13 +82,13 @@ export function StepsReadable({
           className={cn('flex min-h-10 items-center gap-3 rounded-md px-3 py-1.5 transition-colors duration-(--dur-fast)', hovered === n.id ? 'bg-surface-2' : 'hover:bg-surface-1')}
         >
           <span aria-hidden className={cn('h-5 w-1 shrink-0 rounded-full', ZONE_BG[(meta.get(n.id)?.level ?? 1) - 1])} />
-          <span className="w-20 shrink-0 text-micro uppercase text-fg-3 max-sm:hidden">{roleLabel(n.role)}</span>
+          <span className="w-20 shrink-0 text-micro text-fg-3 max-sm:hidden">{roleLabel(n.role)}</span>
           <span className="min-w-0 flex-1 text-body text-fg-1">
-            <span className="block text-micro uppercase text-fg-3 sm:hidden">{roleLabel(n.role)}</span>
+            <span className="block text-micro text-fg-3 sm:hidden">{roleLabel(n.role)}</span>
             {describeStep(n, sport, units.system, thresholds)}
             {n.cue && <span className="block text-body-sm text-fg-3">{n.cue}</span>}
           </span>
-          {meta.get(n.id) && n.measure.type !== 'time' && <span className="shrink-0 font-mono text-mono-sm text-fg-3">≈{fmtClock(meta.get(n.id)!.sec)}</span>}
+          {meta.get(n.id) && n.measure.type !== 'time' && <span className="shrink-0 text-mono-sm text-fg-3">≈{fmtClock(meta.get(n.id)!.sec)}</span>}
         </li>
       ),
     );
@@ -159,7 +159,7 @@ export function TemplateMini({ t, thresholds }: { t: Pick<Template, 'sport' | 's
         <IntensityPips intensity={t.intensity as IntensityClass} />
       </div>
       <div className="h-8">{blocks.length ? <IntensityProfile variant="compact" blocks={blocks} height={32} /> : <div className="h-8 rounded-xs bg-hatch-faint" />}</div>
-      <div className="flex items-center gap-3 font-mono text-mono-sm text-fg-3">
+      <div className="flex items-center gap-3 text-mono-sm text-fg-3">
         {t.plannedDurationSec ? <span>{formatDuration(t.plannedDurationSec, 'clock')}</span> : null}
         {t.plannedLoad ? <span>{Math.round(t.plannedLoad)} load</span> : null}
         <span className="ml-auto">{INTENSITY_META[t.intensity as IntensityClass]?.label}</span>

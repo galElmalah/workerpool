@@ -111,7 +111,7 @@ export function KeyGuide() {
         <>Paste it here. Cadence reads your activities, sleep, HRV and weight with it — nothing else.</>,
       ].map((step, i) => (
         <li key={i} className="flex gap-3">
-          <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-line-3 font-mono text-mono-sm text-fg-2">{i + 1}</span>
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-line-3 text-mono-sm text-fg-2">{i + 1}</span>
           <span>{step}</span>
         </li>
       ))}
@@ -127,7 +127,7 @@ export function TokensGuide() {
         Sign in once on your own computer and paste the token file it prints:
       </p>
       <div className="relative">
-        <pre className="overflow-x-auto rounded-md border border-line-2 bg-surface-1 p-3 pr-20 font-mono text-mono-sm leading-5 text-fg-2">{TOKENS_SNIPPET}</pre>
+        <pre className="overflow-x-auto rounded-md border border-line-2 bg-surface-1 p-3 pr-20 text-mono-sm leading-5 text-fg-2">{TOKENS_SNIPPET}</pre>
         <CopyButton text={TOKENS_SNIPPET} />
       </div>
       <p>The tokens are encrypted at rest and refreshed automatically. Disconnecting deletes them.</p>
@@ -190,7 +190,7 @@ export function GarminConnectForm({
         </div>
       )}
       {demo && (
-        <div role="separator" className="flex items-center gap-3 text-micro uppercase text-fg-4">
+        <div role="separator" className="flex items-center gap-3 text-micro text-fg-4">
           <span className="h-px flex-1 bg-line-1" />
           or connect your own
           <span className="h-px flex-1 bg-line-1" />
@@ -211,7 +211,7 @@ export function GarminConnectForm({
             autoComplete="off"
             spellCheck={false}
             leading={<KeyRound />}
-            className="font-mono text-mono"
+            className="text-mono"
           />
         </Field>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -234,7 +234,7 @@ export function GarminConnectForm({
                 minRows={3}
                 maxRows={8}
                 spellCheck={false}
-                className="font-mono text-mono-sm"
+                className="text-mono-sm"
               />
             </Field>
           </div>

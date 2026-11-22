@@ -109,7 +109,7 @@ export function TrendsFitnessPage() {
                 <li key={b.zone} className={cn('grid grid-cols-[120px_1fr_88px] items-center gap-3 rounded-md px-2 py-2', on && 'bg-surface-2')}>
                   <span className="flex flex-col">
                     <span className={cn('text-label', on ? 'text-fg-1' : 'text-fg-2')}>{b.label}{on ? ' · now' : ''}</span>
-                    <span className="font-mono text-mono-sm text-fg-3">{Number.isFinite(b.min) && Number.isFinite(b.max) ? `${formatSigned(b.min)} … ${formatSigned(b.max)}` : Number.isFinite(b.min) ? `> ${formatSigned(b.min)}` : `< ${formatSigned(b.max)}`}</span>
+                    <span className="text-mono-sm text-fg-3">{Number.isFinite(b.min) && Number.isFinite(b.max) ? `${formatSigned(b.min)} … ${formatSigned(b.max)}` : Number.isFinite(b.min) ? `> ${formatSigned(b.min)}` : `< ${formatSigned(b.max)}`}</span>
                   </span>
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="h-1.5 overflow-hidden rounded-full bg-surface-3">
@@ -117,7 +117,7 @@ export function TrendsFitnessPage() {
                     </span>
                     <span className="truncate text-body-sm text-fg-3 max-sm:hidden">{ZONE_COPY[b.zone]}</span>
                   </span>
-                  <span className="text-right font-mono text-mono text-fg-1">
+                  <span className="text-right text-mono text-fg-1">
                     {n}d <span className="text-fg-3">{Math.round(share * 100)}%</span>
                   </span>
                 </li>
@@ -142,7 +142,7 @@ export function TrendsFitnessPage() {
 function Hero({ label, value, sub, accent, signed }: { label: string; value: number | null | undefined; sub?: React.ReactNode; accent?: boolean; signed?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <span className={cn('text-stat-md', accent ? 'text-accent-ink' : 'text-fg-1')}>{value == null ? '—' : signed ? formatSigned(value, Math.abs(value) < 10 ? 1 : 0) : formatNumber(value, 0)}</span>
       <span className="min-h-5 truncate text-body-sm text-fg-3">{sub}</span>
     </div>
@@ -158,8 +158,8 @@ function RampStrip({ weeks }: { weeks: WeekSummary[] }) {
         <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-line-3" style={{ top: `${50 - (5 / max) * 50}%` }} />
         <div className="pointer-events-none absolute inset-x-0 border-t border-dashed border-fg-3" style={{ top: `${50 - (8 / max) * 50}%` }} />
         <div className="pointer-events-none absolute inset-x-0 border-t border-line-2" style={{ top: '50%' }} />
-        <span className="absolute right-0 font-mono text-mono-sm text-fg-3" style={{ top: `calc(${50 - (8 / max) * 50}% - 16px)` }}>8 risky</span>
-        <span className="absolute right-0 font-mono text-mono-sm text-fg-3" style={{ top: `calc(${50 - (5 / max) * 50}% - 16px)` }}>5</span>
+        <span className="absolute right-0 text-mono-sm text-fg-3" style={{ top: `calc(${50 - (8 / max) * 50}% - 16px)` }}>8 risky</span>
+        <span className="absolute right-0 text-mono-sm text-fg-3" style={{ top: `calc(${50 - (5 / max) * 50}% - 16px)` }}>5</span>
         {ws.map((w, i) => {
           const v = Math.max(-max, Math.min(max, w.fitnessDelta));
           const h = (Math.abs(v) / max) * 50;
@@ -177,7 +177,7 @@ function RampStrip({ weeks }: { weeks: WeekSummary[] }) {
           );
         })}
       </div>
-      <div className="flex justify-between font-mono text-mono-sm text-fg-3">
+      <div className="flex justify-between text-mono-sm text-fg-3">
         <span>{ws[0] ? formatDayMonth(ws[0].startDate) : ''}</span>
         <span>{ws.at(-1) ? `${formatIsoWeek(ws.at(-1)!.isoWeek)} ${formatSigned(ws.at(-1)!.fitnessDelta, 1)}` : ''}</span>
       </div>
@@ -191,7 +191,7 @@ function WeekTable({ weeks }: { weeks: WeekSummary[] }) {
     <div className="relative -mx-4 overflow-x-auto md:mx-0">
       <table className="w-full min-w-[620px] text-left">
         <thead>
-          <tr className="border-b border-line-1 text-micro uppercase text-fg-3">
+          <tr className="border-b border-line-1 text-micro text-fg-3">
             {['Week', 'Load', 'Fitness', 'Δ', 'Fatigue', 'Form', 'Zone'].map((h, i) => (
               <th key={h} className={cn('px-4 py-2 font-[600]', i > 0 && i < 6 && 'text-right')}>
                 {h}
@@ -199,13 +199,13 @@ function WeekTable({ weeks }: { weeks: WeekSummary[] }) {
             ))}
           </tr>
         </thead>
-        <tbody className="font-mono text-mono">
+        <tbody className="text-mono">
           {rows.map((w) => (
             <tr key={w.isoWeek} className="border-b border-line-1 last:border-0 hover:bg-surface-2">
               <td className="px-4 py-2">
                 <Link to="/week/$isoWeek" params={{ isoWeek: w.isoWeek }} className="text-fg-1 hover:underline">
                   {formatIsoWeek(w.isoWeek)} <span className="text-fg-3">{formatDayMonth(w.startDate)}</span>
-                  {w.isProjected && <span className="ml-1 text-micro uppercase text-fg-3">proj.</span>}
+                  {w.isProjected && <span className="ml-1 text-micro text-fg-3">proj.</span>}
                 </Link>
               </td>
               <td className="px-4 py-2 text-right text-accent-ink">{formatNumber(w.doneLoad, 0)}</td>

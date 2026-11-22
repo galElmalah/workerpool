@@ -41,8 +41,8 @@ function Metrics({ day }: { day: DayData }) {
   const w = day.wellness;
   const cell = (label: string, value: string | null) => (
     <div className="flex items-baseline justify-between gap-1">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
-      <span className={cn('font-mono text-mono-sm', value ? 'text-fg-1' : 'text-fg-4')}>{value ?? '—'}</span>
+      <span className="text-micro text-fg-3">{label}</span>
+      <span className={cn('text-mono-sm', value ? 'text-fg-1' : 'text-fg-4')}>{value ?? '—'}</span>
     </div>
   );
   return (
@@ -51,7 +51,7 @@ function Metrics({ day }: { day: DayData }) {
       {cell('RHR', w?.restingHr ? `${Math.round(w.restingHr)}` : null)}
       {cell('Sleep', w?.sleepSec ? formatDuration(w.sleepSec) : null)}
       <div className="flex items-center justify-between gap-1">
-        <span className="text-micro uppercase text-fg-3">Feel</span>
+        <span className="text-micro text-fg-3">Feel</span>
         <span className="flex gap-0.5" role="img" aria-label={w?.feel ? `Feel ${w.feel} of 5` : 'No check-in'}>
           {[1, 2, 3, 4, 5].map((i) => (
             <span key={i} className={cn('size-1.5 rounded-full', w?.feel && i <= w.feel ? 'bg-fg-1' : 'border border-line-3')} />
@@ -116,7 +116,7 @@ const WeekColumn = memo(function WeekColumn({ day, cards, copyGhost, today, week
             <EventBanner key={e.id} e={e} />
           ))}
           {day.markers.some((m) => m.type === 'rest') && cards.length === 0 && (
-            <span className="flex items-center gap-1 text-micro uppercase text-fg-3">
+            <span className="flex items-center gap-1 text-micro text-fg-3">
               <Moon className="size-3" /> Rest
             </span>
           )}
@@ -280,7 +280,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
             <span className="flex items-baseline gap-2">
               {formatIsoWeek(isoWeek)}
               <span className="text-body font-[420] text-fg-3">{formatIsoWeekRange(isoWeek, true)}</span>
-              {week.phase && <span className="text-micro uppercase text-fg-3 max-md:hidden">{week.phase.phase.label} · {week.phase.index}/{week.phase.count}</span>}
+              {week.phase && <span className="text-micro text-fg-3 max-md:hidden">{week.phase.phase.label} · {week.phase.index}/{week.phase.count}</span>}
             </span>
           }
           breadcrumb={[{ label: 'Calendar', link: links.calendar(start) }]}
@@ -327,12 +327,12 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
                   const isToday = d.date === today;
                   return (
                     <div key={`h-${d.date}`} role="columnheader" className={cn('top-(--header-h) z-(--z-sticky) flex h-10 items-center gap-2 px-2.5 glass md:sticky', isToday && 'shadow-[inset_0_1px_0_var(--color-accent)]', mobile && '[scroll-snap-align:start]')}>
-                      <span className="text-micro uppercase text-fg-3">{weekdayShort(d.date)}</span>
+                      <span className="text-micro text-fg-3">{weekdayShort(d.date)}</span>
                       <Link
                         {...links.calendarDay(d.date)}
                         onClickCapture={() => flushSync(() => calStore.set({ focus: { kind: 'day', date: d.date } }))}
                         className={cn(
-                          'flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-mono text-mono-sm transition-colors',
+                          'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-mono-sm transition-colors',
                           isToday ? 'bg-accent font-[600] text-on-accent' : 'text-fg-1 hover:text-accent-ink',
                         )}
                       >
@@ -340,7 +340,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
                       </Link>
                       <MarkerGlyphs markers={d.markers} />
                       {!(today && d.date > today) && <ReadinessDot w={d.wellness} />}
-                      <span className="ml-auto font-mono text-mono-sm text-fg-3">
+                      <span className="ml-auto text-mono-sm text-fg-3">
                         {(() => {
                           const sec = d.cards.reduce((a, c) => a + (c.model.durationSec ?? 0), 0);
                           return sec ? formatDuration(sec) : '';

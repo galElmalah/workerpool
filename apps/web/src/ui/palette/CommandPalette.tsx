@@ -208,7 +208,7 @@ export function CommandPalette() {
                 <LayoutGroup id="cmdk">
                   {groups.map(([group, cmds]) => (
                     <Fragment key={group}>
-                      <div role="presentation" className="px-3 pt-3 pb-1.5 text-micro uppercase text-fg-3 first:pt-1">
+                      <div role="presentation" className="px-3 pt-3 pb-1.5 text-micro text-fg-3 first:pt-1">
                         {group}
                       </div>
                       {cmds.map((c) => {

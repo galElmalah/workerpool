@@ -183,7 +183,7 @@ function FormCard({ d }: { d: TodayData }) {
 function Num({ label, value, accent, signed, suffix }: { label: string; value: number; accent?: boolean; signed?: boolean; suffix?: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5 xl:items-center">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <span className={cn('flex items-baseline gap-1 text-stat-sm', accent ? 'text-accent-ink' : 'text-fg-1')}>
         <Ticker value={value} from={0} format={(v) => (signed ? formatSigned(Math.round(v * 10) / 10, 1) : String(Math.round(v)))} />
         {suffix && <span className="text-label text-fg-3">{suffix}</span>}
@@ -227,7 +227,7 @@ function ReadinessCard({ d }: { d: TodayData }) {
       <div className="grid grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
         <div className="col-span-2 flex flex-col gap-2 border-b border-line-1 p-4 lg:col-span-1 lg:border-r lg:border-b-0 xl:p-5">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-micro uppercase text-fg-3">HRV · 7-day</span>
+            <span className="text-micro text-fg-3">HRV · 7-day</span>
             <span className="text-body-sm text-fg-3">{hrvCopy}</span>
           </div>
           <div className="flex items-end gap-4">
@@ -237,7 +237,7 @@ function ReadinessCard({ d }: { d: TodayData }) {
             </span>
             <HrvMini points={points} className="mb-1 min-w-0 flex-1" />
           </div>
-          <span className="font-mono text-mono-sm text-fg-3">
+          <span className="text-mono-sm text-fg-3">
             {lastHrv != null ? `last night ${Math.round(lastHrv)} · ` : ''}normal {w.hrv.lowMs ?? '—'}–{w.hrv.highMs ?? '—'}
           </span>
         </div>
@@ -251,7 +251,7 @@ function ReadinessCard({ d }: { d: TodayData }) {
           className="lg:border-r lg:border-line-1"
         />
         <div className="col-span-2 flex flex-col gap-1.5 border-t border-line-1 p-4 lg:col-span-1 lg:border-t-0 xl:p-5">
-          <span className="text-micro uppercase text-fg-3">Readiness</span>
+          <span className="text-micro text-fg-3">Readiness</span>
           <span className="flex items-center gap-2 text-title-3 text-fg-1">
             <span className="flex items-end gap-0.5" aria-hidden>
               {[1, 2, 3].map((i) => (
@@ -261,7 +261,7 @@ function ReadinessCard({ d }: { d: TodayData }) {
             {rd.title}
           </span>
           <span className="text-body-sm text-fg-3">{w.readiness.reasons.length ? w.readiness.reasons.join(' · ') : 'Nothing flagged'}</span>
-          <span className="mt-auto text-micro uppercase text-fg-4" title={w.readiness.label}>
+          <span className="mt-auto text-micro text-fg-4" title={w.readiness.label}>
             Heuristic · not a medical score
           </span>
         </div>
@@ -283,12 +283,12 @@ function ReadinessCard({ d }: { d: TodayData }) {
 function Metric({ label, value, unit, note, format, className }: { label: string; value: number | null | undefined; unit?: string; note?: string; format?: (v: number) => string; className?: string }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-1.5 p-4 xl:p-5', className)}>
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <span className="flex items-baseline gap-1 text-stat-md text-fg-1">
         {value != null ? <Ticker value={value} from={0} format={format} /> : <span className="text-fg-4">—</span>}
         {unit && <span className="text-label text-fg-3">{unit}</span>}
       </span>
-      {note && <span className="font-mono text-mono-sm text-fg-3">{note}</span>}
+      {note && <span className="text-mono-sm text-fg-3">{note}</span>}
     </div>
   );
 }
@@ -346,8 +346,8 @@ function WeekCard({ d }: { d: TodayData }) {
               aria-label={`${weekdayLong(day.date)}: ${day.doneCount} done of ${day.plannedCount} planned`}
             >
               {day.isToday && <motion.span layoutId="today-week-pill" transition={spring.smooth} className="absolute inset-0 rounded-md ring-1 ring-accent-a6 ring-inset" />}
-              <span className={cn('text-micro uppercase', day.isToday ? 'text-accent-ink' : 'text-fg-3')}>{weekdayShort(day.date).slice(0, 2)}</span>
-              <span className={cn('font-mono text-mono', day.isToday ? 'text-fg-1' : 'text-fg-2')}>{Number(day.date.slice(8))}</span>
+              <span className={cn('text-micro ', day.isToday ? 'text-accent-ink' : 'text-fg-3')}>{weekdayShort(day.date).slice(0, 2)}</span>
+              <span className={cn('text-mono', day.isToday ? 'text-fg-1' : 'text-fg-2')}>{Number(day.date.slice(8))}</span>
               <span className="flex min-h-3 flex-wrap justify-center gap-0.5">
                 {day.states.length ? day.states.slice(0, 3).map((s, k) => <ComplianceGlyph key={k} state={s} size={10} />) : <span className="text-micro text-fg-4">·</span>}
               </span>
@@ -369,8 +369,8 @@ function RingStat({ label, done, planned, fmt, wow }: { label: string; done: num
     <div className="flex items-center gap-3">
       <ProgressRing done={done} planned={planned} size={52} stroke={4} />
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-micro uppercase text-fg-3">{label}</span>
-        <span className="font-mono text-mono text-fg-1">
+        <span className="text-micro text-fg-3">{label}</span>
+        <span className="text-mono text-fg-1">
           {fmt(done)}
           <span className="text-fg-3"> / {fmt(planned)}</span>
         </span>
@@ -415,10 +415,10 @@ function UpNext({ d }: { d: TodayData }) {
               <span className="text-stat-md text-fg-1">
                 <Ticker value={e!.daysUntil} from={0} />
               </span>
-              <span className="text-micro uppercase text-fg-3">{e!.daysUntil === 1 ? 'day' : 'days'}</span>
+              <span className="text-micro text-fg-3">{e!.daysUntil === 1 ? 'day' : 'days'}</span>
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="flex items-center gap-1.5 text-micro uppercase text-fg-3">
+              <span className="flex items-center gap-1.5 text-micro text-fg-3">
                 <Flag className={cn('size-3', e!.event.priority === 'A' && 'fill-accent text-accent')} />
                 {e!.event.priority}-race · {formatDateMedium(e!.event.date)}
               </span>

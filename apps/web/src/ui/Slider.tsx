@@ -69,7 +69,7 @@ export function Slider({
       {(label || valueLabel) && (
         <div className="flex items-baseline justify-between">
           {label && <BaseSlider.Label className="text-label text-fg-2">{label}</BaseSlider.Label>}
-          {valueLabel && <span className="font-mono text-mono text-fg-1">{valueLabel}</span>}
+          {valueLabel && <span className="text-mono text-fg-1">{valueLabel}</span>}
         </div>
       )}
       <BaseSlider.Control className="relative flex h-6 w-full touch-none items-center select-none" onPointerDown={() => setDragging(true)}>
@@ -164,7 +164,7 @@ export function RpeSlider({ value, onValueChange, onValueCommitted, label = 'RPE
         aria-label="Rate of perceived exertion"
         bubble={(x) => x}
       />
-      <div className="grid grid-cols-4 text-micro uppercase text-fg-3" aria-hidden>
+      <div className="grid grid-cols-4 text-micro text-fg-3" aria-hidden>
         <span>Easy</span>
         <span className="text-center">Moderate</span>
         <span className="text-center">Hard</span>

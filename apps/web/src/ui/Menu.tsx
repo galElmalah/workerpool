@@ -47,7 +47,7 @@ function Entries({ items, P }: { items: MenuEntry[]; P: Parts }) {
         if (it.type === 'separator') return <P.Separator key={i} className="mx-1 my-1 h-px bg-line-1" />;
         if (it.type === 'label')
           return (
-            <div key={i} className="px-2 pt-2 pb-1 text-micro uppercase text-fg-3">
+            <div key={i} className="px-2 pt-2 pb-1 text-micro text-fg-3">
               {it.label}
             </div>
           );

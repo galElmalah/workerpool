@@ -40,7 +40,7 @@ export function RangeBands({ markers, date, weekStart }: { markers: DayMarker[];
           <span key={m.id} className="pointer-events-none absolute inset-x-0 z-[1]" style={{ top: i * 4 }} aria-hidden={!first}>
             <span className={cn('block h-[3px] bg-fg-4', m.date === date && 'ml-1 rounded-l-full', m.endDate === date && 'mr-1 rounded-r-full')} />
             {first && (
-              <span className="absolute top-1 right-1.5 flex max-w-[70%] items-center gap-1 truncate text-micro uppercase text-fg-3">
+              <span className="absolute top-1 right-1.5 flex max-w-[70%] items-center gap-1 truncate text-micro text-fg-3">
                 <I className="size-3 shrink-0" strokeWidth={2} />
                 <span className="truncate">{m.label ?? MARKER_META[m.type].label}</span>
               </span>
@@ -67,7 +67,7 @@ export function EventBanner({ e, compact }: { e: Event; compact?: boolean }) {
       title={`${e.priority}-race · ${e.name}`}
     >
       <Flag className="size-3 shrink-0" strokeWidth={2.25} aria-hidden />
-      {!compact && <span className="shrink-0 font-mono text-mono-sm font-[600]">{e.priority}</span>}
+      {!compact && <span className="shrink-0 text-mono-sm font-[600]">{e.priority}</span>}
       <span className={cn('min-w-0 truncate', e.priority === 'C' ? 'text-label' : 'text-label font-[600]')}>{e.name}</span>
     </Link>
   );

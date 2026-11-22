@@ -27,7 +27,7 @@ export function Section({ title, description, actions, variant = 'title', id, cl
           (variant === 'title' ? (
             <h2 className="text-title-2 text-fg-1">{title}</h2>
           ) : (
-            <h2 className="text-micro uppercase text-fg-3">{title}</h2>
+            <h2 className="text-micro text-fg-3">{title}</h2>
           ))}
         {description && <p className="mt-1 text-body text-fg-2">{description}</p>}
       </div>
@@ -55,7 +55,7 @@ export function Divider({ orientation = 'horizontal', label, className }: { orie
   if (orientation === 'vertical') return <span role="separator" aria-orientation="vertical" className={cn('inline-block w-px self-stretch bg-line-1', className)} />;
   if (label)
     return (
-      <div role="separator" className={cn('flex items-center gap-3 text-micro uppercase text-fg-3', className)}>
+      <div role="separator" className={cn('flex items-center gap-3 text-micro text-fg-3', className)}>
         <span className="h-px flex-1 bg-line-1" />
         {label}
         <span className="h-px flex-1 bg-line-1" />

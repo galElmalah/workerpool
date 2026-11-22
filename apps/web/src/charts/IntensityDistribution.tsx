@@ -80,13 +80,13 @@ export function IntensityDistribution(props: IntensityDistributionProps) {
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <span className="text-title-3 text-fg-1">{cls}</span>
-              <span className="font-mono text-mono text-fg-2">
+              <span className="text-mono text-fg-2">
                 {pct(total.easy)} / {pct(total.moderate)} / {pct(total.hard)} %
               </span>
             </div>
             <div className="flex items-center gap-3">
               {BUCKETS.map((b) => (
-                <span key={b.k} className="inline-flex items-center gap-1.5 text-micro uppercase text-fg-3">
+                <span key={b.k} className="inline-flex items-center gap-1.5 text-micro text-fg-3">
                   <span className="size-2.5 rounded-xs" style={{ background: T.zone(b.zone) }} />
                   {b.label}
                 </span>
@@ -251,7 +251,7 @@ export function ZoneBars({ zones, targetPct, formatRange, unit = '', loading, co
                 <div className={`flex ${rowH} items-center gap-2`}>
                   <span className="w-6 text-micro text-fg-2">Z{z.zone}</span>
                   {!compact && <span className="hidden w-24 truncate text-body-sm text-fg-2 sm:inline">{z.name}</span>}
-                  {!compact && <span className="hidden w-20 font-mono text-mono-sm text-fg-3 md:inline">{range(z.low, z.high)}</span>}
+                  {!compact && <span className="hidden w-20 text-mono-sm text-fg-3 md:inline">{range(z.low, z.high)}</span>}
                 </div>
                 <div className={`relative ${compact ? 'h-2' : 'h-3'} rounded-xs bg-surface-2`} title={range(z.low, z.high)}>
                   <motion.div
@@ -268,7 +268,7 @@ export function ZoneBars({ zones, targetPct, formatRange, unit = '', loading, co
                   )}
                   {tgt != null && <span className="absolute -inset-y-1 w-px bg-fg-1" style={{ left: `${(tgt / max) * 100}%` }} aria-hidden />}
                 </div>
-                <div className={`flex ${rowH} items-center justify-end gap-2 font-mono text-mono`}>
+                <div className={`flex ${rowH} items-center justify-end gap-2 text-mono`}>
                   <span className="text-fg-1">{fmtHMS(z.seconds)}</span>
                   <span className="w-9 text-right text-fg-3">{Math.round(f * 100)}%</span>
                 </div>

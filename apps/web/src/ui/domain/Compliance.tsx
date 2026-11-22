@@ -141,7 +141,7 @@ export function ComplianceBar({ ratio, state, className, showLabel }: { ratio: n
         )}
         <span className="absolute -top-0.5 -bottom-0.5 w-px bg-fg-1" style={{ left: `${tick * 100}%` }} aria-hidden />
       </div>
-      {showLabel && <span className="w-10 text-right font-mono text-mono-sm text-fg-2">{Math.round(ratio * 100)}%</span>}
+      {showLabel && <span className="w-10 text-right text-mono-sm text-fg-2">{Math.round(ratio * 100)}%</span>}
     </div>
   );
 }

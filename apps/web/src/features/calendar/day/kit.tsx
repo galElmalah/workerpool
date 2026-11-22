@@ -265,7 +265,7 @@ export const hm = (sec: number | null | undefined) => {
 export function Stat({ label, value, unit, className, size = 'sm' }: { label: ReactNode; value: ReactNode; unit?: ReactNode; className?: string; size?: 'sm' | 'md' }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-0.5', className)}>
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <span className={cn('flex items-baseline gap-1 text-fg-1', size === 'md' ? 'text-stat-md' : 'text-stat-sm')}>
         {value}
         {unit && <span className="text-label font-[450] text-fg-3">{unit}</span>}
@@ -414,12 +414,12 @@ export function RpeSegments({ value, onChange }: { value: number | null | undefi
                 animate={{ scaleY: on ? 1 : 0, opacity: on ? 1 : 0 }}
                 transition={{ ...spring.snappy, delay: on ? i * 0.012 : 0 }}
               />
-              <span className={cn('relative font-mono text-mono-sm', sel ? 'font-[600] text-fg-1' : on ? 'text-fg-1' : 'text-fg-3')}>{n}</span>
+              <span className={cn('relative text-mono-sm', sel ? 'font-[600] text-fg-1' : on ? 'text-fg-1' : 'text-fg-3')}>{n}</span>
             </motion.button>
           );
         })}
       </div>
-      <div className="grid grid-cols-10 text-micro uppercase text-fg-3" aria-hidden>
+      <div className="grid grid-cols-10 text-micro text-fg-3" aria-hidden>
         <span className="col-span-3">Very easy</span>
         <span className="col-span-3 text-center">Steady</span>
         <span className="col-span-3 text-center">Hard</span>
@@ -670,7 +670,7 @@ export function SyncNowButton({ compact }: { compact?: boolean }) {
       }
       disabled={sync.isPending}
     >
-      {!compact && <span className="font-mono text-mono-sm">{label}</span>}
+      {!compact && <span className="text-mono-sm">{label}</span>}
     </Button>
   );
 }
@@ -727,9 +727,9 @@ export function SessionCard({ card, morphId, showSend = true, showLog = false, c
             <SportGlyph sport={m.sport} subSport={m.subSport ?? undefined} size={20} />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex items-center gap-2 text-micro uppercase text-fg-3">
+            <div className="flex items-center gap-2 text-micro text-fg-3">
               <span>{SPORT_LABEL[m.sport]}</span>
-              {time && <span className="font-mono normal-case tracking-normal">{time}</span>}
+              {time && <span className="normal-case tracking-normal">{time}</span>}
               <span className="flex items-center gap-1">
                 <ComplianceGlyph state={state} />
                 {complianceLabel(state, w?.skipReason)}
@@ -788,7 +788,7 @@ export function SessionCard({ card, morphId, showSend = true, showLog = false, c
       {!a && w && showSend && w.status !== 'skipped' && (
         <div className="flex items-center justify-between gap-3 border-t border-line-1 px-4 py-2.5 md:px-6">
           <SendToWatch workout={w} />
-          {w.environment !== 'any' && <span className="text-micro uppercase text-fg-3">{w.environment}</span>}
+          {w.environment !== 'any' && <span className="text-micro text-fg-3">{w.environment}</span>}
         </div>
       )}
     </div>

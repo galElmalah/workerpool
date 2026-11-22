@@ -64,10 +64,10 @@ export function DndDemo() {
           {DAYS.map((d) => (
             <DayDrop key={d} id={d} className={cn('flex min-h-44 flex-col gap-1.5 bg-canvas p-1.5', d > TODAY && 'bg-surface-1/40')}>
               <div className="flex items-center justify-between px-1 pt-0.5 pb-1">
-                <span className="text-micro uppercase text-fg-3">{weekdayShort(d)}</span>
+                <span className="text-micro text-fg-3">{weekdayShort(d)}</span>
                 <span
                   className={cn(
-                    'flex size-5 items-center justify-center rounded-full font-mono text-mono-sm',
+                    'flex size-5 items-center justify-center rounded-full text-mono-sm',
                     d === TODAY ? 'bg-accent font-[600] text-on-accent' : 'text-fg-2',
                   )}
                 >

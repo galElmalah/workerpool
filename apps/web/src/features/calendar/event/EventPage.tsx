@@ -114,7 +114,7 @@ function EventView({ ev }: { ev: Event }) {
       <PageItem className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <Card className="flex flex-col justify-between" spotlight={ev.priority === 'A' ? 'accent' : true}>
           <div className="flex flex-col gap-1">
-            <span className="text-micro uppercase text-fg-3">{past ? 'Raced' : days === 0 ? 'Race day' : 'Countdown'}</span>
+            <span className="text-micro text-fg-3">{past ? 'Raced' : days === 0 ? 'Race day' : 'Countdown'}</span>
             {days == null ? (
               <Skeleton className="h-18 w-40" />
             ) : (
@@ -125,11 +125,11 @@ function EventView({ ev }: { ev: Event }) {
                 <span className="text-title-3 text-fg-3">{days === 0 ? 'today' : `day${Math.abs(days) === 1 ? '' : 's'}${past ? ' ago' : ''}`}</span>
               </span>
             )}
-            {!past && days != null && days > 0 && <span className="font-mono text-mono-sm text-fg-3">{Math.floor(days / 7)} weeks {days % 7} days · {formatDateLong(ev.date)}</span>}
+            {!past && days != null && days > 0 && <span className="text-mono-sm text-fg-3">{Math.floor(days / 7)} weeks {days % 7} days · {formatDateLong(ev.date)}</span>}
           </div>
           {ev.goal && (
             <p className="mt-6 border-l-2 border-accent pl-3 text-body-lg text-fg-1">
-              <span className="block text-micro uppercase text-fg-3">Goal</span>
+              <span className="block text-micro text-fg-3">Goal</span>
               {ev.goal}
             </p>
           )}
@@ -235,9 +235,9 @@ function RaceDayProjection({ ev, today }: { ev: Event; today?: LocalDate }) {
 function Proj({ label, value, delta, accent, signed }: { label: string; value: number; delta: number | null; accent?: boolean; signed?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <span className={cn('text-stat-md', accent ? 'text-accent-ink' : 'text-fg-1')}>{signed ? formatSigned(Math.round(value)) : Math.round(value)}</span>
-      {delta != null && <span className="font-mono text-mono-sm text-fg-3">{formatSigned(Math.round(delta))} from today</span>}
+      {delta != null && <span className="text-mono-sm text-fg-3">{formatSigned(Math.round(delta))} from today</span>}
     </div>
   );
 }
@@ -262,19 +262,19 @@ function TaperWeeks({ ev, today }: { ev: Event; today?: LocalDate }) {
                 >
                   <span className="flex flex-col">
                     <span className={cn('text-label', cur ? 'text-accent-ink' : 'text-fg-1')}>W{Number(w.isoWeek.slice(6))}{raceWeek && ' · race'}</span>
-                    <span className="font-mono text-mono-sm text-fg-3">{formatIsoWeekRange(w.isoWeek)}</span>
+                    <span className="text-mono-sm text-fg-3">{formatIsoWeekRange(w.isoWeek)}</span>
                   </span>
                   <span className="relative h-3 rounded-xs bg-surface-2" aria-hidden>
                     <span className="absolute inset-y-0 left-0 rounded-xs border border-dashed border-fg-4 bg-hatch-faint" style={{ width: `${(w.plannedLoad / max) * 100}%` }} />
                     <motion.span className="absolute inset-y-0 left-0 w-full origin-left rounded-xs bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: w.doneLoad / max }} transition={{ ...spring.smooth, delay: i * 0.04 }} />
                     {w.targetLoad != null && <span className="absolute -inset-y-1 w-px bg-fg-1" style={{ left: `${(w.targetLoad / max) * 100}%` }} title="Target" />}
                   </span>
-                  <span className="flex items-center gap-3 font-mono text-mono-sm text-fg-2">
+                  <span className="flex items-center gap-3 text-mono-sm text-fg-2">
                     <span className="max-sm:hidden">{hm(w.doneSec || w.plannedSec)}</span>
                     <span className="w-16 text-right">
                       <span className="text-fg-1">{formatLoad(w.doneLoad || w.plannedLoad)}</span> load
                     </span>
-                    {w.doneLoad > 0 ? <ProgressRing done={w.doneLoad} planned={w.plannedLoad} size={28} stroke={3} label={null} /> : <span className="w-7 text-center text-micro uppercase text-fg-4">plan</span>}
+                    {w.doneLoad > 0 ? <ProgressRing done={w.doneLoad} planned={w.plannedLoad} size={28} stroke={3} label={null} /> : <span className="w-7 text-center text-micro text-fg-4">plan</span>}
                   </span>
                 </Link>
               );
@@ -314,7 +314,7 @@ function Result({ ev }: { ev: Event }) {
                     </span>
                     <span className="flex min-w-0 flex-col">
                       <span className="truncate text-body font-[560] text-fg-1">{a.title}</span>
-                      <span className="font-mono text-mono-sm text-fg-3">
+                      <span className="text-mono-sm text-fg-3">
                         {formatDuration(a.durationSec, 'clock')} · {formatLoad(a.load)} load {on ? '· linked result' : '· tap to link'}
                       </span>
                     </span>

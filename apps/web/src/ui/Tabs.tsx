@@ -72,7 +72,7 @@ export function Tab({ value, children, count, disabled }: { value: string; child
   return (
     <BaseTabs.Tab value={value} disabled={disabled} className={cn(tabCls, '-mb-px')}>
       {children}
-      {count != null && <span className="font-mono text-mono-sm text-fg-3">{count}</span>}
+      {count != null && <span className="text-mono-sm text-fg-3">{count}</span>}
       {ctx.value === value && <Indicator />}
     </BaseTabs.Tab>
   );

@@ -329,7 +329,7 @@ export function WorkoutNewPage() {
                           defaultValue={distanceM ? formatMeters(distanceM, sport, units) : ''}
                           placeholder={sport === 'swim' ? '2500 m' : '10 km'}
                           onBlur={(e) => setDistanceM(e.currentTarget.value.trim() ? parseMeters(e.currentTarget.value, sport) : null)}
-                          className="text-right font-mono"
+                          className="text-right "
                         />
                       </Field>
                     )}
@@ -430,7 +430,7 @@ function TemplateStrip({ sport, thresholds, onPick }: { sport: Sport; thresholds
     <div className="flex w-full min-w-0 flex-col gap-1.5">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex h-9 items-center gap-2 self-start rounded-md border border-line-2 px-3 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1">
         <Library className="size-4" /> Start from a template
-        <span className="font-mono text-mono-sm text-fg-4">{list.length || ''}</span>
+        <span className="text-mono-sm text-fg-4">{list.length || ''}</span>
       </button>
       <AnimatePresence initial={false}>
         {open && (

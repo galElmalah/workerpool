@@ -319,11 +319,11 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
               <div style={{ width: GUTTER[layout] }} className="shrink-0" />
               <div className="grid min-w-0 flex-1 gap-px border-b border-line-2" style={{ gridTemplateColumns: COLS[layout] }}>
                 {WEEKDAYS.map((d, i) => (
-                  <div key={d} data-col={i} className={cn('flex h-7 items-center text-micro uppercase text-fg-3', layout === 'sm' ? 'justify-center' : 'px-2')}>
+                  <div key={d} data-col={i} className={cn('flex h-7 items-center text-micro text-fg-3', layout === 'sm' ? 'justify-center' : 'px-2')}>
                     {layout === 'sm' ? weekdayShort(d).slice(0, 1) : weekdayShort(d)}
                   </div>
                 ))}
-                {(layout === 'xl' || layout === 'lg') && <div className="flex h-7 items-center px-3 text-micro uppercase text-fg-3">Week</div>}
+                {(layout === 'xl' || layout === 'lg') && <div className="flex h-7 items-center px-3 text-micro text-fg-3">Week</div>}
               </div>
             </div>
             {pages.error && !pages.data.some(Boolean) ? (

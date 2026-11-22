@@ -159,7 +159,7 @@ export function PageHeader({
           {back && <IconButton label="Back" icon={<ArrowLeft />} size="sm" onClick={onBack} className="-ml-1.5" />}
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {breadcrumb && breadcrumb.length > 0 && (
-              <nav aria-label="Breadcrumb" className={cn('flex min-w-0 items-center gap-1.5 text-micro uppercase text-fg-3', !compact && 'max-md:hidden')}>
+              <nav aria-label="Breadcrumb" className={cn('flex min-w-0 items-center gap-1.5 text-micro text-fg-3', !compact && 'max-md:hidden')}>
                 {breadcrumb.map((c, i) => (
                   <span key={i} className="flex min-w-0 items-center gap-1.5">
                     {i > 0 && <span className="text-fg-4">/</span>}
@@ -195,7 +195,7 @@ export function PageHeader({
         <header className={cn(containerCls(width), 'pt-6 pb-6 md:pt-8', className)}>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" style={vt(!!morph, 'card')}>
             <div className="page-hero-title flex min-w-0 flex-col gap-2">
-              {eyebrow && <div className="text-micro uppercase text-fg-3">{eyebrow}</div>}
+              {eyebrow && <div className="text-micro text-fg-3">{eyebrow}</div>}
               <div className="flex min-w-0 items-center gap-3">
                 {glyph && (
                   <span className="flex shrink-0 text-fg-1" style={vt(!!morph, 'glyph')}>

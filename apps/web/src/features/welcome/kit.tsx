@@ -237,7 +237,7 @@ export function BigThresholdInput({
       {(label || aside) && (
         <div className="flex items-baseline justify-between gap-2">
           {label && (
-            <label htmlFor={id} className="text-micro uppercase text-fg-3">
+            <label htmlFor={id} className="text-micro text-fg-3">
               {label}
             </label>
           )}
@@ -299,7 +299,7 @@ export function SourceChip({ source }: { source: 'manual' | 'garmin' | 'estimate
   return (
     <span
       className={cn(
-        'inline-flex h-5 items-center rounded-xs border px-1.5 text-micro uppercase',
+        'inline-flex h-5 items-center rounded-xs border px-1.5 text-micro ',
         source === 'garmin' && 'border-line-3 bg-surface-3 text-fg-1',
         source === 'manual' && 'border-line-2 text-fg-2',
         source === 'estimated' && 'border-dashed border-line-3 text-fg-2',

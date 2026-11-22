@@ -84,7 +84,7 @@ export function TrendsPeaksPage() {
           question={`${RANGES.find((r) => r.value === primary)!.label} (green) against ${primary === 'all' ? 'this season' : 'all-time'} (dashed). ${sel ? `${sel.activities} sessions in range.` : ''}`}
           actions={
             powerSport && estimate?.criticalPower ? (
-              <span className="flex items-baseline gap-3 font-mono text-mono-sm text-fg-3">
+              <span className="flex items-baseline gap-3 text-mono-sm text-fg-3">
                 <span>
                   CP <span className="text-mono text-fg-1">{estimate.criticalPower.cp} W</span>
                 </span>
@@ -118,15 +118,15 @@ export function TrendsPeaksPage() {
           <ThresholdSteps history={history} fmt={(v) => fmtThr(KIND_FOR[sport], v)} invert={false} />
           {suggestions.length > 0 && (
             <div className="mt-4 flex flex-col gap-2 border-t border-line-1 pt-4">
-              <span className="inline-flex items-center gap-1.5 text-micro uppercase text-fg-3">
+              <span className="inline-flex items-center gap-1.5 text-micro text-fg-3">
                 <FlaskConical className="size-3.5" /> Suggestions · estimated from the last 90 days, never applied automatically
               </span>
               {suggestions.map((s, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-dashed border-line-3 px-3 py-2">
                   <span className="flex min-w-0 flex-col">
                     <span className="text-label text-fg-1">
-                      {KIND_LABEL[s.kind] ?? s.kind} <span className="font-mono">{fmtThr(s.kind, s.value)}</span>
-                      {'current' in s && s.current != null && <span className="ml-1 font-mono text-mono-sm text-fg-3">now {fmtThr(s.kind, s.current)}</span>}
+                      {KIND_LABEL[s.kind] ?? s.kind} <span className="">{fmtThr(s.kind, s.value)}</span>
+                      {'current' in s && s.current != null && <span className="ml-1 text-mono-sm text-fg-3">now {fmtThr(s.kind, s.current)}</span>}
                     </span>
                     <span className="truncate text-body-sm text-fg-3">{s.basis}</span>
                   </span>
@@ -151,7 +151,7 @@ function PowerTable({ points, all, weight }: { points: SourcedPoint[]; all: Sour
   return (
     <table className="w-full text-left">
       <thead>
-        <tr className="border-b border-line-1 text-micro uppercase text-fg-3">
+        <tr className="border-b border-line-1 text-micro text-fg-3">
           <th className="px-2 py-2 font-[600]">Duration</th>
           <th className="px-2 py-2 text-right font-[600]">Power</th>
           <th className="px-2 py-2 text-right font-[600] max-sm:hidden">W/kg</th>
@@ -159,7 +159,7 @@ function PowerTable({ points, all, weight }: { points: SourcedPoint[]; all: Sour
           <th className="px-2 py-2 text-right font-[600]">Date</th>
         </tr>
       </thead>
-      <tbody className="font-mono text-mono">
+      <tbody className="text-mono">
         {POWER_DURS.map((d) => {
           const p = at(points, d);
           const a = at(all, d);
@@ -196,14 +196,14 @@ function EffortTable({ sport, efforts, all }: { sport: Sport; efforts: { distanc
   return (
     <table className="w-full text-left">
       <thead>
-        <tr className="border-b border-line-1 text-micro uppercase text-fg-3">
+        <tr className="border-b border-line-1 text-micro text-fg-3">
           <th className="px-2 py-2 font-[600]">Distance</th>
           <th className="px-2 py-2 text-right font-[600]">Time</th>
           <th className="px-2 py-2 text-right font-[600]">Pace</th>
           <th className="px-2 py-2 text-right font-[600]">Date</th>
         </tr>
       </thead>
-      <tbody className="font-mono text-mono">
+      <tbody className="text-mono">
         {efforts.map((e) => {
           const best = all.find((a) => a.distanceM === e.distanceM);
           const isBest = best && e.timeSec <= best.timeSec;
@@ -241,14 +241,14 @@ function ThresholdSteps({ history, fmt }: { history: Threshold[]; fmt: (v: numbe
         const d = prev ? h.value - prev.value : null;
         return (
           <li key={h.id} className="grid grid-cols-[92px_1fr_auto] items-center gap-3 py-2">
-            <span className="font-mono text-mono-sm text-fg-3">{formatDateMedium(h.effectiveFrom, true)}</span>
+            <span className="text-mono-sm text-fg-3">{formatDateMedium(h.effectiveFrom, true)}</span>
             <span className="h-1.5 overflow-hidden rounded-full bg-surface-3">
               <span className={cn('block h-full rounded-full', i === 0 ? 'bg-accent' : 'bg-fg-3')} style={{ width: `${30 + f * 70}%` }} />
             </span>
-            <span className="flex items-baseline gap-2 font-mono text-mono">
+            <span className="flex items-baseline gap-2 text-mono">
               <span className="text-fg-1">{fmt(h.value)}</span>
               {d != null && Math.abs(d) > 1e-6 && <span className="text-mono-sm text-fg-3">{d > 0 ? '↗' : '↘'}</span>}
-              <span className="text-micro uppercase text-fg-4">{h.source === 'manual' ? 'test' : h.source}</span>
+              <span className="text-micro text-fg-4">{h.source === 'manual' ? 'test' : h.source}</span>
             </span>
           </li>
         );

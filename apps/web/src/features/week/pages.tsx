@@ -216,13 +216,13 @@ function Headline({ s, p, mode }: { s: WeekSummary; p?: WeekSummary; mode: Mode 
           return (
             <motion.div key={c.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: i * 0.035 }} className="flex min-w-0 items-center gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5">
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <span className="text-micro uppercase text-fg-3">{c.label}{mode === 'current' ? ' · so far' : mode === 'future' ? ' · planned' : ''}</span>
+                <span className="text-micro text-fg-3">{c.label}{mode === 'current' ? ' · so far' : mode === 'future' ? ' · planned' : ''}</span>
                 <span className={cn('flex items-baseline gap-1 text-stat-lg', c.signal && done ? 'text-accent-ink' : 'text-fg-1')}>
                   <Ticker value={value} format={c.fmt} from={0} />
                   {c.unit && <span className="text-[1.25rem] font-[450] tracking-normal text-fg-3">{c.unit}</span>}
                 </span>
                 {done ? (
-                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-mono-sm text-fg-3">
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-mono-sm text-fg-3">
                     <span>
                       of <span className="text-fg-1">{c.fmt(c.planned)}</span> planned
                     </span>
@@ -233,7 +233,7 @@ function Headline({ s, p, mode }: { s: WeekSummary; p?: WeekSummary; mode: Mode 
                     ) : null}
                   </span>
                 ) : (
-                  <span className="font-mono text-mono-sm text-fg-3">{c.target ? `target ${c.fmt(c.target)}` : 'no target set'}</span>
+                  <span className="text-mono-sm text-fg-3">{c.target ? `target ${c.fmt(c.target)}` : 'no target set'}</span>
                 )}
                 {mode !== 'future' && (
                   <span className="flex items-center gap-1.5">
@@ -278,7 +278,7 @@ function Headline({ s, p, mode }: { s: WeekSummary; p?: WeekSummary; mode: Mode 
           sub={
             <span className="flex items-center gap-2">
               <FormZoneLabel zone={s.formZone} />
-              {p && <span className="font-mono text-mono-sm text-fg-3">was {formatSigned(Math.round(p.form))}</span>}
+              {p && <span className="text-mono-sm text-fg-3">was {formatSigned(Math.round(p.form))}</span>}
             </span>
           }
         />
@@ -301,7 +301,7 @@ function KeyPips({ done, planned }: { done: number; planned: number }) {
 function MiniStat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <span className="truncate text-micro uppercase text-fg-3">{label}</span>
+      <span className="truncate text-micro text-fg-3">{label}</span>
       <span className="text-stat-sm text-fg-1">{value}</span>
       <span className="min-h-5">{sub}</span>
     </div>
@@ -334,8 +334,8 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
             >
               {isToday && <span className="absolute inset-y-0 left-0 w-0.5 bg-accent" aria-hidden />}
               <Link {...links.calendarDay(d.date)} aria-label={`Open ${weekdayShort(d.date)} ${formatDayMonth(d.date)}`} className="group/day flex flex-col self-start rounded-xs pt-1 outline-none focus-visible:outline-2 focus-visible:outline-focus">
-                <span className={cn('text-micro uppercase', isToday ? 'text-accent-ink' : 'text-fg-3')}>{isToday ? 'Today' : weekdayShort(d.date)}</span>
-                <span className="font-mono text-mono-sm text-fg-2 group-hover/day:text-fg-1 group-hover/day:underline">{formatDayMonth(d.date)}</span>
+                <span className={cn('text-micro ', isToday ? 'text-accent-ink' : 'text-fg-3')}>{isToday ? 'Today' : weekdayShort(d.date)}</span>
+                <span className="text-mono-sm text-fg-2 group-hover/day:text-fg-1 group-hover/day:underline">{formatDayMonth(d.date)}</span>
               </Link>
               <div className="flex min-w-0 flex-wrap gap-2">
                 {d.markers.map((m) => (
@@ -360,7 +360,7 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
                   {plan > load && <span className="absolute inset-y-0 left-0 rounded-full border border-dashed border-line-3 bg-hatch-faint" style={{ width: `${(plan / max) * 100}%` }} />}
                   <motion.span className="absolute inset-y-0 left-0 origin-left rounded-full bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ ...spring.gentle, delay: Math.min(i * 0.012, 0.24) }} style={{ width: `${(load / max) * 100}%` }} />
                 </div>
-                <span className="w-24 text-right font-mono text-mono-sm text-fg-2">
+                <span className="w-24 text-right text-mono-sm text-fg-2">
                   {d.activities.length > 0 && <span className="text-fg-3">{fmtH(d.activities.reduce((a, x) => a + (x.movingSec || x.durationSec), 0))} · </span>}
                   {load ? fmtInt(load) : '—'}
                   {plan > 0 && mode !== 'past' ? <span className="text-fg-4"> /{fmtInt(plan)}</span> : null}
@@ -392,14 +392,14 @@ function KeySessions({ data }: { data: WeekBundle }) {
               <SportGlyph sport={w.sport} subSport={w.subSport} size={20} />
               <div className="flex min-w-0 flex-1 flex-col">
                 <span className={cn('truncate text-body text-fg-1', missed && 'line-through decoration-fg-3')}>{w.title}</span>
-                <span className="font-mono text-mono-sm text-fg-3">
+                <span className="text-mono-sm text-fg-3">
                   {weekdayShort(w.date)} · {a ? `${fmtH(a.movingSec || a.durationSec)} · Load ${fmtInt(a.load)}` : `${w.plannedDurationSec ? fmtH(w.plannedDurationSec) : '—'} planned`}
                   {w.plannedLoad ? ` / ${fmtInt(w.plannedLoad)} planned` : ''}
                 </span>
               </div>
               <span className="flex shrink-0 items-center gap-2">
                 <span className="text-body-sm text-fg-2 max-sm:hidden">{complianceLabel(st, w.skipReason)}</span>
-                {k.compliance?.ratio && !missed ? <span className="font-mono text-mono-sm text-fg-1">{Math.round(k.compliance.ratio * 100)}%</span> : null}
+                {k.compliance?.ratio && !missed ? <span className="text-mono-sm text-fg-1">{Math.round(k.compliance.ratio * 100)}%</span> : null}
                 <ComplianceGlyph state={st} size={14} />
               </span>
             </Link>
@@ -435,10 +435,10 @@ function Highlights({ data }: { data: WeekBundle }) {
           <>
             <span className={cn('grid size-8 shrink-0 place-items-center rounded-md bg-surface-2 text-fg-2 [&_svg]:size-4', it.label.startsWith('New best') && 'bg-accent-a2 text-accent-ink')}>{it.icon}</span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-micro uppercase text-fg-3">{it.label}</span>
+              <span className="text-micro text-fg-3">{it.label}</span>
               <span className="truncate text-body text-fg-1">{it.title}</span>
             </span>
-            <span className="font-mono text-mono text-fg-1">{it.value}</span>
+            <span className="text-mono text-fg-1">{it.value}</span>
           </>
         );
         return (
@@ -474,7 +474,7 @@ function BySport({ s, mode }: { s: WeekSummary; mode: Mode }) {
     <div className="overflow-x-auto rounded-xl border border-line-1 bg-surface-1">
       <table className="w-full min-w-[560px] text-left">
         <thead>
-          <tr className="border-b border-line-1 text-micro uppercase text-fg-3">
+          <tr className="border-b border-line-1 text-micro text-fg-3">
             <th className="px-4 py-2.5 font-[600]">Sport</th>
             <th className="px-3 py-2.5 text-right font-[600]">Sessions</th>
             <th className="px-3 py-2.5 text-right font-[600]">Time{future ? '' : ' done / plan'}</th>
@@ -483,7 +483,7 @@ function BySport({ s, mode }: { s: WeekSummary; mode: Mode }) {
             {!future && <th className="w-[22%] px-4 py-2.5 font-[600]">Share of time</th>}
           </tr>
         </thead>
-        <tbody className="font-mono text-mono">
+        <tbody className="text-mono">
           {rows.map((r) => (
             <tr key={r.sport} className="border-b border-line-1 last:border-0">
               <td className="px-4 py-2.5">
@@ -544,8 +544,8 @@ function Balance({ data }: { data: WeekBundle }) {
     <div className="grid gap-3 lg:grid-cols-2">
       <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5">
         <div className="flex items-baseline justify-between">
-          <span className="text-micro uppercase text-fg-3">Intensity split</span>
-          <span className="font-mono text-mono-sm text-fg-3">by time in zone</span>
+          <span className="text-micro text-fg-3">Intensity split</span>
+          <span className="text-mono-sm text-fg-3">by time in zone</span>
         </div>
         {t > 0 ? (
           <>
@@ -559,13 +559,13 @@ function Balance({ data }: { data: WeekBundle }) {
       </div>
       <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5">
         <div className="flex items-baseline justify-between">
-          <span className="text-micro uppercase text-fg-3">Wellness · weekly average</span>
-          <span className="font-mono text-mono-sm text-fg-3">vs prior week</span>
+          <span className="text-micro text-fg-3">Wellness · weekly average</span>
+          <span className="text-mono-sm text-fg-3">vs prior week</span>
         </div>
         <div className="grid grid-cols-3 gap-4">
           {rows.map((r) => (
             <div key={r.label} className="flex min-w-0 flex-col gap-1">
-              <span className="text-micro uppercase text-fg-3">{r.label}</span>
+              <span className="text-micro text-fg-3">{r.label}</span>
               <span className="flex items-baseline gap-1 text-stat-sm text-fg-1">
                 {r.cur == null ? '—' : r.fmt(r.cur)}
                 <span className="text-body-sm text-fg-3">{r.unit}</span>
@@ -586,7 +586,7 @@ function SplitRow({ label, split, total, dim }: { label: string; split: { easy: 
     <div className={cn('flex flex-col gap-1.5', dim && 'opacity-60')}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-label text-fg-1">{label}</span>
-        <span className="font-mono text-mono-sm text-fg-2">
+        <span className="text-mono-sm text-fg-2">
           easy {pc(split.easy)} · mod {pc(split.moderate)} · hard {pc(split.hard)}
         </span>
       </div>
@@ -692,14 +692,14 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
   return (
     <div className="grid gap-3 lg:grid-cols-5">
       <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5 lg:col-span-2">
-        <span className="text-micro uppercase text-fg-3">Already planned for W{Number(nextWeek.slice(6))}</span>
+        <span className="text-micro text-fg-3">Already planned for W{Number(nextWeek.slice(6))}</span>
         {n && n.plannedSec > 0 ? (
           <>
             <div className="flex items-baseline gap-6">
               <span className="flex items-baseline gap-1 text-stat-md text-fg-1">{fmtH(n.plannedSec)}<span className="text-body text-fg-3">h</span></span>
               <span className="flex items-baseline gap-1 text-stat-md text-fg-1">{fmtInt(n.plannedLoad)}<span className="text-body text-fg-3">Load</span></span>
             </div>
-            <span className="font-mono text-mono-sm text-fg-3">
+            <span className="text-mono-sm text-fg-3">
               {data.next.workoutCount} workouts · {data.next.keyCount} key · {formatPercent(pct(n.plannedLoad, s.plannedLoad) ?? 0, { signed: true })} Load vs this week's plan
             </span>
             <span className="flex flex-wrap gap-1.5">
@@ -720,11 +720,11 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
       </div>
       <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5 lg:col-span-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="text-micro uppercase text-fg-3">Copy this week forward</span>
+          <span className="text-micro text-fg-3">Copy this week forward</span>
           <span className="text-body-sm text-fg-3">{count} workouts from W{Number(data.isoWeek.slice(6))}</span>
         </div>
         <p className="text-body text-fg-2">
-          Suggested <span className="font-mono text-fg-1">{formatSigned(sug.pct)}%</span> · {sug.why}
+          Suggested <span className="text-fg-1">{formatSigned(sug.pct)}%</span> · {sug.why}
         </p>
         <Slider
           label="Progression"
@@ -734,7 +734,7 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
           max={20}
           step={5}
           ticks
-          valueLabel={<span className="font-mono text-mono text-fg-1">{formatSigned(p)}%</span>}
+          valueLabel={<span className="text-mono text-fg-1">{formatSigned(p)}%</span>}
         />
         <div className="grid grid-cols-2 gap-4 border-t border-line-1 pt-4 sm:grid-cols-3">
           <PreviewStat label="Copied hours ≈" value={addSec / 3600} fmt={(v) => fmtH(v * 3600)} sub={`from ${fmtH(s.plannedSec)}`} />
@@ -770,11 +770,11 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
 function PreviewStat({ label, value, fmt, sub, accent }: { label: string; value: number; fmt: (v: number) => string; sub: string; accent?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <span className="truncate text-micro uppercase text-fg-3">{label}</span>
+      <span className="truncate text-micro text-fg-3">{label}</span>
       <span className={cn('text-stat-sm', accent ? 'text-accent-ink' : 'text-fg-1')}>
         <Ticker value={value} format={fmt} />
       </span>
-      <span className="truncate font-mono text-mono-sm text-fg-3">{sub}</span>
+      <span className="truncate text-mono-sm text-fg-3">{sub}</span>
     </div>
   );
 }
@@ -795,7 +795,7 @@ function TargetFields({ isoWeek, suggestHours, suggestLoad }: { isoWeek: string;
   return (
     <div className="flex flex-col gap-2 border-t border-line-1 pt-4">
       <div className="flex items-center justify-between">
-        <span className="text-micro uppercase text-fg-3">Targets for W{Number(isoWeek.slice(6))}</span>
+        <span className="text-micro text-fg-3">Targets for W{Number(isoWeek.slice(6))}</span>
         <SaveIndicator status={status} />
       </div>
       <div className="grid grid-cols-2 gap-3">

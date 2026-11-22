@@ -64,7 +64,7 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-micro uppercase text-fg-3">Text</span>
+        <span className="text-micro text-fg-3">Text</span>
         <Popover
           title="Syntax"
           showTitle
@@ -83,7 +83,7 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
         <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-9 border-r border-line-1 bg-canvas/40">
           <div ref={gutter} className="pt-2.5">
             {lines.map((_, i) => (
-              <div key={i} className={cn('flex h-5 items-center justify-end gap-1 pr-2 font-mono text-mono-sm', activeLine === i + 1 ? 'text-fg-1' : 'text-fg-4')}>
+              <div key={i} className={cn('flex h-5 items-center justify-end gap-1 pr-2 text-mono-sm', activeLine === i + 1 ? 'text-fg-1' : 'text-fg-4')}>
                 {byLine.has(i + 1) && <span className={cn('size-1.5 rounded-full', byLine.get(i + 1)!.severity === 'error' ? 'bg-fg-1' : 'border border-fg-2')} />}
                 {i + 1}
               </div>
@@ -91,7 +91,7 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
           </div>
         </div>
         <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 left-9 overflow-hidden">
-          <div ref={mirror} className="py-2.5 pr-3 pl-3 font-mono text-mono whitespace-pre text-transparent">
+          <div ref={mirror} className="py-2.5 pr-3 pl-3 text-mono whitespace-pre text-transparent">
             {lines.map((l, i) => (
               <div key={i} className={cn('h-5', activeLine === i + 1 && 'bg-surface-2 -mx-3 px-3')}>
                 <span className={cn(byLine.has(i + 1) && 'underline decoration-fg-2 decoration-wavy underline-offset-4')}>{l || ' '}</span>
@@ -121,7 +121,7 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
             }
           }}
           wrap="off"
-          className="absolute inset-y-0 right-0 left-9 resize-none bg-transparent py-2.5 pr-3 pl-3 font-mono text-mono leading-5 whitespace-pre text-fg-1 caret-accent outline-none placeholder:text-fg-4"
+          className="absolute inset-y-0 right-0 left-9 resize-none bg-transparent py-2.5 pr-3 pl-3 text-mono leading-5 whitespace-pre text-fg-1 caret-accent outline-none placeholder:text-fg-4"
           placeholder={PLACEHOLDER[sport] ?? '- 45m z2'}
         />
       </div>
@@ -130,7 +130,7 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
           <li key={k}>
             <button type="button" onClick={() => jump(i.line, i.col)} className="flex w-full items-start gap-2 rounded-sm px-1 py-0.5 text-left text-body-sm text-fg-2 hover:bg-surface-2 hover:text-fg-1">
               <TriangleAlert className={cn('mt-0.5 size-3.5 shrink-0', i.severity === 'error' ? 'text-fg-1' : 'text-fg-3')} />
-              <span className="font-mono text-mono-sm text-fg-3">
+              <span className="text-mono-sm text-fg-3">
                 {i.line}:{i.col}
               </span>
               <span className="min-w-0">{i.message}</span>
@@ -172,7 +172,7 @@ function CheatSheet({ sport }: { sport: Sport }) {
     <dl className="grid w-76 grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-1 pb-1">
       {rows.map(([k, v]) => (
         <div key={k} className="contents">
-          <dt className="font-mono text-mono-sm whitespace-pre text-fg-1">{k}</dt>
+          <dt className="text-mono-sm whitespace-pre text-fg-1">{k}</dt>
           <dd className="text-body-sm text-fg-3">{v}</dd>
         </div>
       ))}

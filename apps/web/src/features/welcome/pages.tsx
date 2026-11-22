@@ -38,7 +38,7 @@ function BareFrame({ children, right }: { children: ReactNode; right?: ReactNode
         {right}
       </header>
       <div className="flex flex-1 flex-col">{children}</div>
-      <footer className="flex h-12 shrink-0 items-center justify-center px-5 text-micro uppercase text-fg-4">Single athlete · self-hosted · your data</footer>
+      <footer className="flex h-12 shrink-0 items-center justify-center px-5 text-micro text-fg-4">Single athlete · self-hosted · your data</footer>
     </div>
   );
 }
@@ -94,7 +94,7 @@ function StepIndicator({ step, done }: { step: number; done: boolean }) {
                         <Check className="size-3.5 text-accent-ink" strokeWidth={2.5} />
                       </motion.span>
                     ) : (
-                      <motion.span key="n" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.4, opacity: 0 }} transition={spring.snappy} className={cn('font-mono text-mono-sm', active ? 'text-fg-1' : 'text-fg-4')}>
+                      <motion.span key="n" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.4, opacity: 0 }} transition={spring.snappy} className={cn('text-mono-sm', active ? 'text-fg-1' : 'text-fg-4')}>
                         {i + 1}
                       </motion.span>
                     )}
@@ -178,7 +178,7 @@ export function WelcomePage() {
   if (step === null) return <Splash />;
 
   return (
-    <BareFrame right={auth.data?.demo ? <span className="rounded-xs border border-dashed border-line-3 px-1.5 py-0.5 text-micro uppercase text-fg-3">Demo mode</span> : undefined}>
+    <BareFrame right={auth.data?.demo ? <span className="rounded-xs border border-dashed border-line-3 px-1.5 py-0.5 text-micro text-fg-3">Demo mode</span> : undefined}>
       <div className="mx-auto grid w-full max-w-[1120px] flex-1 grid-cols-1 gap-10 px-5 pb-10 pt-4 md:px-8 lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)] lg:gap-16 lg:pt-10">
         <div className="flex min-w-0 flex-col gap-8">
           <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="max-w-[30rem] text-body-lg text-fg-2">
@@ -225,7 +225,7 @@ export function WelcomePage() {
 function StepHead({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-micro uppercase text-fg-3">{eyebrow}</span>
+      <span className="text-micro text-fg-3">{eyebrow}</span>
       <h1 data-page-title tabIndex={-1} className="text-title-1 text-fg-1 outline-none">
         {title}
       </h1>
@@ -508,7 +508,7 @@ function BackfillPanel({ defaultMonths }: { defaultMonths: (typeof MONTHS)[numbe
         <div className="flex flex-col gap-3" aria-live="polite">
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-label text-fg-2">{p ? PHASE_LABEL[p.phase] ?? p.phase : 'Waiting for the first sync to finish…'}</span>
-            <span className="font-mono text-mono text-fg-2">
+            <span className="text-mono text-fg-2">
               {p && total ? `${formatNumber(p.done)} / ${formatNumber(total)}` : p?.phase === 'done' ? '' : '…'}
             </span>
           </div>
@@ -518,13 +518,13 @@ function BackfillPanel({ defaultMonths }: { defaultMonths: (typeof MONTHS)[numbe
           </div>
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="flex flex-col gap-0.5">
-              <span className="text-micro uppercase text-fg-3">Activities imported</span>
+              <span className="text-micro text-fg-3">Activities imported</span>
               <span className="text-stat-sm text-fg-1">
                 <Odometer value={p ? p.created + p.updated : 0} />
               </span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-micro uppercase text-fg-3">Oldest reached</span>
+              <span className="text-micro text-fg-3">Oldest reached</span>
               <span className="text-stat-sm text-fg-1">{p?.oldestDate ? formatDateMedium(p.oldestDate, true) : '—'}</span>
             </div>
           </div>
@@ -708,7 +708,7 @@ function Preview({ step }: { step: number }) {
 function PreviewTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div className="mb-8 flex flex-col gap-1.5">
-      <span className="text-micro uppercase text-fg-3">{eyebrow}</span>
+      <span className="text-micro text-fg-3">{eyebrow}</span>
       <span className="text-title-2 text-fg-1">{title}</span>
     </div>
   );
@@ -765,13 +765,13 @@ function PreviewWeek() {
         <ul className="flex flex-col">
           {items.map((w, i) => (
             <motion.li layout transition={spring.smooth} key={w.sport + w.title + i} className="flex h-12 items-center gap-4 border-b border-line-1 last:border-b-0">
-              <span className="w-10 font-mono text-mono text-fg-3">{days[i]}</span>
+              <span className="w-10 text-mono text-fg-3">{days[i]}</span>
               {w.load ? (
                 <>
-                  <span className="w-12 text-micro uppercase text-fg-3">{w.sport}</span>
+                  <span className="w-12 text-micro text-fg-3">{w.sport}</span>
                   <span className="min-w-0 flex-1 truncate text-body text-fg-1">{w.title}</span>
-                  <span className="w-20 text-right font-mono text-mono text-fg-2">{dist(w.m, w.sport)}</span>
-                  <span className="w-10 text-right font-mono text-mono text-accent-ink">{w.load}</span>
+                  <span className="w-20 text-right text-mono text-fg-2">{dist(w.m, w.sport)}</span>
+                  <span className="w-10 text-right text-mono text-accent-ink">{w.load}</span>
                 </>
               ) : (
                 <span className="text-body-sm text-fg-4">Rest day</span>
@@ -782,7 +782,7 @@ function PreviewWeek() {
       </LayoutGroup>
       <div className="mt-6 flex items-baseline gap-2 text-body-sm text-fg-3">
         Threshold pace example:
-        <span className="font-mono text-mono text-fg-1">
+        <span className="text-mono text-fg-1">
           {paceParts(1000 / 270, 'run', units).value} {paceParts(1000 / 270, 'run', units).unit}
         </span>
       </div>
@@ -806,14 +806,14 @@ function PreviewGarmin() {
       {p || status?.connected ? (
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-1">
-            <span className="text-micro uppercase text-fg-3">Activities in Cadence</span>
+            <span className="text-micro text-fg-3">Activities in Cadence</span>
             <span className="text-stat-xl text-fg-1">
               <Odometer value={Math.max(status?.counts.activities ?? 0, p ? p.created + p.updated : 0)} />
             </span>
           </div>
           {p?.oldestDate && (
             <div className="flex flex-col gap-1">
-              <span className="text-micro uppercase text-fg-3">Back to</span>
+              <span className="text-micro text-fg-3">Back to</span>
               <span className="text-stat-md text-fg-1">{formatDateMedium(p.oldestDate, true)}</span>
             </div>
           )}
@@ -821,7 +821,7 @@ function PreviewGarmin() {
       ) : (
         <table className="w-full text-body">
           <thead>
-            <tr className="text-micro uppercase text-fg-3">
+            <tr className="text-micro text-fg-3">
               <th className="pb-3 text-left font-[600]" />
               <th className="pb-3 text-center font-[600]">API key</th>
               <th className="pb-3 text-center font-[600]">Tokens</th>
@@ -864,7 +864,7 @@ function PreviewZones() {
       <div className="flex flex-col gap-2.5">
         {COGGAN.map((z, i) => (
           <div key={z.z} className="flex items-center gap-3">
-            <span className="w-7 font-mono text-mono text-fg-3">{z.z}</span>
+            <span className="w-7 text-mono text-fg-3">{z.z}</span>
             <div className="relative h-6 flex-1 overflow-hidden rounded-xs bg-surface-2">
               <motion.div
                 className={cn('absolute inset-y-0 left-0 origin-left rounded-xs', `bg-z${i + 1}`)}
@@ -875,7 +875,7 @@ function PreviewZones() {
               />
               <span className="absolute inset-y-0 left-2 flex items-center text-label text-fg-1">{z.name}</span>
             </div>
-            <span className="w-24 text-right font-mono text-mono text-fg-2">
+            <span className="w-24 text-right text-mono text-fg-2">
               {i === COGGAN.length - 1 ? `${Math.round(ftp * z.lo)}+` : `${Math.round(ftp * z.lo)}–${Math.round(ftp * z.hi) - 1}`} {thresholdUnit(THRESHOLD_META.ftp, units)}
             </span>
           </div>
@@ -972,11 +972,11 @@ export function LoginPage() {
   if (!auth.data || auth.data.authenticated || !auth.data.configured) return <Splash />;
 
   return (
-    <BareFrame right={auth.data.demo ? <span className="rounded-xs border border-dashed border-line-3 px-1.5 py-0.5 text-micro uppercase text-fg-3">Demo mode</span> : undefined}>
+    <BareFrame right={auth.data.demo ? <span className="rounded-xs border border-dashed border-line-3 px-1.5 py-0.5 text-micro text-fg-3">Demo mode</span> : undefined}>
       <div className="flex flex-1 items-center justify-center px-5 pb-16">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="flex w-full max-w-[22rem] flex-col gap-8">
           <div className="flex flex-col gap-2">
-            <span className="text-micro uppercase text-fg-3">Welcome back</span>
+            <span className="text-micro text-fg-3">Welcome back</span>
             <h1 data-page-title tabIndex={-1} className="text-title-1 text-fg-1 outline-none">
               Unlock Cadence
             </h1>
@@ -998,7 +998,7 @@ export function LoginPage() {
               <AnimatePresence mode="wait" initial={false}>
                 {locked ? (
                   <motion.span key="lock" initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-fg-1">
-                    <Lock className="size-3.5" /> Too many attempts. Try again in <span className="font-mono text-mono tabular-nums">{secondsLeft}s</span>
+                    <Lock className="size-3.5" /> Too many attempts. Try again in <span className="text-mono tabular-nums">{secondsLeft}s</span>
                   </motion.span>
                 ) : wrong ? (
                   <motion.span key="wrong" initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-fg-1">

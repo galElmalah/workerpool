@@ -87,7 +87,7 @@ export function TrendsSportPage() {
 function Tile({ label, value, sub, accent }: { label: string; value: string; sub?: React.ReactNode; accent?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <span className="truncate text-micro uppercase text-fg-3">{label}</span>
+      <span className="truncate text-micro text-fg-3">{label}</span>
       <span className={accent ? 'text-stat-md text-accent-ink' : 'text-stat-md text-fg-1'}>{value}</span>
       <span className="min-h-5 text-body-sm text-fg-3">{sub}</span>
     </div>
@@ -126,14 +126,14 @@ function PointsTrend({ points, fmt, higherIsBetter, refLine }: { points: { date:
           {ticks.map((t) => (
             <g key={t}>
               <line x1={L.l} x2={W - L.r} y1={y(t)} y2={y(t)} className="stroke-line-1" />
-              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 font-mono text-[11px]">
+              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 text-[11px]">
                 {fmt(t)}
               </text>
             </g>
           ))}
           {refLine != null && <line x1={L.l} x2={W - L.r} y1={y(refLine)} y2={y(refLine)} className="stroke-fg-3" strokeDasharray="3 3" />}
-          <text x={L.l} y={H - 4} className="fill-fg-3 font-mono text-[11px]">{formatDateMedium(points[0].date)}</text>
-          <text x={W - L.r} y={H - 4} textAnchor="end" className="fill-fg-3 font-mono text-[11px]">{formatDateMedium(points[points.length - 1].date)}</text>
+          <text x={L.l} y={H - 4} className="fill-fg-3 text-[11px]">{formatDateMedium(points[0].date)}</text>
+          <text x={W - L.r} y={H - 4} textAnchor="end" className="fill-fg-3 text-[11px]">{formatDateMedium(points[points.length - 1].date)}</text>
           {points.map((p, i) => (
             <motion.circle key={p.id} cx={x(xs[i])} cy={y(p.v)} r={3} className="cursor-pointer fill-fg-2 hover:fill-fg-1" initial={{ opacity: 0 }} animate={{ opacity: 0.9 }} transition={{ ...spring.smooth, delay: Math.min(i * 0.004, 0.24) }} onClick={() => navigate({ to: '/activities/$id', params: { id: p.id } })}>
               <title>{`${formatDateMedium(p.date)} · ${fmt(p.v)}`}</title>

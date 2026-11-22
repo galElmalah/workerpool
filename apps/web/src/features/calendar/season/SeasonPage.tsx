@@ -90,7 +90,7 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
         <Card padding="none" className="overflow-hidden" style={{ '--chart-bg': 'var(--color-surface-1)' } as React.CSSProperties}>
           <div className="flex flex-wrap items-baseline justify-between gap-3 px-4 pt-4 xl:px-5">
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
-              <span className="text-micro uppercase text-fg-3">Year so far</span>
+              <span className="text-micro text-fg-3">Year so far</span>
               <span className="text-stat-sm text-accent-ink">{formatLoad(yearDone)} <span className="text-label text-fg-3">load</span></span>
               <span className="text-stat-sm text-fg-1">{Math.round(yearSec / 3600)} <span className="text-label text-fg-3">h</span></span>
             </div>
@@ -129,14 +129,14 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
               onClick={() => setEditing(p.id)}
               className={cn('grid grid-cols-[96px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 text-left outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus', i > 0 && 'border-t border-line-1', editing === p.id && 'bg-surface-2')}
             >
-              <span className={cn('rounded-xs px-1.5 py-0.5 text-center text-micro uppercase', PHASE_STYLE[p.type])}>{PHASE_LABEL[p.type]}</span>
+              <span className={cn('rounded-xs px-1.5 py-0.5 text-center text-micro ', PHASE_STYLE[p.type])}>{PHASE_LABEL[p.type]}</span>
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-body text-fg-1">{p.label}</span>
-                <span className="font-mono text-mono-sm text-fg-3">
+                <span className="text-mono-sm text-fg-3">
                   W{Number(isoWeekOf(p.startDate).slice(6))}–W{Number(isoWeekOf(p.endDate).slice(6))} · {formatIsoWeekRange(isoWeekOf(p.startDate))} → {formatIsoWeekRange(isoWeekOf(p.endDate))}
                 </span>
               </span>
-              <span className="font-mono text-mono-sm text-fg-2">{p.weeklyLoadTarget != null ? `${formatLoad(p.weeklyLoadTarget)} /wk` : '—'}</span>
+              <span className="text-mono-sm text-fg-2">{p.weeklyLoadTarget != null ? `${formatLoad(p.weeklyLoadTarget)} /wk` : '—'}</span>
             </button>
           ))}
         </div>
@@ -158,7 +158,7 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
               <span className={cn('grid size-8 place-items-center rounded-sm text-label font-[600]', e.priority === 'A' ? 'bg-accent text-on-accent' : e.priority === 'B' ? 'border border-accent-a6 text-accent-ink' : 'border border-line-3 text-fg-2')}>{e.priority}</span>
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-body font-[560] text-fg-1">{e.name}</span>
-                <span className="font-mono text-mono-sm text-fg-3">{e.date}{e.goal ? ` · ${e.goal}` : ''}</span>
+                <span className="text-mono-sm text-fg-3">{e.date}{e.goal ? ` · ${e.goal}` : ''}</span>
               </span>
             </Link>
           ))}
@@ -174,7 +174,7 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
 
 function Legend() {
   return (
-    <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-micro uppercase text-fg-3" aria-hidden>
+    <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-micro text-fg-3" aria-hidden>
       <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] bg-accent" />Done</span>
       <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] border border-dashed border-fg-3" />Planned</span>
       <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] bg-hatch-fg" />Target</span>
@@ -229,7 +229,7 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
                 title={`${p.label}${p.weeklyLoadTarget ? ` · ${p.weeklyLoadTarget}/wk` : ''}`}
                 onClick={() => onPhase(p.id)}
                 aria-label={p.label}
-                className={cn('absolute inset-y-0 overflow-hidden rounded-xs px-1.5 text-left text-micro uppercase whitespace-nowrap outline-none focus-visible:outline-2 focus-visible:outline-focus', PHASE_STYLE[p.type])}
+                className={cn('absolute inset-y-0 overflow-hidden rounded-xs px-1.5 text-left text-micro whitespace-nowrap outline-none focus-visible:outline-2 focus-visible:outline-focus', PHASE_STYLE[p.type])}
                 style={{ left: `calc(${(a / n) * 100}% + 1px)`, width: `calc(${((b - a + 1) / n) * 100}% - 2px)` }}
               >
                 <FitLabel full={p.label} short={shortPhaseLabel(p)} />
@@ -288,7 +288,7 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
         {/* months */}
         <div className="relative mt-1.5 h-4">
           {months.map(({ i }) => (
-            <span key={i} className="absolute font-mono text-mono-sm text-fg-3" style={{ left: `${(i / n) * 100}%` }}>
+            <span key={i} className="absolute text-mono-sm text-fg-3" style={{ left: `${(i / n) * 100}%` }}>
               {monthShort(weeks[i]!.endDate)}
             </span>
           ))}

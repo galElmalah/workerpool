@@ -111,7 +111,7 @@ const SECTIONS = [
 function Demo({ label, children, className }: { label?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-3', className)}>
-      {label && <div className="text-micro uppercase text-fg-3">{label}</div>}
+      {label && <div className="text-micro text-fg-3">{label}</div>}
       {children}
     </div>
   );
@@ -126,7 +126,7 @@ function Swatch({ name, cls, text }: { name: string; cls: string; text?: string 
   return (
     <div className="flex flex-col gap-1.5">
       <div className={cn('h-12 rounded-md border border-line-2', cls)} />
-      <span className="font-mono text-mono-sm text-fg-2">{name}</span>
+      <span className="text-mono-sm text-fg-2">{name}</span>
       {text && <span className="text-body-sm text-fg-3">{text}</span>}
     </div>
   );
@@ -161,7 +161,7 @@ function Foundations() {
             ).map(([t, cls]) => (
               <div key={t} className="rounded-md border border-line-1 px-3 py-2.5">
                 <div className={cn('text-body-lg', cls)}>Threshold 4×8′</div>
-                <div className="font-mono text-mono-sm text-fg-3">{t}</div>
+                <div className="text-mono-sm text-fg-3">{t}</div>
               </div>
             ))}
           </div>
@@ -175,11 +175,11 @@ function Foundations() {
             </div>
             <div className="grid grid-cols-8 gap-1.5">
               {['bg-z1', 'bg-z2', 'bg-z3', 'bg-z4', 'bg-z5', 'bg-z6', 'bg-z7'].map((c, i) => (
-                <div key={c} className={cn('flex h-10 items-end rounded-sm p-1.5 font-mono text-mono-sm', c, i > 3 ? 'text-on-accent' : 'text-fg-1')}>
+                <div key={c} className={cn('flex h-10 items-end rounded-sm p-1.5 text-mono-sm', c, i > 3 ? 'text-on-accent' : 'text-fg-1')}>
                   Z{i + 1}
                 </div>
               ))}
-              <div className="flex h-10 items-end rounded-sm bg-accent bg-hatch-fg p-1.5 font-mono text-mono-sm text-on-accent">hatch</div>
+              <div className="flex h-10 items-end rounded-sm bg-accent bg-hatch-fg p-1.5 text-mono-sm text-on-accent">hatch</div>
             </div>
             <div className="flex flex-wrap items-center gap-4 pt-2 text-body">
               <span className="text-accent-ink">accent-ink text</span>
@@ -205,13 +205,13 @@ function Foundations() {
                 ['body', 'text-body', 'Ride steady to the climb, then build.'],
                 ['body-sm', 'text-body-sm', 'Ride steady to the climb, then build.'],
                 ['label', 'text-label', 'Duration'],
-                ['micro', 'text-micro uppercase', 'Zone 4 · Load'],
-                ['mono', 'font-mono text-mono', '1:15:30  4:05 /km  245 W'],
-                ['mono-sm', 'font-mono text-mono-sm', '07:30  W47  ±0%'],
+                ['micro', 'text-micro ', 'Zone 4 · Load'],
+                ['mono', 'text-mono', '1:15:30  4:05 /km  245 W'],
+                ['mono-sm', 'text-mono-sm', '07:30  W47  ±0%'],
               ] as const
             ).map(([name, cls, sample]) => (
               <div key={name} className="flex items-baseline gap-6 overflow-hidden px-4 py-3">
-                <span className="w-20 shrink-0 font-mono text-mono-sm text-fg-3">{name}</span>
+                <span className="w-20 shrink-0 text-mono-sm text-fg-3">{name}</span>
                 <span className={cn('min-w-0 truncate text-fg-1', cls)}>{sample}</span>
               </div>
             ))}
@@ -220,7 +220,7 @@ function Foundations() {
         <Demo label="Radii — xs 4 · sm 6 · md 10 · lg 14 · xl 20 · 2xl 28">
           <div className="flex flex-wrap gap-3">
             {['rounded-xs', 'rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl', 'rounded-2xl'].map((r) => (
-              <div key={r} className={cn('flex size-16 items-end border border-line-3 bg-surface-2 p-1.5 font-mono text-mono-sm text-fg-3', r)}>
+              <div key={r} className={cn('flex size-16 items-end border border-line-3 bg-surface-2 p-1.5 text-mono-sm text-fg-3', r)}>
                 {r.replace('rounded-', '')}
               </div>
             ))}
@@ -680,7 +680,7 @@ function Domain() {
                 <div key={s} className="flex items-center gap-2.5 text-body text-fg-1">
                   <ComplianceGlyph state={s} />
                   <span className="w-24">{complianceLabel(s, s === 'excused' ? 'sick' : undefined)}</span>
-                  <span className="font-mono text-mono-sm text-fg-3">{s}</span>
+                  <span className="text-mono-sm text-fg-3">{s}</span>
                 </div>
               ))}
             </div>
@@ -771,13 +771,13 @@ function MotionLab() {
           <Card title="Tickers" eyebrow="Ticker · Odometer" actions={<IconButton label="Randomize" icon={<Shuffle />} size="sm" onClick={() => (setN(Math.round(800 + Math.random() * 14000)), setFit(Math.round(40 + Math.random() * 80)))} />}>
             <div className="flex items-end justify-between gap-4">
               <div className="flex flex-col gap-1">
-                <span className="text-micro uppercase text-fg-3">Fitness</span>
+                <span className="text-micro text-fg-3">Fitness</span>
                 <span className="text-stat-lg text-accent-ink">
                   <Odometer value={fit} />
                 </span>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className="text-micro uppercase text-fg-3">Load · year</span>
+                <span className="text-micro text-fg-3">Load · year</span>
                 <span className="text-stat-md">
                   <Ticker value={n} />
                 </span>
@@ -807,7 +807,7 @@ function MotionLab() {
                 onPointerMove={onSpotlightMove}
                 className={cn('spotlight flex h-28 flex-col justify-between rounded-lg border border-line-2 bg-surface-1 p-4', i === 3 && 'spotlight-accent')}
               >
-                <span className="text-micro uppercase text-fg-3">{t}</span>
+                <span className="text-micro text-fg-3">{t}</span>
                 <span className="text-stat-sm">{[84, 97, '−13', 'Sat 21'][i]}</span>
               </div>
             ))}
@@ -819,7 +819,7 @@ function MotionLab() {
         <Demo label="Empty state">
           <div className="rounded-xl border border-dashed border-line-2">
             <EmptyState icon={<Inbox />} title="Nothing planned yet" action={<Button icon={<Plus />}>Add workout</Button>}>
-              Press <Kbd>C</Kbd> on any day, or type <span className="font-mono text-mono text-fg-1">run 45m easy</span>.
+              Press <Kbd>C</Kbd> on any day, or type <span className="text-mono text-fg-1">run 45m easy</span>.
             </EmptyState>
           </div>
         </Demo>
@@ -855,8 +855,8 @@ function Formatting() {
       <Panel className="grid gap-x-8 sm:grid-cols-2">
         {rows.map(([k, v]) => (
           <div key={k} className="flex h-9 items-center justify-between gap-4 border-b border-line-1">
-            <span className="truncate font-mono text-mono-sm text-fg-3">{k}</span>
-            <span className="font-mono text-mono text-fg-1">{v}</span>
+            <span className="truncate text-mono-sm text-fg-3">{k}</span>
+            <span className="text-mono text-fg-1">{v}</span>
           </div>
         ))}
       </Panel>

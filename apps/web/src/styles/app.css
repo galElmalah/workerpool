@@ -2,7 +2,7 @@
 @import "./view-transitions.css";
 
 /* ───────────────────────────────────────────────────────────────────────────────
-   Cadence design tokens — design.md §2–§4 (normative). Dark is the default.
+   Cadence design tokens — docs/DESIGN_V2.md (normative; supersedes design.md §2–§4). Dark is the default.
    Light overrides live on <html data-theme="light">. data-theme MUST be on <html>
    because the semantic aliases below resolve on :root.
    ─────────────────────────────────────────────────────────────────────────────── */
@@ -28,19 +28,19 @@
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  /* Neutral ramp (dark) */
-  --color-gray-1: oklch(0 0 0);
-  --color-gray-2: oklch(0.164 0 0);
-  --color-gray-3: oklch(0.196 0 0);
-  --color-gray-4: oklch(0.226 0 0);
-  --color-gray-5: oklch(0.256 0 0);
-  --color-gray-6: oklch(0.285 0 0);
-  --color-gray-7: oklch(0.325 0 0);
-  --color-gray-8: oklch(0.402 0 0);
-  --color-gray-9: oklch(0.549 0 0);
-  --color-gray-10: oklch(0.600 0 0);
-  --color-gray-11: oklch(0.741 0 0);
-  --color-gray-12: oklch(0.940 0 0);
+  /* Neutral ramp (dark) — soft near-black, faintly cool (DESIGN_V2 §2). Never pure black/white. */
+  --color-gray-1: oklch(0.165 0.004 260);
+  --color-gray-2: oklch(0.205 0.005 260);
+  --color-gray-3: oklch(0.235 0.006 260);
+  --color-gray-4: oklch(0.265 0.006 260);
+  --color-gray-5: oklch(0.295 0.006 260);
+  --color-gray-6: oklch(0.330 0.006 260);
+  --color-gray-7: oklch(0.380 0.007 260);
+  --color-gray-8: oklch(0.450 0.008 260);
+  --color-gray-9: oklch(0.530 0.008 260);
+  --color-gray-10: oklch(0.640 0.008 260);
+  --color-gray-11: oklch(0.770 0.006 260);
+  --color-gray-12: oklch(0.930 0.004 260);
 
   /* Semantic neutrals */
   --color-canvas: var(--color-gray-1);
@@ -52,35 +52,36 @@
   --color-fg-2: var(--color-gray-11);
   --color-fg-3: var(--color-gray-10);
   --color-fg-4: var(--color-gray-9);
-  --color-line-1: rgb(255 255 255 / 0.06);
-  --color-line-2: rgb(255 255 255 / 0.10);
-  --color-line-3: rgb(255 255 255 / 0.16);
-  --color-glass: rgb(14 14 14 / 0.72);
-  --color-scrim: rgb(0 0 0 / 0.60);
+  --color-line-1: var(--line-1);
+  --color-line-2: var(--line-2);
+  --color-line-3: var(--line-3);
+  --color-glass: var(--glass);
+  --color-scrim: var(--scrim);
   --color-focus: var(--color-gray-12);
 
-  /* Accent: Signal Green (dark) */
-  --color-accent: oklch(0.850 0.221 150);
-  --color-accent-hover: oklch(0.900 0.182 150);
-  --color-accent-press: oklch(0.790 0.210 150);
-  --color-accent-ink: oklch(0.850 0.221 150);
-  --color-on-accent: #000000;
-  --color-accent-a1: oklch(0.850 0.221 150 / 0.06);
-  --color-accent-a2: oklch(0.850 0.221 150 / 0.10);
-  --color-accent-a3: oklch(0.850 0.221 150 / 0.16);
-  --color-accent-a4: oklch(0.850 0.221 150 / 0.24);
-  --color-accent-a5: oklch(0.850 0.221 150 / 0.40);
-  --color-accent-a6: oklch(0.850 0.221 150 / 0.64);
-  --color-accent-a7: oklch(0.850 0.221 150 / 0.85);
+  /* Accent — resolved from the raw --accent* variables set per theme and per <html data-accent>
+     (blue default, green, rose). Alpha steps and the zone ramp are mixes of the same colour. */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-press: var(--accent-press);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-accent-a1: color-mix(in oklab, var(--accent) 6%, transparent);
+  --color-accent-a2: color-mix(in oklab, var(--accent) 10%, transparent);
+  --color-accent-a3: color-mix(in oklab, var(--accent) 16%, transparent);
+  --color-accent-a4: color-mix(in oklab, var(--accent) 24%, transparent);
+  --color-accent-a5: color-mix(in oklab, var(--accent) 40%, transparent);
+  --color-accent-a6: color-mix(in oklab, var(--accent) 64%, transparent);
+  --color-accent-a7: color-mix(in oklab, var(--accent) 85%, transparent);
 
-  /* Intensity zones = accent opacity ladder */
-  --color-z1: oklch(0.850 0.221 150 / 0.14);
-  --color-z2: oklch(0.850 0.221 150 / 0.26);
-  --color-z3: oklch(0.850 0.221 150 / 0.40);
-  --color-z4: oklch(0.850 0.221 150 / 0.55);
-  --color-z5: oklch(0.850 0.221 150 / 0.70);
-  --color-z6: oklch(0.850 0.221 150 / 0.85);
-  --color-z7: oklch(0.850 0.221 150 / 1);
+  /* Intensity zones = one-hue ramp of the accent (light → strong) */
+  --color-z1: color-mix(in oklab, var(--accent) 16%, transparent);
+  --color-z2: color-mix(in oklab, var(--accent) 28%, transparent);
+  --color-z3: color-mix(in oklab, var(--accent) 42%, transparent);
+  --color-z4: color-mix(in oklab, var(--accent) 56%, transparent);
+  --color-z5: color-mix(in oklab, var(--accent) 70%, transparent);
+  --color-z6: color-mix(in oklab, var(--accent) 85%, transparent);
+  --color-z7: var(--accent);
 
   /* Grayscale sport ramp for stacked charts / mix bars (product.md §3.6.4). */
   --color-ramp-1: var(--color-gray-12);
@@ -98,16 +99,18 @@
   --text-stat-lg: 3rem;     --text-stat-lg--line-height: 1;      --text-stat-lg--letter-spacing: -0.04em;  --text-stat-lg--font-weight: 560;
   --text-stat-md: 2rem;     --text-stat-md--line-height: 2.25rem;--text-stat-md--letter-spacing: -0.03em;  --text-stat-md--font-weight: 560;
   --text-stat-sm: 1.25rem;  --text-stat-sm--line-height: 1.5rem; --text-stat-sm--letter-spacing: -0.015em; --text-stat-sm--font-weight: 560;
-  --text-title-1: 2rem;     --text-title-1--line-height: 2.5rem; --text-title-1--letter-spacing: -0.025em; --text-title-1--font-weight: 620;
-  --text-title-2: 1.5rem;   --text-title-2--line-height: 2rem;   --text-title-2--letter-spacing: -0.02em;  --text-title-2--font-weight: 600;
-  --text-title-3: 1.125rem; --text-title-3--line-height: 1.625rem;--text-title-3--letter-spacing: -0.012em;--text-title-3--font-weight: 600;
+  --text-title-1: 1.75rem;  --text-title-1--line-height: 2.25rem;--text-title-1--letter-spacing: -0.022em; --text-title-1--font-weight: 600;
+  --text-title-2: 1.375rem; --text-title-2--line-height: 1.75rem;--text-title-2--letter-spacing: -0.018em; --text-title-2--font-weight: 580;
+  --text-title-3: 1.0625rem;--text-title-3--line-height: 1.5rem;  --text-title-3--letter-spacing: -0.01em; --text-title-3--font-weight: 580;
   --text-body-lg: 1rem;     --text-body-lg--line-height: 1.5rem; --text-body-lg--letter-spacing: -0.006em; --text-body-lg--font-weight: 420;
   --text-body: 0.875rem;    --text-body--line-height: 1.25rem;   --text-body--letter-spacing: -0.003em;    --text-body--font-weight: 420;
   --text-body-sm: 0.8125rem;--text-body-sm--line-height: 1.125rem;--text-body-sm--font-weight: 420;
-  --text-label: 0.75rem;    --text-label--line-height: 1rem;     --text-label--letter-spacing: 0.005em;    --text-label--font-weight: 520;
-  --text-micro: 0.6875rem;  --text-micro--line-height: 0.875rem; --text-micro--letter-spacing: 0.06em;     --text-micro--font-weight: 600;
-  --text-mono: 0.8125rem;   --text-mono--line-height: 1.125rem;  --text-mono--font-weight: 450;
-  --text-mono-sm: 0.6875rem;--text-mono-sm--line-height: 0.875rem;--text-mono-sm--letter-spacing: 0.01em;  --text-mono-sm--font-weight: 450;
+  --text-label: 0.75rem;    --text-label--line-height: 1rem;     --text-label--letter-spacing: 0;          --text-label--font-weight: 450;
+  /* v2: micro is an alias of label (sentence case, no tracking). Never pair with `uppercase`. */
+  --text-micro: 0.75rem;    --text-micro--line-height: 1rem;     --text-micro--letter-spacing: 0;          --text-micro--font-weight: 450;
+  /* v2: text-mono / text-mono-sm are size tokens only (= body-sm / label). Numbers use the sans. */
+  --text-mono: 0.8125rem;   --text-mono--line-height: 1.125rem;  --text-mono--font-weight: 420;
+  --text-mono-sm: 0.75rem;  --text-mono-sm--line-height: 1rem;   --text-mono-sm--letter-spacing: 0;       --text-mono-sm--font-weight: 420;
 
   /* Spacing / radius / containers / breakpoints */
   --spacing: 0.25rem;
@@ -115,7 +118,7 @@
   --radius-xl: 20px; --radius-2xl: 28px; --radius-full: 9999px;
   --container-prose: 45rem;   /* 720 */
   --container-palette: 40rem; /* 640 */
-  --container-page: 75rem;    /* 1200 */
+  --container-page: 70rem;    /* 1120 */
   --breakpoint-sm: 40rem; --breakpoint-md: 48rem; --breakpoint-lg: 64rem;
   --breakpoint-xl: 80rem; --breakpoint-2xl: 96rem;
 
@@ -147,36 +150,46 @@
   --z-sticky: 10; --z-rail: 20; --z-drag: 40; --z-popover: 50; --z-toast: 60; --z-palette: 70;
   /* Shell geometry (read by the shell + sticky offsets in pages). */
   --rail-w: 0px; --header-h: 52px; --bottom-bar-h: 0px;
-  --inset-shadow-hairline: inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+  --inset-shadow-hairline: inset 0 0 0 0 transparent; /* v2: no hairline highlights */
+  --line-1: rgb(255 255 255 / 0.06); --line-2: rgb(255 255 255 / 0.10); --line-3: rgb(255 255 255 / 0.18);
+  --glass: oklch(0.185 0.005 260 / 0.78); --scrim: rgb(0 0 0 / 0.50);
+  /* Accent (dark): calm blue by default. */
+  --accent: oklch(0.740 0.115 250); --accent-hover: oklch(0.790 0.100 250); --accent-press: oklch(0.690 0.115 250);
+  --accent-ink: oklch(0.780 0.105 250); --on-accent: oklch(0.180 0.020 250);
   color-scheme: dark;
   interpolate-size: allow-keywords; /* Chromium-only progressive enhancement */
+}
+
+:root[data-accent="green"] {
+  --accent: oklch(0.770 0.105 160); --accent-hover: oklch(0.815 0.092 160); --accent-press: oklch(0.720 0.105 160);
+  --accent-ink: oklch(0.800 0.098 160); --on-accent: oklch(0.180 0.020 160);
+}
+:root[data-accent="rose"] {
+  --accent: oklch(0.770 0.100 5); --accent-hover: oklch(0.815 0.088 5); --accent-press: oklch(0.720 0.100 5);
+  --accent-ink: oklch(0.800 0.094 5); --on-accent: oklch(0.180 0.020 5);
 }
 
 /* Light theme */
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-gray-1: oklch(1 0 0);       --color-gray-2: oklch(0.985 0 0);  --color-gray-3: oklch(0.967 0 0);
-  --color-gray-4: oklch(0.949 0 0);   --color-gray-5: oklch(0.928 0 0);  --color-gray-6: oklch(0.907 0 0);
-  --color-gray-7: oklch(0.876 0 0);   --color-gray-8: oklch(0.802 0 0);  --color-gray-9: oklch(0.640 0 0);
-  --color-gray-10: oklch(0.556 0 0);  --color-gray-11: oklch(0.500 0 0); --color-gray-12: oklch(0.209 0 0);
+  --color-gray-1: oklch(1 0 0);                --color-gray-2: oklch(0.985 0.002 260);  --color-gray-3: oklch(0.962 0.003 260);
+  --color-gray-4: oklch(0.940 0.004 260);      --color-gray-5: oklch(0.918 0.004 260);  --color-gray-6: oklch(0.895 0.004 260);
+  --color-gray-7: oklch(0.860 0.005 260);      --color-gray-8: oklch(0.790 0.006 260);  --color-gray-9: oklch(0.640 0.006 260);
+  --color-gray-10: oklch(0.540 0.008 260);     --color-gray-11: oklch(0.440 0.008 260); --color-gray-12: oklch(0.240 0.006 260);
   --color-surface-1: var(--color-gray-1);  /* light: cards are white on a gray-2 canvas */
   --color-canvas: var(--color-gray-2);
-  --color-line-1: rgb(0 0 0 / 0.06); --color-line-2: rgb(0 0 0 / 0.10); --color-line-3: rgb(0 0 0 / 0.16);
-  --color-glass: rgb(255 255 255 / 0.72);
-  --color-scrim: rgb(0 0 0 / 0.24);
-  --color-accent: oklch(0.640 0.175 150);
-  --color-accent-hover: oklch(0.600 0.165 150);
-  --color-accent-press: oklch(0.559 0.154 150);
-  --color-accent-ink: oklch(0.501 0.138 150);
-  --color-accent-a1: oklch(0.640 0.175 150 / 0.06); --color-accent-a2: oklch(0.640 0.175 150 / 0.10);
-  --color-accent-a3: oklch(0.640 0.175 150 / 0.16); --color-accent-a4: oklch(0.640 0.175 150 / 0.24);
-  --color-accent-a5: oklch(0.640 0.175 150 / 0.40); --color-accent-a6: oklch(0.640 0.175 150 / 0.64);
-  --color-accent-a7: oklch(0.640 0.175 150 / 0.85);
-  --color-z1: oklch(0.640 0.175 150 / 0.14); --color-z2: oklch(0.640 0.175 150 / 0.26);
-  --color-z3: oklch(0.640 0.175 150 / 0.40); --color-z4: oklch(0.640 0.175 150 / 0.55);
-  --color-z5: oklch(0.640 0.175 150 / 0.70); --color-z6: oklch(0.640 0.175 150 / 0.85);
-  --color-z7: oklch(0.640 0.175 150 / 1);
-  --inset-shadow-hairline: inset 0 1px 0 0 rgb(255 255 255 / 0.6);
+  --line-1: rgb(0 0 0 / 0.06); --line-2: rgb(0 0 0 / 0.10); --line-3: rgb(0 0 0 / 0.18);
+  --glass: rgb(255 255 255 / 0.78); --scrim: rgb(0 0 0 / 0.24);
+  --accent: oklch(0.550 0.150 255); --accent-hover: oklch(0.510 0.150 255); --accent-press: oklch(0.470 0.145 255);
+  --accent-ink: oklch(0.480 0.150 255); --on-accent: oklch(1 0 0);
+}
+:root[data-theme="light"][data-accent="green"] {
+  --accent: oklch(0.550 0.115 160); --accent-hover: oklch(0.510 0.110 160); --accent-press: oklch(0.470 0.105 160);
+  --accent-ink: oklch(0.450 0.100 160);
+}
+:root[data-theme="light"][data-accent="rose"] {
+  --accent: oklch(0.580 0.150 5); --accent-hover: oklch(0.540 0.150 5); --accent-press: oklch(0.500 0.145 5);
+  --accent-ink: oklch(0.500 0.150 5);
 }
 
 /* ───────────────────────────── base layer ───────────────────────────── */

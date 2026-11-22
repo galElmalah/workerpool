@@ -226,7 +226,7 @@ export function JournalPage() {
           <div className={cn('flex flex-col transition-opacity duration-(--dur-fast)', feed.isPlaceholderData && 'opacity-60')}>
             {months.map((m) => (
               <section key={m.key} aria-label={formatMonthYearLong(`${m.key}-01`)}>
-                <h2 className="sticky top-[calc(var(--header-h)+6.5rem)] z-[1] -mx-1 bg-canvas/85 px-1 py-2 text-micro uppercase text-fg-3 backdrop-blur-sm">{formatMonthYearLong(`${m.key}-01`)}</h2>
+                <h2 className="sticky top-[calc(var(--header-h)+6.5rem)] z-[1] -mx-1 bg-canvas/85 px-1 py-2 text-micro text-fg-3 backdrop-blur-sm">{formatMonthYearLong(`${m.key}-01`)}</h2>
                 <motion.ol variants={listContainer} initial="hidden" animate="show" className="flex flex-col">
                   {m.items.map((it) => (
                     <motion.li key={`${it.type}-${it.ref}`} variants={listItem} layout="position" transition={spring.smooth}>
@@ -259,14 +259,14 @@ function Entry({ it, words, onTag }: { it: Item; words: string[]; onTag: (t: str
     <EntryLink it={it}>
       <div className="flex gap-4">
         <div className="flex w-14 shrink-0 flex-col items-start gap-1 pt-0.5">
-          <span className="font-mono text-mono text-fg-2">{formatDayShort(it.date)}</span>
+          <span className="text-mono text-fg-2">{formatDayShort(it.date)}</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             {it.sport ? <SportGlyph sport={it.sport as Sport} size={16} className="text-fg-2" /> : it.type === 'week' ? <CalendarDays className="size-4 text-fg-3" /> : <NotebookPen className="size-4 text-fg-3" />}
-            <span className="text-micro uppercase text-fg-3">{KIND_LABEL[it.type]}</span>
+            <span className="text-micro text-fg-3">{KIND_LABEL[it.type]}</span>
             {it.type !== 'day' && <span className="min-w-0 truncate text-body text-fg-2">{it.type === 'week' ? `${it.title} · ${formatIsoWeekRange(it.ref)}` : it.title}</span>}
-            {it.rpe != null && <span className="font-mono text-mono-sm text-fg-2">RPE {it.rpe}</span>}
+            {it.rpe != null && <span className="text-mono-sm text-fg-2">RPE {it.rpe}</span>}
             {it.feel != null && <Dots value={it.feel} />}
             <ArrowUpRight className="ml-auto size-3.5 text-fg-4 opacity-0 transition-opacity duration-(--dur-fast) group-hover:opacity-100" />
           </div>
@@ -317,7 +317,7 @@ function Composer() {
     <Section stagger>
       <div className="rounded-xl border border-line-2 bg-surface-1 p-4 transition-colors duration-(--dur-fast) focus-within:border-line-3">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <span className="text-micro uppercase text-fg-3">{today ? `Today · ${formatDateLong(today)}` : 'Today'}</span>
+          <span className="text-micro text-fg-3">{today ? `Today · ${formatDateLong(today)}` : 'Today'}</span>
           <SaveIndicator status={status} />
         </div>
         {body === null ? (

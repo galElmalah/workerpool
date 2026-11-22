@@ -236,7 +236,7 @@ function ProfileTip({ blocks, id, k, left, width, y }: { blocks: ProfileBlock[];
   return (
     <div className="glass pointer-events-none absolute z-(--z-popover) whitespace-nowrap rounded-sm border border-line-3 px-2 py-1 text-body-sm inset-shadow-hairline" style={{ left: Math.max(0, Math.min(width - 160, cx - 60)), top }}>
       <span className="text-fg-1">{b.label ?? b.role}</span>
-      <span className="ml-2 font-mono text-mono-sm text-fg-2">
+      <span className="ml-2 text-mono-sm text-fg-2">
         {fmtHMS(b.durationSec)} · {Math.round(b.intensity * 100)}
         {b.intensityEnd != null ? `→${Math.round(b.intensityEnd * 100)}` : ''}%
       </span>

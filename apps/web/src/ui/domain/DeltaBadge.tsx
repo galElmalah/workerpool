@@ -32,7 +32,7 @@ export interface DeltaBadgeProps {
 const ROT: Record<DeltaDirection, number> = { up: -45, down: 45, flat: 0 };
 
 export function DeltaBadge({ value, kind = 'percent', decimals = 0, flatBelow, good, warning, suffix, size = 'md', className }: DeltaBadgeProps) {
-  if (value == null || !Number.isFinite(value)) return <span className={cn('font-mono text-mono-sm text-fg-4', className)}>—</span>;
+  if (value == null || !Number.isFinite(value)) return <span className={cn('text-mono-sm text-fg-4', className)}>—</span>;
   const dir = deltaDirection(value, flatBelow ?? (kind === 'percent' ? 0.01 : 0.5));
   const text =
     kind === 'percent'

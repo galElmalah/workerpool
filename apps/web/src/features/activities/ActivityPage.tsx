@@ -117,7 +117,7 @@ function ActivityView({ a }: { a: ActivityDetail }) {
             <span className="flex flex-wrap items-center gap-x-2">
               <span>{formatDateLong(a.localDate, true)}</span>
               <span className="text-fg-4">·</span>
-              <span className="font-mono">{formatInstantTime(a.startedAt, a.utcOffsetMin)}</span>
+              <span className="">{formatInstantTime(a.startedAt, a.utcOffsetMin)}</span>
               <span className="text-fg-4">·</span>
               <span>{SPORT_META[a.sport].label}{a.subSport && a.subSport !== 'generic' ? ` · ${a.subSport.replace('_', ' ')}` : ''}</span>
             </span>
@@ -168,7 +168,7 @@ function HeaderMeta({ a, set }: { a: ActivityDetail; set: Setter }) {
           <button type="button" className="flex h-7 items-center gap-2 rounded-sm border border-line-2 px-2 transition-colors duration-(--dur-fast) hover:bg-surface-2" aria-label="Change intensity">
             <IntensityPips intensity={a.intensity} size="md" />
             <span className="text-label text-fg-1">{INTENSITY_META[a.intensity].label}</span>
-            <span className="text-micro uppercase text-fg-3">{overridden ? 'Set by you' : 'Auto'}</span>
+            <span className="text-micro text-fg-3">{overridden ? 'Set by you' : 'Auto'}</span>
           </button>
         }
       >
@@ -190,13 +190,13 @@ function HeaderMeta({ a, set }: { a: ActivityDetail; set: Setter }) {
         <span className="flex h-7 items-center gap-1.5 rounded-sm border border-line-2 px-2 text-label text-fg-1">
           <ComplianceGlyph state={a.compliance.state} />
           {complianceLabel(a.compliance.state)}
-          <span className="font-mono text-mono-sm text-fg-2">
+          <span className="text-mono-sm text-fg-2">
             {Math.round(a.compliance.ratio * 100)}% {a.compliance.metric}
           </span>
         </span>
       )}
       {a.compliance?.state === 'unplanned' && (
-        <span className="flex h-7 items-center gap-1.5 px-1 text-micro uppercase text-fg-3">
+        <span className="flex h-7 items-center gap-1.5 px-1 text-micro text-fg-3">
           <ComplianceGlyph state="unplanned" /> Unplanned
         </span>
       )}
@@ -211,7 +211,7 @@ function HeroLoad({ a, liveLoad }: { a: ActivityDetail; liveLoad?: number }) {
         <span className="text-stat-lg text-accent-ink">
           <Ticker value={liveLoad ?? a.load} format={(n) => String(Math.round(n))} />
         </span>
-        <span className="text-micro uppercase text-fg-3">Load</span>
+        <span className="text-micro text-fg-3">Load</span>
       </div>
       <span className="text-body-sm text-fg-3">{a.loadSource === 'rpe' ? 'estimated from RPE' : a.loadSource === 'hr' ? 'from heart rate' : a.loadSource === 'power' ? 'from power' : a.loadSource === 'manual' ? 'set by you' : `from ${a.loadSource.replace('_', ' ')}`}</span>
     </div>
@@ -347,10 +347,10 @@ function StatGrid({ stats, hasPrev }: { stats: Stat[]; hasPrev: boolean }) {
 }
 
 function StatLabel({ s }: { s: Stat }) {
-  if (!s.tip) return <span className="truncate text-micro uppercase text-fg-3">{s.label}</span>;
+  if (!s.tip) return <span className="truncate text-micro text-fg-3">{s.label}</span>;
   return (
     <Tooltip content={<span className="block max-w-64">{s.tip}</span>}>
-      <span tabIndex={0} className="flex w-fit cursor-help items-center gap-1 truncate rounded-xs text-micro uppercase text-fg-3 outline-none hover:text-fg-2 focus-visible:outline-2 focus-visible:outline-focus">
+      <span tabIndex={0} className="flex w-fit cursor-help items-center gap-1 truncate rounded-xs text-micro text-fg-3 outline-none hover:text-fg-2 focus-visible:outline-2 focus-visible:outline-focus">
         {s.label}
         <Info className="size-3 opacity-60" aria-hidden />
       </span>
@@ -388,7 +388,7 @@ function FeltCard({ a, rpe, setRpe, set }: { a: ActivityDetail; rpe: number | nu
                 role="radio"
                 aria-checked={on}
                 onClick={() => void set({ feel: on ? null : i + 1 })}
-                className={cn('flex h-12 flex-col items-center justify-center gap-1 rounded-md border text-micro uppercase transition-colors duration-(--dur-fast)', on ? 'border-line-3 bg-surface-3 text-fg-1' : 'border-line-1 text-fg-3 hover:bg-surface-2 hover:text-fg-1')}
+                className={cn('flex h-12 flex-col items-center justify-center gap-1 rounded-md border text-micro transition-colors duration-(--dur-fast)', on ? 'border-line-3 bg-surface-3 text-fg-1' : 'border-line-1 text-fg-3 hover:bg-surface-2 hover:text-fg-1')}
               >
                 <span className="flex gap-0.5" aria-hidden>
                   {Array.from({ length: 5 }, (_, k) => (
@@ -411,7 +411,7 @@ function FeltCard({ a, rpe, setRpe, set }: { a: ActivityDetail; rpe: number | nu
       </div>
       {a.plannedWorkout?.preNote && (
         <div className="border-t border-line-1 pt-4">
-          <div className="mb-1 text-micro uppercase text-fg-3">Pre-workout note</div>
+          <div className="mb-1 text-micro text-fg-3">Pre-workout note</div>
           <p className="text-body-sm whitespace-pre-wrap text-fg-2">{a.plannedWorkout.preNote}</p>
         </div>
       )}

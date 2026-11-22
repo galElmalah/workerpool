@@ -82,10 +82,10 @@ export function EndLabelRow({ labels }: { labels: Omit<EndLabel, 'y'>[] }) {
           <svg width="8" height="8">
             <circle cx="4" cy="4" r="3" style={{ fill: l.dashed ? 'none' : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
           </svg>
-          <span className="font-mono text-mono-sm" style={{ color: toneText[l.tone] }}>
+          <span className="text-mono-sm" style={{ color: toneText[l.tone] }}>
             {l.value}
           </span>
-          <span className="text-micro uppercase text-fg-3">{l.name}</span>
+          <span className="text-micro text-fg-3">{l.name}</span>
         </span>
       ))}
     </div>

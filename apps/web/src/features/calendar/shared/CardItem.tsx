@@ -49,7 +49,7 @@ function MiniChip({ card }: { card: CalendarCard }) {
     >
       {(s.rail ?? (m.isKey ? 'bg-accent' : null)) && <span className={cn('absolute inset-y-0.5 left-0 w-0.5 rounded-r-full', s.rail ?? 'bg-accent')} aria-hidden />}
       <SportGlyph sport={m.sport} size={14} className="shrink-0 text-fg-1" style={vt(on, 'glyph')} />
-      <span className={cn('truncate font-mono text-mono-sm text-fg-2 max-[360px]:hidden', state === 'missed' && 'line-through')}>
+      <span className={cn('truncate text-mono-sm text-fg-2 max-[360px]:hidden', state === 'missed' && 'line-through')}>
         {m.durationSec && m.durationSec >= 3600 ? `${Math.round(m.durationSec / 3600)}h` : formatDuration(m.durationSec).replace(/^0:/, ':')}
       </span>
     </div>
@@ -84,7 +84,7 @@ function CompactCard({ card, ghost, selected, style }: { card: CalendarCard; gho
       </span>
       <div className="flex min-w-0 items-center gap-1 pt-0.5">
         <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className="shrink-0 text-fg-2" />
-        <span className={cn('shrink-0 font-mono text-mono-sm text-fg-2', state === 'missed' && 'line-through')}>{formatDuration(m.durationSec)}</span>
+        <span className={cn('shrink-0 text-mono-sm text-fg-2', state === 'missed' && 'line-through')}>{formatDuration(m.durationSec)}</span>
         <span className="ml-auto flex min-w-0 items-center gap-1">
           {m.isKey && <KeyStar pressed readOnly size="sm" />}
           {m.compliance && state !== 'planned' && <ComplianceGlyph state={state} size={11} />}

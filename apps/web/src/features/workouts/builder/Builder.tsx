@@ -326,7 +326,7 @@ function PoolLength({ structure, onChange }: { structure: WorkoutStructure; onCh
   const v = structure.poolLengthM === 50 ? '50' : structure.poolLengthM && Math.abs(structure.poolLengthM - 22.86) < 0.01 ? '25y' : '25';
   return (
     <div className="flex items-center gap-3">
-      <span className="text-micro uppercase text-fg-3">Pool</span>
+      <span className="text-micro text-fg-3">Pool</span>
       <Segmented
         size="sm"
         aria-label="Pool length"

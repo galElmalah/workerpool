@@ -60,7 +60,7 @@ function PhaseGutter({ info, width }: { info?: PhaseInfo; width: number }) {
         >
           {width >= 16 && (
             <span
-              className={cn('mt-2 truncate text-micro uppercase', info.phase.type === 'peak' || info.phase.type === 'race' ? 'text-fg-1' : 'text-fg-2')}
+              className={cn('mt-2 truncate text-micro ', info.phase.type === 'peak' || info.phase.type === 'race' ? 'text-fg-1' : 'text-fg-2')}
               style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', maxHeight: 'calc(100% - 16px)' }}
             >
               {info.phase.label}
@@ -145,14 +145,14 @@ export const DayCell = memo(function DayCell({ day, cards, copyGhost, today, wee
             tabIndex={-1}
             onClickCapture={() => flushSync(() => calStore.set({ focus: { kind: 'day', date } }))}
             className={cn(
-              'flex h-5 shrink-0 items-center justify-center rounded-full font-mono text-mono-sm transition-colors duration-(--dur-fast)',
+              'flex h-5 shrink-0 items-center justify-center rounded-full text-mono-sm transition-colors duration-(--dur-fast)',
               isToday ? 'min-w-5 bg-accent px-1 font-[600] text-on-accent' : first ? 'px-0.5 font-[600] text-fg-1 hover:text-accent-ink' : 'min-w-5 px-0.5 text-fg-2 hover:text-fg-1',
               mini && 'h-4 min-w-4',
             )}
             aria-label={`Open ${date}`}
           >
             {Number(date.slice(8))}
-            {first && !mini && <span className={cn('ml-1 uppercase', isToday ? '' : 'text-fg-1')}>{monthShort(date)}</span>}
+            {first && !mini && <span className={cn('ml-1 ', isToday ? '' : 'text-fg-1')}>{monthShort(date)}</span>}
           </Link>
           {!mini && <MarkerGlyphs markers={day.markers} />}
           {!mini && day.note && <Pilcrow className="size-3 shrink-0 text-fg-3" aria-label="Day note" />}
@@ -181,7 +181,7 @@ export const DayCell = memo(function DayCell({ day, cards, copyGhost, today, wee
                 ))}
               </div>
             )}
-            {rest && cards.length === 0 && !mini && <span className="text-micro uppercase text-fg-3">Rest</span>}
+            {rest && cards.length === 0 && !mini && <span className="text-micro text-fg-3">Rest</span>}
             <div ref={listRef} className={cn('flex flex-col', mini ? 'gap-0.5' : 'gap-1')}>
               {shown.map((c) => (
                 <div key={c.key} data-flip={c.key} className="relative">
@@ -198,7 +198,7 @@ export const DayCell = memo(function DayCell({ day, cards, copyGhost, today, wee
               <Link
                 {...links.calendarDay(date)}
                 onClick={(e) => e.stopPropagation()}
-                className="self-start rounded-xs px-1 font-mono text-mono-sm text-fg-3 transition-colors hover:bg-surface-3 hover:text-fg-1"
+                className="self-start rounded-xs px-1 text-mono-sm text-fg-3 transition-colors hover:bg-surface-3 hover:text-fg-1"
               >
                 +{more}
                 {!mini && ' more'}

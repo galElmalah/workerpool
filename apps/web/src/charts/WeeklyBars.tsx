@@ -231,14 +231,14 @@ function WeeklyInner({
                 onPointerLeave={() => setFocusSport(null)}
                 onFocus={() => setFocusSport(s)}
                 onBlur={() => setFocusSport(null)}
-                className="inline-flex items-center gap-1.5 rounded-xs text-micro uppercase text-fg-3 hover:text-fg-1"
+                className="inline-flex items-center gap-1.5 rounded-xs text-micro text-fg-3 hover:text-fg-1"
               >
                 <SportSwatch s={s} defs={defs} active={focusSport === s} />
                 {SPORT_RAMP[s].label}
               </button>
             ))}
             {showTargets && weeks.some((w) => acc.target(w)) && (
-              <span className="inline-flex items-center gap-1.5 text-micro uppercase text-fg-3">
+              <span className="inline-flex items-center gap-1.5 text-micro text-fg-3">
                 <svg width="14" height="8" aria-hidden>
                   <line x1="0" x2="9" y1="4" y2="4" style={{ stroke: T.fg2 }} />
                   <path d="M9 4l4 -3v6z" style={{ fill: T.fg2 }} />
@@ -247,7 +247,7 @@ function WeeklyInner({
               </span>
             )}
             {showPlanned && (
-              <span className="inline-flex items-center gap-1.5 text-micro uppercase text-fg-3">
+              <span className="inline-flex items-center gap-1.5 text-micro text-fg-3">
                 <svg width="12" height="10" aria-hidden>
                   <rect x="0.5" y="0.5" width="11" height="9" rx="1.5" style={{ fill: 'none', stroke: T.fg3, strokeDasharray: '2 2' }} />
                 </svg>
@@ -465,7 +465,7 @@ function WeekTooltip({ weeks, keys, sync, acc, xc, width, top, defs }: { weeks: 
         title={
           <span className="flex items-center gap-2">
             {w.isoWeek.slice(5)} · {fmtMonthDay(w.startDate)}
-            {w.isProjected && <span className="text-micro uppercase text-accent-ink">so far</span>}
+            {w.isProjected && <span className="text-micro text-accent-ink">so far</span>}
           </span>
         }
         rows={rows}

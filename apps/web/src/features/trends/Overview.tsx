@@ -270,7 +270,7 @@ function WowTiles({ all, today, compare, sport, fitness, loading }: { all: WeekS
           footer={
             <span className="inline-flex items-center gap-2">
               <FormZoneLabel zone={fd?.formZone} />
-              {fd?.formPct != null && <span className="font-mono text-mono-sm text-fg-3">{formatSigned(Math.round(fd.formPct))}%</span>}
+              {fd?.formPct != null && <span className="text-mono-sm text-fg-3">{formatSigned(Math.round(fd.formPct))}%</span>}
             </span>
           }
         />,
@@ -289,7 +289,7 @@ function WowTiles({ all, today, compare, sport, fitness, loading }: { all: WeekS
             'This week'
           )}
         </h2>
-        <span className="text-micro uppercase text-fg-3">{COMPARE_LABEL[compare]}{inProgress && compare !== 'year' ? ' · same weekday' : ''}</span>
+        <span className="text-micro text-fg-3">{COMPARE_LABEL[compare]}{inProgress && compare !== 'year' ? ' · same weekday' : ''}</span>
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {loading || !tiles.length
@@ -349,7 +349,7 @@ function WowTile({
   return (
     <div className="spotlight flex h-full min-h-[158px] min-w-0 flex-col gap-2 rounded-lg border border-line-1 bg-surface-1 p-4">
       <div className="flex items-start justify-between gap-2">
-        <span className="truncate text-micro uppercase text-fg-3">{label}</span>
+        <span className="truncate text-micro text-fg-3">{label}</span>
         {spark && spark.values.length > 1 && <SparkBars values={spark.values} planned={spark.planned} todayIndex={spark.values.length - 1} barWidth={4} gap={2} height={18} ariaLabel={`${label}, last ${spark.values.length} weeks`} className="max-sm:hidden" />}
         {sparkLine && sparkLine.length > 1 && <MiniLine values={sparkLine} accent={signal} />}
       </div>
@@ -365,7 +365,7 @@ function WowTile({
         {plan ? (
           <div className="flex flex-col gap-1.5">
             <Meter value={plan.done} max={plan.total} ghost={plan.total} target={plan.target} size="xs" aria-label={`${label}: ${plan.fmt(plan.done)} of ${plan.fmt(plan.total)}`} />
-            <span className="truncate font-mono text-mono-sm text-fg-3">
+            <span className="truncate text-mono-sm text-fg-3">
               {plan.label ?? (
                 <>
                   <span className="text-fg-4">on track for</span> {plan.fmt(plan.total)}{plan.target ? ` · target ${plan.fmt(plan.target)}` : ''}
@@ -418,7 +418,7 @@ function RampBand({ ramp, band }: { ramp: number; band: string | null }) {
           ))}
           <motion.span className="absolute -top-1 h-3.5 w-0.5 rounded-full bg-fg-1" initial={false} animate={{ left: `calc(${pos(ramp)}% - 1px)` }} transition={spring.smooth} />
         </div>
-        <span className="font-mono text-mono-sm text-fg-3">
+        <span className="text-mono-sm text-fg-3">
           Ramp <span className="text-fg-1">{formatSigned(ramp, 1)}</span>/wk · {band}
         </span>
       </div>
@@ -487,8 +487,8 @@ export function SelectionReadout({ sel }: { sel: FitnessSelection | null }) {
 function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <span className="inline-flex items-baseline gap-1.5">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
-      <span className="font-mono text-mono text-fg-1">{children}</span>
+      <span className="text-micro text-fg-3">{label}</span>
+      <span className="text-mono text-fg-1">{children}</span>
     </span>
   );
 }
@@ -522,7 +522,7 @@ function WowSection({ all, weeks, metric, compare, sync, loading, onMetric, onOp
       actions={
         <div className="flex gap-1" role="group" aria-label="Metric">
           {(['hours', 'load', 'distance'] as Metric[]).map((m) => (
-            <button key={m} type="button" aria-pressed={m === metric} onClick={() => onMetric(m)} className={cn('h-6 rounded-xs px-2 text-micro uppercase transition-colors', m === metric ? 'bg-surface-3 text-fg-1' : 'text-fg-3 hover:text-fg-1')}>
+            <button key={m} type="button" aria-pressed={m === metric} onClick={() => onMetric(m)} className={cn('h-6 rounded-xs px-2 text-micro transition-colors', m === metric ? 'bg-surface-3 text-fg-1' : 'text-fg-3 hover:text-fg-1')}>
               {METRIC_NAME[m]}
             </button>
           ))}
@@ -565,8 +565,8 @@ function Streak({ value, unit, label, best }: { value: number; unit: string; lab
       <span className="flex items-baseline gap-1 text-stat-sm text-fg-1">
         <Ticker value={value} from={0} />
         <span className="text-body text-fg-3">{unit}</span>
-        {best != null && best > value && <span className="ml-1 font-mono text-mono-sm text-fg-3">best {best}</span>}
-        {best != null && best <= value && value > 1 && <span className="ml-1 text-micro uppercase text-accent-ink">best</span>}
+        {best != null && best > value && <span className="ml-1 text-mono-sm text-fg-3">best {best}</span>}
+        {best != null && best <= value && value > 1 && <span className="ml-1 text-micro text-accent-ink">best</span>}
       </span>
       <span className="text-body-sm text-fg-3">{label}</span>
     </div>

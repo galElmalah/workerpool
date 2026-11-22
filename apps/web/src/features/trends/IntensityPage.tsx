@@ -74,7 +74,7 @@ export function TrendsIntensityPage() {
 function Tile({ label, value, sub }: { label: string; value: string; sub?: React.ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <span className="truncate text-micro uppercase text-fg-3">{label}</span>
+      <span className="truncate text-micro text-fg-3">{label}</span>
       <span className="text-stat-md text-fg-1">{value}</span>
       <span className="min-h-5 text-body-sm text-fg-3">{sub}</span>
     </div>
@@ -112,7 +112,7 @@ function KeyPerWeek({ weeks, onOpen }: { weeks: { isoWeek: string; done: number;
       {rows.map((w, i) => (
         <li key={w.isoWeek}>
           <button type="button" onClick={() => onOpen(w.isoWeek)} className="grid w-full grid-cols-[44px_1fr_44px] items-center gap-3 rounded-sm px-1 py-1 text-left hover:bg-surface-2">
-            <span className="font-mono text-mono-sm text-fg-3">{formatIsoWeek(w.isoWeek)}</span>
+            <span className="text-mono-sm text-fg-3">{formatIsoWeek(w.isoWeek)}</span>
             <span className="flex items-center gap-1">
               {Array.from({ length: Math.max(w.planned, w.done) }, (_, k) => (
                 <motion.span key={k} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ...spring.smooth, delay: Math.min((i * 3 + k) * 0.012, 0.24) }}>
@@ -123,7 +123,7 @@ function KeyPerWeek({ weeks, onOpen }: { weeks: { isoWeek: string; done: number;
               <span className="sr-only">{`${w.done} of ${w.planned}`}</span>
               <span aria-hidden style={{ width: 0 }} data-max={max} />
             </span>
-            <span className="text-right font-mono text-mono-sm text-fg-2">
+            <span className="text-right text-mono-sm text-fg-2">
               {w.done}/{w.planned}
             </span>
           </button>

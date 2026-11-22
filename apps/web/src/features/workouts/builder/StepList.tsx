@@ -118,7 +118,7 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
           align="start"
           items={STEP_ROLES.map((r) => ({ label: roleLabel(r), checked: step.role === r, onSelect: () => patch({ role: r as StepRole }) }))}
           trigger={
-            <button type="button" className="ml-1 inline-flex h-7 w-[6.75rem] shrink-0 items-center justify-between gap-1 rounded-sm px-1.5 text-micro uppercase text-fg-2 transition-colors hover:bg-surface-3 hover:text-fg-1">
+            <button type="button" className="ml-1 inline-flex h-7 w-[6.75rem] shrink-0 items-center justify-between gap-1 rounded-sm px-1.5 text-micro text-fg-2 transition-colors hover:bg-surface-3 hover:text-fg-1">
               <span className="truncate">{roleLabel(step.role)}</span>
               <ChevronDown className="size-3 shrink-0 opacity-60" />
             </button>
@@ -137,7 +137,7 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
       </div>
       {(selected || step.cue) && (
         <div className="-mt-1 flex items-center pb-1.5 pl-[3.25rem]">
-          <span className="mr-1 font-mono text-mono-sm text-fg-4">//</span>
+          <span className="mr-1 text-mono-sm text-fg-4">//</span>
           <input
             aria-label="Cue"
             defaultValue={step.cue ?? ''}
@@ -169,7 +169,7 @@ function MeasureToggle({ step, onChange }: { step: Step; onChange: (m: Step['mea
         { label: 'Until lap button', checked: m.type === 'lap_button', onSelect: () => onChange({ type: 'lap_button' }) },
       ]}
       trigger={
-        <button type="button" aria-label="Measure type" className="flex h-7 w-4 shrink-0 items-center justify-center rounded-xs font-mono text-mono-sm text-fg-4 transition-colors hover:bg-surface-3 hover:text-fg-1">
+        <button type="button" aria-label="Measure type" className="flex h-7 w-4 shrink-0 items-center justify-center rounded-xs text-mono-sm text-fg-4 transition-colors hover:bg-surface-3 hover:text-fg-1">
           {m.type === 'time' ? '◷' : m.type === 'distance' ? '↦' : m.type === 'reps' ? '#' : '⏎'}
         </button>
       }
@@ -197,7 +197,7 @@ function SwimChip({ step, onChange }: { step: Step; onChange: (p: Partial<Step>)
     >
       <div className="flex w-72 flex-col gap-3 p-1">
         <div>
-          <div className="mb-1.5 text-micro uppercase text-fg-3">Stroke</div>
+          <div className="mb-1.5 text-micro text-fg-3">Stroke</div>
           <div className="flex flex-wrap gap-1">
             {SWIM_STROKES.map((s) => (
               <Pill key={s} on={sw.stroke === s} onClick={() => set({ stroke: sw.stroke === s ? undefined : s })}>
@@ -207,7 +207,7 @@ function SwimChip({ step, onChange }: { step: Step; onChange: (p: Partial<Step>)
           </div>
         </div>
         <div>
-          <div className="mb-1.5 text-micro uppercase text-fg-3">Equipment</div>
+          <div className="mb-1.5 text-micro text-fg-3">Equipment</div>
           <div className="flex flex-wrap gap-1">
             {SWIM_EQUIPMENT.map((e) => {
               const on = sw.equipment?.includes(e) ?? false;
@@ -260,7 +260,7 @@ function RepeatBlock({ node, path, meta, grip, selected }: { node: RepeatNode; p
     <RowShell id={node.id} selected={selected} className="bg-transparent!">
       <div className="flex h-10 items-center gap-1 pr-1 pl-0.5">
         {grip}
-        <span className="ml-1 text-micro uppercase text-fg-3">Repeat</span>
+        <span className="ml-1 text-micro text-fg-3">Repeat</span>
         <div className="ml-1 flex items-center rounded-sm border border-line-2 bg-surface-2">
           <button type="button" aria-label="Fewer repeats" className="flex size-6 items-center justify-center text-fg-3 hover:text-fg-1 disabled:opacity-30" disabled={node.count <= 1} onClick={() => setCount(node.count - 1)}>
             <Minus className="size-3" />
@@ -270,7 +270,7 @@ function RepeatBlock({ node, path, meta, grip, selected }: { node: RepeatNode; p
             <Plus className="size-3" />
           </button>
         </div>
-        {once > 0 && <span className="ml-2 font-mono text-mono-sm text-fg-3">{fmtClock(once * node.count)}</span>}
+        {once > 0 && <span className="ml-2 text-mono-sm text-fg-3">{fmtClock(once * node.count)}</span>}
         <input
           aria-label="Repeat label"
           defaultValue={node.label ?? ''}

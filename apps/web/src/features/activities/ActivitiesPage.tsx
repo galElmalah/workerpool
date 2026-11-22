@@ -320,7 +320,7 @@ function TotalsStrip({ totals, loading }: { totals?: { count: number; movingSec:
     <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-line-2 bg-surface-1 md:grid-cols-4">
       {cells.map((c) => (
         <div key={c.label} className="-mr-px -mb-px flex flex-col gap-1 border-r border-b border-line-1 px-4 py-3">
-          <span className="text-micro uppercase text-fg-3">{c.label}</span>
+          <span className="text-micro text-fg-3">{c.label}</span>
           {loading ? (
             <Skeleton className="h-8 w-24" />
           ) : (
@@ -379,7 +379,7 @@ function ActivityTable({ items, fetching }: { items: Activity[]; fetching: boole
         type="button"
         onClick={() => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }))}
         aria-sort={on ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
-        className={cn('flex items-center gap-1 whitespace-nowrap uppercase transition-colors hover:text-fg-1', right && 'flex-row-reverse justify-self-end', on && 'text-fg-1')}
+        className={cn('flex items-center gap-1 whitespace-nowrap transition-colors hover:text-fg-1', right && 'flex-row-reverse justify-self-end', on && 'text-fg-1')}
       >
         {label}
         <motion.span initial={false} animate={{ rotate: on && sort.dir === 'asc' ? 0 : 180, opacity: on ? 1 : 0.3 }} transition={spring.snappy} className="inline-flex">
@@ -390,7 +390,7 @@ function ActivityTable({ items, fetching }: { items: Activity[]; fetching: boole
   };
   return (
     <div role="table" aria-label="Activities" className={cn('rounded-lg border border-line-2 bg-surface-1 transition-opacity duration-(--dur-base)', fetching && 'opacity-70')}>
-      <div role="row" className={cn('sticky top-(--header-h) z-(--z-sticky) grid h-9 items-center gap-x-3 rounded-t-lg border-b border-line-1 bg-surface-1 px-4 text-micro font-[600] uppercase text-fg-3', COLS)}>
+      <div role="row" className={cn('sticky top-(--header-h) z-(--z-sticky) grid h-9 items-center gap-x-3 rounded-t-lg border-b border-line-1 bg-surface-1 px-4 text-micro font-[600] text-fg-3', COLS)}>
         {head('date', 'Date')}
         <span />
         {head('title', 'Title')}
@@ -431,7 +431,7 @@ function Row({ a, prevMonth }: { a: Activity; prevMonth: string | null }) {
   return (
     <>
       {prevMonth !== null && prevMonth !== month && (
-        <div className="border-b border-line-1 bg-canvas/40 px-4 pt-4 pb-1.5 text-micro uppercase text-fg-3">
+        <div className="border-b border-line-1 bg-canvas/40 px-4 pt-4 pb-1.5 text-micro text-fg-3">
           {monthShort(a.localDate)} {a.localDate.slice(0, 4)}
         </div>
       )}
@@ -443,19 +443,19 @@ function Row({ a, prevMonth }: { a: Activity; prevMonth: string | null }) {
         style={vt(on, 'card')}
         className={cn('spotlight group relative grid h-11 items-center gap-x-3 border-b border-line-1 px-4 text-body outline-none transition-colors duration-(--dur-fast) last:rounded-b-lg last:border-b-0 hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus', COLS)}
       >
-        <span className="font-mono text-mono-sm text-fg-2">{formatDayShort(a.localDate)} <span className="text-fg-4">{monthShort(a.localDate)}</span></span>
+        <span className="text-mono-sm text-fg-2">{formatDayShort(a.localDate)} <span className="text-fg-4">{monthShort(a.localDate)}</span></span>
         <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} className="text-fg-1" />
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-fg-1" style={vt(on, 'title')}>{a.title}</span>
           {a.isKey && <KeyStar pressed readOnly size="sm" />}
           {a.postNote && <Pilcrow className="size-3 shrink-0 text-fg-3" aria-label="Has a note" />}
         </span>
-        <span className="text-right font-mono text-mono text-fg-1">{formatDuration(a.movingSec || a.durationSec)}</span>
-        <span className="text-right font-mono text-mono text-fg-2">{d ? <>{d.value}<span className="text-fg-3"> {d.unit}</span></> : <span className="text-fg-4">—</span>}</span>
-        <span className="text-right font-mono text-mono text-accent-ink">{formatNumber(a.load, 0)}</span>
+        <span className="text-right text-mono text-fg-1">{formatDuration(a.movingSec || a.durationSec)}</span>
+        <span className="text-right text-mono text-fg-2">{d ? <>{d.value}<span className="text-fg-3"> {d.unit}</span></> : <span className="text-fg-4">—</span>}</span>
+        <span className="text-right text-mono text-accent-ink">{formatNumber(a.load, 0)}</span>
         <span className="flex justify-end"><IntensityPips intensity={a.intensity} /></span>
-        <span className="text-right font-mono text-mono text-fg-2">{a.avgHr ?? <span className="text-fg-4">—</span>}</span>
-        <span className="text-right font-mono text-mono whitespace-nowrap text-fg-1"><Out a={a} /></span>
+        <span className="text-right text-mono text-fg-2">{a.avgHr ?? <span className="text-fg-4">—</span>}</span>
+        <span className="text-right text-mono whitespace-nowrap text-fg-1"><Out a={a} /></span>
         <span className="flex justify-center">{a.compliance && <ComplianceGlyph state={a.compliance.state} />}</span>
         <span className="flex justify-end">{a.sparkline && a.sparkline.length > 1 ? <MiniProfile values={a.sparkline} height={16} className="w-[4.5rem]" /> : null}</span>
       </Link>
@@ -486,7 +486,7 @@ function MobileCard({ a, units }: { a: Activity; units: ReturnType<typeof useUni
         {a.compliance && <ComplianceGlyph state={a.compliance.state} />}
       </div>
       <div className="flex items-end gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 font-mono text-mono-sm text-fg-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 text-mono-sm text-fg-2">
           <span>{formatDayShort(a.localDate)} {monthShort(a.localDate)}</span>
           <span className="text-fg-1">{formatDuration(a.movingSec || a.durationSec)}</span>
           {d && <span>{d.value} {d.unit}</span>}

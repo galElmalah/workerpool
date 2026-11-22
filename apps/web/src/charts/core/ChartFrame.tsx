@@ -54,7 +54,7 @@ export function ChartSkeleton({ height, className = '' }: { height: number; clas
 export function ChartEmpty({ height, title = 'No data yet', hint }: { height: number; title?: string; hint?: string }) {
   return (
     <div className="flex w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-line-2 text-center" style={{ height }}>
-      <span className="text-micro uppercase text-fg-3">{title}</span>
+      <span className="text-micro text-fg-3">{title}</span>
       {hint && <span className="max-w-72 px-4 text-body-sm text-fg-3">{hint}</span>}
     </div>
   );

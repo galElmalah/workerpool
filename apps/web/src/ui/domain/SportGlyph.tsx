@@ -67,7 +67,7 @@ export function SportGlyph({ sport, subSport, size = 16, withLabel, className, s
   return (
     <span className={cn('inline-flex items-center gap-1.5', className)} style={style}>
       {glyph}
-      <span className="text-micro uppercase">{SPORT_SHORT[sport]}</span>
+      <span className="text-micro ">{SPORT_SHORT[sport]}</span>
     </span>
   );
 }

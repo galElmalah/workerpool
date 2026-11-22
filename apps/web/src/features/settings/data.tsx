@@ -160,7 +160,7 @@ function DemoCard() {
                 ['Demo today', d?.today ? formatDateMedium(d.today) : undefined],
               ].map(([l, v]) => (
                 <div key={l as string} className="flex flex-col gap-0.5">
-                  <span className="text-micro uppercase text-fg-3">{l}</span>
+                  <span className="text-micro text-fg-3">{l}</span>
                   <span className="text-stat-sm text-fg-1">{v == null ? '—' : typeof v === 'number' ? formatNumber(v) : v}</span>
                 </div>
               ))}
@@ -170,7 +170,7 @@ function DemoCard() {
             <div className="flex flex-col gap-2" aria-live="polite">
               <div className="flex justify-between text-label text-fg-2">
                 <span>Seeding · {job.phase}</span>
-                <span className="font-mono text-mono">
+                <span className="text-mono">
                   {formatNumber(job.done)} / {formatNumber(job.total)}
                 </span>
               </div>

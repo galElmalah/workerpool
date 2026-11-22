@@ -937,14 +937,14 @@ function StreamInner({
       {/* readout row */}
       <div className="mb-2 flex flex-wrap items-end gap-x-5 gap-y-1.5" aria-hidden>
         <div className="flex min-w-28 flex-col">
-          <span className="text-micro uppercase text-fg-3">Cursor</span>
-          <span ref={timeRef} className="font-mono text-mono text-fg-2">
+          <span className="text-micro text-fg-3">Cursor</span>
+          <span ref={timeRef} className="text-mono text-fg-2">
             avg · whole activity
           </span>
         </div>
         {tracks.map((tr) => (
           <div key={tr.key} className="flex flex-col">
-            <span className="flex items-center gap-1.5 text-micro uppercase text-fg-3">
+            <span className="flex items-center gap-1.5 text-micro text-fg-3">
               <span className="h-0.5 w-2.5 rounded-full" style={{ background: tr.key === 'power' ? tk.accent : tr.key === 'hr' ? tk.fg1 : tr.key === 'speed' ? tk.fg2 : tr.key === 'altitude' ? tk.fg4 : tk.fg3 }} />
               {tr.label}
             </span>
@@ -977,7 +977,7 @@ function StreamInner({
         <canvas ref={overRef} className="absolute inset-0" aria-hidden />
         {selection && selStats && (
           <div ref={chipRef} className="glass absolute left-0 top-1.5 z-(--z-popover) flex items-center gap-2 rounded-md border border-line-3 py-1 pl-2.5 pr-1 opacity-0 inset-shadow-hairline" onPointerDown={(e) => e.stopPropagation()}>
-            <span className="whitespace-nowrap font-mono text-mono-sm text-fg-1">
+            <span className="whitespace-nowrap text-mono-sm text-fg-1">
               {fmtHMS(selStats.durationSec)}
               {selStats.avgPower != null && <span className="text-accent-ink"> · {fmtNum(selStats.avgPower)} W</span>}
               {selStats.avgHr != null && <span className="text-fg-2"> · {fmtNum(selStats.avgHr)} bpm</span>}

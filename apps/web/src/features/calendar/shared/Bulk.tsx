@@ -32,7 +32,7 @@ function Shell({ anchor, onClose, children, title }: { anchor: HTMLElement; onCl
       <BasePopover.Portal>
         <BasePopover.Positioner anchor={anchor} side="left" align="start" sideOffset={8} collisionPadding={12} className="z-(--z-popover)">
           <BasePopover.Popup className="ui-popup w-72 max-w-80 rounded-lg p-3" initialFocus>
-            <BasePopover.Title className="pb-2 text-micro uppercase text-fg-3">{title}</BasePopover.Title>
+            <BasePopover.Title className="pb-2 text-micro text-fg-3">{title}</BasePopover.Title>
             {children}
           </BasePopover.Popup>
         </BasePopover.Positioner>
@@ -85,7 +85,7 @@ export function CopyWeekPopover({ isoWeek, anchor, model, actions, onClose }: { 
         <Stepper
           label={
             <>
-              <span className="font-mono text-mono">{formatIsoWeek(target)}</span> <span className="text-fg-3">· {formatIsoWeekRange(target)}</span>
+              <span className="text-mono">{formatIsoWeek(target)}</span> <span className="text-fg-3">· {formatIsoWeekRange(target)}</span>
             </>
           }
           onPrev={() => setOffset((o) => (o - 1 === 0 ? -1 : o - 1))}
@@ -93,7 +93,7 @@ export function CopyWeekPopover({ isoWeek, anchor, model, actions, onClose }: { 
         />
         <Slider
           label="Progression"
-          valueLabel={<span className="font-mono text-mono-sm">{pct > 0 ? '+' : pct < 0 ? MINUS : '±'}{Math.abs(pct)}%</span>}
+          valueLabel={<span className="text-mono-sm">{pct > 0 ? '+' : pct < 0 ? MINUS : '±'}{Math.abs(pct)}%</span>}
           value={pct}
           onValueChange={setPct}
           min={-40}
@@ -102,7 +102,7 @@ export function CopyWeekPopover({ isoWeek, anchor, model, actions, onClose }: { 
           ticks
           aria-label="Progression percent"
         />
-        <div className="flex items-center gap-1.5 rounded-sm border border-dashed border-line-3 px-2 py-1.5 font-mono text-mono-sm text-fg-2">
+        <div className="flex items-center gap-1.5 rounded-sm border border-dashed border-line-3 px-2 py-1.5 text-mono-sm text-fg-2">
           <span className="text-fg-1">{planned.length}</span>
           <span className="font-sans text-fg-3">workouts</span>
           <span className="ml-auto text-fg-3">{formatDuration(sec)} →</span>
@@ -155,7 +155,7 @@ export function ShiftPopover({ from, anchor, onClose }: { from: string; anchor: 
         </p>
         <Stepper
           label={
-            <span className="font-mono text-mono">
+            <span className="text-mono">
               {days > 0 ? '+' : MINUS}
               {Math.abs(days)} day{Math.abs(days) === 1 ? '' : 's'}
             </span>
@@ -192,7 +192,7 @@ export function SelectionBar({ model, actions }: { model: CalendarModel; actions
           className="glass fixed bottom-[calc(var(--bottom-bar-h)+1.5rem)] left-[calc(50%+var(--rail-w)/2)] z-(--z-popover) flex items-center gap-1 rounded-lg border border-line-3 p-1 pl-3 inset-shadow-hairline"
         >
           <span className="pr-2 text-label text-fg-1">
-            <span className="font-mono">{selection.size}</span> selected
+            <span className="">{selection.size}</span> selected
           </span>
           <Button size="sm" variant="ghost" icon={<ArrowLeft />} onClick={() => shift(-1)}>
             Day

@@ -107,7 +107,7 @@ export function NumberField({
         </BaseNumberField.Decrement>
         <BaseNumberField.Input
           placeholder={placeholder}
-          className="h-full min-w-0 flex-1 bg-transparent text-right font-mono text-mono text-fg-1 outline-none placeholder:text-fg-4"
+          className="h-full min-w-0 flex-1 bg-transparent text-right text-mono text-fg-1 outline-none placeholder:text-fg-4"
         />
         {unit && <span className="pl-1.5 text-body-sm text-fg-3">{unit}</span>}
         <BaseNumberField.Increment className={stepBtn} aria-label="Increase">
@@ -207,7 +207,7 @@ function TextValueField<V>({
               onValueChange(next);
             }
           }}
-          className={cn(controlStyles(size), 'text-right font-mono text-mono', unit ? 'pr-14' : '')}
+          className={cn(controlStyles(size), 'text-right text-mono', unit ? 'pr-14' : '')}
         />
         {unit && <span className="pointer-events-none absolute right-3 text-body-sm text-fg-3">{unit}</span>}
       </div>

@@ -356,7 +356,7 @@ function NoteField({ label, value, placeholder, onSave }: { label: string; value
   }, [value]);
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <Textarea
         value={v}
         minRows={2}
@@ -380,7 +380,7 @@ function Notes({ w, patch }: { w: PlannedWorkout; patch: (p: WorkoutPatch) => Pr
         <NoteField label="Pre-workout note" value={w.preNote} placeholder="Intent for the day — “legs heavy, keep it honest”" onSave={(v) => patch({ preNote: v || (null as never) })} />
         <NoteField label="Description & coaching cues" value={w.description} placeholder="Purpose, cues, fuelling…" onSave={(v) => patch({ description: v || (null as never) })} />
         <div className="flex flex-col gap-1.5">
-          <span className="text-micro uppercase text-fg-3">Tags</span>
+          <span className="text-micro text-fg-3">Tags</span>
           <TagInput value={w.tags} onValueChange={(tags) => void patch({ tags })} aria-label="Tags" />
         </div>
       </div>
@@ -417,7 +417,7 @@ export function GarminPanel({ w, structure }: { w: PlannedWorkout; structure: Wo
     <Card padding="md" className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <Watch className="size-4 text-fg-2" />
-        <span className="text-micro uppercase text-fg-3">Garmin</span>
+        <span className="text-micro text-fg-3">Garmin</span>
         <span className="ml-auto">
           <GarminStateIcon state={g.syncState === 'none' ? null : g.syncState} error={g.error} />
         </span>
@@ -465,7 +465,7 @@ function PlanActions({ w, today }: { w: PlannedWorkout; today: LocalDate }) {
   const [weeks, setWeeks] = useState(6);
   return (
     <Card padding="md" className="flex flex-col gap-1">
-      <span className="mb-1 text-micro uppercase text-fg-3">Plan</span>
+      <span className="mb-1 text-micro text-fg-3">Plan</span>
       <Popover
         title="Duplicate to"
         trigger={<ActionRow icon={<Copy />} label="Duplicate to…" />}
@@ -498,7 +498,7 @@ function PlanActions({ w, today }: { w: PlannedWorkout; today: LocalDate }) {
             <button type="button" aria-label="Fewer weeks" className="size-7 text-fg-3 hover:text-fg-1" onClick={() => setWeeks((x) => Math.max(2, x - 1))}>
               −
             </button>
-            <span className="w-6 text-center font-mono text-mono text-fg-1">{weeks}</span>
+            <span className="w-6 text-center text-mono text-fg-1">{weeks}</span>
             <button type="button" aria-label="More weeks" className="size-7 text-fg-3 hover:text-fg-1" onClick={() => setWeeks((x) => Math.min(52, x + 1))}>
               +
             </button>
@@ -635,9 +635,9 @@ function PairPanel({ w, past, today }: { w: PlannedWorkout; past: boolean; today
           )}
           {rows.map((r) => (
             <div key={r.label} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3">
-              <span className="text-micro uppercase text-fg-3">{r.label}</span>
+              <span className="text-micro text-fg-3">{r.label}</span>
               <Meter value={r.done ?? 0} max={Math.max(r.plan! * 1.3, r.done ?? 0)} target={r.plan} aria-label={`${r.label} compliance`} />
-              <span className="font-mono text-mono text-fg-2">
+              <span className="text-mono text-fg-2">
                 {r.done != null ? r.fmt(r.done) : '—'} <span className="text-fg-4">/ {r.fmt(r.plan!)}</span>
               </span>
             </div>
@@ -663,8 +663,8 @@ function PairPanel({ w, past, today }: { w: PlannedWorkout; past: boolean; today
               >
                 <SportGlyph sport={a.sport} size={16} className="text-fg-2" />
                 <span className="min-w-0 flex-1 truncate text-body text-fg-1">{a.title}</span>
-                <span className="font-mono text-mono-sm text-fg-3">{formatDayShort(a.localDate)}</span>
-                <span className="font-mono text-mono-sm text-fg-3">{formatDuration(a.movingSec || a.durationSec, 'clock')}</span>
+                <span className="text-mono-sm text-fg-3">{formatDayShort(a.localDate)}</span>
+                <span className="text-mono-sm text-fg-3">{formatDuration(a.movingSec || a.durationSec, 'clock')}</span>
               </button>
             </li>
           ))}

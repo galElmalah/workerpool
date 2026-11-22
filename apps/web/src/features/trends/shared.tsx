@@ -235,8 +235,8 @@ export function InlineError({ onRetry, children = "Couldn't load this." }: { onR
 export function Readout({ label, children, className }: { label: ReactNode; children: ReactNode; className?: string }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-0.5', className)}>
-      <span className="text-micro uppercase text-fg-3">{label}</span>
-      <span className="font-mono text-mono text-fg-1">{children}</span>
+      <span className="text-micro text-fg-3">{label}</span>
+      <span className="text-mono text-fg-1">{children}</span>
     </div>
   );
 }

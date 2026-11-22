@@ -93,7 +93,7 @@ export function MonthGrid({ value, onSelect, today = localToday(), min, max, cla
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 pb-1 text-center font-mono text-mono-sm text-fg-3" aria-hidden>
+      <div className="grid grid-cols-7 pb-1 text-center text-mono-sm text-fg-3" aria-hidden>
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
           <span key={i} className="h-6 leading-6">
             {d}
@@ -138,7 +138,7 @@ export function MonthGrid({ value, onSelect, today = localToday(), min, max, cla
                   onClick={() => onSelect(d)}
                   onFocus={() => setFocus(d)}
                   className={cn(
-                    'mx-auto flex size-[34px] items-center justify-center rounded-full font-mono text-mono outline-none transition-colors duration-(--dur-fast)',
+                    'mx-auto flex size-[34px] items-center justify-center rounded-full text-mono outline-none transition-colors duration-(--dur-fast)',
                     'focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus disabled:opacity-30',
                     inMonth ? 'text-fg-1' : 'text-fg-4',
                     !isSel && !isToday && 'hover:bg-surface-3',

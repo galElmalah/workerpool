@@ -180,8 +180,8 @@ function Ring({ label, done, planned, fmt, wow }: { label: string; done: number;
     <div className="flex items-center gap-2.5">
       <ProgressRing done={done} planned={planned} size={44} />
       <div className="flex min-w-0 flex-col">
-        <span className="text-micro uppercase text-fg-3">{label}</span>
-        <span className="font-mono text-mono-sm text-fg-1">
+        <span className="text-micro text-fg-3">{label}</span>
+        <span className="text-mono-sm text-fg-1">
           {fmt(done)}
           <span className="text-fg-3">/{fmt(planned)}</span>
         </span>
@@ -223,7 +223,7 @@ function FitnessAside({ date }: { date: LocalDate }) {
 function Mini({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
     <div className="flex flex-col">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <span className={cn('text-stat-sm', accent ? 'text-accent-ink' : 'text-fg-1')}>{value}</span>
     </div>
   );
@@ -248,7 +248,7 @@ function WellnessPanel({ date, day, editable }: { date: LocalDate; day?: import(
       <div className="grid grid-cols-2 sm:grid-cols-4">
         {metrics.map((m, i) => (
           <div key={m.label} className={cn('flex flex-col gap-1 border-line-1 p-4', i % 2 === 0 && 'border-r', i < 2 && 'max-sm:border-b', i === 1 && 'sm:border-r')}>
-            <span className="text-micro uppercase text-fg-3">{m.label}</span>
+            <span className="text-micro text-fg-3">{m.label}</span>
             <span className="flex items-baseline gap-1 text-stat-sm text-fg-1">
               {m.value ?? <span className="text-fg-4">—</span>}
               {m.value && m.unit && <span className="text-label text-fg-3">{m.unit}</span>}

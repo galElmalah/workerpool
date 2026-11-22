@@ -80,7 +80,7 @@ export function DeltaBadge({ value, flat = 0.01, good = false, caution = false, 
   const dir = deltaDir(value, flat);
   const cls = dir === 'up' ? 'font-semibold text-fg-1' : dir === 'down' ? 'text-fg-2' : 'text-fg-3';
   return (
-    <span className={`inline-flex items-center gap-1 font-mono text-mono-sm ${cls} ${className}`}>
+    <span className={`inline-flex items-center gap-1 text-mono-sm ${cls} ${className}`}>
       {caution ? <CautionGlyph /> : <DeltaArrow dir={dir} accent={good && dir === 'up'} />}
       <span className={caution ? 'bg-hatch-fg bg-[length:100%_2px] bg-bottom bg-no-repeat pb-px' : ''}>{value == null ? '—' : dir === 'flat' ? '±0%' : fmtPct(value)}</span>
     </span>

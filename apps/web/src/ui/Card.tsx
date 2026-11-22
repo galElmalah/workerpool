@@ -69,7 +69,7 @@ export function Card({
       {(title || actions || eyebrow) && (
         <div className={cn('flex items-start justify-between gap-3', px, pt, padding === 'none' && pb)}>
           <div className="min-w-0">
-            {eyebrow && <div className="mb-1 text-micro uppercase text-fg-3">{eyebrow}</div>}
+            {eyebrow && <div className="mb-1 text-micro text-fg-3">{eyebrow}</div>}
             {title && <h3 className="truncate text-title-3 text-fg-1">{title}</h3>}
           </div>
           {actions && <div className="-my-1 -mr-1 flex shrink-0 items-center gap-1">{actions}</div>}

@@ -100,7 +100,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
           {m.title}
         </span>
         {m.isKey && <KeyStar pressed readOnly size="sm" />}
-        <span className={cn('shrink-0 font-mono text-mono-sm text-fg-2', missed && 'line-through')}>{formatDuration(m.durationSec)}</span>
+        <span className={cn('shrink-0 text-mono-sm text-fg-2', missed && 'line-through')}>{formatDuration(m.durationSec)}</span>
       </>
     ) : (
       <>
@@ -120,7 +120,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
           </span>
         </div>
         <div className="flex items-center gap-2 pl-6">
-          <span className={cn('min-w-0 flex-1 truncate font-mono text-mono-sm text-fg-2', missed && 'line-through')}>
+          <span className={cn('min-w-0 flex-1 truncate text-mono-sm text-fg-2', missed && 'line-through')}>
             {formatDuration(m.durationSec)}
             {density === 'full' && dist && (
               <>
@@ -140,9 +140,9 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
           </span>
           {m.intensity && !(density === 'full' && hasSpark) && <IntensityPips intensity={m.intensity} />}
         </div>
-        {s.microLabel && density === 'full' && <span className="pl-6 text-micro uppercase text-fg-3">{s.microLabel}</span>}
+        {s.microLabel && density === 'full' && <span className="pl-6 text-micro text-fg-3">{s.microLabel}</span>}
         {state === 'excused' && m.skipReason && density === 'full' && (
-          <span className="pl-6 text-micro uppercase text-fg-3">Skipped · {m.skipReason}</span>
+          <span className="pl-6 text-micro text-fg-3">Skipped · {m.skipReason}</span>
         )}
         {density === 'full' && hasSpark && (
           <div className="flex items-end gap-2 pl-6">

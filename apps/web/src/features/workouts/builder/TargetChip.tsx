@@ -42,9 +42,9 @@ export function TargetChip({ step, sport, th, units, onChange }: Props) {
           )}
         >
           <span className="text-fg-4">@</span>
-          <span className={cn('truncate font-mono text-mono', t && t.type !== 'open' ? 'text-fg-1' : 'text-fg-3')}>{targetLabel(t, sport, units)}</span>
-          {abs && <span className="truncate font-mono text-mono-sm text-fg-3 max-sm:hidden">{abs}</span>}
-          {sec && <span className="truncate font-mono text-mono-sm text-fg-3 max-md:hidden">· {targetLabel(sec, sport, units)}</span>}
+          <span className={cn('truncate text-mono', t && t.type !== 'open' ? 'text-fg-1' : 'text-fg-3')}>{targetLabel(t, sport, units)}</span>
+          {abs && <span className="truncate text-mono-sm text-fg-3 max-sm:hidden">{abs}</span>}
+          {sec && <span className="truncate text-mono-sm text-fg-3 max-md:hidden">· {targetLabel(sec, sport, units)}</span>}
         </button>
       }
     >
@@ -81,7 +81,7 @@ function TargetEditor({ step, sport, th, units, onChange }: Props) {
         ))}
       </div>
       <TargetValues t={t} sport={sport} units={units} onChange={(target) => onChange({ target })} />
-      {targetAbsolute(t, sport, th, units) && <div className="font-mono text-mono-sm text-fg-3">= {targetAbsolute(t, sport, th, units)}</div>}
+      {targetAbsolute(t, sport, th, units) && <div className="text-mono-sm text-fg-3">= {targetAbsolute(t, sport, th, units)}</div>}
       {(sport === 'bike' || sport === 'run') && (
         <div className="flex items-center justify-between gap-2 border-t border-line-1 pt-2">
           <span className="text-label text-fg-2">Cadence</span>
@@ -175,7 +175,7 @@ function TargetValues({ t, sport, units, onChange }: { t: Target; sport: Sport; 
               key={z}
               type="button"
               onClick={() => onChange({ type: 'hr_zone', zone: z })}
-              className={cn('h-7 w-8 rounded-sm border font-mono text-mono transition-colors duration-(--dur-fast)', t.zone === z ? 'border-line-3 bg-surface-active text-fg-1' : 'border-line-1 text-fg-2 hover:text-fg-1')}
+              className={cn('h-7 w-8 rounded-sm border text-mono transition-colors duration-(--dur-fast)', t.zone === z ? 'border-line-3 bg-surface-active text-fg-1' : 'border-line-1 text-fg-2 hover:text-fg-1')}
             >
               Z{z}
             </button>

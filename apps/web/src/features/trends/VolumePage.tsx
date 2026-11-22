@@ -159,7 +159,7 @@ function SportTable({ raw, n, metric }: { raw: WeekSummary[]; n: number; metric:
     <div className="relative -mx-4 overflow-x-auto md:mx-0">
       <table className="w-full min-w-[680px] text-left">
         <thead>
-          <tr className="border-b border-line-1 text-micro uppercase text-fg-3">
+          <tr className="border-b border-line-1 text-micro text-fg-3">
             {['Sport', 'Sessions', 'Time', 'Distance', 'Load', 'Share', `${METRIC_NAME[metric]} WoW`, `${METRIC_NAME[metric]} YoY`].map((h, i) => (
               <th key={h} className={cn('px-4 py-2 font-[600]', i > 0 && 'text-right')}>
                 {h}
@@ -167,7 +167,7 @@ function SportTable({ raw, n, metric }: { raw: WeekSummary[]; n: number; metric:
             ))}
           </tr>
         </thead>
-        <tbody className="font-mono text-mono">
+        <tbody className="text-mono">
           {rows.map((r) => (
             <tr key={r.sp} className="border-b border-line-1 last:border-0">
               <td className="px-4 py-2.5">
@@ -256,27 +256,27 @@ function YearLines({ a, b, labelA, labelB, fmt }: { a: (number | null)[]; b: (nu
           {ticks.map((t) => (
             <g key={t}>
               <line x1={L.l} x2={W - L.r} y1={y(t)} y2={y(t)} className="stroke-line-1" />
-              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 font-mono text-[11px]">
+              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 text-[11px]">
                 {fmt(t)}
               </text>
             </g>
           ))}
           {months.map((m, i) => (
-            <text key={m} x={x(i * 13)} y={H - 4} className="fill-fg-3 font-mono text-[11px]">
+            <text key={m} x={x(i * 13)} y={H - 4} className="fill-fg-3 text-[11px]">
               {m}
             </text>
           ))}
           <MorphPath d={path(b)} fill="none" transition={spring.gentle} className="stroke-fg-3" style={{ strokeWidth: 1.25, strokeDasharray: '2 3' }} />
           <MorphPath d={path(a)} fill="none" transition={spring.gentle} className="stroke-accent" style={{ strokeWidth: 2 }} />
           {lb && (
-            <text x={lb.x + 6} y={lb.y} dominantBaseline="central" className="fill-fg-3 font-mono text-[11px]">
+            <text x={lb.x + 6} y={lb.y} dominantBaseline="central" className="fill-fg-3 text-[11px]">
               ’{labelB.slice(2)} {fmt(lb.v)}
             </text>
           )}
           {la && (
             <g>
               <motion.circle cx={la.x} cy={la.y} r={3.5} className="fill-accent" initial={false} animate={{ cx: la.x, cy: la.y }} transition={spring.gentle} />
-              <text x={la.x + 7} y={la.y - (lb && Math.abs(lb.y - la.y) < 14 ? 8 : 0)} dominantBaseline="central" className="fill-accent-ink font-mono text-[11px]">
+              <text x={la.x + 7} y={la.y - (lb && Math.abs(lb.y - la.y) < 14 ? 8 : 0)} dominantBaseline="central" className="fill-accent-ink text-[11px]">
                 ’{labelA.slice(2)} {fmt(la.v)}
               </text>
             </g>

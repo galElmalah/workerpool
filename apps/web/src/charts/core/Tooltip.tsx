@@ -50,7 +50,7 @@ export function TooltipBody({ title, rows, footer }: { title?: ReactNode; rows: 
           <div key={r.label} className="contents">
             <span className="flex w-3.5 items-center">{r.swatch && <Swatch s={r.swatch} />}</span>
             <span className={`whitespace-nowrap text-body-sm ${r.muted ? 'text-fg-3' : 'text-fg-2'}`}>{r.label}</span>
-            <span className={`whitespace-nowrap text-right font-mono text-mono ${r.strong ? 'font-semibold text-fg-1' : r.muted ? 'text-fg-3' : 'text-fg-1'}`}>
+            <span className={`whitespace-nowrap text-right text-mono ${r.strong ? 'font-semibold text-fg-1' : r.muted ? 'text-fg-3' : 'text-fg-1'}`}>
               {r.value}
               {r.hint && <span className="ml-1.5 text-fg-3">{r.hint}</span>}
             </span>

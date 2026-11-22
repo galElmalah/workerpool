@@ -66,14 +66,14 @@ function PlanVsActual({ a, w }: { a: ActivityDetail; w: PlannedWorkout }) {
           <Link {...links.workout(w.id)} {...morphSourceProps(w.id)} style={vt(morphOn, 'card')} className="group flex items-center gap-3 rounded-md outline-none focus-visible:outline-2 focus-visible:outline-focus">
             <SportGlyph sport={w.sport} subSport={w.subSport} size={20} style={vt(morphOn, 'glyph')} />
             <div className="min-w-0 flex-1">
-              <div className="text-micro uppercase text-fg-3">Planned · {formatDayShort(w.date)}</div>
+              <div className="text-micro text-fg-3">Planned · {formatDayShort(w.date)}</div>
               <div className="truncate text-title-3 text-fg-1 group-hover:underline" style={vt(morphOn, 'title')}>{w.title}</div>
             </div>
             <ArrowRight className="size-4 text-fg-3 transition-transform duration-(--dur-fast) group-hover:translate-x-0.5" />
           </Link>
           {blocks.length > 0 ? (
             <div style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
-              <div className="mb-1 text-micro uppercase text-fg-3">Planned structure</div>
+              <div className="mb-1 text-micro text-fg-3">Planned structure</div>
               <IntensityProfile blocks={blocks} height={96} showAxis axisLabel={w.sport === 'bike' ? '%FTP' : w.sport === 'run' ? '% threshold pace' : w.sport === 'swim' ? '% CSS' : '% threshold'} />
             </div>
           ) : (
@@ -83,13 +83,13 @@ function PlanVsActual({ a, w }: { a: ActivityDetail; w: PlannedWorkout }) {
             <div className="grid gap-3 border-t border-line-1 pt-4 md:grid-cols-2">
               {w.description && (
                 <div>
-                  <div className="mb-1 text-micro uppercase text-fg-3">Purpose</div>
+                  <div className="mb-1 text-micro text-fg-3">Purpose</div>
                   <p className="text-body-sm whitespace-pre-wrap text-fg-2">{w.description}</p>
                 </div>
               )}
               {w.preNote && (
                 <div>
-                  <div className="mb-1 text-micro uppercase text-fg-3">Pre-note</div>
+                  <div className="mb-1 text-micro text-fg-3">Pre-note</div>
                   <p className="text-body-sm whitespace-pre-wrap text-fg-2">{w.preNote}</p>
                 </div>
               )}
@@ -101,7 +101,7 @@ function PlanVsActual({ a, w }: { a: ActivityDetail; w: PlannedWorkout }) {
             <div className="flex items-center gap-2">
               <ComplianceGlyph state={c.state} size={14} />
               <span className="text-title-3 text-fg-1">{complianceLabel(c.state)}</span>
-              <span className="ml-auto font-mono text-mono text-fg-2">
+              <span className="ml-auto text-mono text-fg-2">
                 {Math.round(c.ratio * 100)}% <span className="text-fg-3">{c.metric}</span>
               </span>
             </div>
@@ -109,8 +109,8 @@ function PlanVsActual({ a, w }: { a: ActivityDetail; w: PlannedWorkout }) {
           {ratios.map((r) => (
             <div key={r.label} className="flex flex-col gap-1.5">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-micro uppercase text-fg-3">{r.label}</span>
-                <span className="font-mono text-mono-sm text-fg-1">
+                <span className="text-micro text-fg-3">{r.label}</span>
+                <span className="text-mono-sm text-fg-1">
                   {r.fmt(r.actual!)} <span className="text-fg-3">/ {r.fmt(r.planned!)}</span>
                 </span>
               </div>
@@ -163,7 +163,7 @@ function PairPicker({ a }: { a: ActivityDetail }) {
                     <SportGlyph sport={w.sport} size={16} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-body text-fg-1">{w.title}</span>
-                      <span className="font-mono text-mono-sm text-fg-3">{formatDayShort(w.date)} · {formatDuration(w.plannedDurationSec)}</span>
+                      <span className="text-mono-sm text-fg-3">{formatDayShort(w.date)} · {formatDuration(w.plannedDurationSec)}</span>
                     </span>
                   </button>
                 ))}

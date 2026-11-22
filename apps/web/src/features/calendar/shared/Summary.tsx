@@ -34,7 +34,7 @@ export interface SummaryMenuHandlers {
  * mounts a projection node that forces a document-scroll read), same encodings.
  */
 function Delta({ value, caution, flatBelow = 0.03 }: { value: number | null | undefined; caution?: boolean; flatBelow?: number }) {
-  if (value == null || !Number.isFinite(value)) return <span className="font-mono text-mono-sm text-fg-4">—</span>;
+  if (value == null || !Number.isFinite(value)) return <span className="text-mono-sm text-fg-4">—</span>;
   const dir = Math.abs(value) < flatBelow ? 'flat' : value > 0 ? 'up' : 'down';
   const text = dir === 'flat' ? '±0%' : formatPercent(value, { signed: true });
   return (
@@ -113,11 +113,11 @@ function WeekMenu({ week, handlers, className }: { week: WeekData; handlers: Sum
 function WeekLabel({ week, phase, size = 'sm' }: { week: WeekData; phase?: PhaseInfo; size?: 'sm' | 'md' }) {
   return (
     <Link {...links.week(week.isoWeek)} className="group/wl flex min-w-0 items-baseline gap-1.5 outline-none" onClick={(e) => e.stopPropagation()}>
-      <span className={cn('font-mono text-fg-1 transition-colors group-hover/wl:text-accent-ink', size === 'md' ? 'text-mono font-[600]' : 'text-mono-sm font-[600]')}>
+      <span className={cn('text-fg-1 transition-colors group-hover/wl:text-accent-ink', size === 'md' ? 'text-mono font-[600]' : 'text-mono-sm font-[600]')}>
         {formatIsoWeek(week.isoWeek)}
       </span>
       {phase && (
-        <span className="truncate text-micro uppercase text-fg-3">
+        <span className="truncate text-micro text-fg-3">
           {phase.phase.label}
           <span className="text-fg-4"> · {phase.index}/{phase.count}</span>
         </span>
@@ -132,7 +132,7 @@ function Stat({ value, of, unit, label, delta, caution }: { value: string; of?: 
       <div className="flex items-baseline justify-between gap-1">
         <span className="flex min-w-0 items-baseline gap-1 whitespace-nowrap">
           <span className="text-stat-sm text-fg-1 num">{value}</span>
-          {of && <span className="font-mono text-mono-sm text-fg-3">/{NBSP}{of}</span>}
+          {of && <span className="text-mono-sm text-fg-3">/{NBSP}{of}</span>}
           {unit && <span className="text-label text-fg-3">{unit}</span>}
         </span>
         {delta && <span className={cn('shrink-0 rounded-xs px-0.5', caution && 'ring-1 ring-accent')}>{delta}</span>}
@@ -147,12 +147,12 @@ function MiniStat({ label, value, of, delta, caution, line }: { label: string; v
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       <div className="flex h-3.5 items-center justify-between gap-1">
-        <span className="text-micro uppercase text-fg-3">{label}</span>
+        <span className="text-micro text-fg-3">{label}</span>
         {delta && <span className={cn('-mr-0.5 rounded-xs px-0.5', caution && 'ring-1 ring-accent')}>{delta}</span>}
       </div>
       <span className="flex min-w-0 items-baseline gap-0.5 whitespace-nowrap">
         <span className="text-stat-sm text-fg-1 num">{value}</span>
-        {of && <span className="truncate font-mono text-mono-sm text-fg-3">/{of}</span>}
+        {of && <span className="truncate text-mono-sm text-fg-3">/{of}</span>}
       </span>
       {line}
     </div>
@@ -173,7 +173,7 @@ function SportLines({ s, max = 4 }: { s: WeekSummary; max?: number }) {
         const done = distanceParts(x.doneDistanceM, fmtSport, units, dec(x.doneDistanceM));
         const plan = distanceParts(x.plannedDistanceM, fmtSport, units, dec(x.plannedDistanceM));
         return (
-          <span key={x.sport} className="flex min-w-0 items-center gap-1 font-mono text-mono-sm text-fg-2" title={`${x.sport}: done ${formatDuration(x.doneSec)} of ${formatDuration(x.plannedSec)} planned`}>
+          <span key={x.sport} className="flex min-w-0 items-center gap-1 text-mono-sm text-fg-2" title={`${x.sport}: done ${formatDuration(x.doneSec)} of ${formatDuration(x.plannedSec)} planned`}>
             <SportGlyph sport={x.sport} size={14} className="shrink-0 text-fg-3" />
             <span className="truncate">
               {dist ? (
@@ -200,24 +200,24 @@ function FormLine({ s, compact, trailing }: { s: WeekSummary; compact?: boolean;
   const proj = s.isProjected;
   return (
     <div className="flex flex-col gap-1">
-      <div className={cn('flex flex-wrap items-baseline gap-x-2 font-mono text-mono-sm whitespace-nowrap', proj ? 'text-fg-3' : 'text-fg-2')}>
+      <div className={cn('flex flex-wrap items-baseline gap-x-2 text-mono-sm whitespace-nowrap', proj ? 'text-fg-3' : 'text-fg-2')}>
         <span title="Fitness at week end">
-          <span className="font-sans text-micro uppercase text-fg-3">Fit </span>
+          <span className="font-sans text-micro text-fg-3">Fit </span>
           <span className={proj ? 'text-fg-2' : 'text-fg-1'}>{Math.round(s.fitness)}</span>
           {!compact && <span className="text-fg-3"> {formatSigned(s.fitnessDelta, 0)}</span>}
         </span>
         <span title="Fatigue at week end">
-          <span className="font-sans text-micro uppercase text-fg-3">Fat </span>
+          <span className="font-sans text-micro text-fg-3">Fat </span>
           <span className={proj ? 'text-fg-2' : 'text-fg-1'}>{Math.round(s.fatigue)}</span>
         </span>
         <span title="Form at week end">
-          <span className="font-sans text-micro uppercase text-fg-3">Form </span>
+          <span className="font-sans text-micro text-fg-3">Form </span>
           <span className={proj ? 'text-fg-2' : 'text-fg-1'}>{formatSigned(s.form, 0)}</span>
         </span>
       </div>
       <div className="flex items-center gap-1.5">
-        <FormZoneLabel zone={s.formZone} className={cn('!text-micro uppercase', proj && 'opacity-70')} />
-        {proj && <span className="font-mono text-mono-sm text-fg-3 italic">proj.</span>}
+        <FormZoneLabel zone={s.formZone} className={cn('!text-micro ', proj && 'opacity-70')} />
+        {proj && <span className="text-mono-sm text-fg-3 italic">proj.</span>}
         {trailing && <span className="ml-auto">{trailing}</span>}
       </div>
     </div>
@@ -244,7 +244,7 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
   const itT = it.easy + it.moderate + it.hard;
   const mix = s.bySport.map((x) => ({ sport: x.sport, value: s.doneSec > 0 ? x.doneSec : x.plannedSec }));
   const keyLine = s.keyPlanned + s.keyDone > 0 && (
-    <span className="flex items-center gap-1 font-mono text-mono-sm text-fg-2" title="Key sessions done / planned">
+    <span className="flex items-center gap-1 text-mono-sm text-fg-2" title="Key sessions done / planned">
       <Star className="size-3 fill-accent text-accent" strokeWidth={1.5} aria-hidden />
       <span className="text-fg-1">{s.keyDone}</span>/{Math.max(s.keyPlanned, s.keyDone)}
       <span className="font-sans text-fg-3"> key</span>
@@ -252,7 +252,7 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
   );
   const split = itT > 0 && (
     <span className="flex min-w-0 flex-1 items-center gap-1.5" title="Intensity split of done time">
-      <span className="shrink-0 font-mono text-mono-sm text-fg-3">
+      <span className="shrink-0 text-mono-sm text-fg-3">
         E<span className="text-fg-2">{pctInt(it.easy, itT)}</span> M<span className="text-fg-2">{pctInt(it.moderate, itT)}</span> H<span className="text-fg-2">{pctInt(it.hard, itT)}</span>
       </span>
       <SplitBar easy={it.easy} moderate={it.moderate} hard={it.hard} height={3} className="min-w-3 flex-1" />
@@ -277,7 +277,7 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
     return (
       <div data-summary className={cn('flex min-w-0 items-center gap-4 overflow-hidden px-3 py-2', className)}>
         <WeekLabel week={week} phase={week.phase} />
-        <span className="flex items-baseline gap-1 font-mono text-mono-sm text-fg-3">
+        <span className="flex items-baseline gap-1 text-mono-sm text-fg-3">
           {future ? (
             <>
               <span className="text-mono text-fg-1">{formatDuration(s.plannedSec)}</span>
@@ -290,15 +290,15 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
             </>
           )}
         </span>
-        <span className="flex items-baseline gap-1 font-mono text-mono-sm text-fg-3 max-sm:hidden">
+        <span className="flex items-baseline gap-1 text-mono-sm text-fg-3 max-sm:hidden">
           <span className="text-mono text-fg-1">{formatLoad(future ? s.plannedLoad : s.doneLoad)}</span>
           {!future && `/${formatLoad(s.plannedLoad)}`}
           <span className="font-sans">load</span>
         </span>
         {!future && <span className="max-md:hidden">{load}</span>}
         <span className="max-md:hidden">{keyLine}</span>
-        <span className="flex items-baseline gap-1 font-mono text-mono-sm text-fg-2 max-sm:hidden">
-          <span className="font-sans text-micro uppercase text-fg-3">Form</span>
+        <span className="flex items-baseline gap-1 text-mono-sm text-fg-2 max-sm:hidden">
+          <span className="font-sans text-micro text-fg-3">Form</span>
           {formatSigned(s.form, 0)}
           {s.isProjected && <span className="text-fg-3 italic">proj.</span>}
         </span>
@@ -314,27 +314,27 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
     return (
       <div data-summary className={cn('grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-[repeat(3,minmax(0,1fr))_auto] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.1fr)_auto]', className)}>
         <div className="flex flex-col gap-1.5">
-          <span className="text-micro uppercase text-fg-3">Hours</span>
+          <span className="text-micro text-fg-3">Hours</span>
           {hoursStat}
           {hoursLine}
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-micro uppercase text-fg-3">Load</span>
+          <span className="text-micro text-fg-3">Load</span>
           {loadStat}
           {loadLine}
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-micro uppercase text-fg-3">Sports</span>
+          <span className="text-micro text-fg-3">Sports</span>
           <SportLines s={s} />
           {mix.some((m) => m.value > 0) && <SportMixBar segments={mix} height={4} />}
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-micro uppercase text-fg-3">Key · Intensity</span>
-          {keyLine || <span className="font-mono text-mono-sm text-fg-4">No key sessions</span>}
+          <span className="text-micro text-fg-3">Key · Intensity</span>
+          {keyLine || <span className="text-mono-sm text-fg-4">No key sessions</span>}
           {split}
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-micro uppercase text-fg-3">End of week</span>
+          <span className="text-micro text-fg-3">End of week</span>
           <FormLine s={s} />
         </div>
         <div className="flex flex-col items-end justify-between gap-2">
@@ -370,12 +370,12 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
           {...links.week(week.isoWeek)}
           onClick={(e) => e.stopPropagation()}
           title={week.phase ? `${week.phase.phase.label} · week ${week.phase.index} of ${week.phase.count}` : undefined}
-          className="font-mono text-mono-sm font-[600] text-fg-1 outline-none transition-colors hover:text-accent-ink"
+          className="text-mono-sm font-[600] text-fg-1 outline-none transition-colors hover:text-accent-ink"
         >
           {formatIsoWeek(week.isoWeek)}
         </Link>
-        <FormZoneLabel zone={s.formZone} withScale={false} className={cn('shrink-0 !text-micro uppercase', s.isProjected ? 'text-fg-3' : 'text-fg-2')} />
-        {s.isProjected && <span className="font-mono text-mono-sm text-fg-3 italic">proj.</span>}
+        <FormZoneLabel zone={s.formZone} withScale={false} className={cn('shrink-0 !text-micro ', s.isProjected ? 'text-fg-3' : 'text-fg-2')} />
+        {s.isProjected && <span className="text-mono-sm text-fg-3 italic">proj.</span>}
         <span className="ml-auto flex shrink-0 items-center gap-1">
           {note}
           <WeekMenu week={week} handlers={handlers} className="-mr-1.5" />
@@ -392,20 +392,20 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
         <span className="ml-auto shrink-0">{spark}</span>
       </div>
       <div
-        className={cn('flex items-baseline gap-2 font-mono text-mono-sm whitespace-nowrap', s.isProjected ? 'text-fg-3' : 'text-fg-2')}
+        className={cn('flex items-baseline gap-2 text-mono-sm whitespace-nowrap', s.isProjected ? 'text-fg-3' : 'text-fg-2')}
         title={`End of week${s.isProjected ? ' (projected)' : ''}: fitness ${Math.round(s.fitness)}, fatigue ${Math.round(s.fatigue)}, form ${Math.round(s.form)}`}
       >
         <span>
-          <span className="font-sans text-micro uppercase text-fg-3">Fit </span>
+          <span className="font-sans text-micro text-fg-3">Fit </span>
           <span className={s.isProjected ? 'text-fg-2' : 'text-fg-1'}>{Math.round(s.fitness)}</span>
           <span className="text-fg-3"> {formatSigned(s.fitnessDelta, 0)}</span>
         </span>
         <span>
-          <span className="font-sans text-micro uppercase text-fg-3">Fat </span>
+          <span className="font-sans text-micro text-fg-3">Fat </span>
           <span className={s.isProjected ? 'text-fg-2' : 'text-fg-1'}>{Math.round(s.fatigue)}</span>
         </span>
         <span>
-          <span className="font-sans text-micro uppercase text-fg-3">Form </span>
+          <span className="font-sans text-micro text-fg-3">Form </span>
           <span className={s.isProjected ? 'text-fg-2' : 'text-fg-1'}>{formatSigned(s.form, 0)}</span>
         </span>
       </div>

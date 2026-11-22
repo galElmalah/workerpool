@@ -35,8 +35,8 @@ export function Meter({ value, max, target, ghost, label, valueLabel, tone = 'ac
     <BaseMeter.Root value={value} max={scaleMax} aria-label={aria['aria-label']} className={cn('flex w-full flex-col gap-1.5', className)}>
       {(label || valueLabel) && (
         <div className="flex items-baseline justify-between gap-3">
-          {label && <BaseMeter.Label className="text-micro uppercase text-fg-3">{label}</BaseMeter.Label>}
-          {valueLabel && <span className="font-mono text-mono text-fg-1">{valueLabel}</span>}
+          {label && <BaseMeter.Label className="text-micro text-fg-3">{label}</BaseMeter.Label>}
+          {valueLabel && <span className="text-mono text-fg-1">{valueLabel}</span>}
         </div>
       )}
       <BaseMeter.Track className={cn('relative w-full overflow-visible rounded-full bg-surface-3', h)}>

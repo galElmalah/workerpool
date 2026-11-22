@@ -87,10 +87,10 @@ export function FormDial({ value, zone, min = -45, max = 35, bands = DEFAULT_FOR
         </motion.g>
       </svg>
       <div className="absolute inset-x-0 flex flex-col items-center" style={{ top: size * 0.3 }}>
-        <span className="text-micro uppercase text-fg-3">{label}</span>
+        <span className="text-micro text-fg-3">{label}</span>
         <Ticker value={value} format={(v) => fmtNum(v)} className={size >= 180 ? 'text-stat-lg text-fg-1' : 'text-stat-md text-fg-1'} ariaLive />
-        <span className={`mt-1 text-micro uppercase ${active === 'fresh' || active === 'productive' ? 'text-accent-ink' : 'text-fg-2'}`}>{zoneLabel}</span>
-        {caption && <span className="mt-0.5 font-mono text-mono-sm text-fg-3">{caption}</span>}
+        <span className={`mt-1 text-micro ${active === 'fresh' || active === 'productive' ? 'text-accent-ink' : 'text-fg-2'}`}>{zoneLabel}</span>
+        {caption && <span className="mt-0.5 text-mono-sm text-fg-3">{caption}</span>}
       </div>
     </div>
   );
@@ -126,12 +126,12 @@ export function Gauge({ value, min = 0, max = 100, label, format = (v) => fmtNum
         })}
       </svg>
       <div className="absolute inset-x-0 flex flex-col items-center" style={{ top: size * 0.3 }}>
-        <span className="text-micro uppercase text-fg-3">{label}</span>
+        <span className="text-micro text-fg-3">{label}</span>
         <span className="flex items-baseline gap-1">
           <Ticker value={value} format={format} className="text-stat-md text-fg-1" ariaLive />
           {unit && <span className="text-label text-fg-3">{unit}</span>}
         </span>
-        {caption && <span className="font-mono text-mono-sm text-fg-3">{caption}</span>}
+        {caption && <span className="text-mono-sm text-fg-3">{caption}</span>}
       </div>
     </div>
   );
@@ -165,7 +165,7 @@ export function ProgressRing({ done, planned, size = 44, stroke = 4, label, aria
         <motion.path d={ring} fill="none" strokeLinecap="round" style={{ stroke: T.accent, strokeWidth: stroke }} initial={{ pathLength: reduce ? Math.min(1, f) : 0 }} animate={{ pathLength: Math.min(1, f) }} transition={t} />
         {f > 1 && r2 > 2 && <motion.path d={ring2} fill="none" strokeLinecap="round" style={{ stroke: T.fg1, strokeWidth: 1.5 }} initial={{ pathLength: 0 }} animate={{ pathLength: Math.min(1, f - 1) }} transition={{ ...t, delay: reduce ? 0 : 0.3 }} />}
       </svg>
-      {label !== null && size >= 36 && <span className={`relative font-mono ${size >= 56 ? 'text-mono' : 'text-mono-sm'} text-fg-1`}>{label ?? `${Math.round(f * 100)}`}</span>}
+      {label !== null && size >= 36 && <span className={`relative ${size >= 56 ? 'text-mono' : 'text-mono-sm'} text-fg-1`}>{label ?? `${Math.round(f * 100)}`}</span>}
     </span>
   );
 }
@@ -193,7 +193,7 @@ export function CompareBars({ items, currentLabel = 'This week', previousLabel =
   const id = useId();
   return (
     <div className={`min-w-0 ${className ?? ''}`} role="table" aria-label={`${currentLabel} versus ${previousLabel}`}>
-      <div className="mb-2 flex items-center gap-4 text-micro uppercase text-fg-3" aria-hidden>
+      <div className="mb-2 flex items-center gap-4 text-micro text-fg-3" aria-hidden>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-3 rounded-xs bg-fg-1" />
           {currentLabel}
@@ -234,7 +234,7 @@ export function CompareBars({ items, currentLabel = 'This week', previousLabel =
                 </div>
               </div>
               <div role="cell" className="flex min-w-28 flex-col items-end">
-                <span className="font-mono text-mono text-fg-1">
+                <span className="text-mono text-fg-1">
                   {fmt(it.current)}
                   {it.unit && <span className="text-fg-3"> {it.unit}</span>}
                   <span className="text-fg-3"> / {fmt(it.previous)}</span>

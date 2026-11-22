@@ -118,7 +118,7 @@ export default function ChartGallery() {
       <div className="mx-auto max-w-page px-4 py-8 md:px-6 xl:px-10">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-micro uppercase text-fg-3">cadence · dev</p>
+            <p className="text-micro text-fg-3">cadence · dev</p>
             <h1 className="text-title-1 text-fg-1">Chart kit</h1>
             <p className="max-w-prose text-body text-fg-2">Hand-rolled SVG + d3 math + Motion, Canvas for 1 Hz streams. Black, white and Signal Green. Hover, drag, use the arrow keys.</p>
           </div>
@@ -135,13 +135,13 @@ export default function ChartGallery() {
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
               {tiles.map((t) => (
                 <div key={t.id} className="flex min-w-0 flex-col gap-1 rounded-lg border border-line-2 bg-surface-1 p-3 inset-shadow-hairline">
-                  <span className="text-micro uppercase text-fg-3">{t.label}</span>
+                  <span className="text-micro text-fg-3">{t.label}</span>
                   <span className="flex items-baseline gap-1">
                     <Ticker value={t.current} format={(v) => (t.id === 'hours' ? fmtHM(v * 3600) : fmtNum(v))} className={`text-stat-md ${t.id === 'load' || t.id === 'fitness' ? 'text-accent-ink' : 'text-fg-1'}`} />
                     <span className="text-label text-fg-3">{t.unit}</span>
                   </span>
                   <span className="flex items-center justify-between gap-2">
-                    {t.deltaKind === 'pct' ? <DeltaBadge value={t.delta} good={t.id === 'load'} caution={t.id === 'load' && (t.delta ?? 0) > 0.15} /> : <span className="font-mono text-mono-sm text-fg-2">{fmtSigned(t.delta, 1)}</span>}
+                    {t.deltaKind === 'pct' ? <DeltaBadge value={t.delta} good={t.id === 'load'} caution={t.id === 'load' && (t.delta ?? 0) > 0.15} /> : <span className="text-mono-sm text-fg-2">{fmtSigned(t.delta, 1)}</span>}
                     {t.id === 'fitness' && <Sparkline values={data.weeks.slice(-12).map((w) => w.fitness)} width={56} height={18} />}
                     {t.id === 'hours' && <Sparkline values={data.weeks.slice(-12).map((w) => w.doneSec / 3600)} tone="fg" width={56} height={18} />}
                     {t.id === 'compliance' && <ProgressRing done={t.current} planned={100} size={28} stroke={3} label={null} />}
@@ -155,7 +155,7 @@ export default function ChartGallery() {
             <FitnessChart days={data.fitness} today={MOCK_TODAY} events={mockEvents()} phases={mockPhases()} showRamp sync={dateSync} onSelect={setFsel} />
             <div className="mt-3 min-h-6 text-body-sm text-fg-2" aria-live="polite">
               {fsel ? (
-                <span className="font-mono text-mono">
+                <span className="text-mono">
                   {fsel.from} → {fsel.to} · {fsel.days} d · load {fmtNum(fsel.load)} ({fmtNum(fsel.avgLoad)}/d) · fitness {fmtSigned(fsel.fitnessDelta, 1)} · form ends {fmtNum(fsel.formEnd)}
                 </span>
               ) : (
@@ -175,7 +175,7 @@ export default function ChartGallery() {
                   <Gauge value={latestWell.readiness ?? 0} label="Readiness" size={132} />
                   <div className="flex flex-col items-center gap-1 pb-3">
                     <ProgressRing done={cur.doneSec} planned={cur.plannedSec} size={64} stroke={5} />
-                    <span className="text-micro uppercase text-fg-3">week done</span>
+                    <span className="text-micro text-fg-3">week done</span>
                   </div>
                 </div>
               </div>
@@ -203,7 +203,7 @@ export default function ChartGallery() {
                   <RouteMap streams={data.ride.streams} cursor={cursor} selection={sel} height={300} elevationShading />
                 </div>
                 <div className="rounded-lg border border-line-2 p-3" data-chart="selection">
-                  <div className="mb-2 text-micro uppercase text-fg-3">{sel ? 'Selection' : 'Drag on the streams to select'}</div>
+                  <div className="mb-2 text-micro text-fg-3">{sel ? 'Selection' : 'Drag on the streams to select'}</div>
                   <dl className="grid grid-cols-3 gap-x-3 gap-y-2">
                     {[
                       ['Time', stats ? fmtHMS(stats.durationSec) : '—'],
@@ -214,8 +214,8 @@ export default function ChartGallery() {
                       ['Gain', stats?.elevationGain != null ? `${fmtNum(stats.elevationGain)} m` : '—'],
                     ].map(([k, v]) => (
                       <div key={k} className="flex flex-col">
-                        <dt className="text-micro uppercase text-fg-3">{k}</dt>
-                        <dd className="font-mono text-mono text-fg-1">{v}</dd>
+                        <dt className="text-micro text-fg-3">{k}</dt>
+                        <dd className="text-mono text-fg-1">{v}</dd>
                       </div>
                     ))}
                   </dl>
@@ -224,11 +224,11 @@ export default function ChartGallery() {
             </div>
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div>
-                <h3 className="mb-3 text-micro uppercase text-fg-3">Time in power zones</h3>
+                <h3 className="mb-3 text-micro text-fg-3">Time in power zones</h3>
                 <ZoneBars zones={zonesFromPower(data.ride.streams.power!, data.ride.ftp)} unit="W" targetPct={[0.18, 0.32, 0.1, 0.22, 0.12, 0.04, 0.02]} />
               </div>
               <div>
-                <h3 className="mb-3 text-micro uppercase text-fg-3">Planned structure</h3>
+                <h3 className="mb-3 text-micro text-fg-3">Planned structure</h3>
                 <IntensityProfile blocks={baseBlocks} repeats={baseRepeats} height={96} />
               </div>
             </div>
@@ -269,7 +269,7 @@ export default function ChartGallery() {
                 <div key={i} className="rounded-md border border-line-2 bg-surface-2 p-2.5">
                   <div className="mb-2 flex items-center justify-between text-body-sm">
                     <span className="truncate text-fg-1">{['Threshold + VO2', 'Threshold 3×12', 'VO2 5×3', 'Endurance'][i]}</span>
-                    <span className="font-mono text-mono-sm text-fg-3">{fmtHM(bs.reduce((a, b) => a + b.durationSec, 0))}</span>
+                    <span className="text-mono-sm text-fg-3">{fmtHM(bs.reduce((a, b) => a + b.durationSec, 0))}</span>
                   </div>
                   <IntensityProfile variant="compact" blocks={reflow(bs)} height={24} />
                 </div>
@@ -300,8 +300,8 @@ export default function ChartGallery() {
                 <div className="flex flex-col gap-3">
                   {data.weeks.slice(-3).map((w) => (
                     <div key={w.isoWeek} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 rounded-md border border-line-1 p-3">
-                      <span className="text-micro uppercase text-fg-3">{w.isoWeek.slice(5)}</span>
-                      <span className="font-mono text-mono text-fg-1">
+                      <span className="text-micro text-fg-3">{w.isoWeek.slice(5)}</span>
+                      <span className="text-mono text-fg-1">
                         {fmtHM(w.doneSec)} <span className="text-fg-3">/ {fmtHM(w.plannedSec)} h</span> · {fmtNum(w.doneLoad)} <span className="text-fg-3">/ {fmtNum(w.plannedLoad)}</span>
                       </span>
                       <SparkBars values={w.dailyLoad} planned={w.isProjected ? w.dailyLoad.map((v, i) => (i === 6 ? 120 : v)) : undefined} todayIndex={w.isProjected ? 5 : undefined} />

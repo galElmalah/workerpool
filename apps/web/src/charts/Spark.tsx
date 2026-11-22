@@ -57,7 +57,7 @@ export function Sparkline({ values, width = 64, height = 20, tone = 'accent', en
         <MorphPath d={d} transition={spring.smooth} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: c, strokeWidth: 1.5 }} />
         {endDot && last && <circle cx={last.x} cy={last.y} r={2.25} style={{ fill: c, stroke: T.bg, strokeWidth: 1.5 }} />}
       </svg>
-      {showValue && last && <span className={`font-mono text-mono-sm ${tone === 'accent' ? 'text-accent-ink' : 'text-fg-1'}`}>{format(last.v)}</span>}
+      {showValue && last && <span className={`text-mono-sm ${tone === 'accent' ? 'text-accent-ink' : 'text-fg-1'}`}>{format(last.v)}</span>}
     </span>
   );
 }

@@ -163,7 +163,7 @@ export function SettingsZonesPage() {
             <AnimatePresence initial={false}>
               {suggestions.length > 0 && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-2 border-t border-line-1 p-5">
-                  <span className="text-micro uppercase text-fg-3">Suggested from your recent bests</span>
+                  <span className="text-micro text-fg-3">Suggested from your recent bests</span>
                   {suggestions.map((sg) => {
                     const meta = THRESHOLD_META[sg.kind];
                     return (
@@ -171,7 +171,7 @@ export function SettingsZonesPage() {
                         <span className="flex items-center gap-2 text-body text-fg-1">
                           <Wand2 className="size-4 text-fg-3" />
                           {meta.label}
-                          <span className="font-mono text-mono">
+                          <span className="text-mono">
                             {thresholdText(meta, sg.value, units)} {thresholdUnit(meta, units)}
                           </span>
                           <span className="text-body-sm text-fg-3">
@@ -235,12 +235,12 @@ export function SettingsZonesPage() {
                         className="group relative flex items-center gap-4 px-5 py-2.5"
                       >
                         <span className={cn('relative z-10 size-2.5 shrink-0 rounded-full border-2 border-surface-1', i === 0 ? 'bg-accent' : 'bg-fg-3')} />
-                        <span className="w-36 shrink-0 whitespace-nowrap font-mono text-mono text-fg-2">{formatDateMedium(t.effectiveFrom, true)}</span>
+                        <span className="w-36 shrink-0 whitespace-nowrap text-mono text-fg-2">{formatDateMedium(t.effectiveFrom, true)}</span>
                         <span className="min-w-0 flex-1 truncate text-body text-fg-1">
                           {meta.label}
                           {t.sport !== 'all' && t.kind === 'lthr' ? ` · ${t.sport}` : ''}
                         </span>
-                        <span className="font-mono text-mono text-fg-1">
+                        <span className="text-mono text-fg-1">
                           {thresholdText(meta, t.value, units)} <span className="text-fg-3">{thresholdUnit(meta, units)}</span>
                         </span>
                         <span className="hidden w-24 justify-end sm:flex">
@@ -275,7 +275,7 @@ function SportTabs({ value, onChange }: { value: ZoneSport; onChange: (v: ZoneSp
           >
             {on && <motion.span layoutId="zones-tab" transition={spring.snappy} className="absolute inset-0 rounded-md border border-line-2 bg-surface-3" />}
             <span className="relative flex items-center gap-2">
-              {t.glyph ? <SportGlyph sport={t.glyph} size={16} /> : <span className="font-mono text-mono-sm">♥</span>}
+              {t.glyph ? <SportGlyph sport={t.glyph} size={16} /> : <span className="text-mono-sm">♥</span>}
               {t.label}
             </span>
           </button>
@@ -311,7 +311,7 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
         <h3 className="text-title-3 text-fg-1">{title}</h3>
         <span className="flex items-center gap-2 text-body-sm text-fg-3">
           threshold
-          <motion.span key={fmt(t.threshold)} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={spring.snappy} className="font-mono text-mono text-fg-1">
+          <motion.span key={fmt(t.threshold)} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={spring.snappy} className="text-mono text-fg-1">
             {fmt(t.threshold)} {unit}
           </motion.span>
           {t.defaulted && <SourceChip source="default" />}
@@ -319,7 +319,7 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
       </div>
       <table className="w-full">
         <thead>
-          <tr className="border-y border-line-1 text-micro uppercase text-fg-3">
+          <tr className="border-y border-line-1 text-micro text-fg-3">
             <th className="py-2 pl-5 text-left font-[600]">Zone</th>
             <th className="py-2 text-right font-[600]">{unit}</th>
             <th className="hidden py-2 pr-5 text-right font-[600] sm:table-cell">% thr</th>
@@ -335,19 +335,19 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
               <tr key={zn.label} className="border-b border-line-1 last:border-b-0">
                 <td className="py-2 pl-5">
                   <div className="flex items-center gap-3">
-                    <span className="w-9 font-mono text-mono text-fg-2">{zn.label}</span>
+                    <span className="w-9 text-mono text-fg-2">{zn.label}</span>
                     <span className="relative hidden h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2 sm:block" aria-hidden>
                       <span className={cn('absolute inset-y-0 left-0 rounded-full', `bg-z${fill}`)} style={{ width: `${Math.max(6, (hiF / maxPct) * 100)}%` }} />
                     </span>
                     <span className="truncate text-body text-fg-1">{zn.name}</span>
                   </div>
                 </td>
-                <td className="whitespace-nowrap py-2 pl-3 text-right font-mono text-mono text-fg-1">
+                <td className="whitespace-nowrap py-2 pl-3 text-right text-mono text-fg-1">
                   <motion.span key={range(zn.low, zn.high)} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.snappy, delay: i * 0.02 }} className="inline-block">
                     {range(zn.low, zn.high)}
                   </motion.span>
                 </td>
-                <td className="hidden whitespace-nowrap py-2 pl-3 pr-5 text-right font-mono text-mono text-fg-3 sm:table-cell">
+                <td className="hidden whitespace-nowrap py-2 pl-3 pr-5 text-right text-mono text-fg-3 sm:table-cell">
                   {zn.low == null ? `< ${hi}` : hi == null ? `${lo}+` : `${lo}–${hi}`}
                 </td>
               </tr>

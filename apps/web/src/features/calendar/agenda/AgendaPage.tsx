@@ -114,7 +114,7 @@ export function AgendaPage() {
         <AgendaWindow key={from} from={from} onLoaded={() => setTick((t) => t + 1)} />
       ))}
       <div ref={bottom} className="flex justify-center py-8" aria-hidden>
-        <span className="font-mono text-mono-sm text-fg-4">loading later weeks…</span>
+        <span className="text-mono-sm text-fg-4">loading later weeks…</span>
       </div>
     </Page>
   );
@@ -154,8 +154,8 @@ function WeekStrip({ today, onPick }: { today: LocalDate; onPick: (d: LocalDate)
                   aria-label={weekdayLong(d)}
                 >
                   {isToday && <span className="absolute inset-x-1 inset-y-0.5 rounded-md bg-accent" aria-hidden />}
-                  <span className="relative text-micro uppercase">{weekdayShort(d).slice(0, 2)}</span>
-                  <span className="relative font-mono text-mono">{Number(d.slice(8))}</span>
+                  <span className="relative text-micro ">{weekdayShort(d).slice(0, 2)}</span>
+                  <span className="relative text-mono">{Number(d.slice(8))}</span>
                 </button>
               );
             })}
@@ -224,11 +224,11 @@ function WeekDivider({ iso, week, current }: { iso: string; week?: WeekSummary; 
       {...links.calendarWeek(iso)}
       className="group/wd mt-8 mb-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line-2 pb-2 outline-none focus-visible:outline-2 focus-visible:outline-focus"
     >
-      <span className={cn('text-micro uppercase', current ? 'text-accent-ink' : 'text-fg-2')}>
+      <span className={cn('text-micro ', current ? 'text-accent-ink' : 'text-fg-2')}>
         W{Number(iso.slice(6))} · {formatIsoWeekRange(iso)}
       </span>
       {week && (
-        <span className="ml-auto flex items-baseline gap-3 font-mono text-mono-sm text-fg-2">
+        <span className="ml-auto flex items-baseline gap-3 text-mono-sm text-fg-2">
           <span>
             {hm(week.doneSec)}
             {week.plannedSec > week.doneSec && <span className="text-fg-4">/{hm(week.plannedSec)}</span>}
@@ -273,18 +273,18 @@ function AgendaDay({ date, data }: { date: LocalDate; data: CalendarResponse }) 
           aria-expanded={open}
           className="flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left outline-none focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span className={cn('grid size-7 shrink-0 place-items-center rounded-full font-mono text-mono', isToday ? 'bg-accent text-on-accent' : past ? 'text-fg-3' : 'text-fg-1')}>
+          <span className={cn('grid size-7 shrink-0 place-items-center rounded-full text-mono', isToday ? 'bg-accent text-on-accent' : past ? 'text-fg-3' : 'text-fg-1')}>
             {Number(date.slice(8))}
           </span>
           <span className={cn('text-label', past ? 'text-fg-2' : 'text-fg-1')}>{weekdayLong(date)}</span>
-          {Math.abs(diffDays(today, date)) <= 1 && <span className={cn('text-micro uppercase', isToday ? 'text-accent-ink' : 'text-fg-3')}>{rel}</span>}
+          {Math.abs(diffDays(today, date)) <= 1 && <span className={cn('text-micro ', isToday ? 'text-accent-ink' : 'text-fg-3')}>{rel}</span>}
           {!open && <CollapsedSummary cards={cards} />}
           {note && <Pilcrow className="size-3 shrink-0 text-fg-3" aria-label="Has a note" />}
           <motion.span initial={false} animate={{ rotate: open ? 0 : -90 }} transition={spring.snappy} className="ml-auto shrink-0 text-fg-3">
             <ChevronDown className="size-4" />
           </motion.span>
         </button>
-        <Link {...links.calendarDay(date)} className="shrink-0 rounded-sm px-1.5 text-micro uppercase text-fg-3 outline-none hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus">
+        <Link {...links.calendarDay(date)} className="shrink-0 rounded-sm px-1.5 text-micro text-fg-3 outline-none hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus">
           Day
         </Link>
       </div>
@@ -303,7 +303,7 @@ function AgendaDay({ date, data }: { date: LocalDate; data: CalendarResponse }) 
                 <Link key={e.id} {...links.event(e.id)} className={cn('flex items-center gap-2 rounded-md px-3 py-2 text-body font-[560]', e.priority === 'A' ? 'bg-accent text-on-accent' : e.priority === 'B' ? 'border border-accent-a6 text-fg-1' : 'border border-line-3 text-fg-1')}>
                   <Flag className={cn('size-3.5', e.priority === 'A' && 'fill-current')} />
                   {e.name}
-                  <span className="ml-auto text-micro uppercase opacity-70">{e.priority}-race</span>
+                  <span className="ml-auto text-micro opacity-70">{e.priority}-race</span>
                 </Link>
               ))}
               {markers.map((m) => (
@@ -311,7 +311,7 @@ function AgendaDay({ date, data }: { date: LocalDate; data: CalendarResponse }) 
                   {MARKER_META[m.type].icon}
                   {MARKER_META[m.type].label}
                   {m.label && <span className="text-fg-3">· {m.label}</span>}
-                  {m.endDate && <span className="font-mono text-mono-sm text-fg-3">until {formatDayMonth(m.endDate)}</span>}
+                  {m.endDate && <span className="text-mono-sm text-fg-3">until {formatDayMonth(m.endDate)}</span>}
                 </span>
               ))}
               {cards.map((c) => (
@@ -343,7 +343,7 @@ function CollapsedSummary({ cards }: { cards: CalendarCard[] }) {
       {cards.slice(0, 3).map((c) => (
         <span key={c.key} className="inline-flex shrink-0 items-center gap-1">
           <SportGlyph sport={c.model.sport} size={14} className="text-fg-2" />
-          <span className="font-mono text-mono-sm">{formatDuration(c.model.durationSec, 'prime')}</span>
+          <span className="text-mono-sm">{formatDuration(c.model.durationSec, 'prime')}</span>
           <ComplianceGlyph state={c.model.compliance?.state ?? 'planned'} size={10} />
         </span>
       ))}

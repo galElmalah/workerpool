@@ -41,7 +41,7 @@ export function EventBanner({ event, result, className }: { event: Event; result
     >
       <Flag className={cn('size-4 shrink-0', a ? 'fill-current' : event.priority === 'B' ? 'text-accent-ink' : 'text-fg-2')} />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className={cn('text-micro uppercase', a ? 'text-on-accent opacity-75' : 'text-fg-3')}>
+        <span className={cn('text-micro ', a ? 'text-on-accent opacity-75' : 'text-fg-3')}>
           {event.priority}-race{event.location ? ` · ${event.location}` : ''}
           {dist ? ` · ${dist.value} ${dist.unit}` : ''}
         </span>
@@ -103,7 +103,7 @@ export function MarkerEditor({ date, markers }: { date: LocalDate; markers: DayM
               {MARKER_META[m.type].icon}
               {MARKER_META[m.type].label}
               {m.label && <span className="text-fg-2">· {m.label}</span>}
-              {m.endDate && <span className="font-mono text-mono-sm text-fg-3">{formatDayMonth(m.date)}–{formatDayMonth(m.endDate)}</span>}
+              {m.endDate && <span className="text-mono-sm text-fg-3">{formatDayMonth(m.date)}–{formatDayMonth(m.endDate)}</span>}
               <button type="button" aria-label={`Remove ${MARKER_META[m.type].label} marker`} onClick={() => drop(m)} className="grid size-6 place-items-center rounded-sm text-fg-3 outline-none hover:bg-surface-3 hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus">
                 <X />
               </button>

@@ -75,7 +75,7 @@ export function StatTile({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-micro uppercase text-fg-3">{label}</span>
+        <span className="truncate text-micro text-fg-3">{label}</span>
         {hint && <span className="text-body-sm text-fg-3">{hint}</span>}
       </div>
       <div className="flex items-end justify-between gap-3">

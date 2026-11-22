@@ -275,15 +275,15 @@ function Readout({ series, sync, focusSec, format, unit, secondary, secondaryUni
   return (
     <div className="mb-2 flex flex-wrap items-end gap-x-6 gap-y-2" aria-hidden>
       <div className="flex flex-col">
-        <span className="text-micro uppercase text-fg-3">Duration</span>
-        <span className="font-mono text-mono text-fg-1">{fmtDurShort(k)}</span>
+        <span className="text-micro text-fg-3">Duration</span>
+        <span className="text-mono text-fg-1">{fmtDurShort(k)}</span>
       </div>
       {series.map((s) => {
         const v = valueAt(s.points, k);
         const vv = VARIANT[s.variant ?? 'primary'];
         return (
           <div key={s.id} className="flex flex-col">
-            <span className="flex items-center gap-1.5 text-micro uppercase text-fg-3">
+            <span className="flex items-center gap-1.5 text-micro text-fg-3">
               <svg width="14" height="6">
                 <line x1="0" x2="14" y1="3" y2="3" style={{ stroke: toneStroke[vv.tone], strokeWidth: vv.width + 0.5, strokeDasharray: vv.dash }} />
               </svg>
@@ -293,7 +293,7 @@ function Readout({ series, sync, focusSec, format, unit, secondary, secondaryUni
               <span className={`num text-stat-sm ${vv.tone === 'accent' ? 'text-accent-ink' : vv.tone === 'fg1' ? 'text-fg-1' : 'text-fg-2'}`}>{v == null ? '—' : format(v)}</span>
               <span className="text-label text-fg-3">{unit}</span>
               {secondary && v != null && (
-                <span className="font-mono text-mono-sm text-fg-3">
+                <span className="text-mono-sm text-fg-3">
                   {secondary(v)} {secondaryUnit}
                 </span>
               )}

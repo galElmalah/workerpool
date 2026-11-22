@@ -82,7 +82,7 @@ export function QuickAdd({ date, actions, className }: { date: string; actions: 
         onBlur={() => !text.trim() && setTimeout(() => calStore.get().composer === date && close(), 120)}
         placeholder="run 45m easy"
         aria-label={`Quick add on ${date}. Enter creates, Command Enter opens, Escape cancels`}
-        className="h-6 w-full min-w-0 bg-transparent px-1 font-mono text-mono-sm text-fg-1 outline-none placeholder:text-fg-4"
+        className="h-6 w-full min-w-0 bg-transparent px-1 text-mono-sm text-fg-1 outline-none placeholder:text-fg-4"
       />
       <div className="flex h-5 min-w-0 items-center gap-1.5 px-1">
         {parsed ? (

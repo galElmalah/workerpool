@@ -718,8 +718,8 @@ function FitnessTooltip({ p, sync, indexOf, toX, L }: { p: Prepared; sync: Hover
         title={
           <span className="flex items-center gap-2">
             {fmtDayLong(p.dates[j])}
-            {projected && <span className="text-micro uppercase text-fg-3">proj.</span>}
-            {j === p.todayIdx && <span className="text-micro uppercase text-accent-ink">today</span>}
+            {projected && <span className="text-micro text-fg-3">proj.</span>}
+            {j === p.todayIdx && <span className="text-micro text-accent-ink">today</span>}
           </span>
         }
         rows={rows}
@@ -743,7 +743,7 @@ function Header({ p, sync, indexOf, range, setRange, showRangeControl, compact, 
         <Stat label="Form" value={fmtNum(p.form[i])} delta={zone?.label} big={!compact} />
         <div className="pb-1 text-label text-fg-3">
           {hi == null ? 'Today' : fmtDayLong(p.dates[i])}
-          {i > p.todayIdx && <span className="ml-1.5 text-micro uppercase">proj.</span>}
+          {i > p.todayIdx && <span className="ml-1.5 text-micro ">proj.</span>}
         </div>
       </div>
       {showRangeControl && <ChartSegmented ariaLabel="Range" value={range} options={FITNESS_RANGES} onChange={setRange} />}
@@ -754,7 +754,7 @@ function Header({ p, sync, indexOf, range, setRange, showRangeControl, compact, 
 function Stat({ label, value, delta, tone, caution, big }: { label: string; value: string; delta?: string; tone?: 'accent'; caution?: boolean; big?: boolean }) {
   return (
     <div className="flex flex-col">
-      <span className="flex items-center gap-1.5 text-micro uppercase text-fg-3">
+      <span className="flex items-center gap-1.5 text-micro text-fg-3">
         <svg width="10" height="6" aria-hidden>
           <line x1="0" x2="10" y1="3" y2="3" style={{ stroke: tone === 'accent' ? T.accent : label === 'Form' ? T.fg2 : T.fg1, strokeWidth: 2, strokeDasharray: label === 'Form' ? '3 2' : undefined }} />
         </svg>
@@ -763,7 +763,7 @@ function Stat({ label, value, delta, tone, caution, big }: { label: string; valu
       <span className="flex items-baseline gap-2">
         <span className={`num ${big ? 'text-stat-md' : 'text-stat-sm'} ${tone === 'accent' ? 'text-accent-ink' : 'text-fg-1'}`}>{value}</span>
         {delta && (
-          <span className="inline-flex items-center gap-1 font-mono text-mono-sm text-fg-2">
+          <span className="inline-flex items-center gap-1 text-mono-sm text-fg-2">
             {caution && <CautionGlyph />}
             {delta}
           </span>

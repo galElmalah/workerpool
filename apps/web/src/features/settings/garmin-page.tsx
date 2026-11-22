@@ -36,7 +36,7 @@ function Cap({ on, children }: { on: boolean; children: ReactNode }) {
 function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <span className="text-micro uppercase text-fg-3">{label}</span>
+      <span className="text-micro text-fg-3">{label}</span>
       <span className="truncate text-stat-sm text-fg-1">{children}</span>
     </div>
   );
@@ -194,7 +194,7 @@ function Connected({ s, today }: { s: Status; today?: string }) {
               <motion.div key={report.durationMs} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={spring.smooth} className="border-t border-line-1 p-5" aria-live="polite">
                 <div className="mb-3 flex items-center gap-2 text-body text-fg-1">
                   <Check className="size-4 text-accent-ink" /> {report.summary || 'Up to date'}
-                  <span className="font-mono text-mono-sm text-fg-3">{(report.durationMs / 1000).toFixed(1)} s</span>
+                  <span className="text-mono-sm text-fg-3">{(report.durationMs / 1000).toFixed(1)} s</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <Stat label="New activities">{report.activities.created}</Stat>
@@ -315,7 +315,7 @@ function BackfillCard({ s }: { s: Status }) {
                 {PHASE[p.phase] ?? p.phase}
                 {p.phase === 'done' && p.finishedAt ? ` ${relativeTime(p.finishedAt)}` : ''} · since {formatDateMedium(p.sinceDate, true)}
               </span>
-              <span className="font-mono text-mono text-fg-2">{total ? `${formatNumber(p.done)} / ${formatNumber(total)}` : ''}</span>
+              <span className="text-mono text-fg-2">{total ? `${formatNumber(p.done)} / ${formatNumber(total)}` : ''}</span>
             </div>
             <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-3" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(frac * 100)}>
               <motion.div className="absolute inset-0 origin-left rounded-full bg-accent" initial={false} animate={{ scaleX: frac }} transition={spring.gentle} />

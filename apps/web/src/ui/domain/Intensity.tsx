@@ -111,7 +111,7 @@ export function IntensityPicker({ value, onValueChange, allowRace = true, classN
           );
         })}
       </RadioGroup>
-      <div className="relative h-4 overflow-hidden text-micro uppercase text-fg-2" aria-hidden>
+      <div className="relative h-4 overflow-hidden text-micro text-fg-2" aria-hidden>
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
             key={value}

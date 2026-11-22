@@ -37,7 +37,7 @@ export function Chip({ children, tone, icon, onRemove, onClick, selected, size =
   const t = tone ?? (selected ? 'selected' : 'neutral');
   const cls = cn(
     'enter-pop inline-flex max-w-full shrink-0 select-none items-center gap-1 rounded-sm border text-label whitespace-nowrap',
-    size === 'sm' ? 'h-5 px-1.5 text-micro uppercase' : 'h-6 px-2',
+    size === 'sm' ? 'h-5 px-1.5 text-micro ' : 'h-6 px-2',
     '[&_svg]:size-3.5 [&_svg]:shrink-0',
     tones[t],
     onClick && 'transition-colors duration-(--dur-fast) hover:border-line-3 hover:text-fg-1',

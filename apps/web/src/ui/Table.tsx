@@ -115,7 +115,7 @@ export function Table<T>({
                   style={{ width: c.width, top: stickyTop }}
                   aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   className={cn(
-                    'sticky z-(--z-sticky) h-9 border-b border-line-1 px-3 align-middle text-micro font-[600] uppercase text-fg-3 first:pl-4 last:pr-4',
+                    'sticky z-(--z-sticky) h-9 border-b border-line-1 px-3 align-middle text-micro font-[600] text-fg-3 first:pl-4 last:pr-4',
                     al === 'right' ? 'text-right' : al === 'center' ? 'text-center' : 'text-left',
                     surface === 'canvas' ? 'bg-canvas' : surface === 'surface-1' ? 'bg-surface-1' : 'bg-surface-2',
                     c.hideBelow && hide[c.hideBelow],
@@ -126,7 +126,7 @@ export function Table<T>({
                     <button
                       type="button"
                       onClick={() => toggle(c.key)}
-                      className={cn('inline-flex items-center gap-1 uppercase transition-colors hover:text-fg-1', active && 'text-fg-1', al === 'right' && 'flex-row-reverse')}
+                      className={cn('inline-flex items-center gap-1 transition-colors hover:text-fg-1', active && 'text-fg-1', al === 'right' && 'flex-row-reverse')}
                     >
                       {c.header}
                       <motion.span
@@ -178,7 +178,7 @@ export function Table<T>({
                         key={c.key}
                         className={cn(
                           'relative h-10 border-b border-line-1 px-3 align-middle first:pl-4 last:pr-4',
-                          c.numeric ? 'font-mono text-mono text-fg-1' : 'text-fg-1',
+                          c.numeric ? 'text-mono text-fg-1' : 'text-fg-1',
                           al === 'right' ? 'text-right' : al === 'center' ? 'text-center' : 'text-left',
                           c.hideBelow && hide[c.hideBelow],
                           c.className,
@@ -202,7 +202,7 @@ export function Table<T>({
                   key={c.key}
                   className={cn(
                     'h-10 px-3 align-middle first:pl-4 last:pr-4',
-                    c.numeric ? 'font-mono text-mono font-[560] text-fg-1' : 'text-micro uppercase text-fg-3',
+                    c.numeric ? 'text-mono font-[560] text-fg-1' : 'text-micro text-fg-3',
                     alignOf(c) === 'right' ? 'text-right' : 'text-left',
                     c.hideBelow && hide[c.hideBelow],
                   )}

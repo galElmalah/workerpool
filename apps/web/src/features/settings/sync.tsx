@@ -122,7 +122,7 @@ export function SettingsSyncPage() {
           <div className="flex flex-col">
             {groups.map((g) => (
               <section key={g.key} className="flex flex-col">
-                <h3 className="sticky top-(--header-h) z-(--z-sticky) -mx-1 bg-canvas/90 px-1 py-2 text-micro uppercase text-fg-3 backdrop-blur-sm">{g.label}</h3>
+                <h3 className="sticky top-(--header-h) z-(--z-sticky) -mx-1 bg-canvas/90 px-1 py-2 text-micro text-fg-3 backdrop-blur-sm">{g.label}</h3>
                 <ul className="flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-1">
                   {g.items.map((e) => {
                     const k = KIND[e.kind];
@@ -141,8 +141,8 @@ export function SettingsSyncPage() {
                             <StatusGlyph status={e.status} />
                           </span>
                           <span className={cn('min-w-0 flex-1 truncate text-body', e.status === 'error' ? 'text-fg-1' : 'text-fg-1')}>{e.summary}</span>
-                          <span className="hidden w-16 text-right font-mono text-mono-sm text-fg-3 sm:block">{e.durationMs != null ? `${(e.durationMs / 1000).toFixed(1)} s` : ''}</span>
-                          <span className="w-12 text-right font-mono text-mono-sm text-fg-2">{formatClock(e.at)}</span>
+                          <span className="hidden w-16 text-right text-mono-sm text-fg-3 sm:block">{e.durationMs != null ? `${(e.durationMs / 1000).toFixed(1)} s` : ''}</span>
+                          <span className="w-12 text-right text-mono-sm text-fg-2">{formatClock(e.at)}</span>
                           <motion.span animate={{ rotate: isOpen ? 90 : 0 }} transition={spring.snappy} className="flex text-fg-4">
                             <ChevronRight className="size-3.5" />
                           </motion.span>
@@ -156,15 +156,15 @@ export function SettingsSyncPage() {
                                 <dt className="text-fg-3">Status</dt>
                                 <dd className="text-fg-1">{e.status}</dd>
                                 <dt className="text-fg-3">At</dt>
-                                <dd className="font-mono text-mono-sm text-fg-1">{formatStamp(e.at)}</dd>
+                                <dd className="text-mono-sm text-fg-1">{formatStamp(e.at)}</dd>
                                 {e.durationMs != null && (
                                   <>
                                     <dt className="text-fg-3">Took</dt>
-                                    <dd className="font-mono text-mono-sm text-fg-1">{e.durationMs} ms</dd>
+                                    <dd className="text-mono-sm text-fg-1">{e.durationMs} ms</dd>
                                   </>
                                 )}
                                 <dt className="text-fg-3">Detail</dt>
-                                <dd className="whitespace-pre-wrap break-words font-mono text-mono-sm text-fg-2">{e.detail || '—'}</dd>
+                                <dd className="whitespace-pre-wrap break-words text-mono-sm text-fg-2">{e.detail || '—'}</dd>
                               </dl>
                             </motion.div>
                           )}
