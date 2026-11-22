@@ -141,9 +141,9 @@ function DayBody({ date }: { date: LocalDate }) {
           {data ? <DayNoteEditor key={date} date={date} initial={note?.body ?? ''} minRows={4} /> : <Skeleton className="h-24 w-full rounded-md" />}
         </Section>
 
-        <Section stagger={false} title="Body" variant="micro">
+        {!future && <Section stagger={false} title="Body" variant="micro">
           {data ? <WellnessPanel key={date} date={date} day={data.wellness.find((w) => w.date === date)} editable={!future} /> : <Skeleton className="h-28 w-full rounded-lg" />}
-        </Section>
+        </Section>}
       </div>
 
       <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:self-start">

@@ -5,7 +5,7 @@
  * quick-add, context menu, keyboard grid, multi-select and the bulk week tools.
  */
 import { DndContext } from '@dnd-kit/core';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { animate } from 'motion/react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -53,6 +53,7 @@ function useLayoutMode(): MonthLayout {
 
 export function MonthView({ anchor }: { anchor?: LocalDate }) {
   const navigate = useNavigate();
+  const router = useRouter();
   const settings = useSettings();
   const layout = useLayoutMode();
   const est = EST[layout];
@@ -102,7 +103,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [layout]);
-  const density: CalDensity = dayW < 72 ? 'mini' : dayW >= 184 ? 'full' : dayW >= 104 ? 'compact' : 'chip';
+  const density: CalDensity = dayW < 72 ? 'mini' : dayW >= 184 ? 'full' : dayW >= 96 ? 'compact' : 'chip';
 
   // ── remember position for Back ──
   useEffect(() => {
@@ -152,6 +153,16 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
     if (!anchor && !restore && weekStart(today) !== weekStart(guess)) scrollToDate(today, false);
     if (!calStore.get().cursor) calStore.set({ cursor: anchor ?? today });
   }, [today, anchor, guess, restore, scrollToDate]);
+
+  // warm the week/day route chunks so the zoom never waits on a lazy import
+  useEffect(() => {
+    if (!today) return;
+    const id = setTimeout(() => {
+      void router.preloadRoute(links.calendarWeek(isoWeekOf(today))).catch(() => {});
+      void router.preloadRoute(links.calendarDay(today)).catch(() => {});
+    }, 600);
+    return () => clearTimeout(id);
+  }, [router, today]);
 
   const goToday = useCallback(() => {
     if (!today) return;

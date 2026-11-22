@@ -4,10 +4,10 @@
  * per-column quick-add, ‹ › paging (page-next / page-prev) and the month ⇄ week ⇄ day zoom.
  */
 import { DndContext, useDroppable } from '@dnd-kit/core';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { Moon, Pilcrow, Plus, RotateCcw, TriangleAlert } from 'lucide-react';
 import { LayoutGroup } from 'motion/react';
-import { memo, useCallback, useState, type MouseEvent } from 'react';
+import { memo, useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { flushSync } from 'react-dom';
 import type { LocalDate } from '@cadence/core/domain';
 import { addDays, addWeeks, isoWeekOf, isoWeekStart, weekStart } from '@cadence/core/time';
@@ -181,7 +181,15 @@ function applyPreview(day: DayData, preview: DragPreview | null, previewCard: Ca
 
 export function WeekView({ isoWeek }: { isoWeek: string }) {
   const navigate = useNavigate();
+  const router = useRouter();
   const start = isoWeekStart(isoWeek);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      void router.preloadRoute(links.calendar(start)).catch(() => {});
+      void router.preloadRoute(links.calendarDay(start)).catch(() => {});
+    }, 600);
+    return () => clearTimeout(id);
+  }, [router, start]);
   const idx = weekIndexOf(start);
   const pages = useCalendarPages(idx - 1, idx + 1);
   const model = useCalendarModel(pages.data);

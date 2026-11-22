@@ -7,11 +7,9 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { getRouteApi, Link } from '@tanstack/react-router';
 import { scaleLinear } from 'd3-scale';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Plus, RotateCcw, X } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useMemo, useRef, useState } from 'react';
 import { CompareBars, lowerBound, rollingMeanF64, toF64, useChartSize } from '@/charts';
 import { Button, EmptyState, IconButton, Page, PageHeader, Popover, Section, Segmented, Skeleton, SportGlyph } from '@/ui';
-import { spring } from '@/motion/tokens';
 import { api, call, raw } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatDayShort, formatDuration, formatNumber, monthShort, paceParts } from '@/lib/format';
@@ -68,7 +66,7 @@ export function ActivityComparePage() {
               {details.map((d, i) =>
                 d.data ? (
                   <span key={d.data.id} className="flex h-9 items-center gap-2 rounded-md border border-line-2 bg-surface-1 pr-1 pl-3">
-                    <svg width="18" height="6" aria-hidden><line x1="0" y1="3" x2="18" y2="3" stroke={STROKES[i].c} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
+                    <svg width="18" height="6" aria-hidden><line x1="0" y1="3" x2="18" y2="3" style={{ stroke: STROKES[i].c }} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
                     <SportGlyph sport={d.data.sport} size={14} />
                     <Link {...links.activity(d.data.id)} className="max-w-56 truncate text-label text-fg-1 hover:underline">{d.data.title}</Link>
                     <span className="font-mono text-mono-sm text-fg-3">{formatDayShort(d.data.localDate)} {monthShort(d.data.localDate)}</span>
@@ -239,7 +237,7 @@ function Overlay({ acts, streams }: { acts: (ActivityDetail | undefined)[]; stre
             a ? (
               <div key={a.id} className="flex flex-col">
                 <span className="flex items-center gap-1.5 text-micro uppercase text-fg-3">
-                  <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" stroke={STROKES[i].c} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
+                  <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" style={{ stroke: STROKES[i].c }} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
                   {formatDayShort(a.localDate)} {monthShort(a.localDate)}
                 </span>
                 <span className="flex items-baseline gap-1">
@@ -259,7 +257,7 @@ function Overlay({ acts, streams }: { acts: (ActivityDetail | undefined)[]; stre
             <svg width={w} height={H} className="touch-pan-y select-none" onPointerMove={onMove} onPointerLeave={onLeave} role="img" aria-label={`Overlay of ${metric} for ${acts.length} activities`}>
               {sy.ticks(4).map((t) => (
                 <g key={t}>
-                  <line x1={PADL} x2={w - 8} y1={sy(t)} y2={sy(t)} stroke="var(--color-line-1)" />
+                  <line x1={PADL} x2={w - 8} y1={sy(t)} y2={sy(t)} style={{ stroke: 'var(--color-line-1)' }} />
                   <text x={PADL - 8} y={sy(t)} dy="0.32em" textAnchor="end" className="fill-fg-3 font-mono text-[11px]">{fmtY(t)}</text>
                 </g>
               ))}
@@ -270,21 +268,18 @@ function Overlay({ acts, streams }: { acts: (ActivityDetail | undefined)[]; stre
                 const i = series.length - 1 - ri;
                 if (!s) return null;
                 return (
-                  <motion.path
+                  <path
                     key={`${i}-${metric}-${axis}`}
                     d={path(s)}
                     fill="none"
-                    stroke={STROKES[i].c}
+                    style={{ stroke: STROKES[i].c }}
                     strokeWidth={STROKES[i].w}
                     strokeDasharray={STROKES[i].dash}
                     strokeLinejoin="round"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ ...spring.gentle, delay: i * 0.08 }}
                   />
                 );
               })}
-              <line ref={ruleRef} y1={8} y2={H - PADB} stroke="var(--color-fg-3)" opacity={0} />
+              <line ref={ruleRef} y1={8} y2={H - PADB} style={{ stroke: 'var(--color-fg-3)' }} opacity={0} />
             </svg>
           ) : null}
         </div>
@@ -331,7 +326,7 @@ function DeltaTable({ acts }: { acts: ActivityDetail[] }) {
                 {acts.map((a, i) => (
                   <th key={a.id} className="h-9 border-b border-line-1 px-4 text-right text-micro uppercase text-fg-3">
                     <span className="inline-flex items-center gap-1.5">
-                      <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" stroke={STROKES[i].c} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
+                      <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" style={{ stroke: STROKES[i].c }} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
                       {formatDayShort(a.localDate)} {monthShort(a.localDate)}
                     </span>
                   </th>

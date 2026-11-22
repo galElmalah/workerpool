@@ -232,14 +232,24 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
       <div data-summary className={cn('flex min-w-0 items-center gap-4 overflow-hidden px-3 py-2', className)}>
         <WeekLabel week={week} phase={week.phase} />
         <span className="flex items-baseline gap-1 font-mono text-mono-sm text-fg-3">
-          <span className="text-mono text-fg-1">{formatDuration(s.doneSec)}</span>/{formatDuration(s.plannedSec)}
-          <span className="font-sans">h</span>
+          {future ? (
+            <>
+              <span className="text-mono text-fg-1">{formatDuration(s.plannedSec)}</span>
+              <span className="font-sans">h planned</span>
+            </>
+          ) : (
+            <>
+              <span className="text-mono text-fg-1">{formatDuration(s.doneSec)}</span>/{formatDuration(s.plannedSec)}
+              <span className="font-sans">h</span>
+            </>
+          )}
         </span>
         <span className="flex items-baseline gap-1 font-mono text-mono-sm text-fg-3 max-sm:hidden">
-          <span className="text-mono text-fg-1">{formatLoad(s.doneLoad)}</span>/{formatLoad(s.plannedLoad)}
+          <span className="text-mono text-fg-1">{formatLoad(future ? s.plannedLoad : s.doneLoad)}</span>
+          {!future && `/${formatLoad(s.plannedLoad)}`}
           <span className="font-sans">load</span>
         </span>
-        <span className="max-md:hidden">{load}</span>
+        {!future && <span className="max-md:hidden">{load}</span>}
         <span className="max-md:hidden">{keyLine}</span>
         <span className="flex items-baseline gap-1 font-mono text-mono-sm text-fg-2 max-sm:hidden">
           <span className="font-sans text-micro uppercase text-fg-3">Form</span>

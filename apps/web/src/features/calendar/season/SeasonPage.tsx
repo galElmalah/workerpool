@@ -203,10 +203,17 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
   const done = fitness.filter((f) => !f.projected);
   const proj = fitness.filter((f, i) => f.projected || (fitness[i + 1]?.projected ?? false));
   const curIdx = idxOf(today);
-  const months = weeks.map((w, i) => ({ i, m: w.startDate.slice(5, 7), first: i === 0 || weeks[i - 1]!.startDate.slice(5, 7) !== w.startDate.slice(5, 7) })).filter((x) => x.first);
+  const monthOf = (w: WeekSummary) => w.endDate.slice(5, 7);
+  const months = weeks.map((w, i) => ({ i, first: i === 0 || monthOf(weeks[i - 1]!) !== monthOf(w) })).filter((x) => x.first);
 
   return (
-    <div className="overflow-x-auto px-4 pt-3 pb-4 xl:px-5 [scrollbar-width:thin]">
+    <div
+      ref={(el) => {
+        // Phones: start with the current week in view.
+        if (el && curIdx >= 0 && el.scrollWidth > el.clientWidth && el.scrollLeft === 0) el.scrollLeft = Math.max(0, ((curIdx + 4) / n) * el.scrollWidth - el.clientWidth);
+      }}
+      className="overflow-x-auto px-4 pt-3 pb-4 xl:px-5 [scrollbar-width:thin]"
+    >
       <div className="relative min-w-[720px]">
         {/* phase bands */}
         <div className="relative mb-1 h-6">
@@ -281,7 +288,7 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
         <div className="relative mt-1.5 h-4">
           {months.map(({ i }) => (
             <span key={i} className="absolute font-mono text-mono-sm text-fg-3" style={{ left: `${(i / n) * 100}%` }}>
-              {monthShort(weeks[i]!.startDate)}
+              {monthShort(weeks[i]!.endDate)}
             </span>
           ))}
         </div>

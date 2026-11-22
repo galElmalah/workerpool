@@ -210,7 +210,7 @@ function EffortTable({ sport, efforts, all }: { sport: Sport; efforts: { distanc
           const d = distanceParts(e.distanceM, sport, units, e.distanceM % 1000 === 0 || e.distanceM < 1000 ? 0 : 1);
           return (
             <tr key={e.distanceM} className="border-b border-line-1 last:border-0">
-              <td className="px-2 py-2 text-fg-2">{Math.abs(e.distanceM - 1609.344) < 1 ? '1 mile' : Math.abs(e.distanceM - 21097.5) < 1 ? 'Half' : Math.abs(e.distanceM - 42195) < 1 ? 'Marathon' : `${d.value} ${d.unit}`}</td>
+              <td className="px-2 py-2 text-fg-2">{Math.abs(e.distanceM - 1609.344) < 1 ? '1 mile' : Math.abs(e.distanceM - 21097.5) < 1 ? 'Half' : Math.abs(e.distanceM - 42195) < 1 ? 'Marathon' : e.distanceM < 1000 && sport !== 'swim' ? `${e.distanceM} m` : `${d.value} ${d.unit}`}</td>
               <td className={cn('px-2 py-2 text-right text-fg-1')}>
                 {isBest && <span className="mr-1.5 inline-block size-1.5 rounded-full bg-accent align-middle" aria-label="All-time best" />}
                 {formatDuration(e.timeSec, 'hms')}

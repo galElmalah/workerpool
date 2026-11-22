@@ -972,7 +972,7 @@ export function LoginPage() {
   if (!auth.data || auth.data.authenticated || !auth.data.configured) return <Splash />;
 
   return (
-    <BareFrame right={auth.data.demo ? <span className="font-mono text-mono-sm text-fg-4">demo · cadence-demo</span> : undefined}>
+    <BareFrame right={auth.data.demo ? <span className="rounded-xs border border-dashed border-line-3 px-1.5 py-0.5 text-micro uppercase text-fg-3">Demo mode</span> : undefined}>
       <div className="flex flex-1 items-center justify-center px-5 pb-16">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="flex w-full max-w-[22rem] flex-col gap-8">
           <div className="flex flex-col gap-2">

@@ -50,7 +50,7 @@ function MiniChip({ card }: { card: CalendarCard }) {
       {(s.rail ?? (m.isKey ? 'bg-accent' : null)) && <span className={cn('absolute inset-y-0.5 left-0 w-0.5 rounded-r-full', s.rail ?? 'bg-accent')} aria-hidden />}
       <SportGlyph sport={m.sport} size={14} className="shrink-0 text-fg-1" style={vt(on, 'glyph')} />
       <span className={cn('truncate font-mono text-mono-sm text-fg-2 max-[360px]:hidden', state === 'missed' && 'line-through')}>
-        {formatDuration(m.durationSec).replace(/^0:/, ':')}
+        {m.durationSec && m.durationSec >= 3600 ? `${Math.round(m.durationSec / 3600)}h` : formatDuration(m.durationSec).replace(/^0:/, ':')}
       </span>
     </div>
   );
@@ -168,7 +168,10 @@ export const CardItem = memo(function CardItem({ card, date, density, actions, z
   };
 
   const zoomStyle: CSSProperties | undefined = zoomName ? vtName(`w-${card.key}`, 'cal-item') : undefined;
-  const model = hideSpark ? { ...card.model, sparkline: null } : card.model;
+  const model =
+    hideSpark || card.model.compliance?.state === 'planned'
+      ? { ...card.model, sparkline: hideSpark ? null : card.model.sparkline, compliance: card.model.compliance?.state === 'planned' ? null : card.model.compliance }
+      : card.model;
 
   return (
     <div
