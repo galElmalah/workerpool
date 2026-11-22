@@ -29,18 +29,18 @@
   --color-current: currentColor;
 
   /* Neutral ramp (dark) — soft near-black, faintly cool (DESIGN_V2 §2). Never pure black/white. */
-  --color-gray-1: oklch(0.165 0.004 260);
-  --color-gray-2: oklch(0.205 0.005 260);
-  --color-gray-3: oklch(0.235 0.006 260);
-  --color-gray-4: oklch(0.265 0.006 260);
-  --color-gray-5: oklch(0.295 0.006 260);
-  --color-gray-6: oklch(0.330 0.006 260);
-  --color-gray-7: oklch(0.380 0.007 260);
-  --color-gray-8: oklch(0.450 0.008 260);
-  --color-gray-9: oklch(0.530 0.008 260);
-  --color-gray-10: oklch(0.640 0.008 260);
-  --color-gray-11: oklch(0.770 0.006 260);
-  --color-gray-12: oklch(0.930 0.004 260);
+  --color-gray-1: oklch(0.165 0.006 var(--hue));
+  --color-gray-2: oklch(0.195 0.006 var(--hue));
+  --color-gray-3: oklch(0.225 0.006 var(--hue));
+  --color-gray-4: oklch(0.260 0.006 var(--hue));
+  --color-gray-5: oklch(0.290 0.006 var(--hue));
+  --color-gray-6: oklch(0.330 0.006 var(--hue));
+  --color-gray-7: oklch(0.380 0.006 var(--hue));
+  --color-gray-8: oklch(0.440 0.006 var(--hue));
+  --color-gray-9: oklch(0.500 0.006 var(--hue));
+  --color-gray-10: oklch(0.660 0.006 var(--hue));
+  --color-gray-11: oklch(0.780 0.006 var(--hue));
+  --color-gray-12: oklch(0.930 0.004 var(--hue));
 
   /* Semantic neutrals */
   --color-canvas: var(--color-gray-1);
@@ -74,14 +74,10 @@
   --color-accent-a6: color-mix(in oklab, var(--accent) 64%, transparent);
   --color-accent-a7: color-mix(in oklab, var(--accent) 85%, transparent);
 
-  /* Intensity zones = one-hue ramp of the accent (light → strong) */
-  --color-z1: color-mix(in oklab, var(--accent) 16%, transparent);
-  --color-z2: color-mix(in oklab, var(--accent) 28%, transparent);
-  --color-z3: color-mix(in oklab, var(--accent) 42%, transparent);
-  --color-z4: color-mix(in oklab, var(--accent) 56%, transparent);
-  --color-z5: color-mix(in oklab, var(--accent) 70%, transparent);
-  --color-z6: color-mix(in oklab, var(--accent) 85%, transparent);
-  --color-z7: var(--accent);
+  /* Intensity zones: opaque, single-hue, lightness-monotonic ramp derived from the accent
+     (design-principles.md §5.3). Raw --z* values are set per theme below. */
+  --color-z1: var(--z1); --color-z2: var(--z2); --color-z3: var(--z3); --color-z4: var(--z4);
+  --color-z5: var(--z5); --color-z6: var(--z6); --color-z7: var(--z7);
 
   /* Grayscale sport ramp for stacked charts / mix bars (product.md §3.6.4). */
   --color-ramp-1: var(--color-gray-12);
@@ -91,26 +87,26 @@
   --color-ramp-5: var(--color-gray-8);
   --color-ramp-6: var(--color-gray-7);
 
-  /* Type */
+  /* Type — closed scale 12/13/14/16/20/28 + one display size 44; weights 400/500/600 only. */
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --text-stat-xl: 4.5rem;   --text-stat-xl--line-height: 1;      --text-stat-xl--letter-spacing: -0.045em; --text-stat-xl--font-weight: 560;
-  --text-stat-lg: 3rem;     --text-stat-lg--line-height: 1;      --text-stat-lg--letter-spacing: -0.04em;  --text-stat-lg--font-weight: 560;
-  --text-stat-md: 2rem;     --text-stat-md--line-height: 2.25rem;--text-stat-md--letter-spacing: -0.03em;  --text-stat-md--font-weight: 560;
-  --text-stat-sm: 1.25rem;  --text-stat-sm--line-height: 1.5rem; --text-stat-sm--letter-spacing: -0.015em; --text-stat-sm--font-weight: 560;
+  --text-stat-xl: 2.75rem;  --text-stat-xl--line-height: 3rem;   --text-stat-xl--letter-spacing: -0.03em;  --text-stat-xl--font-weight: 500;
+  --text-stat-lg: 1.75rem;  --text-stat-lg--line-height: 2.25rem;--text-stat-lg--letter-spacing: -0.022em; --text-stat-lg--font-weight: 600;
+  --text-stat-md: 1.25rem;  --text-stat-md--line-height: 1.75rem;--text-stat-md--letter-spacing: -0.015em; --text-stat-md--font-weight: 600;
+  --text-stat-sm: 1rem;     --text-stat-sm--line-height: 1.5rem; --text-stat-sm--letter-spacing: -0.008em; --text-stat-sm--font-weight: 600;
   --text-title-1: 1.75rem;  --text-title-1--line-height: 2.25rem;--text-title-1--letter-spacing: -0.022em; --text-title-1--font-weight: 600;
-  --text-title-2: 1.375rem; --text-title-2--line-height: 1.75rem;--text-title-2--letter-spacing: -0.018em; --text-title-2--font-weight: 580;
-  --text-title-3: 1.0625rem;--text-title-3--line-height: 1.5rem;  --text-title-3--letter-spacing: -0.01em; --text-title-3--font-weight: 580;
-  --text-body-lg: 1rem;     --text-body-lg--line-height: 1.5rem; --text-body-lg--letter-spacing: -0.006em; --text-body-lg--font-weight: 420;
-  --text-body: 0.875rem;    --text-body--line-height: 1.25rem;   --text-body--letter-spacing: -0.003em;    --text-body--font-weight: 420;
-  --text-body-sm: 0.8125rem;--text-body-sm--line-height: 1.125rem;--text-body-sm--font-weight: 420;
-  --text-label: 0.75rem;    --text-label--line-height: 1rem;     --text-label--letter-spacing: 0;          --text-label--font-weight: 450;
+  --text-title-2: 1.25rem;  --text-title-2--line-height: 1.75rem;--text-title-2--letter-spacing: -0.015em; --text-title-2--font-weight: 600;
+  --text-title-3: 1rem;     --text-title-3--line-height: 1.5rem; --text-title-3--letter-spacing: -0.008em; --text-title-3--font-weight: 600;
+  --text-body-lg: 1rem;     --text-body-lg--line-height: 1.5rem; --text-body-lg--letter-spacing: -0.006em; --text-body-lg--font-weight: 400;
+  --text-body: 0.875rem;    --text-body--line-height: 1.25rem;   --text-body--letter-spacing: -0.003em;    --text-body--font-weight: 400;
+  --text-body-sm: 0.8125rem;--text-body-sm--line-height: 1.125rem;--text-body-sm--font-weight: 400;
+  --text-label: 0.75rem;    --text-label--line-height: 1rem;     --text-label--letter-spacing: 0;          --text-label--font-weight: 500;
   /* v2: micro is an alias of label (sentence case, no tracking). Never pair with `uppercase`. */
-  --text-micro: 0.75rem;    --text-micro--line-height: 1rem;     --text-micro--letter-spacing: 0;          --text-micro--font-weight: 450;
+  --text-micro: 0.75rem;    --text-micro--line-height: 1rem;     --text-micro--letter-spacing: 0;          --text-micro--font-weight: 400;
   /* v2: text-mono / text-mono-sm are size tokens only (= body-sm / label). Numbers use the sans. */
-  --text-mono: 0.8125rem;   --text-mono--line-height: 1.125rem;  --text-mono--font-weight: 420;
-  --text-mono-sm: 0.75rem;  --text-mono-sm--line-height: 1rem;   --text-mono-sm--letter-spacing: 0;       --text-mono-sm--font-weight: 420;
+  --text-mono: 0.8125rem;   --text-mono--line-height: 1.125rem;  --text-mono--font-weight: 400;
+  --text-mono-sm: 0.75rem;  --text-mono-sm--line-height: 1rem;   --text-mono-sm--letter-spacing: 0;       --text-mono-sm--font-weight: 400;
 
   /* Spacing / radius / containers / breakpoints */
   --spacing: 0.25rem;
@@ -151,45 +147,61 @@
   /* Shell geometry (read by the shell + sticky offsets in pages). */
   --rail-w: 0px; --header-h: 52px; --bottom-bar-h: 0px;
   --inset-shadow-hairline: inset 0 0 0 0 transparent; /* v2: no hairline highlights */
-  --line-1: rgb(255 255 255 / 0.06); --line-2: rgb(255 255 255 / 0.10); --line-3: rgb(255 255 255 / 0.18);
-  --glass: oklch(0.185 0.005 260 / 0.78); --scrim: rgb(0 0 0 / 0.50);
-  /* Accent (dark): calm blue by default. */
-  --accent: oklch(0.740 0.115 250); --accent-hover: oklch(0.790 0.100 250); --accent-press: oklch(0.690 0.115 250);
-  --accent-ink: oklch(0.780 0.105 250); --on-accent: oklch(0.180 0.020 250);
+  --line-1: rgb(255 255 255 / 0.06); --line-2: rgb(255 255 255 / 0.10); --line-3: rgb(255 255 255 / 0.16);
+  --glass: oklch(0.195 0.006 var(--hue) / 0.80); --scrim: rgb(0 0 0 / 0.50);
+  /* Accent (dark): calm blue by default; neutrals are tinted with the same hue. */
+  --hue: 252;
+  --accent: oklch(0.72 0.12 252); --accent-hover: oklch(0.77 0.11 252); --accent-press: oklch(0.67 0.12 252);
+  --accent-ink: oklch(0.78 0.10 252); --on-accent: oklch(0.20 0.012 252);
+  --z1: oklch(from var(--accent) 0.340 0.030 h);
+  --z2: oklch(from var(--accent) 0.423 calc(0.030 + (c - 0.030) * 0.233) h);
+  --z3: oklch(from var(--accent) 0.507 calc(0.030 + (c - 0.030) * 0.467) h);
+  --z4: oklch(from var(--accent) 0.590 calc(0.030 + (c - 0.030) * 0.700) h);
+  --z5: oklch(from var(--accent) 0.673 calc(0.030 + (c - 0.030) * 0.933) h);
+  --z6: oklch(from var(--accent) 0.757 c h);
+  --z7: oklch(from var(--accent) 0.840 calc(c * 0.8) h);
   color-scheme: dark;
   interpolate-size: allow-keywords; /* Chromium-only progressive enhancement */
 }
-
 :root[data-accent="green"] {
-  --accent: oklch(0.770 0.105 160); --accent-hover: oklch(0.815 0.092 160); --accent-press: oklch(0.720 0.105 160);
-  --accent-ink: oklch(0.800 0.098 160); --on-accent: oklch(0.180 0.020 160);
+  --hue: 160;
+  --accent: oklch(0.76 0.11 160); --accent-hover: oklch(0.81 0.10 160); --accent-press: oklch(0.71 0.11 160);
+  --accent-ink: oklch(0.80 0.10 160); --on-accent: oklch(0.20 0.010 160);
 }
 :root[data-accent="rose"] {
-  --accent: oklch(0.770 0.100 5); --accent-hover: oklch(0.815 0.088 5); --accent-press: oklch(0.720 0.100 5);
-  --accent-ink: oklch(0.800 0.094 5); --on-accent: oklch(0.180 0.020 5);
+  --hue: 8;
+  --accent: oklch(0.76 0.10 8); --accent-hover: oklch(0.81 0.09 8); --accent-press: oklch(0.71 0.10 8);
+  --accent-ink: oklch(0.80 0.085 8); --on-accent: oklch(0.20 0.010 8);
 }
 
 /* Light theme */
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-gray-1: oklch(1 0 0);                --color-gray-2: oklch(0.985 0.002 260);  --color-gray-3: oklch(0.962 0.003 260);
-  --color-gray-4: oklch(0.940 0.004 260);      --color-gray-5: oklch(0.918 0.004 260);  --color-gray-6: oklch(0.895 0.004 260);
-  --color-gray-7: oklch(0.860 0.005 260);      --color-gray-8: oklch(0.790 0.006 260);  --color-gray-9: oklch(0.640 0.006 260);
-  --color-gray-10: oklch(0.540 0.008 260);     --color-gray-11: oklch(0.440 0.008 260); --color-gray-12: oklch(0.240 0.006 260);
+  --color-gray-1: oklch(1 0 0);                       --color-gray-2: oklch(0.990 0.003 var(--hue));  --color-gray-3: oklch(0.968 0.006 var(--hue));
+  --color-gray-4: oklch(0.940 0.006 var(--hue));      --color-gray-5: oklch(0.918 0.006 var(--hue));  --color-gray-6: oklch(0.895 0.006 var(--hue));
+  --color-gray-7: oklch(0.860 0.006 var(--hue));      --color-gray-8: oklch(0.790 0.006 var(--hue));  --color-gray-9: oklch(0.660 0.006 var(--hue));
+  --color-gray-10: oklch(0.520 0.009 var(--hue));     --color-gray-11: oklch(0.430 0.009 var(--hue)); --color-gray-12: oklch(0.220 0.009 var(--hue));
   --color-surface-1: var(--color-gray-1);  /* light: cards are white on a gray-2 canvas */
   --color-canvas: var(--color-gray-2);
-  --line-1: rgb(0 0 0 / 0.06); --line-2: rgb(0 0 0 / 0.10); --line-3: rgb(0 0 0 / 0.18);
-  --glass: rgb(255 255 255 / 0.78); --scrim: rgb(0 0 0 / 0.24);
-  --accent: oklch(0.550 0.150 255); --accent-hover: oklch(0.510 0.150 255); --accent-press: oklch(0.470 0.145 255);
-  --accent-ink: oklch(0.480 0.150 255); --on-accent: oklch(1 0 0);
+  --line-1: rgb(0 0 0 / 0.07); --line-2: rgb(0 0 0 / 0.11); --line-3: rgb(0 0 0 / 0.17);
+  --glass: rgb(255 255 255 / 0.80); --scrim: rgb(0 0 0 / 0.24);
+  --accent: oklch(0.53 0.14 252); --accent-hover: oklch(0.49 0.135 252); --accent-press: oklch(0.45 0.125 252);
+  --accent-ink: oklch(0.50 0.135 252); --on-accent: oklch(1 0 0);
+  --z1: oklch(from var(--accent) 0.930 0.030 h);
+  --z2: oklch(from var(--accent) 0.845 calc(0.030 + (c - 0.030) * 0.233) h);
+  --z3: oklch(from var(--accent) 0.760 calc(0.030 + (c - 0.030) * 0.467) h);
+  --z4: oklch(from var(--accent) 0.675 calc(0.030 + (c - 0.030) * 0.700) h);
+  --z5: oklch(from var(--accent) 0.590 calc(0.030 + (c - 0.030) * 0.933) h);
+  --z6: oklch(from var(--accent) 0.505 c h);
+  --z7: oklch(from var(--accent) 0.420 c h);
 }
 :root[data-theme="light"][data-accent="green"] {
-  --accent: oklch(0.550 0.115 160); --accent-hover: oklch(0.510 0.110 160); --accent-press: oklch(0.470 0.105 160);
-  --accent-ink: oklch(0.450 0.100 160);
+  --accent: oklch(0.50 0.10 160); --accent-hover: oklch(0.46 0.095 160); --accent-press: oklch(0.42 0.09 160);
+  --accent-ink: oklch(0.48 0.10 160);
 }
 :root[data-theme="light"][data-accent="rose"] {
-  --accent: oklch(0.580 0.150 5); --accent-hover: oklch(0.540 0.150 5); --accent-press: oklch(0.500 0.145 5);
-  --accent-ink: oklch(0.500 0.150 5);
+  --accent: oklch(0.54 0.14 8); --accent-hover: oklch(0.50 0.14 8); --accent-press: oklch(0.46 0.13 8);
+  --accent-ink: oklch(0.51 0.14 8);
 }
 
 /* ───────────────────────────── base layer ───────────────────────────── */
@@ -199,7 +211,7 @@
          text-rendering: optimizeLegibility; -webkit-tap-highlight-color: transparent; }
   body { min-height: 100dvh; background: var(--color-canvas);
          font-size: var(--text-body); line-height: var(--text-body--line-height);
-         letter-spacing: var(--text-body--letter-spacing); font-weight: 420;
+         letter-spacing: var(--text-body--letter-spacing); font-weight: 400;
          font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
   :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
   ::selection { background: var(--color-accent-a5); color: var(--color-fg-1); }

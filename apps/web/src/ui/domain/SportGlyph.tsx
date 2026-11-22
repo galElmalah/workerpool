@@ -4,7 +4,7 @@
  * (indoor, virtual, treadmill, erg) get a small corner dot. Never color-coded.
  *
  *   <SportGlyph sport="bike" subSport="indoor" size={16} />
- *   <SportGlyph sport="run" withLabel />   // glyph + RUN micro label
+ *   <SportGlyph sport="run" withLabel />   // glyph + "Run" label
  */
 import type { Sport, SubSport } from '@cadence/core';
 import { Activity, Bike, Dumbbell, Flower2, Footprints, Mountain, Route, Snowflake, Waves, type LucideIcon, type LucideProps } from 'lucide-react';
@@ -25,18 +25,18 @@ const ICONS: Record<Sport, LucideIcon | ((p: LucideProps) => React.JSX.Element)>
   other: Activity,
 };
 
-/** 3–5 letter labels (micro caps). */
+/** Short sentence-case labels. */
 export const SPORT_SHORT: Record<Sport, string> = {
-  bike: 'RIDE',
-  run: 'RUN',
-  swim: 'SWIM',
-  row: 'ROW',
-  strength: 'STR',
-  hike: 'HIKE',
-  walk: 'WALK',
-  yoga: 'YOGA',
-  ski: 'SKI',
-  other: 'OTHER',
+  bike: 'Ride',
+  run: 'Run',
+  swim: 'Swim',
+  row: 'Row',
+  strength: 'Strength',
+  hike: 'Hike',
+  walk: 'Walk',
+  yoga: 'Yoga',
+  ski: 'Ski',
+  other: 'Other',
 };
 
 const INDOOR = new Set<SubSport>(['indoor', 'virtual', 'treadmill', 'erg']);
@@ -67,7 +67,7 @@ export function SportGlyph({ sport, subSport, size = 16, withLabel, className, s
   return (
     <span className={cn('inline-flex items-center gap-1.5', className)} style={style}>
       {glyph}
-      <span className="text-micro ">{SPORT_SHORT[sport]}</span>
+      <span className="text-label">{SPORT_SHORT[sport]}</span>
     </span>
   );
 }

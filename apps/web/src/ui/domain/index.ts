@@ -1,11 +1,12 @@
 export { SportGlyph, SPORT_SHORT, isIndoor, type SportGlyphProps } from './SportGlyph';
-export { IntensityPips, IntensityPicker, type IntensityPipsProps, type IntensityPickerProps } from './Intensity';
+export { IntensityDot, IntensityPips, IntensityPicker, type IntensityDotProps, type IntensityPipsProps, type IntensityPickerProps } from './Intensity';
 export { KeyStar, type KeyStarProps } from './KeyStar';
 export {
   ComplianceGlyph,
   ComplianceBar,
   complianceStyles,
   complianceLabel,
+  complianceDeviates,
   ALL_COMPLIANCE,
   type ComplianceStyle,
 } from './Compliance';

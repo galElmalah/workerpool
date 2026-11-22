@@ -1,6 +1,8 @@
 # Cadence design v2 — "quiet"
 
-**Status: binding.** This document overrides `docs/research/design.md`, `apps/web/src/ui/README.md` and
+**Status: binding.** Where this document and `docs/research/design-principles.md` differ (the month
+chip keeps a neutral key star and a hard-session dot; the page container is 1120px), this document wins.
+It overrides `docs/research/design.md`, `apps/web/src/ui/README.md` and
 `docs/FEATURE_BRIEF.md` wherever they disagree. The reasoning and sources are in
 `docs/research/design-principles.md`.
 
@@ -18,9 +20,11 @@ and the motion, and changes what is on screen: **less at once, softer colour, mo
    Details live in the next level down: hover card → week/day page → workout/activity page.
 3. **Space groups, borders don't.** Grouping is done with whitespace and, when needed, one surface step.
    No borders around cards, no cards inside cards, no divider where a gap works.
-4. **Colour is rationed.** Neutrals carry the interface. The accent appears on: the one primary action of
-   a page, "today", the selected/active item, key-session stars, and the primary data series of a chart.
-   Never on body numbers, never as a large filled area, never as decoration.
+4. **Colour is rationed.** Neutrals carry the interface. The accent means only: the one primary action of
+   a page, "today/now", the current selection, and — inside data — the hero series of a chart and the
+   intensity ramp. Never "done", never Load or other body numbers, never key-session stars (neutral),
+   never a large filled area, never decoration. Aim for ≤ 5 accent marks per viewport outside charts
+   and the calendar's hard-session dots.
 5. **No coloured edge stripes. Ever.** No accent (or any coloured) left/right rails, top lines or
    bottom lines on cards, cells, chips, tiles, rows, banners, toasts or the today column. State and
    emphasis are shown by a surface step, text colour/weight, a small glyph or a dot — never by a stripe
@@ -34,16 +38,18 @@ and the motion, and changes what is on screen: **less at once, softer colour, mo
 Tokens keep their names (`canvas`, `surface-1..3`, `surface-active`, `fg-1..4`, `line-1..3`, `accent*`,
 `z1..z7`, `ramp-*`); only values change, in `apps/web/src/styles/app.css`. Use tokens only.
 
-- **Canvas is a soft near-black, not `#000`**; text is off-white, not `#fff`. Neutrals carry a trace of
-  the accent hue so the UI feels of a piece.
+- **Canvas is a soft near-black, not `#000`** (`oklch(0.165 0.006 h)`); text is off-white (L 0.93), not
+  `#fff`. Neutrals carry a trace of the accent hue (`--hue`) so the UI feels of a piece. No colour on
+  screen has chroma above 0.13 (v1's green was 0.22).
 - **Surfaces step lighter with depth** (canvas → surface-1 → surface-2). A card is a `surface-1` fill with
   no border. `line-1` is for the rare divider and table row rules; `line-2` for inputs and outlined
   controls; `line-3` for hover/focus of those. Nothing else gets a border.
 - **Accent** is a calm, medium-chroma hue (see app.css; three options ship — blue, green, rose — selected in
   Settings → Appearance via `<html data-accent>`). Budget: ≤ ~5% of the pixels of any screen.
   - Allowed: primary button (max one per page; the rail's "New workout" is neutral), today marker,
-    selected state of nav/tabs/segmented *indicator dots or text*, key star, focus ring, links on hover,
-    primary chart series (line + a ≤ 12% alpha area fill), the zone ramp inside charts.
+    the current selection where a surface step is not enough, focus ring, the hero chart series (line +
+    a ≤ 12% alpha area fill), and the zone ramp `z1..z7` (now an **opaque** one-hue lightness ramp; pair
+    it with a label, height or position — never colour alone).
   - Not allowed: Load / Fitness / any stat numbers (they are `fg-1`), "done" states (neutral, see §5),
     coloured rails/stripes on any edge (rule 5), decorative sparklines in tiles, borders, large filled
     blocks, glows.
@@ -56,9 +62,10 @@ Two families remain installed, but **Geist Mono is only for**: the workout text-
 hints (`Kbd`), and code-like values (API keys, IDs). Everything else — including every number — is Geist
 with `tabular-nums`.
 
-- Scale (unchanged token names): `title-1` 28/36 page titles · `title-2` 22/28 · `title-3` 17/24 section
-  and card titles · `body-lg` 16/24 · `body` 14/20 (default) · `body-sm` 13/18 · `label` 12/16 ·
-  `stat-xl|lg|md|sm` for hero numbers. `text-micro` is now an alias of `label` (12px, no tracking);
+- **Closed scale: 12 / 13 / 14 / 16 / 20 / 28 px plus one display size, 44 px. Weights 400 / 500 / 600
+  only** (no arbitrary `font-[520]`-style weights). Tokens: `title-1` 28 page titles · `title-2` 20 ·
+  `title-3` 16 semibold section and card titles · `body-lg` 16 · `body` 14 (default) · `body-sm` 13 ·
+  `label` 12 medium · `stat-sm` 16 · `stat-md` 20 · `stat-lg` 28 · `stat-xl` 44 (one per page at most). `text-micro` is now an alias of `label` (12px, no tracking);
   **remove the `uppercase` class wherever it is paired with labels, eyebrows, column headers, legends,
   axis text and chips.** `text-mono` / `text-mono-sm` resolve to the sans sizes `body-sm` / `label`; drop
   `font-mono` except for the three allowed uses.
@@ -87,11 +94,12 @@ with `tabular-nums`.
 
 ## 5. Component rules
 
-- **Workout chip (month view): exactly one line, 28px.** `sport glyph · title (truncated) · key star (if
-  key) · duration`. No border. Done → `surface-2` fill, `fg-1` text, a small solid neutral check/dot is
+- **Workout chip (month view): exactly one line, 28px.** `sport glyph · title (truncated) · duration`.
+  A key session has a semibold `fg-1` title and a small **neutral** star before the duration. No border. Done → `surface-2` fill, `fg-1` text, a small solid neutral check/dot is
   implied by the fill. Planned (future) → transparent, `fg-2` text. Missed → `fg-4`, struck through.
-  Intensity → one small dot (6px) just before the duration, toned from `z1..z7` (easy sessions may show
-  none); this is the only tint a chip carries. **No edge bar.** No pips, no sparkline, no compliance bar, no note/Garmin icons, no load, no distance at this zoom.
+  Intensity → only hard sessions (threshold and above, and races) carry one small dot (6px) before the
+  duration, toned from the upper zone ramp; easy and moderate sessions show nothing. This is the only
+  tint a chip carries. **No edge bar.** No pips, no sparkline, no compliance bar, no note/Garmin icons, no load, no distance at this zoom.
   Everything removed is shown in a **hover card** (and on the week/day views).
 - **Workout card (week view / lists):** two lines — title; then `duration · distance or load` in `fg-3`.
   Intensity dot (as on the chip), star at right, a compliance mark only when it deviates (partial /
@@ -100,10 +108,13 @@ with `tabular-nums`.
   hours done as the hero with `of 9:45` in `fg-3` and one thin progress bar; then `Load 464 · Form −6`
   in `fg-2`. One WoW delta badge at most. Everything else (per-sport distance, key count, fitness,
   fatigue, distribution) is on the week page the summary links to.
-- **Stat tile:** label, value, one context line. No border; either sits directly on the canvas in a row
+- **Stat tile:** label, value, one context line (at most: 1 hero number + 2 supporting figures). Each
+  fact appears once per view — do not repeat a number in a subtitle, a gauge and a tile. No border; either sits directly on the canvas in a row
   separated by whitespace, or the whole row shares one `surface-1` card.
 - **Buttons:** one accent primary per page at most. Everything else is `secondary` (surface fill) or
   `ghost`. Rail "New workout" = neutral secondary.
+- **Gauges, dials and rings** are chartjunk for a single number: prefer the number plus a thin bar. Keep
+  at most one ring/dial in the whole product where it earns its place.
 - **Charts:** at most 3 horizontal gridlines (`line-1`), no vertical gridlines, no axis lines, axis text
   `label fg-3` sans, direct labels instead of legends where possible, one accent series; comparison
   series neutral (`fg-3`/`fg-4`). No uppercase annotations. Generous inner padding. Tooltips on hover carry
@@ -121,7 +132,9 @@ non-interactive cards).
 
 ## 7. What "done" looks like for a redesigned page
 
-1. Squint test at 1440×900: one focal point, clear groups, ≥ 30% of the viewport is empty canvas.
+1. Squint/blur test at 1440×900: one focal point, clear groups, ≥ 30% of the viewport is empty canvas;
+   under an 8px blur only the title, ≤ 3 hero numbers and the primary action stay identifiable. Count
+   the numbers above the fold: Today ≤ 12, a tile ≤ 3, a month-view week summary ≤ 3.
 2. Count the accent: a handful of small marks plus at most one button and one chart series.
 3. No tracked uppercase, no mono numbers, no bordered card, no card in a card, **no coloured stripe on
    any edge of anything**.

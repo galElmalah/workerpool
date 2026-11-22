@@ -1,10 +1,10 @@
 /**
- * Compliance encodings — product.md §3.6.4 mapped onto design tokens (design.md §2.4, rule 2: 1px
- * hairlines only). Readable in grayscale: fill, outline style, hatch, glyph shape and text.
- * Green only where ARCHITECTURE allows it: completed/compliant work (on plan).
+ * Compliance encodings (DESIGN_V2 §2 "status without colour", §5 chip/card rules). Calm defaults:
+ * no borders, no edge rails, no accent. Done = one surface step (neutral fill); planned = no fill;
+ * missed = dimmed text struck through; skipped = quiet text. Shape lives in ComplianceGlyph.
  *
  *   const s = complianceStyles(c.state);
- *   <div className={cn(s.card)}>{s.rail && <span className={s.rail} />}<span className={s.title}>…</span></div>
+ *   <div className={cn(s.card)}><span className={s.title}>…</span></div>
  *   <ComplianceGlyph state="partial_short" />   <ComplianceBar ratio={0.93} state="on_target" />
  */
 import { COMPLIANCE_STATES, type ComplianceState } from '@cadence/core';
@@ -13,17 +13,17 @@ import { cn } from '@/lib/cn';
 import { spring } from '@/motion/tokens';
 
 export interface ComplianceStyle {
-  /** Card container: surface + border classes. */
+  /** Card container: surface classes (no borders). */
   card: string;
-  /** 3px left rail classes (absolute, inset-y) or null. */
+  /** @deprecated Always null: v2 has no edge rails (DESIGN_V2 rule 5). Kept for API compatibility. */
   rail: string | null;
-  /** Title text treatment (strike-through, muted). */
+  /** Title text treatment (strike-through only; text colour is the caller's). */
   title: string;
-  /** Whole-card dimming for missed/excused. */
+  /** Missed / skipped read quieter (WorkoutCard dims them through text colour, not opacity). */
   dim: boolean;
   /** Copy (product.md Appendix A). */
   label: string;
-  /** Show the UNPLANNED micro label. */
+  /** @deprecated Always null (unplanned is told in the hover card / detail page). */
   microLabel: string | null;
 }
 
@@ -43,33 +43,30 @@ export function complianceLabel(state: ComplianceState, reason?: string): string
   return state === 'excused' && reason ? `Skipped · ${reason}` : LABELS[state];
 }
 
-const DONE = 'bg-surface-2 border border-line-2';
+const DONE = 'bg-surface-2';
+
+/** True when the outcome deviates from plan (partial / way off / missed): the only states a card marks. */
+export function complianceDeviates(state: ComplianceState | null | undefined): boolean {
+  return state === 'partial_short' || state === 'partial_long' || state === 'off_short' || state === 'off_long' || state === 'missed';
+}
 
 export function complianceStyles(state: ComplianceState | null | undefined): ComplianceStyle {
-  switch (state ?? 'planned') {
+  const st = state ?? 'planned';
+  switch (st) {
     case 'planned':
-      return { card: 'bg-transparent border border-dashed border-line-3', rail: null, title: '', dim: false, label: LABELS.planned, microLabel: null };
+      return { card: 'bg-transparent', rail: null, title: '', dim: false, label: LABELS.planned, microLabel: null };
     case 'on_target':
-      return { card: DONE, rail: 'bg-accent', title: '', dim: false, label: LABELS.on_target, microLabel: null };
     case 'partial_short':
     case 'partial_long':
-      return { card: DONE, rail: 'bg-hatch-accent', title: '', dim: false, label: LABELS[state!], microLabel: null };
     case 'off_short':
     case 'off_long':
-      return { card: 'bg-surface-2 border border-fg-4', rail: 'bg-dots-fg', title: '', dim: false, label: LABELS[state!], microLabel: null };
+      return { card: DONE, rail: null, title: '', dim: false, label: LABELS[st], microLabel: null };
     case 'missed':
-      return {
-        card: 'bg-transparent border border-dashed border-line-2 bg-hatch-faint',
-        rail: null,
-        title: 'line-through decoration-fg-3',
-        dim: true,
-        label: LABELS.missed,
-        microLabel: null,
-      };
+      return { card: 'bg-transparent', rail: null, title: 'line-through decoration-fg-4', dim: true, label: LABELS.missed, microLabel: null };
     case 'excused':
-      return { card: 'bg-transparent border border-dotted border-line-3', rail: null, title: 'text-fg-2', dim: true, label: LABELS.excused, microLabel: null };
+      return { card: 'bg-transparent', rail: null, title: '', dim: true, label: LABELS.excused, microLabel: null };
     case 'unplanned':
-      return { card: 'bg-surface-2 border border-transparent', rail: 'bg-fg-1', title: '', dim: false, label: LABELS.unplanned, microLabel: 'Unplanned' };
+      return { card: DONE, rail: null, title: '', dim: false, label: LABELS.unplanned, microLabel: null };
   }
 }
 
@@ -77,7 +74,7 @@ export function complianceStyles(state: ComplianceState | null | undefined): Com
 export const ALL_COMPLIANCE = COMPLIANCE_STATES;
 
 /**
- * 12px glyph: ○ planned · ● on plan (accent) · ◐ short (left half) / long (right half) ·
+ * 12px glyph, neutral: ○ planned · ● on plan · ◐ short (left half) / long (right half) ·
  * ◔ way short · ◕ way over · ⊘ missed · ◌ excused (dotted ring) · ▪ unplanned.
  */
 export function ComplianceGlyph({ state, size = 12, className, title }: { state: ComplianceState; size?: number; className?: string; title?: string }) {
@@ -89,7 +86,7 @@ export function ComplianceGlyph({ state, size = 12, className, title }: { state:
     const y = c - r * Math.cos(a);
     return `M${c} ${c} L${c} ${c - r} A${r} ${r} 0 ${frac > 0.5 ? 1 : 0} 1 ${x.toFixed(3)} ${y.toFixed(3)} Z`;
   };
-  const tone = state === 'on_target' ? 'text-accent' : state === 'planned' ? 'text-fg-3' : state === 'excused' || state === 'missed' ? 'text-fg-2' : 'text-fg-1';
+  const tone = state === 'planned' || state === 'excused' || state === 'missed' ? 'text-fg-3' : 'text-fg-2';
   return (
     <svg viewBox="0 0 12 12" width={size} height={size} className={cn('shrink-0', tone, className)} role="img" aria-label={title ?? LABELS[state]}>
       {state === 'unplanned' ? (
@@ -111,8 +108,8 @@ export function ComplianceGlyph({ state, size = 12, className, title }: { state:
 }
 
 /**
- * Actual / planned bar with a tick at 100%. The overshoot beyond 100% is hatched. Fill is accent
- * only when on plan; otherwise fg-2. Animates with scaleX (smooth).
+ * Actual / planned bar with a tick at 100%. The overshoot beyond 100% is hatched. Neutral fill
+ * (done is never accent). Animates with scaleX (smooth).
  */
 export function ComplianceBar({ ratio, state, className, showLabel }: { ratio: number | null | undefined; state?: ComplianceState; className?: string; showLabel?: boolean }) {
   if (ratio == null || !Number.isFinite(ratio)) return null;
@@ -120,12 +117,12 @@ export function ComplianceBar({ ratio, state, className, showLabel }: { ratio: n
   const under = Math.min(ratio, 1) / scaleMax;
   const over = ratio > 1 ? (Math.min(ratio, scaleMax) - 1) / scaleMax : 0;
   const tick = 1 / scaleMax;
-  const on = state ? state === 'on_target' : ratio >= 0.8 && ratio <= 1.2;
+  void state;
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div className="relative h-1 flex-1 rounded-full bg-surface-3" role="meter" aria-valuenow={Math.round(ratio * 100)} aria-valuemin={0} aria-valuemax={200} aria-label={`${Math.round(ratio * 100)}% of plan`}>
         <motion.span
-          className={cn('absolute inset-y-0 left-0 w-full origin-left rounded-full', on ? 'bg-accent' : 'bg-fg-2')}
+          className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-fg-3"
           initial={false}
           animate={{ scaleX: under }}
           transition={spring.smooth}
@@ -139,9 +136,9 @@ export function ComplianceBar({ ratio, state, className, showLabel }: { ratio: n
             transition={spring.smooth}
           />
         )}
-        <span className="absolute -top-0.5 -bottom-0.5 w-px bg-fg-1" style={{ left: `${tick * 100}%` }} aria-hidden />
+        <span className="absolute -top-0.5 -bottom-0.5 w-px bg-fg-2" style={{ left: `${tick * 100}%` }} aria-hidden />
       </div>
-      {showLabel && <span className="w-10 text-right text-mono-sm text-fg-2">{Math.round(ratio * 100)}%</span>}
+      {showLabel && <span className="w-10 text-right text-label text-fg-2 num">{Math.round(ratio * 100)}%</span>}
     </div>
   );
 }

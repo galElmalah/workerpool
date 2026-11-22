@@ -2,7 +2,7 @@
  * KeyStar — key-workout toggle (design.md §5.4k). Base UI Toggle. Turning ON scales the star
  * 1 → 1.25 → 1 (bouncy), fills outline → accent, and bursts 6 accent particles (3px, radiating
  * 10px at 60° steps, 360ms ease-out). No burst on turn-off, under reduced motion, or for repeat
- * toggles within 1s. `readOnly` renders the static 12px marker used on cards.
+ * toggles within 1s. `readOnly` renders the static marker used on cards (10–12px).
  */
 import { Toggle } from '@base-ui/react/toggle';
 import { Star } from 'lucide-react';
@@ -35,7 +35,8 @@ function StarBurst({ fire }: { fire: number }) {
 export interface KeyStarProps {
   pressed: boolean;
   onPressedChange?: (pressed: boolean) => void;
-  size?: 'sm' | 'md';
+  /** 'xs' (10px) is for one-line calendar chips. */
+  size?: 'xs' | 'sm' | 'md';
   readOnly?: boolean;
   className?: string;
 }
@@ -45,7 +46,7 @@ export function KeyStar({ pressed, onPressedChange, size = 'md', readOnly, class
   const [fire, setFire] = useState(0);
   const last = useRef(0);
   const controls = useAnimationControls();
-  const px = size === 'sm' ? 'size-3' : 'size-4';
+  const px = size === 'xs' ? 'size-2.5' : size === 'sm' ? 'size-3' : 'size-4';
 
   if (readOnly) {
     return pressed ? <Star className={cn(px, 'shrink-0 fill-accent text-accent', className)} strokeWidth={1.5} aria-label="Key workout" /> : null;

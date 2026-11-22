@@ -1,6 +1,6 @@
 /**
  * Small status atoms: SyncDot (rail / Garmin connection), GarminStateIcon (per planned card),
- * FormZoneLabel (Fitness model zone). All monochrome-first; accent only for live/synced.
+ * FormZoneLabel (Fitness model zone). Monochrome; accent only while a sync is running.
  */
 import type { FormZone } from '@cadence/core';
 import { Check, RefreshCw, TriangleAlert } from 'lucide-react';
@@ -16,7 +16,7 @@ const SYNC_LABEL: Record<SyncState, string> = {
   offline: 'Garmin not connected',
 };
 
-/** 8px dot: accent (synced), accent + live ring (syncing), dashed ring (error), hollow (offline). */
+/** 8px dot: neutral (synced), accent + live ring (syncing), dashed ring (error), hollow (offline). */
 export function SyncDot({ state, className, label }: { state: SyncState; className?: string; label?: string }) {
   return (
     <span className={cn('relative inline-flex size-2 shrink-0', className)} role="img" aria-label={label ?? SYNC_LABEL[state]}>
@@ -24,7 +24,7 @@ export function SyncDot({ state, className, label }: { state: SyncState; classNa
       <span
         className={cn(
           'relative size-2 rounded-full',
-          state === 'idle' && 'bg-accent',
+          state === 'idle' && 'bg-fg-3',
           state === 'syncing' && 'bg-accent',
           state === 'error' && 'border border-dashed border-fg-1 bg-transparent',
           state === 'offline' && 'border border-fg-4 bg-transparent',
@@ -73,7 +73,7 @@ export function FormZoneLabel({ zone, className, withScale = true }: { zone: For
         {withScale && (
           <span className="inline-flex items-center gap-0.5" aria-hidden>
             {[0, 1, 2, 3, 4].map((i) => (
-              <span key={i} className={cn('h-2 w-1 rounded-[1px]', i === m.pos ? 'bg-fg-1' : 'bg-gray-7', i === 2 && i !== m.pos && 'bg-line-3')} />
+              <span key={i} className={cn('h-2 w-1 rounded-[1px]', i === m.pos ? 'bg-fg-1' : 'bg-surface-3')} />
             ))}
           </span>
         )}
