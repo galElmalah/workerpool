@@ -1,83 +1,102 @@
 {
- "id": "act_q6786eg02s",
+ "id": "act_j0oj4dkl7h",
  "source": "garmin",
- "garminActivityId": "20380435799",
+ "garminActivityId": "20378916683",
  "garminTypeKey": "running",
- "startedAt": "2026-11-19T17:22:29.000Z",
+ "startedAt": "2026-11-15T07:52:50.000Z",
  "utcOffsetMin": 60,
- "localDate": "2026-11-19",
+ "localDate": "2026-11-15",
  "sport": "run",
  "subSport": "road_run",
- "title": "Tempo 25′ continuous",
- "durationSec": 3056,
- "movingSec": 3010,
- "distanceM": 9758.9,
- "elevationGainM": 29,
- "load": 56.9,
+ "title": "Long run w/ 3×10′ steady",
+ "durationSec": 5117,
+ "movingSec": 5105,
+ "distanceM": 16904.2,
+ "elevationGainM": 97,
+ "load": 99.5,
  "loadSource": "pace",
- "intensityFactor": 0.825,
- "avgHr": 152,
- "maxHr": 165,
- "avgSpeedMps": 3.242,
- "adjustedSpeedMps": 3.325,
+ "intensityFactor": 0.838,
+ "avgHr": 157,
+ "maxHr": 174,
+ "avgSpeedMps": 3.311,
+ "adjustedSpeedMps": 3.377,
  "avgCadence": 175,
- "calories": 738,
- "efficiency": 1.3109,
- "aerobicEffect": 2.6,
- "anaerobicEffect": 0.4,
+ "calories": 1253,
+ "efficiency": 1.293,
+ "decouplingPct": 6.05,
+ "aerobicEffect": 3.5,
+ "anaerobicEffect": 1.1,
  "intensityAuto": "tempo",
  "intensity": "tempo",
  "isKey": true,
- "rpe": 5,
- "feel": 3,
+ "rpe": 6,
+ "feel": 4,
+ "postNote": "Long run done. Hips tight last 3k.",
  "tags": [],
- "pairedWorkoutId": "wk_d20261119_1",
+ "pairedWorkoutId": "wk_d20261115_1",
  "hasStreams": true,
  "sparkline": [
-  0.76,
   0.78,
   0.78,
   0.77,
   0.77,
   0.77,
-  0.78,
   0.79,
-  0.8,
-  0.82,
+  0.81,
+  0.84,
+  0.85,
+  0.85,
   0.83,
-  0.84
+  0.79
  ],
- "createdAt": "2026-11-21T18:00:22.101Z",
- "updatedAt": "2026-11-21T18:00:22.122Z",
+ "locationName": "Girona",
+ "createdAt": "2026-11-22T10:48:14.195Z",
+ "updatedAt": "2026-11-22T10:48:14.246Z",
  "compliance": {
   "metric": "load",
-  "ratio": 1,
-  "state": "on_target"
+  "ratio": 1.25,
+  "state": "partial_long"
  },
  "laps": [
   {
    "index": 0,
    "startSec": 0,
-   "durationSec": 900,
-   "movingSec": 900,
-   "distanceM": 2746.9,
-   "avgHr": 144,
-   "maxHr": 148,
-   "avgSpeedMps": 3.052,
-   "avgCadence": 174,
-   "elevationGainM": 8
+   "durationSec": 2160,
+   "movingSec": 2160,
+   "distanceM": 6999.7,
+   "avgHr": 152,
+   "maxHr": 158,
+   "avgSpeedMps": 3.241,
+   "avgCadence": 176,
+   "elevationGainM": 50,
+   "maxSpeedMps": 3.95,
+   "maxCadence": 180,
+   "elevationLossM": 31,
+   "avgTempC": 10,
+   "avgGroundContactMs": 254,
+   "avgVerticalOscillationCm": 8.7,
+   "avgVerticalRatioPct": 7.81,
+   "avgStrideLengthM": 1.11
   },
   {
    "index": 1,
-   "startSec": 900,
-   "durationSec": 1500,
-   "movingSec": 1500,
-   "distanceM": 5451.9,
-   "avgHr": 162,
-   "maxHr": 165,
-   "avgSpeedMps": 3.635,
-   "avgCadence": 178,
-   "elevationGainM": 15
+   "startSec": 2160,
+   "durationSec": 600,
+   "movingSec": 600,
+   "distanceM": 2301.1,
+   "avgHr": 168,
+   "maxHr": 174,
+   "avgSpeedMps": 3.835,
+   "avgCadence": 180,
+   "elevationGainM": 10,
+   "maxSpeedMps": 4.333,
+   "maxCadence": 186,
+   "elevationLossM": 15,
+   "avgTempC": 11,
+   "avgGroundContactMs": 234,
+   "avgVerticalOscillationCm": 8.9,
+   "avgVerticalRatioPct": 6.92,
+   "avgStrideLengthM": 1.28
   }
  ],
  "zones": {
@@ -87,14 +106,14 @@
     "name": "Recovery",
     "low": null,
     "high": 3.125581395348837,
-    "seconds": 1360
+    "seconds": 1154
    },
    {
     "zone": 2,
     "name": "Aerobic",
     "low": 3.125581395348837,
     "high": 3.5368421052631582,
-    "seconds": 422
+    "seconds": 2353
    }
   ],
   "hr": [
@@ -103,14 +122,14 @@
     "name": "Recovery",
     "low": null,
     "high": 144.5,
-    "seconds": 708
+    "seconds": 186
    },
    {
     "zone": 2,
     "name": "Aerobic",
     "low": 144.5,
     "high": 153,
-    "seconds": 796
+    "seconds": 1690
    }
   ]
  },
@@ -118,37 +137,37 @@
   "hr": [
    {
     "durationSec": 1,
-    "value": 165,
-    "startSec": 1631
+    "value": 174,
+    "startSec": 2685
    },
    {
     "durationSec": 2,
-    "value": 165,
-    "startSec": 1694
+    "value": 174,
+    "startSec": 2692
    }
   ],
   "speed": [
    {
     "durationSec": 1,
-    "value": 4.07,
-    "startSec": 2015
+    "value": 4.38,
+    "startSec": 3389
    },
    {
     "durationSec": 2,
-    "value": 3.98,
-    "startSec": 2108
+    "value": 4.345,
+    "startSec": 3332
    }
   ],
   "efforts": [
    {
     "distanceM": 400,
-    "timeSec": 104.4,
-    "startSec": 2060
+    "timeSec": 96.5,
+    "startSec": 3318
    },
    {
     "distanceM": 1000,
-    "timeSec": 262.9,
-    "startSec": 1976
+    "timeSec": 243.1,
+    "startSec": 3245
    }
   ]
  },
@@ -160,138 +179,196 @@
   "lthr": 170,
   "hrMax": 187,
   "hrRest": 47,
-  "weightKg": 72.6
+  "weightKg": 71.8
+ },
+ "facts": {
+  "startLat": 41.9794,
+  "startLng": 2.8214,
+  "elevationLossM": 97,
+  "minAltitudeM": 60.5,
+  "maxAltitudeM": 101.3,
+  "deviceLoad": 110,
+  "trainingEffectLabel": "TEMPO",
+  "endLat": 41.979753,
+  "endLng": 2.817784,
+  "timerSec": 5117,
+  "maxSpeedMps": 4.381,
+  "maxCadence": 184,
+  "avgGroundContactMs": 252,
+  "avgGroundContactBalanceLeftPct": 49.5,
+  "avgVerticalOscillationCm": 8.7,
+  "avgVerticalRatioPct": 7.7,
+  "avgStrideLengthM": 1.14,
+  "steps": 14890,
+  "avgTempC": 11,
+  "minTempC": 10,
+  "maxTempC": 11,
+  "sportProfile": "Run",
+  "deviceName": "Forerunner 965",
+  "deviceSoftware": "25.24",
+  "sensors": [
+   {
+    "kind": "Heart rate",
+    "name": "HRM-Pro"
+   }
+  ],
+  "pausedSec": 12,
+  "maxGradePct": 2.9,
+  "minGradePct": -2.9,
+  "minHr": 90
  },
  "plannedWorkout": {
-  "id": "wk_d20261119_1",
-  "date": "2026-11-19",
-  "startTime": "18:30",
+  "id": "wk_d20261115_1",
+  "date": "2026-11-15",
+  "startTime": "09:00",
   "sport": "run",
   "subSport": "road_run",
-  "title": "Tempo 25′ continuous",
-  "description": "River path loop. Controlled discomfort, not a race.",
-  "plannedDurationSec": 3000,
-  "plannedDistanceM": 9943,
-  "plannedLoad": 57.1,
-  "plannedIntensityFactor": 0.828,
+  "title": "Long run w/ 3×10′ steady",
+  "description": "Greenway out-and-back. Gel at 45′.",
+  "plannedDurationSec": 5100,
+  "plannedDistanceM": 15135,
+  "plannedLoad": 79.3,
+  "plannedIntensityFactor": 0.748,
   "structure": {
    "steps": [
     {
      "kind": "step",
      "id": "s1",
-     "role": "warmup",
-     "measure": {
-      "type": "time",
-      "sec": 900
-     },
-     "target": {
-      "type": "pace_pct",
-      "low": 70,
-      "high": 78
-     },
-     "label": "Warm up"
-    },
-    {
-     "kind": "step",
-     "id": "s2",
      "role": "active",
      "measure": {
       "type": "time",
-      "sec": 1500
+      "sec": 2160
      },
      "target": {
-      "type": "pace_pct",
-      "low": 90,
-      "high": 94
+      "type": "hr_zone",
+      "zone": 2
      },
-     "label": "Tempo"
+     "label": "Easy"
+    },
+    {
+     "kind": "repeat",
+     "id": "s4",
+     "count": 3,
+     "steps": [
+      {
+       "kind": "step",
+       "id": "s2",
+       "role": "active",
+       "measure": {
+        "type": "time",
+        "sec": 600
+       },
+       "target": {
+        "type": "pace_pct",
+        "low": 88,
+        "high": 92
+       },
+       "label": "Steady"
+      },
+      {
+       "kind": "step",
+       "id": "s3",
+       "role": "recovery",
+       "measure": {
+        "type": "time",
+        "sec": 180
+       },
+       "target": {
+        "type": "pace_pct",
+        "low": 70,
+        "high": 78
+       }
+      }
+     ]
     }
    ]
   },
   "isKey": true,
   "intensity": "tempo",
   "tags": [
-   "tempo"
+   "long"
   ],
   "environment": "outdoor",
-  "pairedActivityId": "act_q6786eg02s",
+  "pairedActivityId": "act_j0oj4dkl7h",
   "status": "planned",
   "sparkline": [
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617,
-   0.617
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55,
+   0.55
   ],
   "garmin": {
    "syncState": "none"
   },
-  "createdAt": "2026-11-21T18:00:20.888Z",
-  "updatedAt": "2026-11-21T18:00:22.122Z",
+  "createdAt": "2026-11-22T10:48:09.264Z",
+  "updatedAt": "2026-11-22T10:48:14.246Z",
   "compliance": {
    "metric": "load",
-   "ratio": 1,
-   "state": "on_target"
+   "ratio": 1.25,
+   "state": "partial_long"
   }
  },
  "previousSimilar": {
-  "id": "act_odbsq67tb0",
+  "id": "act_szaha8xemy",
   "source": "garmin",
-  "garminActivityId": "20376505963",
+  "garminActivityId": "20369258551",
   "garminTypeKey": "running",
-  "startedAt": "2026-11-08T08:28:10.000Z",
-  "utcOffsetMin": 60,
-  "localDate": "2026-11-08",
+  "startedAt": "2026-10-18T09:10:37.000Z",
+  "utcOffsetMin": 120,
+  "localDate": "2026-10-18",
   "sport": "run",
   "subSport": "road_run",
-  "title": "Easy run 50′",
-  "durationSec": 3018,
-  "movingSec": 3006,
-  "distanceM": 9146.8,
-  "elevationGainM": 27,
-  "load": 48.6,
+  "title": "Costa Brava Half — Run 21.1k",
+  "durationSec": 5965,
+  "movingSec": 5965,
+  "distanceM": 21079.7,
+  "elevationGainM": 43,
+  "load": 127.6,
   "loadSource": "pace",
-  "intensityFactor": 0.763,
-  "avgHr": 147,
-  "maxHr": 154,
-  "avgSpeedMps": 3.043,
-  "adjustedSpeedMps": 3.075,
-  "avgCadence": 173,
-  "calories": 685,
-  "efficiency": 1.2516,
-  "aerobicEffect": 2.4,
-  "anaerobicEffect": 0,
-  "intensityAuto": "endurance",
-  "intensity": "endurance",
-  "isKey": false,
-  "rpe": 3,
-  "feel": 4,
-  "postNote": "Easy along the Ter. 5:29/km, HR 147.",
+  "intensityFactor": 0.877,
+  "avgHr": 160,
+  "maxHr": 169,
+  "avgSpeedMps": 3.534,
+  "adjustedSpeedMps": 3.538,
+  "avgCadence": 177,
+  "calories": 1559,
+  "efficiency": 1.3239,
+  "decouplingPct": 4.66,
+  "aerobicEffect": 4,
+  "anaerobicEffect": 0.4,
+  "intensityAuto": "tempo",
+  "intensity": "tempo",
+  "isKey": true,
+  "rpe": 9,
+  "feel": 5,
+  "postNote": "FINISHED 4:48:47! Run fell apart a bit after 15k but held 4:43/km. Sub-5 ✔",
   "tags": [],
-  "pairedWorkoutId": "wk_d20261108_1",
+  "pairedWorkoutId": "wk_d20261018_3",
   "hasStreams": true,
   "sparkline": [
-   0.75,
-   0.59,
-   0.86,
-   0.91,
-   0.95,
-   0.97,
-   0.95,
    0.94,
-   0.92,
-   0.91,
-   0.91,
-   0.91
+   0.94,
+   0.96,
+   0.98,
+   1,
+   0.99,
+   0.96,
+   0.94,
+   0.94,
+   0.95,
+   0.96,
+   0.95
   ],
-  "createdAt": "2026-11-21T18:00:25.909Z",
-  "updatedAt": "2026-11-21T18:00:25.930Z"
+  "locationName": "Castell-Platja d'Aro",
+  "createdAt": "2026-11-22T10:48:30.811Z",
+  "updatedAt": "2026-11-22T10:48:30.902Z"
  }
 }

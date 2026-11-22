@@ -1809,6 +1809,8 @@ extension View {
     public func task<T: Equatable>(id value: T, priority: TaskPriority = .userInitiated, @_inheritActorContext _ action: @escaping @Sendable () async -> Void) -> some View { _m }
     public func onChange<V: Equatable>(of value: V, initial: Bool = false, _ action: @escaping (_ oldValue: V, _ newValue: V) -> Void) -> some View { _m }
     public func onChange<V: Equatable>(of value: V, initial: Bool = false, _ action: @escaping () -> Void) -> some View { _m }
+    @available(*, deprecated, message: "iOS 14 form, deprecated in iOS 17: use the two-parameter or zero-parameter closure")
+    public func onChange<V: Equatable>(of value: V, perform action: @escaping (_ newValue: V) -> Void) -> some View { _m }
     public func onReceive<P: Publisher>(_ publisher: P, perform action: @escaping (P.Output) -> Void) -> some View where P.Failure == Never { _m }
     public func onOpenURL(perform action: @escaping (URL) -> ()) -> some View { _m }
     public func refreshable(@_inheritActorContext action: @escaping @Sendable () async -> Void) -> some View { _m }

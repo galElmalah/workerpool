@@ -98,6 +98,19 @@ final class FixtureDecodingTests: XCTestCase {
         XCTAssertEqual(again, a)
     }
 
+    func testActivityLocationFactsLapsAndSwimLengths() throws {
+        let run = try Fixtures.decode(ActivityDetail.self, "activity_run")
+        XCTAssertEqual(run.locationName, "Girona")
+        XCTAssertNotNil(run.facts?.deviceName)
+        XCTAssertNotNil(run.facts?.avgGroundContactMs)
+        XCTAssertTrue(run.laps.contains { $0.avgGroundContactMs != nil && $0.maxSpeedMps != nil })
+        let swim = try Fixtures.decode(ActivityDetail.self, "activity_swim")
+        XCTAssertFalse(swim.swimLengths?.isEmpty ?? true)
+        XCTAssertTrue(swim.swimLengths?.allSatisfy { $0.durationSec > 0 } ?? false)
+        let list = try Fixtures.decode(ActivityPage.self, "activities_list")
+        XCTAssertTrue(list.items.contains { $0.locationName != nil })
+    }
+
     func testNullBodiesDecodeAsNil() throws {
         XCTAssertNil(try Fixtures.decode(Optional<DayNote>.self, "day_note_empty"))
         XCTAssertNil(try APIClient.decode(Optional<WeekNote>.self, from: Data("null".utf8)))

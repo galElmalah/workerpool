@@ -134,26 +134,32 @@ final class ActivityMetricsTests: XCTestCase {
         XCTAssertEqual(power.items.first { $0.label == "Weighted" }?.unit, "W")
         XCTAssertEqual(power.items.first { $0.label == "Intensity" }?.value, "0.70")
         let elevation = groups.first { $0.kind == .elevation }!
-        XCTAssertEqual(elevation.items.map(\.label), ["Gain", "Loss", "Highest", "Lowest"])
+        // device facts (ActivityDetail.facts) supply loss / extremes / grades
+        XCTAssertEqual(elevation.items.map(\.label), ["Gain", "Loss", "Highest", "Lowest", "Steepest climb", "Steepest descent"])
+        XCTAssertEqual(groups.first { $0.kind == .conditions }?.items.first { $0.label == "Location" }?.value, "Girona")
         XCTAssertEqual(groups.first { $0.kind == .timeDistance }?.items.first { $0.label == "Start" }?.value, "09:26")
         XCTAssertTrue(groups.first { $0.kind == .conditions }?.items.contains { $0.label == "Temperature" } ?? false)
     }
 
-    func testExtrasDecodeTolerantlyAndFeedGroups() throws {
-        let json = """
-        {"id":"x","locationName":"Girona","facts":{"maxSpeedMps":15.2,"elevationLossM":700,"maxAltitudeM":410,"minAltitudeM":20,
-         "avgTempC":18.4,"minTempC":12,"maxTempC":24,"deviceName":"Edge 840","deviceSoftware":"21.19","trainingEffectLabel":"VO2MAX",
-         "sensors":[{"kind":"power meter","name":"Assioma"},{"kind":"heart rate"}],"powerBalanceLeftPct":49.6,"pausedSec":300,"pauseCount":2}}
-        """
-        let extras = try JSONDecoder().decode(ActivityExtras.self, from: Data(json.utf8))
-        XCTAssertEqual(extras.locationName, "Girona")
-        XCTAssertEqual(extras.facts?.deviceName, "Edge 840")
-        let broken = try JSONDecoder().decode(ActivityExtras.self, from: Data(#"{"locationName":"A","facts":{"maxSpeedMps":"fast"}}"#.utf8))
-        XCTAssertEqual(broken.locationName, "A")
-        XCTAssertNil(broken.facts, "a malformed facts object is dropped, not fatal")
+    func testFactsAndLocationDecodeTolerantlyAndFeedGroups() throws {
+        // the bike fixture plus a full set of device facts and a location (as the server sends them)
+        var obj = try JSONSerialization.jsonObject(with: Fixtures.data("activity_bike")) as! [String: Any]
+        obj["locationName"] = "Girona"
+        obj["facts"] = ["maxSpeedMps": 15.2, "elevationLossM": 700, "maxAltitudeM": 410, "minAltitudeM": 20,
+                        "avgTempC": 18.4, "minTempC": 12, "maxTempC": 24, "deviceName": "Edge 840", "deviceSoftware": "21.19",
+                        "trainingEffectLabel": "VO2MAX", "sensors": [["kind": "power meter", "name": "Assioma"], ["kind": "heart rate"]],
+                        "powerBalanceLeftPct": 49.6, "pausedSec": 300, "pauseCount": 2] as [String: Any]
+        let d = try JSONDecoder().decode(ActivityDetail.self, from: JSONSerialization.data(withJSONObject: obj))
+        XCTAssertEqual(d.locationName, "Girona")
+        XCTAssertEqual(d.facts?.deviceName, "Edge 840")
+        XCTAssertEqual(d.facts?.pauseCount, 2)
 
-        let d = try Fixtures.decode(ActivityDetail.self, "activity_bike")
-        let groups = ActivityMetrics.groups(d, units: .metric, extras: extras)
+        obj["facts"] = ["maxSpeedMps": "fast"]
+        let broken = try JSONDecoder().decode(ActivityDetail.self, from: JSONSerialization.data(withJSONObject: obj))
+        XCTAssertNil(broken.facts, "a malformed facts object is dropped, not fatal")
+        XCTAssertEqual(broken.locationName, "Girona")
+
+        let groups = ActivityMetrics.groups(d, units: .metric)
         func item(_ k: MetricGroupKind, _ label: String) -> MetricItem? { groups.first { $0.kind == k }?.items.first { $0.label == label } }
         XCTAssertEqual(item(.conditions, "Location")?.value, "Girona")
         XCTAssertEqual(item(.conditions, "Device")?.value, "Edge 840 (21.19)")
@@ -164,9 +170,25 @@ final class ActivityMetricsTests: XCTestCase {
         XCTAssertEqual(item(.energy, "Training effect")?.value, "VO2 max")
         XCTAssertEqual(item(.power, "Balance left / right")?.value, "50 / 50")
         XCTAssertEqual(item(.timeDistance, "Paused")?.unit, "2 stops")
-        XCTAssertEqual(ActivityDetailModel(detail: d, units: .metric, extras: extras).locationText, "Girona")
-        XCTAssertEqual(ActivityExtras.trainingEffectText("ANAEROBIC_CAPACITY"), "Anaerobic capacity")
-        XCTAssertEqual(ActivityExtras.endpoint(id: "act_1").cacheKey, Endpoints.activity(id: "act_1").cacheKey)
+        XCTAssertEqual(ActivityDetailModel(detail: d, units: .metric).locationText, "Girona")
+        XCTAssertEqual(ActivityMetrics.trainingEffectText("ANAEROBIC_CAPACITY"), "Anaerobic capacity")
+    }
+
+    func testSwimLengthsFeedSwimGroup() throws {
+        var obj = try JSONSerialization.jsonObject(with: Fixtures.data("activity_swim")) as! [String: Any]
+        obj["facts"] = [String: Any]()
+        obj["avgCadence"] = nil
+        obj["swimLengths"] = [
+            ["index": 0, "startSec": 0, "durationSec": 31.5, "stroke": "freestyle", "strokes": 14, "strokeRate": 27, "swolf": 45],
+            ["index": 1, "startSec": 31.5, "durationSec": 29.0, "stroke": "freestyle", "strokes": 15, "strokeRate": 31, "swolf": 44],
+            ["index": 2, "startSec": 60.5, "durationSec": 20.0, "isRest": true],
+        ] as [[String: Any]]
+        let d = try JSONDecoder().decode(ActivityDetail.self, from: JSONSerialization.data(withJSONObject: obj))
+        XCTAssertEqual(d.swimLengths?.count, 3)
+        let swim = ActivityMetrics.groups(d, units: .metric).first { $0.kind == .swim }
+        XCTAssertEqual(swim?.items.first { $0.label == "Active lengths" }?.value, "2")
+        XCTAssertEqual(swim?.items.first { $0.label == "Fastest length" }?.value, "0:29")
+        XCTAssertEqual(swim?.items.first { $0.label == "Stroke rate" }?.value, "29")
     }
 
     func testLapTableColumns() {

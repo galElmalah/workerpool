@@ -19,7 +19,7 @@
 # What a pass means: the targets are internally consistent (names, labels, types, optionality,
 # async/throws, CadenceKit usage, result-builder shapes) against declarations that mirror Apple's.
 # It does not prove the stubs match the real SDK, and it says nothing about runtime behaviour.
-# STRICT_CONCURRENCY=1 additionally reports Swift 6 concurrency diagnostics (informational).
+# Warnings fail the check too. STRICT_CONCURRENCY=1 adds -strict-concurrency=complete (Swift 6 diagnostics).
 set -euo pipefail
 
 IOS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -68,6 +68,8 @@ typecheck() {
   fi
   # map flattened names back to repo paths
   sed -E "s#$dir/([^:]+)#\1#; s#__#/#g" "$WORK/$name.log" | grep -E "error:|warning:" | sort -u || true
+  # the targets are kept warning-free too
+  if grep -q "warning:" "$WORK/$name.log"; then status=1; fi
 }
 
 typecheck app Cadence App Shared

@@ -55,8 +55,10 @@ called `onUnauthorized` → show Connect), `.throttled(retryAfter:code:message:)
 `CalendarResponse` (+ helpers `workouts(on:)`, `activities(on:)`, `unplannedActivities(on:)`, `week(containing:)`,
 `phase(on:)`, `markers(on:)`, `dayNote(on:)`, `events(on:)`), `PlannedWorkout`, `WorkoutStructure` /
 `StructureNode` (flat recursive: `kind` .step/.repeat; builders `.step(id:role:measure:target:)`,
-`.repeatBlock(id:count:steps:)`; `StepMeasure.time(_)/.distance(_)/.reps(_)`), `Target`, `Activity`,
-`ActivityDetail` (`detail.title` works via dynamic member lookup), `ActivityStreams`, `Lap`, `ZoneTime`,
+`.repeatBlock(id:count:steps:)`; `StepMeasure.time(_)/.distance(_)/.reps(_)`), `Target`, `Activity`
+(+ `locationName`), `ActivityDetail` (`detail.title` works via dynamic member lookup; `facts: ActivityFacts?`
+— device/stream extras, every field optional, a malformed object decodes as nil; `swimLengths: [SwimLength]?`),
+`ActivityStreams`, `Lap` (incl. max power/speed/cadence, loss, temperature, strokes, running dynamics), `ZoneTime`,
 `WeekSummary`, `FitnessDay`, `WeekReview`, trends types, `Event`, `Phase`, `DayMarker`, `DayNote`, `WeekNote`,
 `WellnessDay`, `JournalItem`, `SearchItem`, `GarminStatus`, `SyncReport`, `Device`. Inputs: `WorkoutInput`,
 `WorkoutPatch`, `ActivityPatch`, `WellnessCheckIn`, `EventInput/Patch`, `WeekNoteInput`, `SettingsPatch`,
@@ -91,7 +93,11 @@ or `Activity`) is the row model for widgets **and** app lists. `MobileSnapshot.p
 
 **Deep links** — `DeepLink`: `.today .calendar(date:) .month .week .workout(id:) .activity(id:) .event(id:)
 .template(id:) .checkIn(date:) .newWorkout(date:) .trends`; `.url` → `cadence://workout/wk_1`;
-`DeepLink(url:)`, `DeepLink(webPath:)` (maps `SearchItem.href`). The app sets `AppModel.pendingLink` in `.onOpenURL`.
+`DeepLink(url:)`, `DeepLink(webPath:)` (maps `SearchItem.href`). The app routes them in `AppModel.open(_:)`
+(tab + `[Route]` path): `.onOpenURL` and `IntentNavigator.shared.$pendingLink` (App Intents that open the
+app) both feed it (`App/Core/CadenceApp.swift`). `cadence://new` → New workout on the calendar tab;
+`cadence://checkin/<date>` → Today, scrolled to the check-in (also on a cold launch); `.template` has no
+screen yet (calendar + a toast).
 
 **Storage** — `TokenStore` protocol (`load() -> DeviceCredentials?`, `save(_:)`, `clear()`, `token`, `isConnected`);
 `KeychainTokenStore(accessGroup:)` (after-first-unlock, this device only; falls back to the default group
@@ -121,13 +127,35 @@ Components: `SportGlyph(sport:size:)`, `LabelledStat(label:value:unit:context:si
   around cards (surface step instead); sentence-case labels; numbers in SF Pro with tabular digits
   (never monospaced fonts); "Load, Fitness, Fatigue, Form" — never TSS/CTL/ATL/TSB.
 - Views never format or compute: add a formatter/view-model to CadenceKit with a test instead.
-- After any write that changes today/week, call `refreshSnapshot(into:)` and
-  `WidgetCenter.shared.reloadAllTimelines()` (AppModel.refresh does both).
+- After any write: `await model.didWrite()` (snapshot refresh + `WidgetCenter.reloadAllTimelines()` +
+  bumps `dataVersion`, so screens with `.task(id: model.dataVersion)` reload). For small writes the
+  current screen already shows (autosaved notes, quick log) use `await model.didWriteQuietly()` (snapshot
+  + widgets, no screen reload). Intents use `IntentServices.didWrite(client)`.
+- Sign-out / 401 (`AppModel.didLoseAuthorization`) clears the token, `SnapshotCache`, both
+  `ResponseCache`s (app caches + the widget's `WidgetResponses/` in the App Group) and `CheckInStore`, then
+  reloads every widget timeline. Anything new the phone stores per account must be cleared there too.
 - Widgets: build from `SnapshotEntry.snapshot` with `WidgetModels`; `.containerBackground(c.canvas, for: .widget)`
   is mandatory on iOS 17; `placeholder(in:)` uses `MobileSnapshot.preview` (no network).
 - `ActivityKit` also declares `Activity`: if you import it, write `CadenceKit.Activity`.
 - New endpoint or field: add it to the model (one `public var` per line), capture a fixture
   (`scripts/capture_fixtures.py`), list it in `Fixtures/index.json`, add the decoder entry in
   `FixtureDecodingTests.swift`, run `scripts/check_fixtures.py --strict`.
-- Before handing off: `SWIFT_BIN=… scripts/linux-test.sh` (build in Swift 5 and strict Swift 6 mode, tests,
-  fixture check, parse of App/Widgets/Shared). CadenceKit must stay warning-free in both modes.
+- Before handing off: `SWIFT_BIN=… scripts/linux-test.sh` (CadenceKit build in Swift 5 and strict Swift 6
+  mode, tests, fixture check, and the stub type-check of both SwiftUI targets). CadenceKit and both
+  targets must stay warning-free.
+
+## Type-checking the SwiftUI targets without Xcode
+
+`scripts/typecheck-stubs.sh` compiles `scripts/stubs/*.swift` (SwiftUI, Charts, MapKit, WidgetKit,
+AppIntents, Combine, UIKit, BackgroundTasks, CoreLocation — declarations only) into modules and runs
+`swiftc -typecheck` over the app target (`App/**` + `Shared/**`) and the widget target (`Widgets/**` +
+`Shared/**` minus `Shared/Intents/AppOnly/**`), mirroring `project.yml`, against the real CadenceKit.
+`#Preview` blocks are rewritten to stub calls (`stubs/prepare_sources.py`) so their bodies are checked.
+Rules when it fails:
+- An error in app code that is a real mistake (wrong name/label/optionality/async, missing import, a
+  view builder with > 10 children or a `for` loop): fix the app code.
+- An API the stubs do not declare yet: add it to the stub **with Apple's exact signature** (labels,
+  defaults, generics, `@MainActor`, `@available(iOS 18.0, *)` for iOS 18 APIs, and to the iOS 18 list in
+  the script). Never bend app code to a guessed stub; if unsure what the SDK accepts, write the plainest
+  form of the API in the app instead.
+- Linux ignores `@available(iOS …)`; the script's textual check stands in for it.

@@ -1,5 +1,5 @@
 {
- "id": "act_gu480nz9po",
+ "id": "act_ut6igcvike",
  "source": "garmin",
  "garminActivityId": "20379402867",
  "garminTypeKey": "strength_training",
@@ -43,8 +43,8 @@
   0.66,
   0.41
  ],
- "createdAt": "2026-11-21T18:00:22.950Z",
- "updatedAt": "2026-11-21T18:00:22.958Z",
+ "createdAt": "2026-11-22T10:48:13.179Z",
+ "updatedAt": "2026-11-22T10:48:13.192Z",
  "compliance": {
   "metric": "load",
   "ratio": 1.43,
@@ -118,6 +118,20 @@
    "isRest": true
   }
  ],
+ "facts": {
+  "deviceLoad": 49,
+  "timerSec": 3480,
+  "sportProfile": "Strength",
+  "deviceName": "Forerunner 965",
+  "deviceSoftware": "25.24",
+  "sensors": [
+   {
+    "kind": "Heart rate",
+    "name": "HRM-Pro"
+   }
+  ],
+  "minHr": 86
+ },
  "plannedWorkout": {
   "id": "wk_d20261116_2",
   "date": "2026-11-16",
@@ -174,7 +188,7 @@
    "strength"
   ],
   "environment": "indoor",
-  "pairedActivityId": "act_gu480nz9po",
+  "pairedActivityId": "act_ut6igcvike",
   "status": "planned",
   "sparkline": [
    0.683,
@@ -193,8 +207,8 @@
   "garmin": {
    "syncState": "none"
   },
-  "createdAt": "2026-11-21T18:00:20.888Z",
-  "updatedAt": "2026-11-21T18:00:22.958Z",
+  "createdAt": "2026-11-22T10:48:09.264Z",
+  "updatedAt": "2026-11-22T10:48:13.192Z",
   "compliance": {
    "metric": "load",
    "ratio": 1.43,
@@ -202,7 +216,7 @@
   }
  },
  "previousSimilar": {
-  "id": "act_g5x1gfqrqo",
+  "id": "act_uggcraoxh3",
   "source": "garmin",
   "garminActivityId": "20378365443",
   "garminTypeKey": "strength_training",
@@ -247,7 +261,7 @@
    0.45,
    0.63
   ],
-  "createdAt": "2026-11-21T18:00:24.413Z",
-  "updatedAt": "2026-11-21T18:00:24.420Z"
+  "createdAt": "2026-11-22T10:48:15.868Z",
+  "updatedAt": "2026-11-22T10:48:15.884Z"
  }
 }

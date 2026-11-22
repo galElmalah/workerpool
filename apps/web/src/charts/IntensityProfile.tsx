@@ -4,6 +4,11 @@
  * ramps as trapezoids, repeat brackets, FTP line. Full variant animates add / remove /
  * reorder by morphing each block's path (same command structure, so Motion interpolates it);
  * the compact variant is static and cheap for cards.
+ *
+ * Read as data, not as a banner: each block is a soft vertical gradient from its zone colour
+ * (slightly below full strength) to ~60 % of it, with rounded top corners and 2px gaps of the
+ * surface between steps. No edge lines (DESIGN_V2 rule 5). `ZoneFillDefs` + `zoneGradient` give
+ * other step profiles (library cards) the same fill.
  */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -63,6 +68,28 @@ export interface IntensityProfileProps {
   className?: string;
 }
 
+/** Opacity of a profile block at its top and bottom edge (gradient between). */
+export const ZONE_FILL = { top: 0.82, bottom: 0.5 } as const;
+/** Gap between steps, px. */
+export const STEP_GAP = 2;
+
+/** One vertical gradient per zone; reference with `zoneGradient(uid, level)`. Place inside an <svg>. */
+export function ZoneFillDefs({ uid }: { uid: string }) {
+  return (
+    <defs>
+      {[1, 2, 3, 4, 5, 6, 7].map((z) => (
+        <linearGradient key={z} id={`${uid}-z${z}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style={{ stopColor: T.zone(z), stopOpacity: ZONE_FILL.top }} />
+          <stop offset="1" style={{ stopColor: T.zone(z), stopOpacity: ZONE_FILL.bottom }} />
+        </linearGradient>
+      ))}
+    </defs>
+  );
+}
+export const zoneGradient = (uid: string, level: number) => `url(#${uid}-z${Math.max(1, Math.min(7, Math.round(level)))})`;
+/** A `useId()` value usable inside url(#…). */
+export const useSvgId = () => useId().replace(/[^a-zA-Z0-9_-]/g, '');
+
 /** Path for one block: rect (or trapezoid for ramps) with 2px rounded top corners. Same commands for both. */
 function blockPath(x: number, w: number, yA: number, yB: number, base: number, r = 2) {
   const rr = Math.min(r, w / 2, (base - Math.min(yA, yB)) / 2);
@@ -105,12 +132,15 @@ function CompactProfile({ blocks, width, height, maxIntensity = 1.4 }: Intensity
   const total = blocks.reduce((a, b) => Math.max(a, b.startSec + b.durationSec), 0) || 1;
   const k = width / total;
   const y = (v: number) => height - Math.max(0.12, Math.min(1, v / maxIntensity)) * height;
+  const uid = useSvgId();
   return (
     <svg width={width} height={height} className="block" aria-hidden>
+      <ZoneFillDefs uid={uid} />
       {blocks.map((b) => {
         const x = b.startSec * k;
-        const w = Math.max(0.5, b.durationSec * k - (b.durationSec * k > 2 ? 1 : 0));
-        return <path key={b.id} d={blockPath(x, w, y(b.intensity), y(b.intensityEnd ?? b.intensity), height, 1)} style={{ fill: T.zone(b.level ?? levelFor(Math.max(b.intensity, b.intensityEnd ?? 0))) }} />;
+        const full = b.durationSec * k;
+        const w = Math.max(0.5, full - (full > STEP_GAP * 2 ? STEP_GAP : full > 2 ? 1 : 0));
+        return <path key={b.id} d={blockPath(x, w, y(b.intensity), y(b.intensityEnd ?? b.intensity), height, 1.5)} style={{ fill: zoneGradient(uid, b.level ?? levelFor(Math.max(b.intensity, b.intensityEnd ?? 0))) }} />;
       })}
     </svg>
   );
@@ -120,6 +150,7 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
   const defs = useChartDefs();
   const reduce = useReducedMotion();
   const uid = useId();
+  const gid = useSvgId();
   const [hoverS, setHoverS] = useState<string | null>(null);
   // Stagger only the first draw; later updates (hover dim, edits) must respond immediately.
   const firstDraw = useRef(true);
@@ -150,6 +181,7 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
     <div className="relative">
       <svg width={width} height={axisY + (showAxis ? 16 : 0)} className="block select-none overflow-visible" role="list" aria-label="Workout steps">
         <ChartDefs ids={defs} />
+        <ZoneFillDefs uid={gid} />
         {ticks.map((t) => (
           <g key={t} aria-hidden>
             <line x1={L.left} x2={L.left + plotW} y1={y(t)} y2={y(t)} strokeLinecap="round" style={{ stroke: t === 1 ? T.fg4 : T.line1, strokeDasharray: t === 1 ? '1 3' : undefined }} />
@@ -161,9 +193,10 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
         <AnimatePresence initial={false}>
           {blocks.map((b, i) => {
             const x = L.left + b.startSec * k;
-            const w = Math.max(1, b.durationSec * k - 1);
+            const full = b.durationSec * k;
+            const w = Math.max(1, full - (full > STEP_GAP * 2 ? STEP_GAP : 1));
             const lvl = b.level ?? levelFor(Math.max(b.intensity, b.intensityEnd ?? 0));
-            const d = blockPath(x, w, y(b.intensity), y(b.intensityEnd ?? b.intensity), base);
+            const d = blockPath(x, w, y(b.intensity), y(b.intensityEnd ?? b.intensity), base, 3);
             const dim = focusKey != null && focusKey !== keyOf(b);
             const sel = selKey != null && selKey === keyOf(b);
             return (
@@ -190,7 +223,7 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
                 }}
                 className="outline-none"
               >
-                <motion.path initial={false} animate={{ d }} transition={spring.smooth} style={{ fill: T.zone(lvl) }} />
+                <motion.path initial={false} animate={{ d }} transition={spring.smooth} style={{ fill: zoneGradient(gid, lvl) }} />
                 {sel && <motion.path initial={false} animate={{ d }} transition={spring.smooth} style={{ fill: 'none', stroke: T.fg1, strokeWidth: 1.25 }} />}
               </motion.g>
             );

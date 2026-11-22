@@ -91,6 +91,8 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: Widgets
+        excludes:
+          - "**/*.md"   # Widgets/README.md is documentation, not a bundle resource
       # Shared (Theme, DataColor, components) and Shared/Intents (App Intents) are compiled into
       # both targets; the AppShortcutsProvider is app-only (one per app bundle).
       - path: Shared

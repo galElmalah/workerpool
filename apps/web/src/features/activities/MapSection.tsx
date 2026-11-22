@@ -37,7 +37,7 @@ export function MapSection({ a, streams }: { a: ActivityDetail; streams: Activit
   return (
     <Section id="map" title="Map" description={a.locationName ? undefined : 'Location name not reported by the device — start coordinates shown.'}>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        <div data-activity-map className="relative min-w-0 overflow-hidden rounded-lg bg-surface-1" style={{ height, ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
+        <div data-activity-map className="relative min-w-0 select-none overflow-hidden rounded-lg bg-surface-1" style={{ height, ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
           {svg ? (
             <RouteMap streams={streams} cursor={sync.cursor} selection={sync.hover ?? sync.selection} height={height} kmMarkers={false} />
           ) : (

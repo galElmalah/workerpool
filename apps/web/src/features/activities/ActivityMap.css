@@ -1,4 +1,10 @@
 /* ActivityMap markers and MapLibre chrome, in Cadence tokens (loaded only with the map chunk). */
+/* dragging the map (or a marker on it) never starts a page text selection */
+.cad-map,
+.cad-map * {
+  -webkit-user-select: none;
+  user-select: none;
+}
 .cad-map .maplibregl-map {
   font: inherit;
 }

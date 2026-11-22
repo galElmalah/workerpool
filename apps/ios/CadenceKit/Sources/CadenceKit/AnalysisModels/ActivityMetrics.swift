@@ -47,13 +47,13 @@ public struct MetricGroup: Hashable, Sendable, Identifiable {
 public enum ActivityMetrics {
     /// Every metric with a value, grouped in `MetricGroupKind` order; empty groups are dropped.
     /// `streams` (optional) adds stream-derived figures such as average temperature.
-    /// `extras` (device facts, location) wins over stream-derived values when both exist.
-    public static func groups(_ d: ActivityDetail, units: UnitSystem, streams: ActivityStreams? = nil,
-                              extras: ActivityExtras? = nil) -> [MetricGroup] {
+    /// Device facts (`d.facts`) win over stream-derived values when both exist.
+    public static func groups(_ d: ActivityDetail, units: UnitSystem, streams: ActivityStreams? = nil) -> [MetricGroup] {
         let a = d.activity
         let sport = a.sport
         let th = d.thresholdsUsed
-        let f = extras?.facts ?? ActivityExtraFacts()
+        let f = d.facts ?? ActivityFacts()
+        let lengths = (d.swimLengths ?? []).filter { !($0.isRest ?? false) && $0.durationSec > 0 }
         var b = Builder()
 
         func num(_ v: Double?, _ decimals: Int = 0) -> String? {
@@ -74,7 +74,7 @@ public enum ActivityMetrics {
         }
         b.add(.timeDistance, "Timer time", pos(f.timerSec).map { Format.duration($0, style: .hms) })
         if let p = pos(f.pausedSec) {
-            let n = Int(f.pauseCount ?? 0)
+            let n = f.pauseCount ?? 0
             b.add(.timeDistance, "Paused", Format.duration(p, style: .hms), n > 0 ? "\(n) stop\(n == 1 ? "" : "s")" : "")
         }
         b.add(.timeDistance, "Laps", d.laps.count > 1 ? "\(d.laps.count)" : nil)
@@ -169,7 +169,14 @@ public enum ActivityMetrics {
 
         // Swim
         if sport == .swim {
-            b.add(.swim, "Active lengths", num(pos(f.activeLengths)))
+            b.add(.swim, "Active lengths", num(pos(f.activeLengths)) ?? (lengths.isEmpty ? nil : "\(lengths.count)"))
+            if let fastest = lengths.min(by: { $0.durationSec < $1.durationSec }) {
+                b.add(.swim, "Fastest length", Format.duration(fastest.durationSec, style: .hms))
+            }
+            let rates = lengths.compactMap(\.strokeRate).filter { $0 > 0 }
+            if !rates.isEmpty, pos(a.avgCadence) == nil {
+                b.add(.swim, "Stroke rate", Format.number(rates.reduce(0, +) / Double(rates.count)), "spm")
+            }
             b.add(.swim, "Strokes per length", num(pos(f.avgStrokesPerLength), 1))
             b.add(.swim, "Distance per stroke", num(pos(f.avgDistancePerStrokeM), 2), "m")
             b.add(.swim, "Pool length", num(pos(a.poolLengthM)), "m")
@@ -206,7 +213,7 @@ public enum ActivityMetrics {
         b.add(.energy, "Calories", num(pos(a.calories)), "kcal")
         b.add(.energy, "Aerobic effect", num(pos(a.aerobicEffect), 1))
         b.add(.energy, "Anaerobic effect", num(pos(a.anaerobicEffect), 1))
-        b.add(.energy, "Training effect", f.trainingEffectLabel.map { ActivityExtras.trainingEffectText($0) })
+        b.add(.energy, "Training effect", f.trainingEffectLabel.map { trainingEffectText($0) })
         b.add(.energy, "Garmin training load", num(pos(f.deviceLoad)))
         b.add(.energy, "Sweat loss", num(pos(f.sweatLossMl)), "ml")
         b.add(.energy, "Efficiency", num(pos(a.efficiency), sport == .bike || sport == .row ? 2 : 3))
@@ -216,7 +223,7 @@ public enum ActivityMetrics {
         // Conditions & device
         func temp(_ c: Double) -> String { Format.number(units == .imperial ? c * 9 / 5 + 32 : c) }
         let tempUnit = units == .imperial ? "°F" : "°C"
-        b.add(.conditions, "Location", extras?.locationName.flatMap { $0.isEmpty ? nil : $0 })
+        b.add(.conditions, "Location", a.locationName.flatMap { $0.isEmpty ? nil : $0 })
         if let avg = f.avgTempC {
             var range = ""
             if let lo = f.minTempC, let hi = f.maxTempC, hi > lo { range = "\(temp(lo))\(Format.enDash)\(temp(hi))\(tempUnit) range" }
@@ -237,6 +244,15 @@ public enum ActivityMetrics {
         if let sub = a.subSport, sub != .unknown { b.add(.conditions, "Type", ActivityDetailModel.subSportLabel(sub)) }
 
         return b.groups()
+    }
+
+    /// "Tempo", "VO2 max", "Anaerobic capacity" from Garmin's "TEMPO", "VO2MAX", "ANAEROBIC_CAPACITY".
+    public static func trainingEffectText(_ raw: String) -> String {
+        let up = raw.uppercased()
+        if up == "VO2MAX" || up == "VO2_MAX" { return "VO2 max" }
+        if up == "LACTATE_THRESHOLD" { return "Threshold" }
+        let words = raw.replacingOccurrences(of: "_", with: " ").lowercased()
+        return words.prefix(1).uppercased() + words.dropFirst()
     }
 
     public static func sourceLabel(_ s: ActivitySource) -> String? {

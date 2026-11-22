@@ -1,5 +1,5 @@
 {
- "id": "act_uxe16yozne",
+ "id": "act_8e86x8nud2",
  "source": "garmin",
  "garminActivityId": "20380998387",
  "garminTypeKey": "road_biking",
@@ -52,8 +52,9 @@
   0.75,
   0.9
  ],
- "createdAt": "2026-11-21T18:00:21.807Z",
- "updatedAt": "2026-11-21T18:00:21.873Z",
+ "locationName": "Girona",
+ "createdAt": "2026-11-22T10:48:11.229Z",
+ "updatedAt": "2026-11-22T10:48:11.319Z",
  "compliance": {
   "metric": "load",
   "ratio": 1.07,
@@ -72,7 +73,12 @@
    "weightedPower": 139,
    "avgSpeedMps": 9.168,
    "avgCadence": 79,
-   "elevationGainM": 10
+   "elevationGainM": 10,
+   "maxPower": 251,
+   "maxSpeedMps": 12.394,
+   "maxCadence": 93,
+   "elevationLossM": 95,
+   "avgTempC": 8
   },
   {
    "index": 1,
@@ -86,7 +92,12 @@
    "weightedPower": 195,
    "avgSpeedMps": 7.528,
    "avgCadence": 82,
-   "elevationGainM": 64
+   "elevationGainM": 64,
+   "maxPower": 267,
+   "maxSpeedMps": 11.915,
+   "maxCadence": 93,
+   "elevationLossM": 48,
+   "avgTempC": 8
   }
  ],
  "zones": {
@@ -159,6 +170,41 @@
   "hrRest": 47,
   "weightKg": 72.6
  },
+ "facts": {
+  "startLat": 41.9794,
+  "startLng": 2.8214,
+  "elevationLossM": 778,
+  "minAltitudeM": -29.3,
+  "maxAltitudeM": 117.8,
+  "deviceLoad": 111,
+  "trainingEffectLabel": "BASE",
+  "endLat": 41.970498,
+  "endLng": 2.847872,
+  "timerSec": 7561,
+  "maxSpeedMps": 15.156,
+  "powerBalanceLeftPct": 49.5,
+  "maxCadence": 97,
+  "avgTempC": 9,
+  "minTempC": 8,
+  "maxTempC": 10,
+  "sportProfile": "Road Bike",
+  "deviceName": "Edge 840",
+  "deviceSoftware": "27.12",
+  "sensors": [
+   {
+    "kind": "Heart rate",
+    "name": "HRM-Pro"
+   },
+   {
+    "kind": "Power",
+    "name": "Rally XC200"
+   }
+  ],
+  "pausedSec": 63,
+  "maxGradePct": 5.7,
+  "minGradePct": -6.8,
+  "minHr": 77
+ },
  "plannedWorkout": {
   "id": "wk_d20261121_1",
   "date": "2026-11-21",
@@ -177,16 +223,16 @@
    "endurance"
   ],
   "environment": "outdoor",
-  "pairedActivityId": "act_uxe16yozne",
+  "pairedActivityId": "act_8e86x8nud2",
   "status": "planned",
   "garmin": {
    "workoutId": "1000000001",
    "scheduleId": "500000001",
    "syncState": "synced",
-   "lastPushedAt": "2026-11-21T18:02:06.782Z"
+   "lastPushedAt": "2026-11-22T10:51:09.034Z"
   },
-  "createdAt": "2026-11-21T18:00:20.888Z",
-  "updatedAt": "2026-11-21T18:00:21.873Z",
+  "createdAt": "2026-11-22T10:48:09.264Z",
+  "updatedAt": "2026-11-22T10:48:11.319Z",
   "compliance": {
    "metric": "load",
    "ratio": 1.07,
@@ -194,7 +240,7 @@
   }
  },
  "previousSimilar": {
-  "id": "act_v688xoq2u2",
+  "id": "act_5357aptjmj",
   "source": "garmin",
   "garminActivityId": "20378581511",
   "garminTypeKey": "road_biking",
@@ -246,7 +292,8 @@
    0.45,
    0.8
   ],
-  "createdAt": "2026-11-21T18:00:24.263Z",
-  "updatedAt": "2026-11-21T18:00:24.314Z"
+  "locationName": "Girona",
+  "createdAt": "2026-11-22T10:48:15.561Z",
+  "updatedAt": "2026-11-22T10:48:15.644Z"
  }
 }

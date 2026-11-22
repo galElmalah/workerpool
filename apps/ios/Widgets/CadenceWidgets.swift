@@ -15,7 +15,7 @@ struct CadenceWidgets: WidgetBundle {
         RaceWidget()
         CheckInWidget()
         #if compiler(>=6.0)
-        if #available(iOSApplicationExtension 18.0, *) {
+        if #available(iOS 18.0, *) {
             QuickAddControl()
         }
         #endif

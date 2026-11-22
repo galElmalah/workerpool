@@ -58,6 +58,8 @@ public struct Activity: Codable, Hashable, Sendable, Identifiable {
     public var compliance: Compliance?
     public var hasStreams: Bool
     public var sparkline: [Double]?
+    /// Place name reported by Garmin (e.g. "Girona"); absent for FIT uploads, indoor and GPS-less sessions.
+    public var locationName: String?
     public var createdAt: IsoInstant
     public var updatedAt: IsoInstant
 
@@ -82,6 +84,92 @@ public struct Lap: Codable, Hashable, Sendable {
     public var stroke: String?
     public var swolf: Double?
     public var isRest: Bool?
+    public var maxPower: Double?
+    public var maxSpeedMps: Double?
+    public var maxCadence: Double?
+    public var elevationLossM: Double?
+    public var avgTempC: Double?
+    public var calories: Double?
+    /// swim strokes / row strokes in the lap
+    public var strokes: Double?
+    public var avgGroundContactMs: Double?
+    public var avgVerticalOscillationCm: Double?
+    public var avgVerticalRatioPct: Double?
+    public var avgStrideLengthM: Double?
+}
+
+/// Pool swims: one length (domain.ts `SwimLength`).
+public struct SwimLength: Codable, Hashable, Sendable {
+    public var index: Int
+    /// the lap (interval) this length belongs to, when known
+    public var lapIndex: Int?
+    public var startSec: Double
+    public var durationSec: Double
+    public var stroke: String?
+    public var strokes: Double?
+    /// strokes / min
+    public var strokeRate: Double?
+    public var swolf: Double?
+    public var isRest: Bool?
+}
+
+/// A sensor paired during the activity (FIT `device_info`); `kind` is a short English noun phrase.
+public struct ActivitySensor: Codable, Hashable, Sendable {
+    public var kind: String
+    public var name: String?
+}
+
+/// Device-reported and stream-derived extras shown on the activity page (domain.ts `ActivityFacts`).
+/// Every field is optional: an absent fact is simply not shown.
+public struct ActivityFacts: Codable, Hashable, Sendable {
+    public var startLat: Double?
+    public var startLng: Double?
+    public var endLat: Double?
+    public var endLng: Double?
+    /// IANA time zone
+    public var timezone: String?
+    public var timerSec: Double?
+    public var pausedSec: Double?
+    public var pauseCount: Int?
+    public var maxSpeedMps: Double?
+    public var elevationLossM: Double?
+    public var minAltitudeM: Double?
+    public var maxAltitudeM: Double?
+    /// steepest sustained climb, percent
+    public var maxGradePct: Double?
+    /// steepest sustained descent, percent (negative)
+    public var minGradePct: Double?
+    public var minHr: Double?
+    /// left share of total power, percent (50 = balanced)
+    public var powerBalanceLeftPct: Double?
+    public var maxCadence: Double?
+    public var avgGroundContactMs: Double?
+    /// left share of ground contact time, percent
+    public var avgGroundContactBalanceLeftPct: Double?
+    public var avgVerticalOscillationCm: Double?
+    public var avgVerticalRatioPct: Double?
+    public var avgStrideLengthM: Double?
+    public var steps: Double?
+    public var activeLengths: Double?
+    public var avgStrokesPerLength: Double?
+    public var avgDistancePerStrokeM: Double?
+    /// total strokes for sports other than swimming (rowing)
+    public var totalStrokes: Double?
+    public var avgTempC: Double?
+    public var minTempC: Double?
+    public var maxTempC: Double?
+    /// Garmin's EPOC-based training load (not Cadence Load)
+    public var deviceLoad: Double?
+    /// Garmin's primary training benefit, e.g. "TEMPO", "VO2MAX"
+    public var trainingEffectLabel: String?
+    public var sweatLossMl: Double?
+    public var deviceName: String?
+    public var deviceSoftware: String?
+    public var sensors: [ActivitySensor]?
+    /// sport profile used on the device ("Road Bike", "Pool Swim")
+    public var sportProfile: String?
+
+    public init() {}
 }
 
 public struct ZoneTime: Codable, Hashable, Sendable {
@@ -153,6 +241,10 @@ public struct ActivityDetail: Codable, Hashable, Sendable, Identifiable {
     public var zones: ActivityZones
     public var peaks: ActivityPeaks
     public var strengthSets: [StrengthSet]?
+    /// device-reported and stream-derived extras (location, dynamics, temperature, device …)
+    public var facts: ActivityFacts?
+    /// pool swims: every length
+    public var swimLengths: [SwimLength]?
     public var thresholdsUsed: ThresholdSnapshot
     public var plannedWorkout: PlannedWorkout?
     public var previousSimilar: Activity?
@@ -164,7 +256,7 @@ public struct ActivityDetail: Codable, Hashable, Sendable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case laps, zones, peaks, strengthSets, thresholdsUsed, plannedWorkout, previousSimilar
+        case laps, zones, peaks, strengthSets, facts, swimLengths, thresholdsUsed, plannedWorkout, previousSimilar
     }
 
     public init(from decoder: Decoder) throws {
@@ -174,6 +266,9 @@ public struct ActivityDetail: Codable, Hashable, Sendable, Identifiable {
         zones = try c.decodeIfPresent(ActivityZones.self, forKey: .zones) ?? ActivityZones()
         peaks = try c.decodeIfPresent(ActivityPeaks.self, forKey: .peaks) ?? ActivityPeaks()
         strengthSets = try c.decodeIfPresent([StrengthSet].self, forKey: .strengthSets)
+        // display-only extras: a malformed fact never fails the whole activity
+        facts = (try? c.decodeIfPresent(ActivityFacts.self, forKey: .facts)) ?? nil
+        swimLengths = (try? c.decodeIfPresent([SwimLength].self, forKey: .swimLengths)) ?? nil
         thresholdsUsed = try c.decodeIfPresent(ThresholdSnapshot.self, forKey: .thresholdsUsed) ?? ThresholdSnapshot()
         plannedWorkout = try c.decodeIfPresent(PlannedWorkout.self, forKey: .plannedWorkout)
         previousSimilar = try c.decodeIfPresent(Activity.self, forKey: .previousSimilar)
@@ -186,6 +281,8 @@ public struct ActivityDetail: Codable, Hashable, Sendable, Identifiable {
         try c.encode(zones, forKey: .zones)
         try c.encode(peaks, forKey: .peaks)
         try c.encodeIfPresent(strengthSets, forKey: .strengthSets)
+        try c.encodeIfPresent(facts, forKey: .facts)
+        try c.encodeIfPresent(swimLengths, forKey: .swimLengths)
         try c.encode(thresholdsUsed, forKey: .thresholdsUsed)
         try c.encodeIfPresent(plannedWorkout, forKey: .plannedWorkout)
         try c.encodeIfPresent(previousSimilar, forKey: .previousSimilar)

@@ -229,6 +229,10 @@
      "type": "[Double]?",
      "required": false
     },
+    "locationName": {
+     "type": "String?",
+     "required": false
+    },
     "createdAt": {
      "type": "IsoInstant",
      "required": true
@@ -264,6 +268,14 @@
      "type": "[StrengthSet]?",
      "required": false
     },
+    "facts": {
+     "type": "ActivityFacts?",
+     "required": false
+    },
+    "swimLengths": {
+     "type": "[SwimLength]?",
+     "required": false
+    },
     "thresholdsUsed": {
      "type": "ThresholdSnapshot",
      "required": true
@@ -279,6 +291,161 @@
    },
    "ignore": [],
    "flatten": "Activity",
+   "file": "Activity.swift"
+  },
+  "ActivityFacts": {
+   "fields": {
+    "startLat": {
+     "type": "Double?",
+     "required": false
+    },
+    "startLng": {
+     "type": "Double?",
+     "required": false
+    },
+    "endLat": {
+     "type": "Double?",
+     "required": false
+    },
+    "endLng": {
+     "type": "Double?",
+     "required": false
+    },
+    "timezone": {
+     "type": "String?",
+     "required": false
+    },
+    "timerSec": {
+     "type": "Double?",
+     "required": false
+    },
+    "pausedSec": {
+     "type": "Double?",
+     "required": false
+    },
+    "pauseCount": {
+     "type": "Int?",
+     "required": false
+    },
+    "maxSpeedMps": {
+     "type": "Double?",
+     "required": false
+    },
+    "elevationLossM": {
+     "type": "Double?",
+     "required": false
+    },
+    "minAltitudeM": {
+     "type": "Double?",
+     "required": false
+    },
+    "maxAltitudeM": {
+     "type": "Double?",
+     "required": false
+    },
+    "maxGradePct": {
+     "type": "Double?",
+     "required": false
+    },
+    "minGradePct": {
+     "type": "Double?",
+     "required": false
+    },
+    "minHr": {
+     "type": "Double?",
+     "required": false
+    },
+    "powerBalanceLeftPct": {
+     "type": "Double?",
+     "required": false
+    },
+    "maxCadence": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgGroundContactMs": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgGroundContactBalanceLeftPct": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgVerticalOscillationCm": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgVerticalRatioPct": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgStrideLengthM": {
+     "type": "Double?",
+     "required": false
+    },
+    "steps": {
+     "type": "Double?",
+     "required": false
+    },
+    "activeLengths": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgStrokesPerLength": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgDistancePerStrokeM": {
+     "type": "Double?",
+     "required": false
+    },
+    "totalStrokes": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgTempC": {
+     "type": "Double?",
+     "required": false
+    },
+    "minTempC": {
+     "type": "Double?",
+     "required": false
+    },
+    "maxTempC": {
+     "type": "Double?",
+     "required": false
+    },
+    "deviceLoad": {
+     "type": "Double?",
+     "required": false
+    },
+    "trainingEffectLabel": {
+     "type": "String?",
+     "required": false
+    },
+    "sweatLossMl": {
+     "type": "Double?",
+     "required": false
+    },
+    "deviceName": {
+     "type": "String?",
+     "required": false
+    },
+    "deviceSoftware": {
+     "type": "String?",
+     "required": false
+    },
+    "sensors": {
+     "type": "[ActivitySensor]?",
+     "required": false
+    },
+    "sportProfile": {
+     "type": "String?",
+     "required": false
+    }
+   },
+   "ignore": [],
+   "flatten": null,
    "file": "Activity.swift"
   },
   "ActivityPage": {
@@ -401,6 +568,21 @@
      "required": true
     },
     "cursor": {
+     "type": "String?",
+     "required": false
+    }
+   },
+   "ignore": [],
+   "flatten": null,
+   "file": "Activity.swift"
+  },
+  "ActivitySensor": {
+   "fields": {
+    "kind": {
+     "type": "String",
+     "required": true
+    },
+    "name": {
      "type": "String?",
      "required": false
     }
@@ -1611,6 +1793,50 @@
     "isRest": {
      "type": "Bool?",
      "required": false
+    },
+    "maxPower": {
+     "type": "Double?",
+     "required": false
+    },
+    "maxSpeedMps": {
+     "type": "Double?",
+     "required": false
+    },
+    "maxCadence": {
+     "type": "Double?",
+     "required": false
+    },
+    "elevationLossM": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgTempC": {
+     "type": "Double?",
+     "required": false
+    },
+    "calories": {
+     "type": "Double?",
+     "required": false
+    },
+    "strokes": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgGroundContactMs": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgVerticalOscillationCm": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgVerticalRatioPct": {
+     "type": "Double?",
+     "required": false
+    },
+    "avgStrideLengthM": {
+     "type": "Double?",
+     "required": false
     }
    },
    "ignore": [],
@@ -2792,6 +3018,49 @@
    "ignore": [],
    "flatten": null,
    "file": "Workout.swift"
+  },
+  "SwimLength": {
+   "fields": {
+    "index": {
+     "type": "Int",
+     "required": true
+    },
+    "lapIndex": {
+     "type": "Int?",
+     "required": false
+    },
+    "startSec": {
+     "type": "Double",
+     "required": true
+    },
+    "durationSec": {
+     "type": "Double",
+     "required": true
+    },
+    "stroke": {
+     "type": "String?",
+     "required": false
+    },
+    "strokes": {
+     "type": "Double?",
+     "required": false
+    },
+    "strokeRate": {
+     "type": "Double?",
+     "required": false
+    },
+    "swolf": {
+     "type": "Double?",
+     "required": false
+    },
+    "isRest": {
+     "type": "Bool?",
+     "required": false
+    }
+   },
+   "ignore": [],
+   "flatten": null,
+   "file": "Activity.swift"
   },
   "SwimStepOptions": {
    "fields": {

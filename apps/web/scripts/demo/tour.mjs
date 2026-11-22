@@ -628,10 +628,13 @@ async function today(rec, base) {
     if (!mb) return;
     const c = at(mb);
     await rec.moveTo(c.x, c.y, 800);
+    // the map zooms on ⌘/Ctrl + wheel only (a plain wheel scrolls the page)
+    await page.keyboard.down('Control');
     for (let i = 0; i < 6; i++) {
       await page.mouse.wheel(0, -120);
       await rec.wait(90);
     }
+    await page.keyboard.up('Control');
     await pause(rec, 500);
     await rec.drag(c, { x: c.x - mb.width * 0.18, y: c.y + mb.height * 0.1 }, { ms: 900, hold: 80, settle: 400 });
     await pause(rec, 500);

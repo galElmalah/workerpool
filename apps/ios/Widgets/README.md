@@ -84,11 +84,12 @@ yesterday's only). Other errors clear the local record and are reported. No toke
 | `WeekWidgetConfigurationIntent` | — | Week widget: lead with hours or Load |
 | `OpenQuickAddIntent` (iOS 18) | — | Control Center button → `cadence://new` |
 
-**App hookup needed (App target owners):** iOS 17 has no `OpenURLIntent`, so the app must forward
-`IntentNavigator.shared.pendingLink` to its router, e.g. on the root view:
-`.onReceive(IntentNavigator.shared.$pendingLink.compactMap { $0 }) { model.pendingLink = $0; IntentNavigator.shared.pendingLink = nil }`.
-The app must also handle `cadence://new` (quick add) and `cadence://checkin/<date>` (`DeepLink.newWorkout`
-/ `.checkIn`).
+**App hookup (done, `App/Core/CadenceApp.swift`):** iOS 17 has no `OpenURLIntent`, so the app forwards
+`IntentNavigator.shared.pendingLink` to `AppModel.open(_:)` with `.onReceive(IntentNavigator.shared.$pendingLink.compactMap { $0 })`
+next to `.onOpenURL`. `cadence://new` opens New workout (calendar tab), `cadence://checkin/<date>` opens
+Today scrolled to the check-in (works on a cold launch too). `OpenQuickAddIntent` (iOS 18 control) both
+hands the link to `IntentNavigator` (when the system runs it in the app) and returns
+`OpenURLIntent(cadence://new)` (when it runs in the extension); opening twice is harmless.
 
 ## First run on a device — manual checklist
 
@@ -116,6 +117,6 @@ The app must also handle `cadence://new` (quick add) and `cadence://checkin/<dat
 - [ ] VoiceOver reads each widget as one sentence ("Today, Sat 21 Nov. Run, Easy 45, planned, …").
 - [ ] Siri: "What's my workout today in Cadence", "Log how I feel in Cadence" (asks for the value),
       "Add a workout in Cadence" → "run 45 minutes easy tomorrow", "Sync Garmin in Cadence",
-      "Open trends in Cadence" (needs the IntentNavigator hookup). Shortcuts app lists all of them.
+      "Open trends in Cadence" (opens the Trends tab). Shortcuts app lists all of them.
 - [ ] iOS 18: Control Center → add "Add workout" → opens quick add.
 - [ ] Smart Stack: Today rises an hour before a planned session; Check-in in the morning.

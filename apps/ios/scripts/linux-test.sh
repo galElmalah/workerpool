@@ -5,8 +5,9 @@
 #   CADENCE_BASE_URL=http://localhost:5240 CADENCE_PASSPHRASE=cadence-demo apps/ios/scripts/linux-test.sh   # + live suite
 #
 # SWIFT_BIN defaults to the directory of `swift` on PATH. Without CADENCE_BASE_URL/CADENCE_PASSPHRASE
-# the IntegrationTests are skipped. The SwiftUI targets (App/, Widgets/, Shared/) cannot be type-checked
-# on Linux (no SwiftUI/WidgetKit); they are only parsed here — build them in Xcode.
+# the IntegrationTests are skipped. SwiftUI/WidgetKit/AppIntents/Charts/MapKit do not exist on Linux:
+# the app and widget targets are type-checked against stub SDK modules (scripts/typecheck-stubs.sh,
+# scripts/stubs/) — that proves internal consistency, not SDK correctness; build them in Xcode.
 set -euo pipefail
 
 IOS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -28,10 +29,8 @@ echo "== swift build in Swift 6 language mode with complete concurrency checking
 echo "== swift test (IntegrationTests run only when CADENCE_BASE_URL and CADENCE_PASSPHRASE are set)"
 "$SWIFT" test
 
-echo "== parse SwiftUI sources (syntax only)"
-cd "$IOS"
-find App Widgets Shared -name '*.swift' -print0 | xargs -0 -n1 "$SWIFTC" -parse
-"$SWIFTC" -typecheck -I CadenceKit/.build/debug/Modules Shared/Palette.generated.swift
+echo "== type-check the app and widget targets against the stub SDK (Swift 5 mode + complete concurrency checking)"
+SWIFT_BIN="$SWIFT_BIN" STRICT_CONCURRENCY=1 "$IOS/scripts/typecheck-stubs.sh"
 
 if [[ -n "${CADENCE_BASE_URL:-}" && -n "${CADENCE_PASSPHRASE:-}" ]]; then
   echo "== Python contract smoke test against $CADENCE_BASE_URL"

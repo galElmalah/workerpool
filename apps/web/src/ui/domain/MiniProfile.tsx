@@ -39,7 +39,7 @@ export function MiniProfile({ values, height = 20, tone = 'zone', gap = 1, class
         const v = Math.max(0, raw / max);
         const h = Math.max(1.5, v * height);
         const fill = tone === 'zone' ? zoneVar(v) : tone === 'accent' ? 'var(--color-accent)' : 'var(--color-fg-3)';
-        return <rect key={i} x={i * (barW + gap)} y={height - h} width={barW} height={h} rx={0.75} fill={fill} />;
+        return <rect key={i} x={i * (barW + gap)} y={height - h} width={barW} height={h} rx={0.75} fill={fill} fillOpacity={tone === 'zone' ? 0.82 : undefined} />;
       })}
     </svg>
   );

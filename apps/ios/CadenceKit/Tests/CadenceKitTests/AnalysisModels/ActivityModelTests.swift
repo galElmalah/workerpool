@@ -40,10 +40,10 @@ final class ActivityModelTests: XCTestCase {
         let m = ActivityDetailModel(detail: d, units: .metric)
         XCTAssertEqual(m.figures.map(\.id), ["duration", "distance", "load", "pace"])
         XCTAssertEqual(m.figures[3].unit, "/km")
-        // 3.242 m/s = 5:08 /km vs 3.043 m/s = 5:29 /km → 20 s faster (rounded difference of raw seconds)
-        XCTAssertEqual(m.figures[3].context, "20\u{202F}s faster than last time")
+        // 3.311 m/s = 5:02 /km vs 3.534 m/s = 4:43 /km → 19 s slower (rounded difference of raw seconds)
+        XCTAssertEqual(m.figures[3].context, "19\u{202F}s slower than last time")
         XCTAssertEqual(m.efforts.map(\.label), ["400\u{202F}m", "1\u{202F}km"])
-        XCTAssertEqual(m.efforts.last?.value, "4:23")
+        XCTAssertEqual(m.efforts.last?.value, "4:03")
     }
 
     func testPaceVersus() {

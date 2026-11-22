@@ -171,12 +171,26 @@ def main() -> int:
         save('workout_strength', c.call('GET', f"/api/workouts/{strength['id']}"))
 
     acts = save('activities_list', c.call('GET', f'/api/activities?limit=40&from={iso(t - dt.timedelta(days=60))}'))
-    by_sport = {}
+    by_sport, candidates = {}, {}
     for act in (acts or {}).get('items', []):
         by_sport.setdefault(act['sport'], act['id'])
+        candidates.setdefault(act['sport'], []).append(act['id'])
     for sport in ('bike', 'run', 'swim', 'strength', 'row'):
-        if sport in by_sport:
-            save(f'activity_{sport}', c.call('GET', f'/api/activities/{by_sport[sport]}'))
+        if sport not in by_sport:
+            continue
+        # the richest of the first few of each sport (facts, swim lengths, location, laps …), so the
+        # fixtures exercise every optional field the server can send
+        best, best_score = None, -1
+        for aid in candidates[sport][:8]:
+            st, body = c.call('GET', f'/api/activities/{aid}')
+            if st != 200 or not isinstance(body, dict):
+                continue
+            # outdoor (located) sessions and pool swims (lengths) first, then the most distinct keys
+            score = len(set(flat_keys(body))) + 100 * bool(body.get('locationName')) + 100 * bool(body.get('swimLengths'))
+            if score > best_score:
+                best, best_score = aid, score
+        by_sport[sport] = best or by_sport[sport]
+        save(f'activity_{sport}', c.call('GET', f'/api/activities/{by_sport[sport]}'))
     if 'bike' in by_sport:
         save('activity_streams', c.call('GET', f"/api/activities/{by_sport['bike']}/streams?maxPoints=40"))
 

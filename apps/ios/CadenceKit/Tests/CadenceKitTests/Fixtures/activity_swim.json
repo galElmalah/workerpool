@@ -1,85 +1,89 @@
 {
- "id": "act_4gigf12r5h",
+ "id": "act_zd116ja7hf",
  "source": "garmin",
- "garminActivityId": "20379927799",
+ "garminActivityId": "20377509287",
  "garminTypeKey": "lap_swimming",
- "startedAt": "2026-11-18T06:05:49.000Z",
+ "startedAt": "2026-11-11T06:08:41.000Z",
  "utcOffsetMin": 60,
- "localDate": "2026-11-18",
+ "localDate": "2026-11-11",
  "sport": "swim",
  "subSport": "pool",
- "title": "CSS 3×400",
- "durationSec": 3158,
- "movingSec": 2808,
- "distanceM": 2500,
- "load": 56.7,
+ "title": "CSS 8×200",
+ "durationSec": 3350,
+ "movingSec": 3091,
+ "distanceM": 2700,
+ "load": 59,
  "loadSource": "swim_pace",
- "intensityFactor": 0.899,
- "avgHr": 146,
- "maxHr": 167,
- "avgSpeedMps": 0.89,
- "avgCadence": 25,
- "calories": 430,
- "aerobicEffect": 2.6,
+ "intensityFactor": 0.882,
+ "avgHr": 145,
+ "maxHr": 164,
+ "avgSpeedMps": 0.874,
+ "avgCadence": 24,
+ "calories": 462,
+ "aerobicEffect": 2.7,
  "anaerobicEffect": 0.4,
  "poolLengthM": 25,
- "strokes": 1027,
- "avgSwolf": 38,
- "intensityAuto": "high",
- "intensity": "high",
+ "strokes": 1098,
+ "avgSwolf": 39,
+ "intensityAuto": "tempo",
+ "intensity": "tempo",
  "isKey": false,
  "rpe": 7,
- "feel": 3,
+ "feel": 2,
+ "postNote": "Send-offs tight but made all of them.",
  "tags": [],
- "pairedWorkoutId": "wk_d20261118_1",
+ "pairedWorkoutId": "wk_d20261111_1",
  "hasStreams": true,
  "sparkline": [
-  0.87,
-  0.81,
   0.84,
   0.79,
   0.83,
+  0.76,
+  0.82,
   0.79,
-  0.85,
-  0.49,
-  0.64,
-  0.47,
-  0.48,
-  0.63
+  0.8,
+  0.45,
+  0.5,
+  0.63,
+  0.5,
+  0.48
  ],
- "createdAt": "2026-11-21T18:00:22.426Z",
- "updatedAt": "2026-11-21T18:00:22.439Z",
+ "createdAt": "2026-11-22T10:48:17.268Z",
+ "updatedAt": "2026-11-22T10:48:17.286Z",
  "compliance": {
   "metric": "load",
-  "ratio": 0.92,
+  "ratio": 0.89,
   "state": "on_target"
  },
  "laps": [
   {
    "index": 0,
    "startSec": 0,
-   "durationSec": 494.9,
-   "movingSec": 495,
+   "durationSec": 508.9,
+   "movingSec": 509,
    "distanceM": 400,
-   "avgHr": 138,
-   "maxHr": 144,
-   "avgSpeedMps": 0.808,
-   "avgCadence": 22,
+   "avgHr": 135,
+   "maxHr": 140,
+   "avgSpeedMps": 0.786,
+   "avgCadence": 21,
    "lengths": 16,
    "stroke": "choice",
-   "swolf": 42
+   "swolf": 43,
+   "maxCadence": 23,
+   "avgTempC": 28
   },
   {
    "index": 1,
-   "startSec": 495,
-   "durationSec": 22.7,
+   "startSec": 509,
+   "durationSec": 24,
    "movingSec": 0,
    "distanceM": 0,
-   "avgHr": 118,
-   "maxHr": 132,
-   "avgCadence": 21,
+   "avgHr": 116,
+   "maxHr": 131,
+   "avgCadence": 20,
    "lengths": 0,
-   "isRest": true
+   "isRest": true,
+   "avgTempC": 28
   }
  ],
  "zones": {
@@ -89,14 +93,14 @@
     "name": "Active Recovery",
     "low": null,
     "high": 0.9207000000000001,
-    "seconds": 1664
+    "seconds": 1738
    },
    {
     "zone": 2,
     "name": "Endurance",
     "low": 0.9207000000000001,
     "high": 0.9602999999999999,
-    "seconds": 394
+    "seconds": 847
    }
   ],
   "hr": [
@@ -105,14 +109,14 @@
     "name": "Recovery",
     "low": null,
     "high": 144.5,
-    "seconds": 1511
+    "seconds": 1495
    },
    {
     "zone": 2,
     "name": "Aerobic",
     "low": 144.5,
     "high": 153,
-    "seconds": 243
+    "seconds": 446
    }
   ]
  },
@@ -120,25 +124,25 @@
   "hr": [
    {
     "durationSec": 1,
-    "value": 167,
-    "startSec": 2138
+    "value": 164,
+    "startSec": 2007
    },
    {
     "durationSec": 2,
-    "value": 167,
-    "startSec": 2138
+    "value": 164,
+    "startSec": 2006
    }
   ],
   "efforts": [
    {
     "distanceM": 50,
-    "timeSec": 44.6,
-    "startSec": 2327.6
+    "timeSec": 78.1,
+    "startSec": 821.5
    },
    {
     "distanceM": 200,
-    "timeSec": 260.7,
-    "startSec": 2896.7
+    "timeSec": 203.9,
+    "startSec": 1142.1
    }
   ]
  },
@@ -150,19 +154,64 @@
   "lthr": 170,
   "hrMax": 187,
   "hrRest": 47,
-  "weightKg": 72.6
+  "weightKg": 71.8
  },
+ "facts": {
+  "deviceLoad": 66,
+  "trainingEffectLabel": "LACTATE_THRESHOLD",
+  "timerSec": 3350,
+  "activeLengths": 108,
+  "avgTempC": 28,
+  "minTempC": 28,
+  "maxTempC": 28,
+  "sportProfile": "Pool Swim",
+  "deviceName": "Forerunner 965",
+  "deviceSoftware": "25.24",
+  "sensors": [
+   {
+    "kind": "Heart rate",
+    "name": "HRM-Pro"
+   }
+  ],
+  "pausedSec": 259,
+  "minHr": 88,
+  "maxCadence": 30,
+  "avgStrokesPerLength": 11,
+  "avgDistancePerStrokeM": 2.27
+ },
+ "swimLengths": [
+  {
+   "index": 0,
+   "lapIndex": 0,
+   "startSec": 0,
+   "durationSec": 30,
+   "stroke": "free",
+   "strokes": 12,
+   "strokeRate": 23,
+   "swolf": 42
+  },
+  {
+   "index": 1,
+   "lapIndex": 0,
+   "startSec": 30,
+   "durationSec": 31,
+   "stroke": "free",
+   "strokes": 11,
+   "strokeRate": 21,
+   "swolf": 42
+  }
+ ],
  "plannedWorkout": {
-  "id": "wk_d20261118_1",
-  "date": "2026-11-18",
+  "id": "wk_d20261111_1",
+  "date": "2026-11-11",
   "startTime": "07:00",
   "sport": "swim",
   "subSport": "pool",
-  "title": "CSS 3×400",
+  "title": "CSS 8×200",
   "description": "Threshold swim. Hold the pace clock, not your ego.",
-  "plannedDurationSec": 3051,
-  "plannedDistanceM": 2500,
-  "plannedLoad": 61.6,
+  "plannedDurationSec": 3221,
+  "plannedDistanceM": 2700,
+  "plannedLoad": 66.4,
   "plannedIntensityFactor": 0.933,
   "structure": {
    "steps": [
@@ -194,33 +243,33 @@
     },
     {
      "kind": "repeat",
-     "id": "s7",
-     "count": 4,
+     "id": "s5",
+     "count": 8,
      "steps": [
       {
        "kind": "step",
-       "id": "s6",
+       "id": "s4",
        "role": "active",
        "measure": {
         "type": "distance",
-        "m": 50
+        "m": 200
        },
        "target": {
         "type": "pace_pct",
-        "low": 108,
-        "high": 114
+        "low": 98,
+        "high": 101
        },
-       "label": "50 fast",
+       "label": "200 @ CSS",
        "swim": {
         "stroke": "free",
-        "sendOffSec": 70
+        "sendOffSec": 225
        }
       }
      ]
     },
     {
      "kind": "step",
-     "id": "s8",
+     "id": "s6",
      "role": "active",
      "measure": {
       "type": "distance",
@@ -251,7 +300,7 @@
    "intervals"
   ],
   "environment": "indoor",
-  "pairedActivityId": "act_4gigf12r5h",
+  "pairedActivityId": "act_zd116ja7hf",
   "status": "planned",
   "sparkline": [
    0.7,
@@ -261,7 +310,7 @@
    0.7,
    0.7,
    0.7,
-   0.696,
+   0.682,
    0.667,
    0.667,
    0.667,
@@ -270,64 +319,65 @@
   "garmin": {
    "syncState": "none"
   },
-  "createdAt": "2026-11-21T18:00:20.888Z",
-  "updatedAt": "2026-11-21T18:00:22.439Z",
+  "createdAt": "2026-11-22T10:48:09.264Z",
+  "updatedAt": "2026-11-22T10:48:17.286Z",
   "compliance": {
    "metric": "load",
-   "ratio": 0.92,
+   "ratio": 0.89,
    "state": "on_target"
   }
  },
  "previousSimilar": {
-  "id": "act_syn0za0ivc",
+  "id": "act_qbox10cjl7",
   "source": "garmin",
-  "garminActivityId": "20379235271",
+  "garminActivityId": "20376819963",
   "garminTypeKey": "lap_swimming",
-  "startedAt": "2026-11-16T06:00:17.000Z",
+  "startedAt": "2026-11-09T06:16:30.000Z",
   "utcOffsetMin": 60,
-  "localDate": "2026-11-16",
+  "localDate": "2026-11-09",
   "sport": "swim",
   "subSport": "pool",
-  "title": "Technique + 10×50 fast",
-  "durationSec": 3390,
-  "movingSec": 2825,
-  "distanceM": 2300,
-  "load": 43.6,
+  "title": "Aerobic 10×200",
+  "durationSec": 3522,
+  "movingSec": 3276,
+  "distanceM": 2800,
+  "load": 58.6,
   "loadSource": "swim_pace",
-  "intensityFactor": 0.822,
-  "avgHr": 132,
-  "maxHr": 162,
-  "avgSpeedMps": 0.814,
-  "avgCadence": 25,
-  "calories": 398,
-  "aerobicEffect": 2.3,
+  "intensityFactor": 0.863,
+  "avgHr": 142,
+  "maxHr": 155,
+  "avgSpeedMps": 0.855,
+  "avgCadence": 23,
+  "calories": 478,
+  "aerobicEffect": 2.7,
   "anaerobicEffect": 0.4,
   "poolLengthM": 25,
-  "strokes": 689,
-  "avgSwolf": 39,
-  "intensityAuto": "high",
-  "intensity": "high",
+  "strokes": 1152,
+  "avgSwolf": 40,
+  "intensityAuto": "endurance",
+  "intensity": "endurance",
   "isKey": false,
-  "rpe": 7,
-  "feel": 5,
+  "rpe": 3,
+  "feel": 3,
+  "postNote": "Smooth. Focused on the catch.",
   "tags": [],
-  "pairedWorkoutId": "wk_d20261116_1",
+  "pairedWorkoutId": "wk_d20261109_1",
   "hasStreams": true,
   "sparkline": [
-   0.92,
+   0.94,
+   0.88,
    0.89,
-   0.93,
-   0.87,
-   0.89,
-   0.89,
-   0.77,
+   0.9,
+   0.88,
+   0.9,
+   0.58,
+   0.7,
+   0.57,
+   0.53,
    0.54,
-   0.55,
-   0.55,
-   0.67,
-   0.57
+   0.64
   ],
-  "createdAt": "2026-11-21T18:00:23.132Z",
-  "updatedAt": "2026-11-21T18:00:23.147Z"
+  "createdAt": "2026-11-22T10:48:18.619Z",
+  "updatedAt": "2026-11-22T10:48:18.642Z"
  }
 }

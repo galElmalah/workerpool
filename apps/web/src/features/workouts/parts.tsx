@@ -5,8 +5,8 @@
 import { INTENSITY_META, SPORT_META, type IntensityClass, type Sport, type SubSport, type Template, type ThresholdSnapshot, type WorkoutStructure } from '@cadence/core';
 import { describeStep, estimateWorkout, fmtClock, type AnyNode, type WorkoutEstimate } from '@cadence/core/workout';
 import { motion } from 'motion/react';
-import { useMemo, type ReactNode } from 'react';
-import { levelFor, type ProfileBlock } from '@/charts';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { levelFor, useSvgId, zoneGradient, ZoneFillDefs, type ProfileBlock } from '@/charts';
 import { IntensityDot, StatRow, StatTile, SportGlyph, zoneColor } from '@/ui';
 import { cn } from '@/lib/cn';
 import { distanceParts, formatDuration, formatIF } from '@/lib/format';
@@ -173,22 +173,42 @@ export function SubSportChips({ sport, value, onChange }: { sport: Sport; value?
  */
 /** Compact step profile: neutral by default, or each block in its zone colour with `zone` (DESIGN_V2 §8.2). */
 export function NeutralProfile({ blocks, height = 24, className, zone }: { blocks: readonly ProfileBlock[]; height?: number; className?: string; zone?: boolean }) {
+  const uid = useSvgId();
+  const [ref, width] = useWidth();
   const total = blocks.reduce((a, b) => Math.max(a, b.startSec + b.durationSec), 0) || 1;
-  const W = 1000;
+  // Drawn in real pixels (not a stretched viewBox) so the 2px gaps and rounded tops stay crisp,
+  // with the same soft zone gradient as the workout page's profile.
+  const W = width || 1000;
   const k = W / total;
   const y = (v: number) => height - Math.max(0.14, Math.min(1, v / 1.35)) * height;
   return (
-    <svg viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none" className={cn('block w-full text-fg-4', className)} style={{ height }} aria-hidden>
+    <svg ref={ref} viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none" className={cn('block w-full text-fg-4', className)} style={{ height }} aria-hidden>
+      {zone && <ZoneFillDefs uid={uid} />}
       {blocks.map((b) => {
         const x = b.startSec * k;
-        const w = Math.max(1, b.durationSec * k - (b.durationSec * k > 8 ? 4 : 0));
+        const full = b.durationSec * k;
+        const w = Math.max(0.5, full - (full > 4 ? 2 : full > 2 ? 1 : 0));
         const a = y(b.intensity);
         const e = y(b.intensityEnd ?? b.intensity);
-        const fill = zone ? zoneColor(b.level ?? levelFor(Math.max(b.intensity, b.intensityEnd ?? 0))) : 'currentColor';
-        return <path key={b.id} d={`M${x} ${height}L${x} ${a}L${x + w} ${e}L${x + w} ${height}Z`} style={{ fill }} />;
+        const r = Math.min(1.5, w / 2, height - Math.min(a, e));
+        const fill = zone ? zoneGradient(uid, b.level ?? levelFor(Math.max(b.intensity, b.intensityEnd ?? 0))) : 'currentColor';
+        return <path key={b.id} d={`M${x} ${height}L${x} ${a + r}Q${x} ${a} ${x + r} ${a}L${x + w - r} ${e}Q${x + w} ${e} ${x + w} ${e + r}L${x + w} ${height}Z`} style={{ fill }} />;
       })}
     </svg>
   );
+}
+
+function useWidth(): [(el: SVGSVGElement | null) => void, number] {
+  const [w, setW] = useState(0);
+  const ro = useRef<ResizeObserver | null>(null);
+  const ref = useCallback((el: SVGSVGElement | null) => {
+    ro.current?.disconnect();
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    setW(Math.round(el.getBoundingClientRect().width));
+    ro.current = new ResizeObserver(([e]) => setW(Math.round(e!.contentRect.width)));
+    ro.current.observe(el);
+  }, []);
+  return [ref, w];
 }
 
 /** Template card body: tinted glyph + title, the step profile in zone colours, then duration · intensity dot + label. */

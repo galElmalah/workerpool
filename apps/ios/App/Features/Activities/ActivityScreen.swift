@@ -98,8 +98,6 @@ final class ActivityStore {
     private(set) var vm: ActivityDetailModel? = nil
     private(set) var chart: StreamChartModel? = nil
     private(set) var streams: ActivityStreams? = nil
-    /// location + device facts decoded from the same detail response
-    private(set) var extras: ActivityExtras? = nil
     private(set) var isLoadingStreams = false
     /// shared scrubbing position (seconds) — read only by the chart and map sections
     var selection: Double? = nil
@@ -124,12 +122,6 @@ final class ActivityStore {
         self.units = units
         await detail.load(cached: { client.cached(Endpoints.activity(id: id)) },
                           fetch: { try await client.activity(id: id) })
-        // the detail response is already cached: decode its extra fields from it (no second request)
-        if let hit = client.cached(ActivityExtras.endpoint(id: id)) {
-            extras = hit.value
-        } else if detail.value != nil, client.responseCache == nil {
-            extras = try? await client.send(ActivityExtras.endpoint(id: id))
-        }
         rebuild()
         guard let d = detail.value, d.hasStreams else { return }
         if streams == nil {
@@ -159,7 +151,7 @@ final class ActivityStore {
 
     private func rebuild() {
         guard let d = detail.value else { return }
-        vm = ActivityDetailModel(detail: d, units: units, streams: streams, extras: extras)
+        vm = ActivityDetailModel(detail: d, units: units, streams: streams)
         if !seededLog {
             seededLog = true
             rpe = d.rpe

@@ -1,7 +1,7 @@
 {
  "items": [
   {
-   "id": "act_q6786eg02s",
+   "id": "act_522gmb7axk",
    "source": "garmin",
    "garminActivityId": "20380435799",
    "garminTypeKey": "running",
@@ -49,8 +49,9 @@
     0.83,
     0.84
    ],
-   "createdAt": "2026-11-21T18:00:22.101Z",
-   "updatedAt": "2026-11-21T18:00:22.122Z",
+   "locationName": "Girona",
+   "createdAt": "2026-11-22T10:48:11.755Z",
+   "updatedAt": "2026-11-22T10:48:11.792Z",
    "compliance": {
     "metric": "load",
     "ratio": 1,
@@ -58,7 +59,7 @@
    }
   },
   {
-   "id": "act_4gigf12r5h",
+   "id": "act_63rxmm9hay",
    "source": "garmin",
    "garminActivityId": "20379927799",
    "garminTypeKey": "lap_swimming",
@@ -106,8 +107,8 @@
     0.48,
     0.63
    ],
-   "createdAt": "2026-11-21T18:00:22.426Z",
-   "updatedAt": "2026-11-21T18:00:22.439Z",
+   "createdAt": "2026-11-22T10:48:12.236Z",
+   "updatedAt": "2026-11-22T10:48:12.271Z",
    "compliance": {
     "metric": "load",
     "ratio": 0.92,
@@ -115,7 +116,7 @@
    }
   },
   {
-   "id": "act_gu480nz9po",
+   "id": "act_ut6igcvike",
    "source": "garmin",
    "garminActivityId": "20379402867",
    "garminTypeKey": "strength_training",
@@ -159,8 +160,8 @@
     0.66,
     0.41
    ],
-   "createdAt": "2026-11-21T18:00:22.950Z",
-   "updatedAt": "2026-11-21T18:00:22.958Z",
+   "createdAt": "2026-11-22T10:48:13.179Z",
+   "updatedAt": "2026-11-22T10:48:13.192Z",
    "compliance": {
     "metric": "load",
     "ratio": 1.43,
@@ -168,7 +169,7 @@
    }
   },
   {
-   "id": "act_ijdv4ysogd",
+   "id": "act_b2f2sgmgmb",
    "source": "garmin",
    "garminActivityId": "20369221959",
    "garminTypeKey": "road_biking",
@@ -222,8 +223,9 @@
     0.83,
     0.74
    ],
-   "createdAt": "2026-11-21T18:00:33.360Z",
-   "updatedAt": "2026-11-21T18:00:33.433Z",
+   "locationName": "Castell-Platja d'Aro",
+   "createdAt": "2026-11-22T10:48:32.039Z",
+   "updatedAt": "2026-11-22T10:48:32.138Z",
    "compliance": {
     "metric": "load",
     "ratio": 0.69,
@@ -239,5 +241,5 @@
   "load": 3958.9,
   "elevationGainM": 9579
  },
- "nextCursor": "2026-10-17T08:54:43.000Z|act_078luzqemg"
+ "nextCursor": "2026-10-17T08:54:43.000Z|act_h847y1y4fq"
 }

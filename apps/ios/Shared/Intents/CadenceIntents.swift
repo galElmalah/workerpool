@@ -306,7 +306,12 @@ struct OpenQuickAddIntent: AppIntent {
     static var openAppWhenRun: Bool { true }
 
     func perform() async throws -> some IntentResult & OpensIntent {
-        .result(opensIntent: OpenURLIntent(DeepLink.newWorkout(date: nil).url))
+        // Two routes to the same screen (opening it twice is harmless): with openAppWhenRun the system
+        // runs this in the app, where IntentNavigator reaches the router directly; OpenURLIntent covers
+        // the case where it runs in the widget extension (the app's .onOpenURL handles cadence://new).
+        let link = DeepLink.newWorkout(date: nil)
+        await IntentNavigator.shared.open(link)
+        return .result(opensIntent: OpenURLIntent(link.url))
     }
 }
 #endif

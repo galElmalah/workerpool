@@ -216,7 +216,7 @@ public struct ActivityDetailModel: Hashable, Sendable {
     public var feel: Int?
     public var note: String
 
-    public init(detail d: ActivityDetail, units: UnitSystem, streams: ActivityStreams? = nil, extras: ActivityExtras? = nil) {
+    public init(detail d: ActivityDetail, units: UnitSystem, streams: ActivityStreams? = nil) {
         let a = d.activity
         id = a.id
         sport = a.sport
@@ -228,7 +228,7 @@ public struct ActivityDetailModel: Hashable, Sendable {
         if let sub = a.subSport, sub != .unknown { kind.append(ActivityDetailModel.subSportLabel(sub)) }
         if a.source == .garmin { kind.append("Garmin") }
         kindText = kind.joined(separator: Format.dot)
-        locationText = extras?.locationName.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
+        locationText = a.locationName.flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
         let all = ActivityDetailModel.figures(d, units: units)
         figures = Array(all.prefix(4))
         moreFigures = Array(all.dropFirst(4))
@@ -238,7 +238,7 @@ public struct ActivityDetailModel: Hashable, Sendable {
         peaks = ActivityDetailModel.peakRows(d.peaks, sport: a.sport, units: units)
         efforts = ActivityDetailModel.effortRows(d.peaks.efforts, sport: a.sport, units: units)
         strength = ActivityDetailModel.strengthRows(d.strengthSets ?? [], units: units)
-        metricGroups = ActivityMetrics.groups(d, units: units, streams: streams, extras: extras)
+        metricGroups = ActivityMetrics.groups(d, units: units, streams: streams)
         hasRoute = streams.flatMap { RouteShape.make(t: $0.t, lat: $0.lat, lng: $0.lng) } != nil
         isKey = a.isKey
         intensity = a.intensity
@@ -402,6 +402,8 @@ public struct ActivityDetailModel: Hashable, Sendable {
         if showPower && hasHr && laps.contains(where: { ($0.avgSpeedMps ?? 0) > 0 }) { cols.append("Speed") }
         if hasCadence { cols.append(sport == .swim || sport == .row ? "Rate" : "Cadence") }
         if hasElevation { cols.append("Elev") }
+        let hasSwolf = sport == .swim && laps.contains { ($0.swolf ?? 0) > 0 }
+        if hasSwolf { cols.append("SWOLF") }
         let rows = laps.map { l -> LapRowModel in
             var cells = ["\(l.index + 1)", Format.duration(l.movingSec ?? l.durationSec, style: .hms)]
             if hasDist { cells.append(Format.distance(l.distanceM, sport: sport, units: units)) }
@@ -412,6 +414,7 @@ public struct ActivityDetailModel: Hashable, Sendable {
             if cols.contains("Power") && cols.contains("Speed") { cells.append(Format.speedParts(l.avgSpeedMps, units: units).value) }
             if hasCadence { cells.append(Format.number(l.avgCadence)) }
             if hasElevation { cells.append(Format.number(l.elevationGainM.map { units == .imperial ? $0 / Format.metresPerFoot : $0 })) }
+            if hasSwolf { cells.append(Format.number(l.swolf)) }
             return LapRowModel(id: l.index, cells: cells, isRest: l.isRest ?? false)
         }
         return LapTableModel(columns: cols, rows: rows)

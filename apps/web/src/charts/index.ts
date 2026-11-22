@@ -13,7 +13,7 @@ export { EffortCurve, PowerCurve, PaceCurve, valueAt, effortsToPoints } from './
 export type { EffortCurveProps, CurveSeries } from './PowerCurve';
 export { StreamChart, streamStats } from './StreamChart';
 export type { StreamChartProps, StreamSelection, StreamTrack, StreamXAxis, StreamSmoothing } from './StreamChart';
-export { IntensityProfile, levelFor } from './IntensityProfile';
+export { IntensityProfile, levelFor, ZoneFillDefs, zoneGradient, useSvgId, ZONE_FILL, STEP_GAP } from './IntensityProfile';
 export type { IntensityProfileProps, ProfileBlock, ProfileRepeat } from './IntensityProfile';
 export { ConsistencyHeatmap, computeStreaks } from './ConsistencyHeatmap';
 export type { ConsistencyHeatmapProps, HeatDay } from './ConsistencyHeatmap';

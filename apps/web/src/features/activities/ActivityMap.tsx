@@ -19,10 +19,12 @@ import type { GeoJSONSource, StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import type { ActivityStreams, Lap, Sport } from '@cadence/core/domain';
-import type { MotionValue } from 'motion/react';
+import { AnimatePresence, motion, type MotionValue } from 'motion/react';
 import { Maximize, Minus, Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { StreamSelection } from '@/charts';
+import { tween } from '@/motion/tokens';
+import { Kbd } from '@/ui/Kbd';
 import './ActivityMap.css';
 
 maplibregl.setWorkerUrl(workerUrl);
@@ -259,6 +261,7 @@ export default function ActivityMap({ streams, sport, laps, cursor, selection, h
   const geo = useMemo(() => buildGeo(streams), [streams]);
   const [moved, setMoved] = useState(false);
   const [tiles, setTiles] = useState(false);
+  const [zoomHint, setZoomHint] = useState(false);
   const selRef = useRef(selection);
   selRef.current = selection;
 
@@ -421,8 +424,27 @@ export default function ActivityMap({ streams, sport, laps, cursor, selection, h
     const ro = new ResizeObserver(() => map.resize());
     ro.observe(host);
 
+    // No scroll-jacking: the wheel scrolls the page; ⌘/Ctrl + wheel (and trackpad pinch, which
+    // arrives as a ctrl-wheel) zooms the map. Decided in the capture phase, before MapLibre's own
+    // wheel handler on the canvas sees the event; a plain wheel shows the standard hint.
+    let hintTimer: ReturnType<typeof setTimeout> | undefined;
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        map.scrollZoom.enable();
+        setZoomHint(false);
+        return;
+      }
+      map.scrollZoom.disable();
+      setZoomHint(true);
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(() => setZoomHint(false), 1400);
+    };
+    host.addEventListener('wheel', onWheel, { capture: true, passive: true });
+
     return () => {
       disposed = true;
+      clearTimeout(hintTimer);
+      host.removeEventListener('wheel', onWheel, { capture: true });
       unsub();
       mo.disconnect();
       ro.disconnect();
@@ -472,8 +494,24 @@ export default function ActivityMap({ streams, sport, laps, cursor, selection, h
   };
 
   return (
-    <div className="cad-map relative h-full w-full" style={{ height }}>
+    <div className="cad-map relative h-full w-full select-none" style={{ height }}>
       <div ref={hostRef} style={{ position: 'absolute', inset: 0 }} role="application" aria-label={`Route map${tiles ? '' : ' (no basemap)'}. Drag to pan, scroll or use the buttons to zoom.`} />
+      <AnimatePresence>
+        {zoomHint && (
+          <motion.div
+            key="hint"
+            aria-hidden
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: tween('fast', 'out') }}
+            exit={{ opacity: 0, transition: tween('base', 'in') }}
+            className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-canvas/40"
+          >
+            <span className="flex items-center gap-1.5 rounded-md bg-surface-2/95 px-3 py-1.5 text-body-sm text-fg-1">
+              Hold <Kbd keys="mod" /> and scroll to zoom the map
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
         <MapButton label="Zoom in" onClick={() => zoom(1)}>
           <Plus />
