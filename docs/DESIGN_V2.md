@@ -94,7 +94,8 @@ with `tabular-nums`.
 
 ## 5. Component rules
 
-- **Workout chip (month view): exactly one line, 28px.** `sport glyph · title (truncated) · duration`.
+- **Workout chip (month view): one line (28px) when the title fits, two lines at most.** `sport glyph ·
+  title · duration`; a readable title beats a shorter chip.
   A key session has a semibold `fg-1` title and a small **neutral** star before the duration. No border. Done → `surface-2` fill, `fg-1` text, a small solid neutral check/dot is
   implied by the fill. Planned (future) → transparent, `fg-2` text. Missed → `fg-4`, struck through.
   Intensity → only hard sessions (threshold and above, and races) carry one small dot (6px) before the
