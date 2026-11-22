@@ -74,10 +74,19 @@
   --color-accent-a6: color-mix(in oklab, var(--accent) 64%, transparent);
   --color-accent-a7: color-mix(in oklab, var(--accent) 85%, transparent);
 
-  /* Intensity zones: opaque, single-hue, lightness-monotonic ramp derived from the accent
-     (design-principles.md §5.3). Raw --z* values are set per theme below. */
+  /* Intensity zones: Z1 neutral then blue → aqua → yellow → red → violet → magenta (DESIGN_V2 §8).
+     Raw --z* values are set per theme below. */
   --color-z1: var(--z1); --color-z2: var(--z2); --color-z3: var(--z3); --color-z4: var(--z4);
   --color-z5: var(--z5); --color-z6: var(--z6); --color-z7: var(--z7);
+
+  /* Data colour (DESIGN_V2 §8): sport identity, status, chart series. Values are the validated
+     categorical palette (fixed order, CVD-checked on both canvases); raw values set per theme. */
+  --color-sport-bike: var(--c-blue);     --color-sport-run: var(--c-orange);   --color-sport-swim: var(--c-aqua);
+  --color-sport-walk: var(--c-yellow);   --color-sport-strength: var(--c-magenta); --color-sport-hike: var(--c-green);
+  --color-sport-row: var(--c-violet);    --color-sport-ski: var(--c-red);
+  --color-sport-yoga: var(--color-gray-9); --color-sport-other: var(--color-gray-9);
+  --color-series-1: var(--c-blue); --color-series-2: var(--c-orange); --color-series-3: var(--c-aqua);
+  --color-good: var(--s-good); --color-warn: var(--s-warn); --color-serious: var(--s-serious); --color-critical: var(--s-critical);
 
   /* Grayscale sport ramp for stacked charts / mix bars (product.md §3.6.4). */
   --color-ramp-1: var(--color-gray-12);
@@ -153,13 +162,14 @@
   --hue: 252;
   --accent: oklch(0.72 0.12 252); --accent-hover: oklch(0.77 0.11 252); --accent-press: oklch(0.67 0.12 252);
   --accent-ink: oklch(0.78 0.10 252); --on-accent: oklch(0.20 0.012 252);
-  --z1: oklch(from var(--accent) 0.340 0.030 h);
-  --z2: oklch(from var(--accent) 0.423 calc(0.030 + (c - 0.030) * 0.233) h);
-  --z3: oklch(from var(--accent) 0.507 calc(0.030 + (c - 0.030) * 0.467) h);
-  --z4: oklch(from var(--accent) 0.590 calc(0.030 + (c - 0.030) * 0.700) h);
-  --z5: oklch(from var(--accent) 0.673 calc(0.030 + (c - 0.030) * 0.933) h);
-  --z6: oklch(from var(--accent) 0.757 c h);
-  --z7: oklch(from var(--accent) 0.840 calc(c * 0.8) h);
+  /* Categorical hues (dark steps) */
+  --c-blue: #3987e5; --c-orange: #d95926; --c-aqua: #199e70; --c-yellow: #c98500;
+  --c-magenta: #d55181; --c-green: #0ca30c; --c-violet: #9085e9; --c-red: #e66767;
+  /* Status (always with an icon + label) */
+  --s-good: #0ca30c; --s-warn: #fab219; --s-serious: #ec835a; --s-critical: #e05252;
+  /* Training zones: Z1 neutral, then the familiar cool → warm order. Adjacent steps are CVD-checked;
+     always paired with a label, height or position. */
+  --z1: var(--color-gray-8); --z2: #3987e5; --z3: #199e70; --z4: #cf9a00; --z5: #e2554f; --z6: #9085e9; --z7: #d55181;
   color-scheme: dark;
   interpolate-size: allow-keywords; /* Chromium-only progressive enhancement */
 }
@@ -190,13 +200,10 @@
   --glass: rgb(255 255 255 / 0.80); --scrim: rgb(0 0 0 / 0.24);
   --accent: oklch(0.53 0.14 252); --accent-hover: oklch(0.49 0.135 252); --accent-press: oklch(0.45 0.125 252);
   --accent-ink: oklch(0.50 0.135 252); --on-accent: oklch(1 0 0);
-  --z1: oklch(from var(--accent) 0.930 0.030 h);
-  --z2: oklch(from var(--accent) 0.845 calc(0.030 + (c - 0.030) * 0.233) h);
-  --z3: oklch(from var(--accent) 0.760 calc(0.030 + (c - 0.030) * 0.467) h);
-  --z4: oklch(from var(--accent) 0.675 calc(0.030 + (c - 0.030) * 0.700) h);
-  --z5: oklch(from var(--accent) 0.590 calc(0.030 + (c - 0.030) * 0.933) h);
-  --z6: oklch(from var(--accent) 0.505 c h);
-  --z7: oklch(from var(--accent) 0.420 c h);
+  --c-blue: #2a78d6; --c-orange: #eb6834; --c-aqua: #1baf7a; --c-yellow: #eda100;
+  --c-magenta: #e87ba4; --c-green: #008300; --c-violet: #6250d6; --c-red: #e34948;
+  --s-good: #008300; --s-warn: #c98500; --s-serious: #d95926; --s-critical: #d03b3b;
+  --z1: var(--color-gray-8); --z2: #2a78d6; --z3: #1baf7a; --z4: #eda100; --z5: #e34948; --z6: #6250d6; --z7: #e87ba4;
 }
 :root[data-theme="light"][data-accent="green"] {
   --accent: oklch(0.50 0.10 160); --accent-hover: oklch(0.46 0.095 160); --accent-press: oklch(0.42 0.09 160);
@@ -264,6 +271,14 @@
 @utility scrollbar-none { scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
 @utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 @utility tracking-tightest { letter-spacing: -0.045em; }
+/* Data tints (DESIGN_V2 §8): a completed card/chip carries ≤ 14% of its sport colour over a surface.
+   Set `--sport` on the element (sportVars() in ui/domain/dataColor.ts); falls back to neutral. */
+@utility bg-sport-tint { background-color: color-mix(in oklab, var(--sport, var(--color-fg-4)) 12%, var(--color-surface-1)); }
+@utility bg-sport-tint-hover { background-color: color-mix(in oklab, var(--sport, var(--color-fg-4)) 14%, var(--color-surface-2)); }
+@utility bg-sport-tint-faint { background-color: color-mix(in oklab, var(--sport, var(--color-fg-4)) 8%, transparent); }
+/* A small solid swatch / dot in the sport colour (legends, breakdown marks). */
+@utility bg-sport { background-color: var(--sport, var(--color-fg-4)); }
+@utility text-sport { color: var(--sport, currentColor); }
 
 /* ───────────────────────────── components (shared CSS) ───────────────────────────── */
 @layer components {

@@ -14,7 +14,9 @@ import { DatePicker } from '@/ui/DatePicker';
 import { SaveIndicator, type SaveStatus } from '@/ui/SaveIndicator';
 import { Section } from '@/ui/Section';
 import { Skeleton } from '@/ui/Skeleton';
-import { SportGlyph } from '@/ui/domain';
+import { SportGlyph, zoneColor } from '@/ui/domain';
+import { TableScroll } from '@/ui/Table';
+import { zoneFill } from '@/charts/IntensityDistribution';
 import { toast } from '@/ui/toast';
 import { InlineError, useApiToday } from './common';
 import { BigThresholdInput, SourceChip, THRESHOLD_META, thresholdText, thresholdUnit } from './kit';
@@ -315,6 +317,7 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
           {t.defaulted && <SourceChip source="default" />}
         </span>
       </div>
+      <TableScroll label={`${title} zones`}>
       <table className="w-full">
         <thead>
           <tr className="border-b border-line-1 text-label text-fg-3">
@@ -328,14 +331,14 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
             const lo = pct(zn.low) ?? 0;
             const hi = pct(zn.high);
                         const hiF = Math.min(maxPct, zn.high == null ? maxPct : zn.high / t.threshold);
-            const fill = Math.min(7, Math.round(((i + 1) / t.zones.length) * 7));
+            const fill = zoneFill(i + 1, t.zones.length);
             return (
               <tr key={zn.label} className="border-b border-line-1 last:border-b-0">
                 <td className="h-11 py-2">
                   <div className="flex items-center gap-3">
                     <span className="num w-7 text-body-sm text-fg-3">{zn.label}</span>
                     <span className="relative hidden h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-surface-2 sm:block" aria-hidden>
-                      <span className={cn('absolute inset-y-0 left-0 rounded-full', `bg-z${fill}`)} style={{ width: `${Math.max(6, (hiF / maxPct) * 100)}%` }} />
+                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(6, (hiF / maxPct) * 100)}%`, backgroundColor: zoneColor(fill) }} />
                     </span>
                     <span className="truncate text-body text-fg-1">{zn.name}</span>
                   </div>
@@ -353,6 +356,7 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
           })}
         </tbody>
       </table>
+      </TableScroll>
     </div>
   );
 }

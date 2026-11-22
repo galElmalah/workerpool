@@ -280,7 +280,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
       ) : (
         <DndContext {...dnd.contextProps} sensors={sensors} collisionDetection={calendarCollision}>
           <ContextMenu items={menu} className="block">
-            <div className={cn(mobile && '-mx-4 overflow-x-auto px-4 [scroll-snap-type:x_mandatory]')} onContextMenuCapture={onContextMenuCapture}>
+            <div className={cn(mobile && 'relative -mx-4 overflow-x-auto overscroll-x-contain px-4 [scroll-snap-type:x_mandatory]')} onContextMenuCapture={onContextMenuCapture}>
               <div
                 ref={gridRef}
                 data-cal-grid

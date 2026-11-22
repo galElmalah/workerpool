@@ -11,7 +11,7 @@ export { Slider, RpeSlider, type SliderProps, type RpeSliderProps } from './Slid
 export { Chip, Tag, TagInput, type ChipProps, type ChipTone, type TagInputProps } from './Chip';
 export { Card, type CardProps } from './Card';
 export { StatTile, StatRow, type StatTileProps, type StatRowProps } from './StatTile';
-export { Table, type Column, type SortState, type TableProps } from './Table';
+export { Table, TableScroll, type Column, type SortState, type TableProps, type TableScrollProps } from './Table';
 export { Tooltip, TooltipProvider, type TooltipProps } from './Tooltip';
 export { Popover, type PopoverProps } from './Popover';
 export { Menu, ContextMenu, type MenuEntry, type MenuProps } from './Menu';

@@ -211,7 +211,7 @@ export function PageHeader({
                     {glyph}
                   </span>
                 )}
-                <h1 data-page-title tabIndex={-1} className="min-w-0 text-title-2 text-fg-1 outline-none md:text-title-1" style={vt(!!morph, 'title')}>
+                <h1 data-page-title tabIndex={-1} className="min-w-0 text-title-2 [overflow-wrap:anywhere] text-fg-1 outline-none md:text-title-1" style={vt(!!morph, 'title')}>
                   {title}
                 </h1>
               </div>

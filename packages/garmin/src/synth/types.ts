@@ -102,6 +102,33 @@ export interface SynthActivity {
   totalSets?: number;
   totalReps?: number;
   hasGps: boolean;
+  // ── detail extras (see extras.ts); Garmin reports these in the activity list / summary
+  /** Reverse-geocoded place name of the start ("Girona"); none indoors. */
+  locationName?: string;
+  startLat?: number;
+  startLng?: number;
+  endLat?: number;
+  endLng?: number;
+  elevationLossM?: number;
+  minElevationM?: number;
+  maxElevationM?: number;
+  maxSpeedMps?: number;
+  avgTempC?: number;
+  minTempC?: number;
+  maxTempC?: number;
+  maxCadence?: number;
+  /** Running dynamics (HRM-Pro): ms, % left, cm, %, m. */
+  avgGroundContactMs?: number;
+  avgGroundContactBalancePct?: number;
+  avgVerticalOscillationCm?: number;
+  avgVerticalRatioPct?: number;
+  avgStrideLengthM?: number;
+  steps?: number;
+  /** Dual-sided power pedals: left share in percent. */
+  powerBalanceLeftPct?: number;
+  /** Garmin's EPOC training load and primary benefit label. */
+  deviceLoad?: number;
+  trainingEffectLabel?: string;
   /** RPE 1–10 / feel 1–5 the athlete logged afterwards (applied in demo seed, not from Garmin). */
   rpe?: number;
   feel?: number;
@@ -116,6 +143,8 @@ export interface SynthActivityDetail {
   streams?: ActivityStreams; // 1 Hz; absent for strength/yoga without HR
   laps: Lap[];
   strengthSets?: StrengthSet[];
+  /** Runs: per-second running dynamics aligned with `streams.t` (ms, cm, %, m). */
+  dynamics?: { gct: (number | null)[]; vo: (number | null)[]; vr: (number | null)[]; step: (number | null)[] };
 }
 
 export interface SynthAthlete {

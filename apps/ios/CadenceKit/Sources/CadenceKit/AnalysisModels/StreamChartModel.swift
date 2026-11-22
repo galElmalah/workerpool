@@ -58,6 +58,8 @@ public struct StreamReadout: Hashable, Sendable {
     public var items: [ReadoutItem]
     /// position on the route (normalised), when a route exists
     public var routePoint: XYPoint?
+    /// the same position in degrees (map marker)
+    public var routeCoordinate: GeoPoint?
 
     public var accessibilityText: String {
         var parts = [timeText]
@@ -67,10 +69,23 @@ public struct StreamReadout: Hashable, Sendable {
     }
 }
 
+/// A latitude/longitude pair in degrees (Foundation-only stand-in for CLLocationCoordinate2D).
+public struct GeoPoint: Hashable, Sendable {
+    public var latitude: Double
+    public var longitude: Double
+
+    public init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+}
+
 /// The route as a normalised polyline: x, y in 0…1, y down (screen space), aspect-correct
 /// inside a unit square (the longer side spans 0…1, the shorter one is centred).
 public struct RouteShape: Hashable, Sendable {
     public var points: [XYPoint]
+    /// the same samples as latitude/longitude in degrees (for MapKit)
+    public var coordinates: [GeoPoint]
     /// width / height of the route's bounding box
     public var aspectRatio: Double
     /// sample time (s) of each point, for the scrub marker
@@ -82,6 +97,19 @@ public struct RouteShape: Hashable, Sendable {
     public func point(atTime t: Double) -> XYPoint? {
         guard let i = ChartMath.nearestIndex(times, to: t), i < points.count else { return nil }
         return points[i]
+    }
+
+    public func coordinate(atTime t: Double) -> GeoPoint? {
+        guard let i = ChartMath.nearestIndex(times, to: t), i < coordinates.count else { return nil }
+        return coordinates[i]
+    }
+
+    /// Bounding box with a margin, for fitting a map camera: (centre, span in degrees).
+    public var region: (center: GeoPoint, latitudeDelta: Double, longitudeDelta: Double)? {
+        guard let minLat = coordinates.map(\.latitude).min(), let maxLat = coordinates.map(\.latitude).max(),
+              let minLng = coordinates.map(\.longitude).min(), let maxLng = coordinates.map(\.longitude).max() else { return nil }
+        return (GeoPoint(latitude: (minLat + maxLat) / 2, longitude: (minLng + maxLng) / 2),
+                max(0.002, (maxLat - minLat) * 1.3), max(0.002, (maxLng - minLng) * 1.3))
     }
 
     /// Projects lat/lng (degrees) with an equirectangular projection at the mean latitude.
@@ -105,20 +133,23 @@ public struct RouteShape: Hashable, Sendable {
         guard span > 1e-7 else { return nil }
         let offX = (span - w) / 2, offY = (span - h) / 2
         var pts: [XYPoint] = []
+        var coords: [GeoPoint] = []
         var times: [Double] = []
         let stride = max(1, Int((Double(raw.count) / Double(max(2, maxPoints))).rounded(.up)))
         var i = 0
         while i < raw.count {
             pts.append(XYPoint(x: (xs[i] - minX + offX) / span, y: (ys[i] - minY + offY) / span))
+            coords.append(GeoPoint(latitude: raw[i].lat, longitude: raw[i].lng))
             times.append(raw[i].t)
             i += stride
         }
         if times.last != raw[raw.count - 1].t {
             let j = raw.count - 1
             pts.append(XYPoint(x: (xs[j] - minX + offX) / span, y: (ys[j] - minY + offY) / span))
+            coords.append(GeoPoint(latitude: raw[j].lat, longitude: raw[j].lng))
             times.append(raw[j].t)
         }
-        return RouteShape(points: pts, aspectRatio: h > 0 ? w / h : 10, times: times)
+        return RouteShape(points: pts, coordinates: coords, aspectRatio: h > 0 ? w / h : 10, times: times)
     }
 }
 
@@ -331,7 +362,21 @@ public struct StreamChartModel: Hashable, Sendable {
             distanceText = Format.distance(m, sport: sport, units: units)
         }
         return StreamReadout(x: t[i], timeText: Format.duration(t[i] - (t.first ?? 0), style: .hms), distanceText: distanceText,
-                             items: items, routePoint: route?.point(atTime: t[i]))
+                             items: items, routePoint: route?.point(atTime: t[i]),
+                             routeCoordinate: route?.coordinate(atTime: t[i]))
+    }
+
+    /// The elevation profile rescaled into the lower `share` of another track's y domain, so it can
+    /// sit as a faint area behind that track in the same chart (one y scale per chart).
+    /// Returns (base, points): draw areas from `base` up to each point's y.
+    public func elevationBackdrop(in domain: ClosedRange<Double>, share: Double = 0.45) -> (base: Double, points: [StreamPoint]) {
+        guard let e = elevation, !e.points.isEmpty else { return (domain.lowerBound, []) }
+        let lo = e.yDomain.lowerBound, hi = e.yDomain.upperBound
+        let span = max(1e-9, hi - lo)
+        let base = domain.lowerBound
+        let height = (domain.upperBound - domain.lowerBound) * share
+        let pts = e.points.map { p in StreamPoint(x: p.x, y: base + (p.y - lo) / span * height, segment: p.segment) }
+        return (base, pts)
     }
 
     /// "Power, avg 168 W, from 0 to 704 W" — the VoiceOver summary of a track.

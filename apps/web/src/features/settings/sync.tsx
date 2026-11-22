@@ -119,10 +119,17 @@ export function SettingsSyncPage() {
             </EmptyState>
           </div>
         ) : (
-          <div className="flex flex-col">
+          // A long secondary list: it scrolls inside its own box (sticky day headings) instead of
+          // pushing the page (DESIGN_V2 §9); more entries load as its end scrolls into view.
+          <div
+            role="region"
+            aria-label="Sync log entries"
+            tabIndex={0}
+            className="-mx-2 flex max-h-[max(20rem,calc(100dvh-var(--header-h)-16rem))] flex-col overflow-x-hidden overflow-y-auto overscroll-contain px-2 focus-visible:outline-offset-2"
+          >
             {groups.map((g) => (
               <section key={g.key} className="flex flex-col">
-                <h3 className="sticky top-(--header-h) z-(--z-sticky) -mx-1 mt-6 bg-canvas/90 px-1 py-2 text-label text-fg-3 backdrop-blur-sm first:mt-0">{g.label}</h3>
+                <h3 className="sticky top-0 z-(--z-sticky) -mx-1 mt-6 bg-canvas/90 px-1 py-2 text-label text-fg-3 backdrop-blur-sm first:mt-0">{g.label}</h3>
                 <ul className="flex flex-col">
                   {g.items.map((e) => {
                     const k = KIND[e.kind];

@@ -5,6 +5,7 @@
  */
 import type {
   Activity,
+  ActivityFacts,
   BestEffort,
   IntensityClass,
   Lap,
@@ -12,6 +13,7 @@ import type {
   PeakPoint,
   Sport,
   StrengthSet,
+  SwimLength,
   ThresholdSnapshot,
   ZoneTime,
 } from '@cadence/core/domain';
@@ -23,7 +25,7 @@ export const ACTIVITY_COLUMNS = `id, source, garmin_activity_id, garmin_type_key
   avg_power, weighted_power, max_power, avg_speed_mps, adjusted_speed_mps, avg_cadence, calories, work_kj, variability,
   efficiency, decoupling_pct, aerobic_effect, anaerobic_effect, pool_length_m, strokes, avg_swolf, total_sets, total_reps,
   volume_kg, intensity_auto, intensity_override, is_key, rpe, feel, post_note, tags, paired_workout_id, has_streams,
-  sparkline, created_at, updated_at`;
+  sparkline, location_name, created_at, updated_at`;
 
 export type ActivityRow = Record<string, unknown>;
 
@@ -84,6 +86,7 @@ export function rowToActivity(r: ActivityRow): Activity {
     pairedWorkoutId: str(r.paired_workout_id),
     hasStreams: r.has_streams === 1 || r.has_streams === true,
     sparkline: sparkline && sparkline.length ? sparkline : undefined,
+    locationName: str(r.location_name),
     createdAt: r.created_at as string,
     updatedAt: r.updated_at as string,
   } as Record<string, unknown>) as unknown as Activity;
@@ -183,6 +186,9 @@ export interface ActivityExtras {
   zones: { hr?: ZoneTime[]; power?: ZoneTime[]; pace?: ZoneTime[]; three?: { easy: number; moderate: number; hard: number } };
   peaks: { power?: PeakPoint[]; hr?: PeakPoint[]; speed?: PeakPoint[]; efforts?: BestEffort[] };
   strengthSets?: StrengthSet[];
+  /** Detail facts incl. the start position (stored in its own columns). */
+  facts: ActivityFacts;
+  swimLengths?: SwimLength[];
   thresholdsUsed: ThresholdSnapshot;
   loadManual?: number;
   upstreamTitle?: string;
@@ -197,8 +203,14 @@ export function rowToExtras(r: ActivityRow): ActivityExtras {
     zones: parseJson(r.zones, {}),
     peaks: parseJson(r.peaks, {}),
     thresholdsUsed: parseJson<ThresholdSnapshot>(r.thresholds_used, {}),
+    facts: parseJson<ActivityFacts>(r.facts, {}) ?? {},
     pairManual: r.pair_manual === 1,
   };
+  const lat = num(r.start_lat);
+  const lng = num(r.start_lng);
+  if (lat !== undefined && lng !== undefined) out.facts = { startLat: lat, startLng: lng, ...out.facts };
+  const lengths = parseJson<SwimLength[] | null>(r.swim_lengths, null);
+  if (lengths?.length) out.swimLengths = lengths;
   const sets = parseJson<StrengthSet[] | null>(r.strength_sets, null);
   if (sets) out.strengthSets = sets;
   if (num(r.load_manual) !== undefined) out.loadManual = r.load_manual as number;
@@ -216,7 +228,7 @@ export async function getActivityFull(
   const row = await db
     .prepare(
       `SELECT ${ACTIVITY_COLUMNS}, laps, zones, peaks, strength_sets, thresholds_used, load_manual, upstream_title, summary_hash,
-       deleted_at, pair_manual FROM activities WHERE id = ?${opts.includeDeleted ? '' : ' AND deleted_at IS NULL'}`,
+       deleted_at, pair_manual, facts, swim_lengths, start_lat, start_lng FROM activities WHERE id = ?${opts.includeDeleted ? '' : ' AND deleted_at IS NULL'}`,
     )
     .bind(id)
     .first<ActivityRow>();
@@ -304,8 +316,8 @@ function searchWhere(q: ActivitySearch): { sql: string; params: unknown[] } {
   const params: unknown[] = [];
   if (q.q?.trim()) {
     const like = `%${q.q.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`;
-    extra.push("(title LIKE ? ESCAPE '\\' OR post_note LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\')");
-    params.push(like, like, like);
+    extra.push("(title LIKE ? ESCAPE '\\' OR post_note LIKE ? ESCAPE '\\' OR tags LIKE ? ESCAPE '\\' OR location_name LIKE ? ESCAPE '\\')");
+    params.push(like, like, like, like);
   }
   if (q.key !== undefined) extra.push(q.key ? 'is_key = 1' : 'is_key = 0');
   if (q.intensity) {

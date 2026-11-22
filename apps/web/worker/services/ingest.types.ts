@@ -8,7 +8,7 @@
  * + original file when small) → auto-pair with a planned workout (core/workout.pairActivities,
  * never touching manual pairs).
  */
-import type { ActivityStreams, Lap, LocalDate, Sport, StrengthSet, SubSport } from '@cadence/core/domain';
+import type { ActivityFacts, ActivityStreams, Lap, LocalDate, Sport, StrengthSet, SubSport, SwimLength } from '@cadence/core/domain';
 
 /** Source-agnostic summary. `NormalizedActivity` from @cadence/garmin is assignable to this. */
 export interface IngestSummary {
@@ -44,6 +44,12 @@ export interface IngestSummary {
   powerTimeInZoneSec?: number[];
   /** Hash of upstream-editable fields; unchanged hash + same id ⇒ ingest is a no-op. */
   editHash?: string;
+  /** Upstream place name of the start ("Girona"). Never derived locally. */
+  locationName?: string;
+  startLat?: number;
+  startLng?: number;
+  /** Detail-page extras reported upstream (merged with the FIT file's and the streams'). */
+  facts?: ActivityFacts;
 }
 
 export interface IngestInput {
@@ -56,6 +62,7 @@ export interface IngestInput {
   streams?: ActivityStreams;
   laps?: Lap[];
   strengthSets?: StrengthSet[];
+  swimLengths?: SwimLength[];
   /** Athlete-entered fields (manual entry / demo); never overwritten by later syncs. */
   user?: { rpe?: number; feel?: number; postNote?: string; isKey?: boolean; tags?: string[]; loadManual?: number };
   /** Force recomputation even when editHash is unchanged. */

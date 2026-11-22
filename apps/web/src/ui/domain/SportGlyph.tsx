@@ -1,16 +1,20 @@
 /**
  * SportGlyph — the ONLY way to render a sport (design.md §2.4, rule 16). Monochrome object
  * metaphors on Lucide's 24px grid, stroke 1.75, plus the custom ROW glyph. Indoor sub-sports
- * (indoor, virtual, treadmill, erg) get a small corner dot. Never color-coded.
+ * (indoor, virtual, treadmill, erg) get a small corner dot. The glyph (never its label) wears the
+ * sport colour (DESIGN_V2 §8.1); pass `neutral` to draw it in the inherited text colour instead
+ * (missed / skipped sessions, glyphs on filled controls).
  *
  *   <SportGlyph sport="bike" subSport="indoor" size={16} />
- *   <SportGlyph sport="run" withLabel />   // glyph + "Run" label
+ *   <SportGlyph sport="run" withLabel />   // tinted glyph + "Run" label in the text colour
+ *   <SportGlyph sport="swim" neutral className="text-fg-4" />
  */
 import type { Sport, SubSport } from '@cadence/core';
 import { Activity, Bike, Dumbbell, Flower2, Footprints, Mountain, Route, Snowflake, Waves, type LucideIcon, type LucideProps } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { cn } from '@/lib/cn';
 import { RowGlyph } from '../glyphs/Row';
+import { sportColor } from './dataColor';
 
 const ICONS: Record<Sport, LucideIcon | ((p: LucideProps) => React.JSX.Element)> = {
   bike: Bike,
@@ -51,14 +55,23 @@ export interface SportGlyphProps {
   style?: CSSProperties;
   /** Accessible name; default hidden (decorative next to text). */
   title?: string;
+  /** Draw the glyph in the inherited text colour instead of the sport colour. */
+  neutral?: boolean;
 }
 
-export function SportGlyph({ sport, subSport, size = 16, withLabel, className, style, title }: SportGlyphProps) {
+export function SportGlyph({ sport, subSport, size = 16, withLabel, className, style, title, neutral }: SportGlyphProps) {
   const Icon = ICONS[sport] ?? Activity;
   const indoor = isIndoor(subSport);
   const dot = size <= 16 ? 'size-[5px] -top-px -right-px' : size <= 24 ? 'size-1.5 top-0 right-0' : 'size-2 top-0.5 right-0.5';
   const glyph = (
-    <span className={cn('relative inline-flex shrink-0', !withLabel && className)} style={withLabel ? undefined : style} role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
+    <span
+      className={cn('relative inline-flex shrink-0', !withLabel && className)}
+      style={{ ...(withLabel ? undefined : style), ...(neutral ? undefined : { color: sportColor(sport) }) }}
+      data-sport={sport}
+      role={title ? 'img' : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+    >
       <Icon size={size} strokeWidth={size >= 24 ? 1.5 : 1.75} aria-hidden />
       {indoor && <span className={cn('absolute rounded-full bg-current ring-2 ring-canvas', dot)} aria-hidden />}
     </span>

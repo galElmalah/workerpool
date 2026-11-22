@@ -6,7 +6,8 @@
  *   row    — below lg: one quiet line under the week
  *   header — the week view's single totals strip
  * Everything else (per-sport distance, key count, fitness, fatigue, intensity split, targets) is in
- * the hover card (Peek) and on the weekly review page the week label links to.
+ * the hover card (Peek) and on the weekly review page the week label links to. The thin done bar is
+ * split into sport colours (fixed sport order, 2px gaps; DESIGN_V2 §8.1) — no extra line.
  */
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, CalendarClock, CopyPlus, Ellipsis, NotebookPen, TriangleAlert } from 'lucide-react';
@@ -14,6 +15,8 @@ import { memo } from 'react';
 import { cn } from '@/lib/cn';
 import { formatDuration, formatIsoWeek, formatLoad, formatPercent, formatSigned, NBSP } from '@/lib/format';
 import { links } from '@/shell/links';
+import type { Sport } from '@cadence/core/domain';
+import { bySportOrder, sportColor } from '@/ui/domain/dataColor';
 import { FORM_ZONE_META } from '@/ui/domain/Status';
 import { IconButton } from '@/ui/Button';
 import { Menu } from '@/ui/Menu';
@@ -49,14 +52,55 @@ function Delta({ value, caution, flatBelow = 0.03, label, iconOnly }: { value: n
   );
 }
 
-/** One thin neutral done/planned bar (no accent: done is neutral). */
-export function ProgressLine({ done, planned, projected, target, className }: { done: number; planned: number; projected?: number; target?: number; className?: string }) {
+export interface ProgressSegment {
+  sport: Sport;
+  sec: number;
+}
+
+/** Done seconds per sport in the fixed sport order (for ProgressLine `segments`). */
+export function sportSegments(bySport: ReadonlyArray<{ sport: Sport; doneSec: number }> | undefined): ProgressSegment[] {
+  return (bySport ?? [])
+    .filter((x) => x.doneSec > 0)
+    .map((x) => ({ sport: x.sport, sec: x.doneSec }))
+    .sort((a, b) => bySportOrder(a.sport, b.sport));
+}
+
+/**
+ * One thin done/planned bar. With `segments`, the done part is split by sport colour (fixed order,
+ * 2px gaps showing the track); without, it is a neutral fill.
+ */
+export function ProgressLine({
+  done,
+  planned,
+  projected,
+  target,
+  segments,
+  className,
+}: {
+  done: number;
+  planned: number;
+  projected?: number;
+  target?: number;
+  segments?: ProgressSegment[];
+  className?: string;
+}) {
   void projected;
   void target;
   const max = Math.max(done, planned, 1);
+  const width = `${Math.min(100, (done / max) * 100)}%`;
+  const segs = segments?.filter((x) => x.sec > 0) ?? [];
+  const segTotal = segs.reduce((a, x) => a + x.sec, 0);
   return (
     <div className={cn('relative h-[3px] w-full overflow-hidden rounded-full bg-surface-3', className)} aria-hidden>
-      <span className="absolute inset-y-0 left-0 rounded-full bg-fg-2" style={{ width: `${Math.min(100, (done / max) * 100)}%` }} />
+      {segs.length > 0 && segTotal > 0 && done > 0 ? (
+        <span className="absolute inset-y-0 left-0 flex gap-[2px]" style={{ width }}>
+          {segs.map((x) => (
+            <span key={x.sport} className="h-full min-w-[2px] rounded-full" style={{ flexGrow: x.sec, flexBasis: 0, backgroundColor: sportColor(x.sport) }} />
+          ))}
+        </span>
+      ) : (
+        <span className="absolute inset-y-0 left-0 rounded-full bg-fg-2" style={{ width }} />
+      )}
     </div>
   );
 }
@@ -150,7 +194,7 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
             <span className={cn('text-stat-md', future ? 'text-fg-2' : 'text-fg-1')}>{formatDuration(hours)}</span>
             <span className="text-body-sm text-fg-3">{future ? 'planned' : `of ${formatDuration(s.plannedSec)}`}</span>
           </span>
-          <ProgressLine done={future ? 0 : s.doneSec} planned={s.plannedSec} className="w-48" />
+          <ProgressLine done={future ? 0 : s.doneSec} planned={s.plannedSec} segments={sportSegments(s.bySport)} className="w-48" />
         </div>
         <span className="text-body-sm text-fg-3 num">
           Load <span className="text-fg-1">{formatLoad(load)}</span>
@@ -210,7 +254,7 @@ export const WeekSummaryBlock = memo(function WeekSummaryBlock({ week, variant, 
         <span className={cn(narrow ? 'text-stat-sm' : 'text-stat-md', future ? 'text-fg-2' : 'text-fg-1')}>{formatDuration(hours)}</span>
         <span className="truncate text-body-sm text-fg-3">{future ? 'planned' : `of${NBSP}${formatDuration(s.plannedSec)}`}</span>
       </span>
-      <ProgressLine done={future ? 0 : s.doneSec} planned={s.plannedSec} />
+      <ProgressLine done={future ? 0 : s.doneSec} planned={s.plannedSec} segments={sportSegments(s.bySport)} />
       <span className={cn('flex items-center gap-1 pt-0.5 text-label whitespace-nowrap num', s.isProjected ? 'text-fg-3' : 'text-fg-2')} title={formTitle}>
         Load {formatLoad(load)}
         {delta && <span className="-ml-0.5">{delta}</span>}

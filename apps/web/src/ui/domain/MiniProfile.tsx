@@ -1,10 +1,11 @@
 /**
  * MiniProfile — micro bar chart from number[] (0..1; larger values are normalized). Used for card
  * step-profile sparklines (planned structure or actual effort, ≤ 48 bars) and StatTile sparklines.
- * tone: 'zone' (fill density by height, the intensity ladder), 'accent', or 'fg'.
+ * tone: 'zone' (each bar in the zone colour of its height, DESIGN_V2 §8.2), 'accent', or 'fg'.
  * No animation on scroll; bars only re-render on data change.
  */
 import { cn } from '@/lib/cn';
+import { zoneColor, zoneOfFraction } from './dataColor';
 
 export interface MiniProfileProps {
   values: readonly number[];
@@ -16,8 +17,7 @@ export interface MiniProfileProps {
   'aria-label'?: string;
 }
 
-const zoneVar = (v: number) =>
-  v < 0.2 ? 'var(--color-z1)' : v < 0.4 ? 'var(--color-z2)' : v < 0.55 ? 'var(--color-z3)' : v < 0.7 ? 'var(--color-z4)' : v < 0.85 ? 'var(--color-z5)' : v < 0.95 ? 'var(--color-z6)' : 'var(--color-z7)';
+const zoneVar = (v: number) => zoneColor(zoneOfFraction(v));
 
 export function MiniProfile({ values, height = 20, tone = 'zone', gap = 1, className, ...aria }: MiniProfileProps) {
   if (!values.length) return null;

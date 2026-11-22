@@ -36,8 +36,10 @@ export interface StatTileProps {
   delta?: number | null;
   deltaKind?: 'percent' | 'number';
   deltaSuffix?: string;
-  /** Good direction: the delta arrow is fg-1 (never accent). */
+  /** The delta's direction is good: its arrow wears the `good` status colour. */
   good?: boolean;
+  /** The delta's direction is bad: its arrow wears the `warn` status colour. */
+  bad?: boolean;
   warning?: boolean;
   /** 0..1 values (or raw; normalized) for a small neutral bar sparkline. */
   sparkline?: number[];
@@ -66,6 +68,7 @@ export function StatTile({
   deltaKind = 'percent',
   deltaSuffix,
   good,
+  bad,
   warning,
   sparkline,
   hint,
@@ -113,7 +116,7 @@ export function StatTile({
                 exit={{ opacity: 0, transition: tween('fast', 'in') }}
                 className="flex shrink-0"
               >
-                <DeltaBadge value={delta} kind={deltaKind} good={good} warning={warning} suffix={deltaSuffix} />
+                <DeltaBadge value={delta} kind={deltaKind} good={good} bad={bad} warning={warning} suffix={deltaSuffix} />
               </motion.div>
             </AnimatePresence>
           )}

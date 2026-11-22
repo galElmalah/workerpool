@@ -4,7 +4,7 @@ import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { curveMonotoneX, line } from 'd3-shape';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
-import { MorphPath, WeeklyBars, useChartSize } from '@/charts';
+import { MorphPath, T, WeeklyBars, useChartSize } from '@/charts';
 import { formatDateMedium, formatNumber, formatPace } from '@/lib/format';
 import { useUnits } from '@/lib/units';
 import { spring } from '@/motion/tokens';
@@ -49,23 +49,23 @@ export function TrendsSportPage() {
   return (
     <TrendsFrame title={SPORT_META[sport].label} back eyebrow={<span className="inline-flex items-center gap-1.5"><SportGlyph sport={sport} size={14} /> Sport trends</span>} toolbar={<RangeControl value={range} onChange={(r) => set({ range: r })} />}>
       <ChartCard title="Weekly volume" question={`${SPORT_META[sport].label} only. Click a week to review it.`}>
-        <WeeklyBars weeks={weeks} loading={!weekly.data} metric={search.metric ?? 'hours'} onMetricChange={(m) => set({ metric: m })} stack="total" height={240} onWeekClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
+        <WeeklyBars weeks={weeks} loading={!weekly.data} metric={search.metric ?? 'hours'} onMetricChange={(m) => set({ metric: m })} stack="total" totalColor={T.sport(sport)} height={240} onWeekClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
       </ChartCard>
       <StatRow columns={4}>
         <StatTile label="Sessions" value={sum((w) => w.bySport[0]?.doneCount ?? 0)} format={(v) => formatNumber(v, 0)} />
         <StatTile label="Time" value={sum((w) => w.doneSec) / 3600} format={fmtHours} unit="h" />
         <StatTile label="Load" value={sum((w) => w.doneLoad)} format={(v) => formatNumber(v, 0)} />
-        <StatTile label={power ? `Power at ${q.data?.refHr ?? '—'} bpm` : `Pace at ${q.data?.refHr ?? '—'} bpm`} value={effB} format={fmtOut} delta={effA && effB ? effB / effA - 1 : null} good={!!effA && !!effB && effB > effA} deltaSuffix="2nd half vs 1st" />
+        <StatTile label={power ? `Power at ${q.data?.refHr ?? '—'} bpm` : `Pace at ${q.data?.refHr ?? '—'} bpm`} value={effB} format={fmtOut} delta={effA && effB ? effB / effA - 1 : null} good={!!effA && !!effB && effB > effA} bad={!!effA && !!effB && effB < effA} deltaSuffix="2nd half vs 1st" />
       </StatRow>
       {q.isError ? (
         <InlineError onRetry={() => q.refetch()} />
       ) : (
         <section className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <ChartCard title="Efficiency" question={`${power ? 'Power' : 'Pace'} you hold at ${q.data?.refHr ?? 'a reference'} bpm, per session (dots) and its trend. Up means fitter.`}>
-            <PointsTrend points={eff} fmt={fmtOut} higherIsBetter />
+            <PointsTrend points={eff} fmt={fmtOut} higherIsBetter color={T.sport(sport)} />
           </ChartCard>
           <ChartCard title="Aerobic decoupling" question="Drift of output vs heart rate in sessions over an hour. Under 5 % means a solid aerobic base.">
-            <PointsTrend points={dec} fmt={(v) => `${formatNumber(v, 1)}%`} refLine={5} />
+            <PointsTrend points={dec} fmt={(v) => `${formatNumber(v, 1)}%`} refLine={5} color={T.sport(sport)} />
           </ChartCard>
         </section>
       )}
@@ -83,7 +83,7 @@ export function TrendsSportPage() {
 }
 
 /** Dots per session + a rolling-mean line, date x-axis. */
-function PointsTrend({ points, fmt, higherIsBetter, refLine }: { points: { date: string; v: number; id: string }[]; fmt: (v: number) => string; higherIsBetter?: boolean; refLine?: number }) {
+function PointsTrend({ points, fmt, higherIsBetter, refLine, color }: { points: { date: string; v: number; id: string }[]; fmt: (v: number) => string; higherIsBetter?: boolean; refLine?: number; color?: string }) {
   const [ref, size] = useChartSize<HTMLDivElement>();
   const navigate = useNavigate();
   const W = size.width;
@@ -127,7 +127,7 @@ function PointsTrend({ points, fmt, higherIsBetter, refLine }: { points: { date:
               <title>{`${formatDateMedium(p.date)} · ${fmt(p.v)}`}</title>
             </motion.circle>
           ))}
-          <MorphPath d={d} fill="none" className="stroke-accent" style={{ strokeWidth: 2 }} />
+          <MorphPath d={d} fill="none" className={color ? undefined : 'stroke-series-1'} style={{ strokeWidth: 2, ...(color ? { stroke: color } : null) }} />
         </svg>
       )}
     </div>

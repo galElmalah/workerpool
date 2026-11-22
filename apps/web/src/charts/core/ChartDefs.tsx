@@ -17,6 +17,10 @@ export interface ChartDefIds {
   dashesFg: string;
   fadeAccent: string;
   fadeFg: string;
+  /** ≤ 12% fade under the series-1 line (Fitness, power). */
+  fadeSeries1: string;
+  /** ≤ 12% fade under a series-3 line (pace). */
+  fadeSeries3: string;
   /** raw id generator for chart-local clipPaths etc. */
   id: (name: string) => string;
 }
@@ -38,6 +42,8 @@ export function useChartDefs(): ChartDefIds {
       dashesFg: url('dashes-fg'),
       fadeAccent: url('fade-accent'),
       fadeFg: url('fade-fg'),
+      fadeSeries1: url('fade-series-1'),
+      fadeSeries3: url('fade-series-3'),
     };
   }, [raw]);
 }
@@ -68,6 +74,14 @@ export function ChartDefs({ ids }: { ids: ChartDefIds }) {
         <stop offset="0" style={{ stopColor: T.accent, stopOpacity: 0.12 }} />
         <stop offset="1" style={{ stopColor: T.accent, stopOpacity: 0 }} />
       </linearGradient>
+      <linearGradient id={id('fade-series-1')} x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" style={{ stopColor: T.series1, stopOpacity: 0.12 }} />
+        <stop offset="1" style={{ stopColor: T.series1, stopOpacity: 0 }} />
+      </linearGradient>
+      <linearGradient id={id('fade-series-3')} x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" style={{ stopColor: T.series3, stopOpacity: 0.12 }} />
+        <stop offset="1" style={{ stopColor: T.series3, stopOpacity: 0 }} />
+      </linearGradient>
       <linearGradient id={id('fade-fg')} x1="0" x2="0" y1="0" y2="1">
         <stop offset="0" style={{ stopColor: T.fg1, stopOpacity: 0.06 }} />
         <stop offset="1" style={{ stopColor: T.fg1, stopOpacity: 0 }} />
@@ -77,21 +91,27 @@ export function ChartDefs({ ids }: { ids: ChartDefIds }) {
 }
 
 /**
- * Monochrome sport ramp (product.md §3.6.4 adapted to DESIGN_V2): mid-to-low contrast greys
- * (never fg-1 white) + an optional pattern for the two smallest categories. In light theme
- * the gray ramp inverts, so bike becomes the darkest — still ordered. Labels are sentence case.
+ * Sport colours for stacks and mixes (DESIGN_V2 §8.1): each sport keeps its identity colour
+ * (`--color-sport-*`) and stacks in the fixed palette order bike → run → swim → walk → strength →
+ * hike → row → ski → other (yoga and anything else share the neutral "Other"). Adjacent segments
+ * are separated by a 2px surface gap where they are drawn. Labels are sentence case.
+ * (`pattern` is no longer used — colour plus the legend carries identity.)
  */
-export type SportKey = 'bike' | 'run' | 'swim' | 'row' | 'strength' | 'other';
+export type SportKey = 'bike' | 'run' | 'swim' | 'walk' | 'strength' | 'hike' | 'row' | 'ski' | 'other';
 export const SPORT_RAMP: Record<SportKey, { fill: string; pattern?: 'hatch' | 'dots'; label: string }> = {
-  bike: { fill: T.gray(10), label: 'Ride' },
-  run: { fill: T.gray(9), label: 'Run' },
-  swim: { fill: T.gray(8), label: 'Swim' },
-  row: { fill: T.gray(7), label: 'Row' },
-  strength: { fill: T.gray(6), pattern: 'hatch', label: 'Strength' },
-  other: { fill: T.gray(6), pattern: 'dots', label: 'Other' },
+  bike: { fill: T.sport('bike'), label: 'Ride' },
+  run: { fill: T.sport('run'), label: 'Run' },
+  swim: { fill: T.sport('swim'), label: 'Swim' },
+  walk: { fill: T.sport('walk'), label: 'Walk' },
+  strength: { fill: T.sport('strength'), label: 'Strength' },
+  hike: { fill: T.sport('hike'), label: 'Hike' },
+  row: { fill: T.sport('row'), label: 'Row' },
+  ski: { fill: T.sport('ski'), label: 'Ski' },
+  other: { fill: T.sport('other'), label: 'Other' },
 };
-export const SPORT_ORDER: SportKey[] = ['bike', 'run', 'swim', 'row', 'strength', 'other'];
-/** Map any domain Sport to a ramp slot (hike/walk/yoga/ski/other share "other"). */
+export const SPORT_ORDER: SportKey[] = ['bike', 'run', 'swim', 'walk', 'strength', 'hike', 'row', 'ski', 'other'];
+const KEYS = new Set<string>(SPORT_ORDER);
+/** Map any domain Sport to a stack slot (yoga and unknown sports share "other"). */
 export function sportKey(s: string): SportKey {
-  return s === 'bike' || s === 'run' || s === 'swim' || s === 'row' || s === 'strength' ? s : 'other';
+  return KEYS.has(s) ? (s as SportKey) : 'other';
 }

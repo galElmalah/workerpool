@@ -7,7 +7,7 @@ import { duplicateNode, setRepeatCount, unwrapRepeat, updateNode, updateStep, ty
 import { AnimatePresence, Reorder, useDragControls } from 'motion/react';
 import { ChevronDown, Copy, GripVertical, Minus, Plus, Ungroup, X } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { IconButton, Menu, Popover } from '@/ui';
+import { IconButton, Menu, Popover, zoneColor } from '@/ui';
 import { cn } from '@/lib/cn';
 import { fmtClock } from '@cadence/core/workout';
 import { spring } from '@/motion/tokens';
@@ -111,7 +111,6 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
   const patch = (p: Partial<Step>) => b.apply((s) => updateStep(s, path, (st) => ({ ...st, ...p })));
   const hovered = b.hovered === step.id;
   const nested = path.length > 1;
-  void meta;
   return (
     <RowShell id={step.id} selected={selected} hovered={hovered} nested={nested}>
       <div className="flex min-h-12 flex-wrap items-center gap-1 py-1.5 pr-1.5 pl-1 sm:flex-nowrap" onPointerEnter={() => b.setHovered(step.id)} onPointerLeave={() => b.setHovered(null)}>
@@ -122,7 +121,11 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
           items={STEP_ROLES.map((r) => ({ label: roleLabel(r), checked: step.role === r, onSelect: () => patch({ role: r as StepRole }) }))}
           trigger={
             <button type="button" aria-label={`Step type: ${roleLabel(step.role)}`} className="inline-flex h-8 w-28 shrink-0 items-center justify-between gap-1 rounded-sm px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-3 hover:text-fg-1 data-[popup-open]:bg-surface-3">
-              <span className="truncate">{roleLabel(step.role)}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                {/* zone of this step's block in the profile (DESIGN_V2 §8.2: a dot, never an edge stripe) */}
+                {meta && <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: zoneColor(meta.level) }} title={`Zone ${meta.level}`} aria-hidden />}
+                <span className="truncate">{roleLabel(step.role)}</span>
+              </span>
               <ChevronDown className="size-3 shrink-0 text-fg-4 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100" />
             </button>
           }
@@ -279,9 +282,9 @@ function RepeatBlock({ node, path, meta, grip, selected }: { node: RepeatNode; p
         selected ? 'bg-surface-2' : 'bg-surface-1',
       )}
     >
-      <div className="group/row flex h-11 items-center gap-1 pr-0 pl-0">
+      <div className="group/row flex h-11 min-w-0 items-center gap-1 pr-0 pl-0">
         {grip}
-        <span className="w-[4.25rem] text-body-sm text-fg-2">Repeat</span>
+        <span className="w-[4.25rem] shrink-0 text-body-sm text-fg-2 max-sm:mr-1 max-sm:w-auto max-[359px]:sr-only">Repeat</span>
         <div className="flex h-8 items-center rounded-md bg-surface-3">
           <button type="button" aria-label="Fewer repeats" className="flex size-8 items-center justify-center rounded-md text-fg-3 transition-colors duration-(--dur-fast) hover:text-fg-1 disabled:opacity-30" disabled={node.count <= 1} onClick={() => setCount(node.count - 1)}>
             <Minus className="size-3.5" />
@@ -291,7 +294,7 @@ function RepeatBlock({ node, path, meta, grip, selected }: { node: RepeatNode; p
             <Plus className="size-3.5" />
           </button>
         </div>
-        {once > 0 && <span className="ml-3 text-body-sm text-fg-3">{fmtClock(once * node.count)}</span>}
+        {once > 0 && <span className="ml-3 shrink-0 text-body-sm text-fg-3 max-sm:hidden">{fmtClock(once * node.count)}</span>}
         <input
           aria-label="Repeat label"
           defaultValue={node.label ?? ''}
@@ -301,7 +304,7 @@ function RepeatBlock({ node, path, meta, grip, selected }: { node: RepeatNode; p
             const v = e.currentTarget.value.trim();
             if (v !== (node.label ?? '')) b.apply((s) => updateNode(s, path, (r) => ({ ...(r as RepeatNode), label: v || undefined }) as AnyNode));
           }}
-          className="ml-3 h-8 min-w-0 flex-1 rounded-sm bg-transparent px-1 text-body-sm text-fg-2 outline-none placeholder:text-fg-4 placeholder:opacity-0 group-hover/rep:placeholder:opacity-100 focus:placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus"
+          className="ml-3 h-8 min-w-0 flex-1 rounded-sm bg-transparent px-1 text-body-sm max-sm:ml-1 text-fg-2 outline-none placeholder:text-fg-4 placeholder:opacity-0 group-hover/rep:placeholder:opacity-100 focus:placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus"
         />
         <div className="flex shrink-0 items-center opacity-0 transition-opacity duration-(--dur-fast) group-hover/row:opacity-100 group-focus-within/row:opacity-100 pointer-coarse:opacity-100">
           <IconButton size="sm" label="Unwrap repeat" icon={<Ungroup />} onClick={() => b.apply((s) => unwrapRepeat(s, path), { label: 'Unwrap' })} />

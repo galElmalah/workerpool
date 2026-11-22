@@ -24,7 +24,8 @@ export interface SectionProps {
 
 export function Section({ title, description, actions, variant = 'title', id, className, children, stagger = true }: SectionProps) {
   const head = (title || actions) && (
-    <header className={cn('flex items-end justify-between gap-4', variant === 'title' ? 'mb-4 md:mb-5' : 'mb-3')}>
+    // Wraps on narrow screens: the actions drop under the title instead of pushing it (DESIGN_V2 §9).
+    <header className={cn('flex flex-wrap items-end justify-between gap-x-4 gap-y-3', variant === 'title' ? 'mb-4 md:mb-5' : 'mb-3')}>
       <div className="min-w-0">
         {title &&
           (variant === 'title' ? (
@@ -34,7 +35,7 @@ export function Section({ title, description, actions, variant = 'title', id, cl
           ))}
         {description && <p className="mt-1 max-w-[65ch] text-body text-fg-2">{description}</p>}
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
   const body = (

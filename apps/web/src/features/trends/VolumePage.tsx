@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn';
 import { formatNumber, formatPercent } from '@/lib/format';
 import { distanceUnit, useUnits } from '@/lib/units';
 import { spring } from '@/motion/tokens';
-import { DeltaBadge, Section, Segmented, SportGlyph } from '@/ui';
+import { bySportOrder, DeltaBadge, Section, Segmented, ShareBar, SportGlyph, sportColor } from '@/ui';
 import { filterWeeks, METRIC_NAME, rangeWeeks, trimLeading, useWeekly, type Metric } from './data';
 import { fmtHours } from './Overview';
 import { FilterPopover, InlineError, QuietTable, RangeControl, TrendsFrame, activeOf, qtCell, qtRow, sportFilter, sportGroup, useTrendsSearch } from './shared';
@@ -160,8 +160,15 @@ function SportTable({ raw, n, metric }: { raw: WeekSummary[]; n: number; metric:
     .sort((a, b) => b.sec - a.sec);
   const totalSec = rows.reduce((a, r) => a + r.sec, 0) || 1;
   if (!rows.length) return <p className="text-body text-fg-3">No completed sessions in this range.</p>;
+  const shares = [...rows].sort((a, b) => bySportOrder(a.sp, b.sp));
   return (
-    <QuietTable
+    <div className="flex flex-col gap-4">
+      <ShareBar
+        height={8}
+        aria-label={`Time by sport: ${shares.map((r) => `${SPORT_META[r.sp].label} ${formatPercent(r.sec / totalSec)}`).join(', ')}`}
+        parts={shares.map((r) => ({ key: r.sp, value: r.sec, color: sportColor(r.sp), label: `${SPORT_META[r.sp].label} ${formatPercent(r.sec / totalSec)}` }))}
+      />
+      <QuietTable
       minWidth={560}
       head={[{ label: 'Sport' }, { label: 'Sessions', numeric: true }, { label: 'Time', numeric: true }, { label: 'Distance', numeric: true }, { label: 'Load', numeric: true }, { label: `${METRIC_NAME[metric]} vs last year`, numeric: true }]}
     >
@@ -183,7 +190,8 @@ function SportTable({ raw, n, metric }: { raw: WeekSummary[]; n: number; metric:
           </td>
         </tr>
       ))}
-    </QuietTable>
+      </QuietTable>
+    </div>
   );
 }
 
@@ -260,7 +268,7 @@ function YearLines({ a, b, labelA, labelB, fmt }: { a: (number | null)[]; b: (nu
             </text>
           ))}
           <MorphPath d={path(b)} fill="none" transition={spring.gentle} className="stroke-fg-3" style={{ strokeWidth: 1.25, strokeDasharray: '2 3' }} />
-          <MorphPath d={path(a)} fill="none" transition={spring.gentle} className="stroke-accent" style={{ strokeWidth: 2 }} />
+          <MorphPath d={path(a)} fill="none" transition={spring.gentle} className="stroke-series-1" style={{ strokeWidth: 2 }} />
           {lb && (
             <text x={lb.x + 6} y={lb.y} dominantBaseline="central" className="fill-fg-3 text-label font-normal">
               ’{labelB.slice(2)} {fmt(lb.v)}
@@ -268,7 +276,7 @@ function YearLines({ a, b, labelA, labelB, fmt }: { a: (number | null)[]; b: (nu
           )}
           {la && (
             <g>
-              <motion.circle cx={la.x} cy={la.y} r={3.5} className="fill-accent" initial={false} animate={{ cx: la.x, cy: la.y }} transition={spring.gentle} />
+              <motion.circle cx={la.x} cy={la.y} r={3.5} className="fill-series-1" initial={false} animate={{ cx: la.x, cy: la.y }} transition={spring.gentle} />
               <text x={la.x + 7} y={la.y - (lb && Math.abs(lb.y - la.y) < 14 ? 8 : 0)} dominantBaseline="central" className="fill-fg-1 text-label">
                 ’{labelA.slice(2)} {fmt(la.v)}
               </text>

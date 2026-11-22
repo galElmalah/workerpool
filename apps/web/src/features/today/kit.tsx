@@ -24,6 +24,7 @@ import { onSpotlightMove } from '@/motion/pointer';
 import { spring, tween } from '@/motion/tokens';
 import {
   Button,
+  cardTone,
   ComplianceBar,
   ComplianceGlyph,
   complianceLabel,
@@ -36,6 +37,7 @@ import {
   SaveIndicator,
   Skeleton,
   SportGlyph,
+  sportVars,
   Textarea,
   toast,
   type SaveStatus,
@@ -737,8 +739,12 @@ export function SessionCard({
   const footer = logged || (a && showLog) || send;
   return (
     <div
-      className={cn('spotlight group/sc relative flex min-w-0 flex-col rounded-lg bg-surface-1 transition-colors duration-(--dur-fast) hover:bg-surface-2/50', className)}
-      style={vt(on, 'card')}
+      className={cn(
+        'spotlight group/sc relative flex min-w-0 flex-col rounded-lg transition-colors duration-(--dur-fast)',
+        cardTone(state).tone === 'done' ? 'bg-sport-tint hover:bg-sport-tint-hover' : 'bg-surface-1 hover:bg-surface-2/50',
+        className,
+      )}
+      style={{ ...sportVars(m.sport), ...vt(on, 'card') }}
       onPointerMove={onSpotlightMove}
     >
       <Link
@@ -750,7 +756,7 @@ export function SessionCard({
         )}
       >
         <div className="flex items-start gap-3">
-          <SportGlyph sport={m.sport} subSport={m.subSport ?? undefined} size={20} className="mt-1 shrink-0 text-fg-2" style={vt(on, 'glyph')} />
+          <SportGlyph sport={m.sport} subSport={m.subSport ?? undefined} size={20} neutral={s.dim} className="mt-1 shrink-0 text-fg-2" style={vt(on, 'glyph')} />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <h3 className={cn('text-title-2 [overflow-wrap:anywhere]', s.dim ? 'text-fg-3' : 'text-fg-1', s.title)} style={vt(on, 'title')}>
               {m.title}

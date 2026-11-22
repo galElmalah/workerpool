@@ -45,8 +45,8 @@ const OVERLAY_SCRIPT = `
     @keyframes demo-ripple { from { transform: scale(.25); opacity: .9 } to { transform: scale(1); opacity: 0 } }
     #demo-caption { position: fixed; left: var(--demo-cx, 50%); bottom: 36px; z-index: 2147483645; pointer-events: none; transform: translate(-50%, 12px);
       opacity: 0; transition: opacity .35s ease, transform .45s cubic-bezier(.2,.8,.2,1); max-width: min(var(--demo-cw, 980px), 86vw);
-      padding: 14px 22px; border-radius: 16px; background: rgba(10,10,10,.78); backdrop-filter: blur(18px) saturate(1.4);
-      border: 1px solid rgba(255,255,255,.14); color: #fff; font: 500 19px/1.3 'Geist Variable', system-ui, sans-serif;
+      padding: 14px 22px; border-radius: 16px; background: rgba(18,20,25,.8); backdrop-filter: blur(18px) saturate(1.4);
+      border: 1px solid rgba(255,255,255,.14); color: #ecedef; font: 500 19px/1.3 'Geist Variable', system-ui, sans-serif;
       letter-spacing: -0.01em; text-align: center; }
     #demo-caption.on { opacity: 1; transform: translate(-50%, 0); }
     #demo-caption.top { bottom: auto; top: 30px; transform: translate(-50%, -12px); }
@@ -56,15 +56,15 @@ const OVERLAY_SCRIPT = `
     #demo-keys.on { opacity: 1; transform: none; }
     #demo-keys kbd { min-width: 34px; height: 34px; padding: 0 10px; display: grid; place-items: center; border-radius: 9px; background: rgba(18,18,18,.88);
       border: 1px solid rgba(255,255,255,.2); box-shadow: inset 0 -2px 0 rgba(255,255,255,.08); color: #fff; font: 600 15px/1 'Geist Mono Variable', ui-monospace, monospace; }
-    #demo-fade { position: fixed; inset: 0; z-index: 2147483643; pointer-events: none; background: #000; opacity: 0; transition: opacity .6s ease; }
+    #demo-fade { position: fixed; inset: 0; z-index: 2147483643; pointer-events: none; background: #0f1115; opacity: 0; transition: opacity .6s ease; }
     #demo-fade.on { opacity: 1; }
     #demo-caption small { display: block; margin-top: 4px; font: 400 14.5px/1.35 'Geist Variable', system-ui, sans-serif; color: rgba(255,255,255,.66); letter-spacing: 0; }
-    #demo-card { position: fixed; inset: 0; z-index: 2147483644; pointer-events: none; display: grid; place-items: center; background: #000;
+    #demo-card { position: fixed; inset: 0; z-index: 2147483644; pointer-events: none; display: grid; place-items: center; background: #0f1115;
       opacity: 0; transition: opacity .5s ease; color: #fff; text-align: center; }
     #demo-card.on { opacity: 1; }
     #demo-card h1 { margin: 0; font: 600 76px/1 'Geist Variable', system-ui, sans-serif; letter-spacing: -0.045em; }
     #demo-card p { margin: 22px auto 0; max-width: 820px; font: 400 23px/1.4 'Geist Variable', system-ui, sans-serif; color: rgba(255,255,255,.62); letter-spacing: -0.01em; }
-    #demo-card .k { display: inline-block; margin-bottom: 26px; font: 600 13px/1 'Geist Mono Variable', ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; color: #34f47a; }
+    #demo-card .k { display: inline-block; margin-bottom: 26px; font: 600 13px/1 'Geist Mono Variable', ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; color: #8fb4ec; }
   \`;
   const mount = () => {
     document.documentElement.appendChild(css);

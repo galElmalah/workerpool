@@ -1,5 +1,6 @@
 /**
- * IntensityDistribution — per-week 100 % stacked easy / moderate / hard on the zone ramp, with
+ * IntensityDistribution — per-week 100 % stacked easy / moderate / hard in zone colours (easy z2,
+ * moderate z3, hard z5 — the zones of endurance, tempo and high; 2px surface gaps), with
  * a quiet target reference, a classification label and direct labels at the right end (no
  * legend); ZoneBars — horizontal time-in-zone rows. product.md §6.1 row 4, §5.1 item 8.
  */
@@ -47,8 +48,8 @@ export const weeksToSplits = (weeks: WeekSummary[]): IntensitySplit[] => weeks.m
 
 const BUCKETS = [
   { k: 'easy' as const, label: 'Easy', zone: 2 },
-  { k: 'moderate' as const, label: 'Moderate', zone: 4 },
-  { k: 'hard' as const, label: 'Hard', zone: 6 },
+  { k: 'moderate' as const, label: 'Moderate', zone: 3 },
+  { k: 'hard' as const, label: 'Hard', zone: 5 },
 ];
 
 export interface IntensityDistributionProps {
@@ -154,7 +155,7 @@ function IDInner({ items, width, height, target = DEFAULT_TARGET, sync: ext, onI
               {BUCKETS.map((b, k) => {
                 const f = it[b.k] / s;
                 const y1 = y(base + f);
-                const y0 = y(base) - (k ? 1 : 0);
+                const y0 = y(base) - (k ? 2 : 0);
                 base += f;
                 return (
                   <g key={b.k}>
@@ -219,11 +220,14 @@ function Tip({ items, keys, sync, xc, width }: { items: IntensitySplit[]; keys: 
 
 // ───────────────────────────── ZoneBars ─────────────────────────────
 
-/** Map zone i (1-based) of an N-zone model onto the z1..z7 fill ladder. */
+/**
+ * Map zone i (1-based) of an N-zone model onto the z1..z7 colours (DESIGN_V2 §8.2). Zone colours
+ * are familiar, not a lightness ramp, so Z1..Z7 keep their own colour in any model up to 7 zones;
+ * a 3-zone model reads as easy z2 · moderate z3 · hard z5.
+ */
 export function zoneFill(i: number, count: number): number {
-  if (count === 7) return i;
-  if (count === 5) return [1, 2, 3, 5, 7][i - 1] ?? 7;
-  if (count === 3) return [2, 4, 7][i - 1] ?? 7;
+  if (count === 3) return [2, 3, 5][i - 1] ?? 5;
+  if (count <= 7) return Math.max(1, Math.min(7, i));
   return Math.round(1 + ((i - 1) * 6) / Math.max(1, count - 1));
 }
 

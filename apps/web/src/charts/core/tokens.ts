@@ -1,6 +1,7 @@
 /**
  * Token access for charts. SVG marks use `T.*` (CSS var references, so they follow the
- * theme and the accent with zero JS). Canvas renderers call `useCanvasTokens()`, which
+ * theme and the accent with zero JS) — including the data colours of DESIGN_V2 §8
+ * (`T.series1..3`, `T.sport(s)`, `T.zone(n)`, `T.good|warn|serious|critical`). Canvas renderers call `useCanvasTokens()`, which
  * resolves the same tokens to concrete colour strings the 2D context accepts and re-resolves
  * whenever `<html data-theme | data-accent | class | style>` changes.
  *
@@ -36,18 +37,69 @@ export const T = {
   a7: 'var(--color-accent-a7)',
   gray: (n: number) => `var(--color-gray-${n})`,
   zone: (n: number) => `var(--color-z${Math.max(1, Math.min(7, Math.round(n)))})`,
+  /** Data colour (DESIGN_V2 §8): chart series in fixed order — Fitness, Fatigue, Form, then any multi-series chart. */
+  series1: 'var(--color-series-1)',
+  series2: 'var(--color-series-2)',
+  series3: 'var(--color-series-3)',
+  /** Sport identity colour (`--color-sport-*`; yoga / other / unknown are neutral). */
+  sport: (s: string) =>
+    `var(--color-sport-${['bike', 'run', 'swim', 'walk', 'strength', 'hike', 'row', 'ski', 'yoga'].includes(s) ? s : 'other'})`,
+  /** Per-metric stream colour (see METRIC_COLOR). */
+  metric: (k: string) => METRIC_COLOR[k as StreamMetric] ?? 'var(--color-fg-3)',
+  /** Status (always with an icon or a word). */
+  good: 'var(--color-good)',
+  warn: 'var(--color-warn)',
+  serious: 'var(--color-serious)',
+  critical: 'var(--color-critical)',
   /** @deprecated v2 charts use the sans for numbers too; kept as an alias of `sans`. */
   mono: 'var(--font-sans)',
   sans: 'var(--font-sans)',
 } as const;
 
+/**
+ * One colour per activity metric, the same in every chart, map and readout (DESIGN_V2 §8; the
+ * categorical hues of the validated palette): power = blue (series-1), heart rate = red,
+ * pace / speed = aqua (series-3), cadence = violet, elevation = a neutral area. Text stays ink.
+ */
+export type StreamMetric = 'power' | 'hr' | 'speed' | 'pace' | 'cadence' | 'altitude';
+export const METRIC_COLOR: Record<StreamMetric, string> = {
+  power: 'var(--color-series-1)',
+  hr: 'var(--c-red)',
+  speed: 'var(--color-series-3)',
+  pace: 'var(--color-series-3)',
+  cadence: 'var(--c-violet)',
+  altitude: 'var(--color-fg-4)',
+};
+
 /** The one text style for chart labels and ticks: 12px sans, tabular figures (DESIGN_V2 §3). */
 export const TXT = { fontFamily: T.sans, fontSize: 12, fontWeight: 400, letterSpacing: 0, fontVariantNumeric: 'tabular-nums' } as const;
 
-export type Tone = 'accent' | 'fg1' | 'fg2' | 'fg3' | 'fg4';
-export const toneStroke: Record<Tone, string> = { accent: T.accent, fg1: T.fg1, fg2: T.fg2, fg3: T.fg3, fg4: T.fg4 };
-/** Text colour for a tone: accent text must use accent-ink (light-theme contrast). */
-export const toneText: Record<Tone, string> = { accent: T.accentInk, fg1: T.fg1, fg2: T.fg2, fg3: T.fg3, fg4: T.fg3 };
+export type Tone = 'accent' | 'fg1' | 'fg2' | 'fg3' | 'fg4' | 'series1' | 'series2' | 'series3' | 'good' | 'warn';
+export const toneStroke: Record<Tone, string> = {
+  accent: T.accent,
+  fg1: T.fg1,
+  fg2: T.fg2,
+  fg3: T.fg3,
+  fg4: T.fg4,
+  series1: T.series1,
+  series2: T.series2,
+  series3: T.series3,
+  good: T.good,
+  warn: T.warn,
+};
+/** Text colour for a tone: accent text must use accent-ink (light-theme contrast); data colours never colour text. */
+export const toneText: Record<Tone, string> = {
+  accent: T.accentInk,
+  fg1: T.fg1,
+  fg2: T.fg2,
+  fg3: T.fg3,
+  fg4: T.fg3,
+  series1: T.fg2,
+  series2: T.fg2,
+  series3: T.fg2,
+  good: T.fg2,
+  warn: T.fg2,
+};
 
 export interface CanvasTokens {
   canvas: string;
@@ -68,6 +120,17 @@ export interface CanvasTokens {
   a3: string;
   a6: string;
   zones: string[]; // z1..z7
+  /** series-1..3 */
+  series: string[];
+  /** Resolved `--color-sport-*` by sport id (bike, run, swim, walk, strength, hike, row, ski, yoga, other). */
+  sports: Record<string, string>;
+  good: string;
+  warn: string;
+  serious: string;
+  critical: string;
+  /** Resolved METRIC_COLOR, plus a ≤ 12% → 2% fade pair for the area under a metric line. */
+  metrics: Record<StreamMetric, string>;
+  metricFade: Record<StreamMetric, [string, string]>;
   /** @deprecated alias of `sans` (v2: no mono in charts). */
   mono: string;
   sans: string;
@@ -143,6 +206,16 @@ function read(): CanvasTokens {
     a3: v('--color-accent-a3'),
     a6: v('--color-accent-a6'),
     zones: [1, 2, 3, 4, 5, 6, 7].map((i) => v(`--color-z${i}`)),
+    series: [1, 2, 3].map((i) => v(`--color-series-${i}`)),
+    sports: Object.fromEntries(['bike', 'run', 'swim', 'walk', 'strength', 'hike', 'row', 'ski', 'yoga', 'other'].map((k) => [k, v(`--color-sport-${k}`)])),
+    good: v('--color-good'),
+    warn: v('--color-warn'),
+    serious: v('--color-serious'),
+    critical: v('--color-critical'),
+    metrics: Object.fromEntries(Object.entries(METRIC_COLOR).map(([k, c]) => [k, resolveColor(c)])) as Record<StreamMetric, string>,
+    metricFade: Object.fromEntries(
+      Object.entries(METRIC_COLOR).map(([k, c]) => [k, [resolveColor(`color-mix(in srgb, ${c} 12%, transparent)`), resolveColor(`color-mix(in srgb, ${c} 2%, transparent)`)]]),
+    ) as Record<StreamMetric, [string, string]>,
     mono: cs.getPropertyValue('--font-sans').trim() || 'sans-serif',
     sans: cs.getPropertyValue('--font-sans').trim() || 'sans-serif',
     theme: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',

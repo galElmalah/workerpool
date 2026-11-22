@@ -35,7 +35,7 @@ export function Popover({ trigger, children, side = 'bottom', align = 'start', o
       <BasePopover.Trigger render={trigger} openOnHover={openOnHover} />
       <BasePopover.Portal>
         <BasePopover.Positioner side={side} align={align} sideOffset={8} collisionPadding={12} className="z-(--z-popover)">
-          <BasePopover.Popup className={cn('ui-popup max-w-80 rounded-lg p-2', className)}>
+          <BasePopover.Popup className={cn('ui-popup max-h-(--available-height) max-w-[min(20rem,var(--available-width))] overflow-y-auto overscroll-contain rounded-lg p-2', className)}>
             {title && <BasePopover.Title className={showTitle ? 'px-1 pb-2 text-label font-normal text-fg-3' : 'sr-only'}>{title}</BasePopover.Title>}
             {typeof children === 'function' ? children(() => set(false)) : children}
           </BasePopover.Popup>

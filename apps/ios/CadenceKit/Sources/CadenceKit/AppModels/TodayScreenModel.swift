@@ -47,6 +47,7 @@ public struct WellnessModel: Hashable, Sendable {
 
 /// One small compliance mark in the week strip.
 public struct StripMark: Hashable, Sendable {
+    public var state: ComplianceState
     public var symbol: String
     public var isDim: Bool
 }
@@ -157,7 +158,7 @@ extension TodayScreenModel {
         let weekLabel = Day(t.date).map { Format.weekLabel($0.isoWeek) } ?? ""
         let pending = t.pendingLogs.filter { $0.localDate != t.date }.map {
             PendingLogItem(activityId: $0.id, sport: $0.sport, title: $0.title.isEmpty ? $0.sport.label : $0.title,
-                           dayText: weekdayLong($0.localDate), rpe: $0.rpe, feel: $0.feel, note: $0.postNote)
+                           dayText: weekdayName($0.localDate), rpe: $0.rpe, feel: $0.feel, note: $0.postNote)
         }
         return TodayScreenModel(
             date: t.date,
@@ -248,8 +249,8 @@ extension TodayScreenModel {
 
     public static func week(_ w: WeekSummary, strip: [WeekStripDay]) -> WeekStripModel {
         let days = strip.map { d -> StripDay in
-            let marks = d.states.prefix(2).map { s in StripMark(symbol: s.statusSymbol, isDim: s == .missed || s == .excused || s == .planned) }
-            var spoken = "\(weekdayLong(d.date)): \(d.doneCount) done of \(d.plannedCount) planned"
+            let marks = d.states.prefix(2).map { s in StripMark(state: s, symbol: s.statusSymbol, isDim: s == .missed || s == .excused || s == .planned) }
+            var spoken = "\(weekdayName(d.date)): \(d.doneCount) done of \(d.plannedCount) planned"
             if d.hasKey { spoken += ", key session" }
             if d.isToday { spoken += ", today" }
             return StripDay(date: d.date, label: String(Format.weekdayShort(d.date).prefix(2)), isToday: d.isToday,
@@ -303,7 +304,7 @@ extension TodayScreenModel {
 }
 
 /// "Wednesday"
-func weekdayLong(_ date: LocalDate) -> String {
+func weekdayName(_ date: LocalDate) -> String {
     guard let d = Day(date) else { return Format.placeholder }
     return Format.weekdaysLong[d.isoWeekday - 1]
 }

@@ -1,7 +1,6 @@
 /**
  * ConsistencyHeatmap — GitHub-style year grid of daily load: 7 rows × N weeks, small rounded
- * cells with small gaps, the opaque zone ramp z1…z4 at load quartiles (soft, never the full
- * accent), rest days a faint surface step, today a thin neutral ring. Key sessions and
+ * cells with small gaps, one-hue accent tints (16 → 85 %) at load quartiles, rest days a faint surface step, today a thin neutral ring. Key sessions and
  * planned-but-missed days are in the hover tooltip. Streak callouts per product.md §6.1 row 5.
  */
 import { useCallback, useId, useMemo } from 'react';
@@ -37,7 +36,8 @@ export interface ConsistencyHeatmapProps {
 }
 
 /** Load quartiles → the lower half of the opaque zone ramp (soft; the bright steps stay for intensity). */
-const ALPHAS = [T.zone(1), T.zone(2), T.zone(3), T.zone(4)];
+/** One hue (DESIGN_V2 §8): accent tints at load quartiles — never the zone colours. */
+const ALPHAS = [T.a3, T.a5, T.a6, T.a7];
 
 /** Streaks: consecutive weeks with ≥ minSessions, and days since last full rest day. */
 export function computeStreaks(days: HeatDay[], today: LocalDate, minSessions = 3) {

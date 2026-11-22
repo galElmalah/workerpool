@@ -42,7 +42,9 @@ import {
   StatRow,
   StatTile,
   Slider,
+  TableScroll,
   SportGlyph,
+  sportColor,
   Textarea,
   WorkoutCard,
   complianceLabel,
@@ -268,7 +270,7 @@ function WowLine({ s, p, mode, caution }: { s: WeekSummary; p: WeekSummary; mode
       ))}
       {caution && (
         <span className="inline-flex items-center gap-1.5 text-fg-1">
-          <TriangleAlert className="size-3.5" aria-hidden /> Load rose more than 15 %.
+          <TriangleAlert className="size-3.5 text-warn" aria-hidden /> Load rose more than 15 %.
         </span>
       )}
     </p>
@@ -436,7 +438,7 @@ function BySport({ s, mode }: { s: WeekSummary; mode: Mode }) {
   };
   const future = mode === 'future';
   return (
-    <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+    <TableScroll bleed label="Time by sport">
       <table className="w-full min-w-[560px] text-left">
         <thead>
           <tr className="border-b border-line-1 text-label text-fg-3">
@@ -465,7 +467,7 @@ function BySport({ s, mode }: { s: WeekSummary; mode: Mode }) {
                 <td className="pl-6">
                   <span className="flex items-center gap-2">
                     <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-3">
-                      <motion.span className="block h-full origin-left rounded-full bg-fg-2" initial={{ scaleX: 0 }} animate={{ scaleX: r.doneSec / totalDone }} transition={spring.gentle} />
+                      <motion.span className="block h-full origin-left rounded-full" style={{ backgroundColor: sportColor(r.sport) }} initial={{ scaleX: 0 }} animate={{ scaleX: r.doneSec / totalDone }} transition={spring.gentle} />
                     </span>
                     <span className="w-9 text-right text-body-sm text-fg-3">{Math.round((r.doneSec / totalDone) * 100)}%</span>
                   </span>
@@ -475,7 +477,7 @@ function BySport({ s, mode }: { s: WeekSummary; mode: Mode }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScroll>
   );
 }
 
@@ -531,7 +533,12 @@ function Balance({ data }: { data: WeekBundle }) {
                 {r.cur == null ? '—' : r.fmt(r.cur)}
                 <span className="text-body-sm text-fg-3">{r.unit}</span>
               </span>
-              <DeltaBadge value={r.cur != null && r.prev ? r.cur / r.prev - 1 : null} size="sm" good={r.cur != null && r.prev != null && (r.higherGood ? r.cur > r.prev : r.cur < r.prev)} />
+              <DeltaBadge
+                value={r.cur != null && r.prev ? r.cur / r.prev - 1 : null}
+                size="sm"
+                good={r.cur != null && r.prev != null && (r.higherGood ? r.cur > r.prev : r.cur < r.prev)}
+                bad={r.cur != null && r.prev != null && (r.higherGood ? r.cur < r.prev : r.cur > r.prev)}
+              />
             </div>
           ))}
         </div>

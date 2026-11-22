@@ -188,7 +188,7 @@ public struct SessionCardModel: Hashable, Sendable, Identifiable {
         self.rpe = a?.rpe
         self.feel = a?.feel
         self.postNote = a?.postNote
-        self.canSendToWatch = a == nil && w != nil && w?.status != .skipped && state != .missed
+        self.canSendToWatch = a == nil && w != nil && w?.pairedActivityId == nil && w?.status != .skipped && state != .missed
         self.garmin = a == nil ? w?.garmin : nil
         self.environmentText = a == nil ? w?.environment.label : nil
         self.isEditableWorkout = a == nil && w != nil

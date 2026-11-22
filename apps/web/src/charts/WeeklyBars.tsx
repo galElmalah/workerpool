@@ -1,6 +1,6 @@
 /**
- * WeeklyBars — weekly volume (load / hours / distance) stacked by sport with the monochrome
- * sport ramp, faint planned ghosts, current-week remainder and a 4-week rolling average.
+ * WeeklyBars — weekly volume (load / hours / distance) stacked by sport in the sport colours
+ * (fixed order, 2px surface gaps, legend; DESIGN_V2 §8.1), faint planned ghosts, current-week remainder and a 4-week rolling average.
  * WoW deltas and targets are opt-in (they are always in the hover tooltip).
  * product.md §6.1 row 3; v2 look per DESIGN_V2 §5 "Charts".
  */
@@ -35,8 +35,10 @@ export interface WeeklyBarsProps {
   defaultMetric?: WeeklyMetric;
   onMetricChange?: (m: WeeklyMetric) => void;
   showMetricToggle?: boolean;
-  /** 'sport' = grayscale ramp stack (default); 'total' = one neutral bar per week, the current week in accent. */
+  /** 'sport' = stacked in sport colours (default); 'total' = one bar per week (neutral, the current week in accent — or all in `totalColor`). */
   stack?: 'sport' | 'total';
+  /** stack='total': colour every bar with this (e.g. `T.sport('run')` on a one-sport page); the current week is then the same colour. */
+  totalColor?: string;
   showPlanned?: boolean;
   showRollingAvg?: boolean;
   /** Row of week-over-week deltas above the bars. Default false (v2; the tooltip always has it). */
@@ -144,6 +146,7 @@ function WeeklyInner({
   height,
   showMetricToggle = true,
   stack = 'sport',
+  totalColor,
   showPlanned = true,
   showRollingAvg = true,
   showWow = false,
@@ -316,10 +319,10 @@ function WeeklyInner({
                 />
               )}
               {stack === 'total' ? (
-                <motion.rect x={x} width={barW} rx={3} initial={{ y: plotB, height: 0 }} animate={{ y: y(done), height: plotB - y(done) }} transition={{ ...spring.gentle, delay }} style={{ fill: w.isProjected && i === n - 1 ? T.accent : T.fg4 }} />
+                <motion.rect x={x} width={barW} rx={3} initial={{ y: plotB, height: 0 }} animate={{ y: y(done), height: plotB - y(done) }} transition={{ ...spring.gentle, delay }} style={{ fill: totalColor ?? (w.isProjected && i === n - 1 ? T.accent : T.fg4) }} />
               ) : (
                 segs.map((sg, k) => {
-                  const gap = k === 0 ? 0 : 1;
+                  const gap = k === 0 ? 0 : 2; // 2px surface gap between stacked sports
                   const y0 = y(sg.v0) - gap;
                   const y1 = y(sg.v1);
                   const r = SPORT_RAMP[sg.s];
@@ -334,7 +337,7 @@ function WeeklyInner({
                         initial={{ y: plotB, height: 0 }}
                         animate={{ y: y1, height: Math.max(0, y0 - y1) }}
                         transition={{ ...spring.gentle, delay }}
-                        style={{ fill: hi ? T.accent : r.fill }}
+                        style={{ fill: r.fill }}
                       />
                       {r.pattern && !hi && (
                         <motion.rect
@@ -398,9 +401,10 @@ function WeeklyInner({
 
 function SportSwatch({ s, defs, active }: { s: SportKey; defs: ChartDefIds; active?: boolean }) {
   const r = SPORT_RAMP[s];
+  void active; // hovering a legend item dims the other sports in the plot; the swatch keeps its colour
   return (
     <svg width="10" height="10" aria-hidden className="shrink-0">
-      <rect width="10" height="10" rx="2.5" style={{ fill: active ? T.accent : r.fill }} />
+      <rect width="10" height="10" rx="2.5" style={{ fill: r.fill }} />
       {r.pattern && !active && <rect width="10" height="10" rx="2.5" style={{ fill: r.pattern === 'hatch' ? defs.hatchFgDense : defs.dotsFg }} />}
     </svg>
   );
@@ -413,7 +417,7 @@ function WowLabel({ x, y, value, caution }: { x: number; y: number; value: numbe
   return (
     <motion.g initial={{ opacity: 0, y: y + 4 }} animate={{ opacity: 1, y }} transition={spring.smooth} aria-hidden>
       <text x={x} y={0} textAnchor="middle" dominantBaseline="central" style={{ ...TXT, fill: caution ? T.fg1 : dir === 'up' ? T.fg2 : T.fg3, fontWeight: caution ? 500 : 400 }}>
-        {caution ? '⚠ ' : ''}
+        {caution && <tspan style={{ fill: T.warn }}>⚠ </tspan>}
         {text}
       </text>
     </motion.g>

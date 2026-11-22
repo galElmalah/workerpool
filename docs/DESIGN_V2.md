@@ -143,3 +143,43 @@ non-interactive cards).
 5. Works at 1440×900, 1024×768, 390×844, dark and light, all three accents. Keyboard and screen-reader
    names unchanged (keep `aria-label`s, headings and link names stable — the e2e suite and the demo
    recording script rely on them; list any visible string you had to rename in your report).
+
+## 8. Colour for data (v2.1 — the owner asked to "add some colors")
+
+The chrome stays neutral and the accent keeps its job (primary action, today, selection). **Colour now
+carries data meaning** in three fixed vocabularies. Values are tokens in `app.css`, taken from a validated
+categorical palette (fixed order, colour-blind-checked on both canvases). Where this section and §2/§5
+disagree (for example "done is neutral", "one accent series per chart", "intensity only for hard
+sessions"), this section wins.
+
+1. **Sport** — `sport-bike` blue, `sport-run` orange, `sport-swim` aqua, `sport-walk` yellow,
+   `sport-strength` magenta, `sport-hike` green, `sport-row` violet, `sport-ski` red; yoga and other stay
+   grey. Used for the sport glyph (the glyph itself is tinted), a soft 10–14% tint behind a *completed*
+   workout chip or card, stacked volume bars (stack in the order listed), by-sport breakdowns, route
+   lines and the season plan. A sport keeps its colour everywhere.
+2. **Intensity zones** — `z1` grey, `z2` blue, `z3` aqua, `z4` yellow, `z5` red, `z6` violet, `z7`
+   magenta. Intensity classes map recovery→z1, endurance→z2, tempo→z3, threshold→z4, high→z5, race→z6.
+   Used for the intensity dot (now shown for every session that has an intensity), step profiles,
+   time-in-zones, intensity distribution and zone tables. Always paired with a label, height or position.
+3. **Status** — `good` (on plan / done / improving where improving is good), `warn` (partial, over, ramp
+   caution), `serious`, `critical` (missed, error). Always with an icon or word; small marks only.
+4. **Chart series** — `series-1` blue = Fitness, `series-2` orange = Fatigue, `series-3` aqua = Form;
+   other multi-series charts take these three in order. Comparison/ghost series stay neutral.
+
+Rules that still hold: text is never coloured with a data colour (values and labels stay `fg-*`; the
+coloured mark sits beside them); no coloured edge stripes (rule 5); no large saturated areas — fills
+behind text are ≤ 14% tints; bars, lines, dots and glyphs carry the full colour; nothing glows. The
+heatmap stays one-hue (`accent` tints). If a view shows more than about four data colours at once outside
+a chart, something that is not data has been coloured — remove it.
+
+## 9. Scrolling and overflow (owner: "screens and tables are scrollable and not pushing things")
+
+- The page scrolls vertically; nothing ever causes horizontal page scroll at any width ≥ 320px.
+- A table never widens its page: it lives in its own `overflow-x: auto` container with the first column
+  kept visible where useful, a sticky header, and numeric columns that do not wrap. Long secondary
+  tables inside a page (laps, sync log, zone tables) get a max height with internal vertical scroll and a
+  sticky header, so they do not push the rest of the page away; the main list of a list page (activities,
+  journal) scrolls with the page and loads incrementally.
+- Side columns (asides) and the rail scroll independently when taller than the viewport; sticky bars
+  never cover content; long titles truncate or wrap instead of pushing siblings; charts and maps have a
+  fixed aspect or height and never resize the layout while loading (reserve space with skeletons).

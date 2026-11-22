@@ -95,7 +95,7 @@ function EventView({ ev }: { ev: Event }) {
       width="page"
       header={
         <PageHeader
-          title={<InlineEdit aria-label="Event name" value={ev.name} variant="title" className="w-[min(calc(100vw-7rem),56rem)]" onSave={(v) => patch.mutateAsync({ id: ev.id, patch: { name: v } })} />}
+          title={<InlineEdit aria-label="Event name" value={ev.name} variant="title" className="w-[min(calc(100vw-var(--rail-w)-7rem),56rem)]" onSave={(v) => patch.mutateAsync({ id: ev.id, patch: { name: v } })} />}
           titleText={ev.name}
           eyebrow={`${ev.priority} race · ${formatDateLong(ev.date, true)}${ev.location ? ` · ${ev.location}` : ''}`}
           glyph={<Flag className={cn('size-6', ev.priority === 'A' ? 'fill-fg-1 text-fg-1' : 'text-fg-3')} />}

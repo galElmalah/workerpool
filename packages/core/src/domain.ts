@@ -356,6 +356,8 @@ export const Activity = z.object({
   hasStreams: z.boolean(),
   /** ≤ 48 values 0..1, downsampled effort profile for the calendar card sparkline. */
   sparkline: z.array(z.number()).optional(),
+  /** Place name reported by Garmin (e.g. "Girona"); absent for FIT uploads, indoor and GPS-less sessions. */
+  locationName: z.string().optional(),
   createdAt: IsoInstant,
   updatedAt: IsoInstant,
 });
@@ -379,8 +381,106 @@ export const Lap = z.object({
   stroke: z.string().optional(),
   swolf: z.number().optional(),
   isRest: z.boolean().optional(),
+  // detail (all optional; present when the device / streams report them)
+  maxPower: z.number().optional(),
+  maxSpeedMps: z.number().optional(),
+  maxCadence: z.number().optional(),
+  elevationLossM: z.number().optional(),
+  avgTempC: z.number().optional(),
+  calories: z.number().optional(),
+  /** Swim strokes / row strokes in the lap. */
+  strokes: z.number().optional(),
+  // running dynamics
+  avgGroundContactMs: z.number().optional(),
+  avgVerticalOscillationCm: z.number().optional(),
+  avgVerticalRatioPct: z.number().optional(),
+  avgStrideLengthM: z.number().optional(),
 });
 export type Lap = z.infer<typeof Lap>;
+
+/** One pool length (FIT `length` message). Idle lengths are rests. */
+export const SwimLength = z.object({
+  index: z.number().int(),
+  /** Lap (interval) this length belongs to, when known. */
+  lapIndex: z.number().int().optional(),
+  startSec: z.number(),
+  durationSec: z.number(),
+  stroke: z.string().optional(),
+  strokes: z.number().optional(),
+  /** strokes / min */
+  strokeRate: z.number().optional(),
+  swolf: z.number().optional(),
+  isRest: z.boolean().optional(),
+});
+export type SwimLength = z.infer<typeof SwimLength>;
+
+/** A sensor paired during the activity (FIT `device_info`). `kind` is a short English noun phrase. */
+export const ActivitySensor = z.object({ kind: z.string(), name: z.string().optional() });
+export type ActivitySensor = z.infer<typeof ActivitySensor>;
+
+/**
+ * Everything else the device / Garmin reports (or Cadence derives from the streams) that is only
+ * shown on the activity page. Every field is optional: an absent fact is simply not shown.
+ */
+export const ActivityFacts = z.object({
+  // where
+  startLat: z.number().optional(),
+  startLng: z.number().optional(),
+  endLat: z.number().optional(),
+  endLng: z.number().optional(),
+  timezone: z.string().optional(), // IANA
+  // time
+  timerSec: z.number().optional(),
+  pausedSec: z.number().optional(),
+  pauseCount: z.number().int().optional(),
+  // speed
+  maxSpeedMps: z.number().optional(),
+  // elevation
+  elevationLossM: z.number().optional(),
+  minAltitudeM: z.number().optional(),
+  maxAltitudeM: z.number().optional(),
+  /** Steepest sustained climb / descent in percent (descent negative). */
+  maxGradePct: z.number().optional(),
+  minGradePct: z.number().optional(),
+  // heart rate
+  minHr: z.number().optional(),
+  // power
+  /** Left share of total power, percent (50 = balanced). */
+  powerBalanceLeftPct: z.number().optional(),
+  // cadence
+  maxCadence: z.number().optional(),
+  // running dynamics
+  avgGroundContactMs: z.number().optional(),
+  /** Left share of ground contact time, percent. */
+  avgGroundContactBalanceLeftPct: z.number().optional(),
+  avgVerticalOscillationCm: z.number().optional(),
+  avgVerticalRatioPct: z.number().optional(),
+  avgStrideLengthM: z.number().optional(),
+  steps: z.number().optional(),
+  // swim / row
+  activeLengths: z.number().optional(),
+  avgStrokesPerLength: z.number().optional(),
+  avgDistancePerStrokeM: z.number().optional(),
+  /** Total strokes for sports other than swimming (rowing). */
+  totalStrokes: z.number().optional(),
+  // conditions
+  avgTempC: z.number().optional(),
+  minTempC: z.number().optional(),
+  maxTempC: z.number().optional(),
+  // energy & effect
+  /** Garmin's EPOC-based training load (not Cadence Load). */
+  deviceLoad: z.number().optional(),
+  /** Garmin's primary training benefit, e.g. "TEMPO", "VO2MAX". */
+  trainingEffectLabel: z.string().optional(),
+  sweatLossMl: z.number().optional(),
+  // device
+  deviceName: z.string().optional(),
+  deviceSoftware: z.string().optional(),
+  sensors: z.array(ActivitySensor).optional(),
+  /** Sport profile used on the device ("Road Bike", "Pool Swim"). */
+  sportProfile: z.string().optional(),
+});
+export type ActivityFacts = z.infer<typeof ActivityFacts>;
 
 export const ZoneTime = z.object({
   zone: z.number().int(), // 1-based
@@ -436,6 +536,10 @@ export const ActivityDetail = Activity.extend({
     efforts: z.array(BestEffort).optional(),
   }),
   strengthSets: z.array(StrengthSet).optional(),
+  /** Device-reported and stream-derived extras (location, dynamics, temperature, device…). */
+  facts: ActivityFacts.optional(),
+  /** Pool swims: every length. */
+  swimLengths: z.array(SwimLength).optional(),
   thresholdsUsed: ThresholdSnapshot,
   plannedWorkout: PlannedWorkout.optional(),
   /** The previous activity of the same sport with similar duration, for comparison. */

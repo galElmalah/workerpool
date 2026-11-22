@@ -252,6 +252,8 @@ export const activitiesRoutes = new Hono<AppEnv>()
       thresholdsUsed: extras.thresholdsUsed,
     };
     if (extras.strengthSets) detail.strengthSets = extras.strengthSets;
+    if (Object.keys(extras.facts).length) detail.facts = extras.facts;
+    if (extras.swimLengths) detail.swimLengths = extras.swimLengths;
     if (workout) detail.plannedWorkout = (await withCompliance(c.env, [workout], [activity]))[0];
     if (previous) detail.previousSimilar = previous;
     return c.json(detail);

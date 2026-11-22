@@ -16,4 +16,5 @@ export * from './fitness';
 export * from './thresholds';
 export * from './weekly';
 export * from './wellness';
+export * from './facts';
 export { roundHalfAway, type NumSeries } from './util';

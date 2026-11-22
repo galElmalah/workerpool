@@ -120,7 +120,8 @@ Mechanics that matter:
 | `Card` | `title`, `eyebrow`, `actions`, `footer`, `spotlight`, `selected`, `interactive`, `padding: md(24)\|sm(16)\|none`, `level` | surface-1, no border, flat. `interactive` → hover step + neutral spotlight (default only then); `selected` → surface-3; `level={2}` → nested surface-2 well. `spotlight='accent'` renders neutral |
 | `StatTile` (+`.Skeleton`) | `label`, `value`, `format`, `unit`, `delta`, `deltaKind`, `deltaSuffix`, `good`, `warning`, `hint`, `sparkline`, `size: sm\|md\|lg\|xl`, `variant: plain\|card` | plain by default (no box); value always fg-1 (`signal` ignored); ONE context line = delta + hint; sizes 20/28/44/44 |
 | `StatRow` | `card`, `columns: 2\|3\|4` | a row of tiles on the canvas, or sharing one surface-1 card (`card`) |
-| `Table` | `rows`, `columns[{key,header,cell,numeric,sortValue,width,hideBelow}]`, `rowKey`, `onRowClick`, `selectedKey`, `defaultSort`, `totals`, `surface` | 44px rows, line-1 rules, `label fg-3` headers, sticky under the bar; selected = surface-3 (no rail); ≤ 6 columns |
+| `Table` | `rows`, `columns[{key,header,cell,numeric,sortValue,width,hideBelow}]`, `rowKey`, `onRowClick`, `selectedKey`, `defaultSort`, `totals`, `surface`, `maxHeight`, `minWidth`, `stickyFirstColumn` | own `overflow-x:auto` box (never widens the page), header sticky inside it, numeric cells nowrap; `maxHeight` = internal vertical scroll for secondary tables; 44px rows, line-1 rules; ≤ 6 columns |
+| `TableScroll` | `maxHeight`, `label`, `surface`, `bleed` | the same scroll box for hand-written `<table>`s (sticky `thead th`) |
 | `Meter`/`ProgressBar` | `value`, `max`, `target` (tick), `ghost` (done+remaining), `label`, `valueLabel`, `tone: fg\|accent` | neutral fill by default (progress/done is never accent) |
 | `Tooltip` | `content`, `kbd`, `side` — child must accept ref | supplementary only |
 | `Popover` | `trigger`, `children \| (close) => …`, `title` | pickers ≤ 320px |
@@ -140,13 +141,16 @@ Mechanics that matter:
 
 | Atom | Use |
 |---|---|
-| `SportGlyph sport subSport size(14/16/20/24/32) withLabel` | THE only way to draw a sport. Indoor sub-sports get a corner dot. |
-| `IntensityPips intensity size` / `IntensityPicker value onValueChange` | 5 bars on the zone ladder; race = flag. |
+| `SportGlyph sport subSport size(14/16/20/24/32) withLabel neutral` | THE only way to draw a sport. The glyph wears its sport colour (DESIGN_V2 §8.1; label stays ink); `neutral` for missed/skipped or filled controls. Indoor sub-sports get a corner dot. |
+| `IntensityDot intensity hardOnly` | 6px dot in the zone colour of the class (recovery z1 … race z6), shown for every session with an intensity. |
+| `IntensityPips intensity size tone` / `IntensityPicker value onValueChange` | 5 bars, lit ones in the class's zone colour (`tone="neutral"` for fg-3); race = flag. |
 | `KeyStar pressed onPressedChange` / `readOnly` | burst on turn-on (bouncy), static 12px marker on cards. |
-| `ComplianceGlyph state` · `complianceStyles(state)` · `complianceLabel(state, reason)` · `ComplianceBar ratio state` | product.md §3.6.4 encodings: ○ ● ◐ ◔ ◕ ⊘ ◌ ▪; card fill/border/rail/title classes. |
+| `ComplianceGlyph state` · `complianceStyles(state)` · `complianceLabel(state, reason)` · `ComplianceBar ratio state` | product.md §3.6.4 shapes ○ ● ◐ ◔ ◕ ⊘ ◌ ▪, always with their status colour: on plan `good`, short/long/way off `warn`, missed `critical`, planned/skipped/unplanned neutral. |
 | `MiniProfile values height tone(zone\|accent\|fg)` | step-profile / effort sparkline (≤ 48 bars). |
 | `WorkoutCard model density(full\|compact\|chip) link onClick ghost selected morphId` | `densityForWidth(px)` picks density. Model: `WorkoutCardModel` (id, kind, sport, subSport, title, durationSec, distanceM, load, isKey, intensity, compliance{state,ratio}, hasNote, garminState, sparkline, startTime, skipReason). |
-| `DeltaBadge value kind good warning suffix` | ↗ +12% / ↘ −8% / → ±0%; neutral (arrow, sign and weight — never colour). |
+| `DeltaBadge value kind good bad warning suffix` | ↗ +12% / ↘ −8% / → ±0%; arrow, sign and weight; the arrow turns `good` / `warn` only when the caller passes `good` / `bad`; the number stays ink. |
+| `ShareBar parts` · `Legend items` | part-of-a-whole bar (2px gaps, caller's fixed order) and a legend with coloured marks + ink text. |
+| `dataColor.ts`: `sportColor`, `sportVars` (+ `bg-sport-tint*` utilities), `SPORT_STACK_ORDER`, `bySportOrder`, `intensityColor`, `zoneColor`, `complianceTone`, `STATUS_COLOR` | the only mapping from domain values to the §8 data colours. Completed cards: `bg-sport-tint` (12 % over surface-1) with `sportVars(sport)`. |
 | `SyncDot state`, `GarminStateIcon state`, `FormZoneLabel zone` | status atoms. |
 
 ## Motion rules (`@/motion`)

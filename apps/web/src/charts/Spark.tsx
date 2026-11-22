@@ -146,7 +146,7 @@ function MiniAreaInner({ values, width, height, tone, endDot }: { values: (numbe
 }
 
 export interface MixSegment {
-  /** Sport key (bike, run, …) — mapped to the monochrome sport ramp. */
+  /** Sport key (bike, run, …) — mapped to the sport colours (fixed order). */
   sport: string;
   value: number;
 }
@@ -158,7 +158,7 @@ export function SportMixBar({ segments, height = 6, className }: { segments: Mix
   segments.forEach((s) => byKey.set(sportKey(s.sport), (byKey.get(sportKey(s.sport)) ?? 0) + s.value));
   const segs = SPORT_ORDER.filter((k) => (byKey.get(k) ?? 0) > 0).map((k) => ({ k, f: (byKey.get(k) ?? 0) / total }));
   return (
-    <span className={`flex w-full gap-px overflow-hidden rounded-full ${className ?? ''}`} style={{ height }} role="img" aria-label={`Sport mix: ${segs.map((s) => `${SPORT_RAMP[s.k].label} ${Math.round(s.f * 100)}%`).join(', ')}`}>
+    <span className={`flex w-full gap-[2px] overflow-hidden rounded-full ${className ?? ''}`} style={{ height }} role="img" aria-label={`Sport mix: ${segs.map((s) => `${SPORT_RAMP[s.k].label} ${Math.round(s.f * 100)}%`).join(', ')}`}>
       {segs.map((s) => {
         const r = SPORT_RAMP[s.k];
         const pattern = r.pattern === 'hatch' ? `repeating-linear-gradient(-45deg, ${T.fg3} 0 1px, transparent 1px 3.5px)` : r.pattern === 'dots' ? `radial-gradient(${T.fg3} 0.8px, transparent 1px)` : undefined;
@@ -168,16 +168,16 @@ export function SportMixBar({ segments, height = 6, className }: { segments: Mix
   );
 }
 
-/** Tiny 3-segment easy / moderate / hard bar (fill density). */
+/** Tiny 3-segment easy / moderate / hard bar in zone colours (easy z2 · moderate z3 · hard z5; 2px gaps). */
 export function SplitBar({ easy, moderate, hard, height = 6, className }: { easy: number; moderate: number; hard: number; height?: number; className?: string }) {
   const t = easy + moderate + hard || 1;
   const parts = [
     { f: easy / t, z: 2 },
-    { f: moderate / t, z: 4 },
-    { f: hard / t, z: 6 },
+    { f: moderate / t, z: 3 },
+    { f: hard / t, z: 5 },
   ];
   return (
-    <span className={`flex w-full gap-px overflow-hidden rounded-full ${className ?? ''}`} style={{ height }} role="img" aria-label={`Easy ${Math.round((easy / t) * 100)}%, moderate ${Math.round((moderate / t) * 100)}%, hard ${Math.round((hard / t) * 100)}%`}>
+    <span className={`flex w-full gap-[2px] overflow-hidden rounded-full ${className ?? ''}`} style={{ height }} role="img" aria-label={`Easy ${Math.round((easy / t) * 100)}%, moderate ${Math.round((moderate / t) * 100)}%, hard ${Math.round((hard / t) * 100)}%`}>
       {parts.map((p, i) => (p.f > 0 ? <span key={i} style={{ flexGrow: p.f, background: T.zone(p.z) }} /> : null))}
     </span>
   );

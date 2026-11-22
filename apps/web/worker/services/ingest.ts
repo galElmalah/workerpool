@@ -12,17 +12,20 @@
  *    written on creation; the title is overwritten only while it still equals the previously
  *    ingested upstream title (`upstream_title`), so a rename by the athlete survives syncs.
  */
-import type { ActivityStreams, IntensityClass, Lap, LocalDate, Sport, StrengthSet, SubSport, ThresholdSnapshot, ZoneTime } from '@cadence/core/domain';
+import type { ActivityFacts, ActivityStreams, IntensityClass, Lap, LocalDate, Sport, StrengthSet, SubSport, ThresholdSnapshot, ZoneTime } from '@cadence/core/domain';
 import { SPORT_META } from '@cadence/core/domain';
 import {
   bestEfforts,
   computeActivityMetrics,
+  enrichLaps,
   ergPowerFromSpeed,
   meanMaximal,
+  mergeFacts,
   prepareStreams,
   ROW_EFFORT_DISTANCES,
   RUN_EFFORT_DISTANCES,
   swimBestEfforts,
+  streamFacts,
   SWIM_EFFORT_DISTANCES,
   volumeLoad,
   type ActivityMetrics,
@@ -310,10 +313,52 @@ interface ExistingRow {
   local_date: string;
   has_streams: number;
   paired_workout_id: string | null;
+  facts: string | null;
 }
 
 const EXISTING_COLS =
-  'id, summary_hash, deleted_at, title, upstream_title, rpe, load_manual, intensity_override, local_date, has_streams, paired_workout_id';
+  'id, summary_hash, deleted_at, title, upstream_title, rpe, load_manual, intensity_override, local_date, has_streams, paired_workout_id, facts';
+
+/** Facts the Garmin summary reports better than the FIT file (elevation is corrected upstream). */
+const SUMMARY_FIRST: ReadonlyArray<keyof ActivityFacts> = ['elevationLossM', 'minAltitudeM', 'maxAltitudeM', 'timezone', 'deviceLoad', 'trainingEffectLabel'];
+
+function only(f: ActivityFacts | undefined, keys: ReadonlyArray<keyof ActivityFacts>): ActivityFacts | undefined {
+  if (!f) return undefined;
+  const out: Record<string, unknown> = {};
+  for (const k of keys) if (f[k] !== undefined) out[k] = f[k];
+  return out as ActivityFacts;
+}
+
+/**
+ * Detail facts for the activities row: upstream summary (elevation, Garmin labels) → FIT file →
+ * upstream summary (rest) → stream-derived → previously stored, first value wins. Swim/row stroke
+ * figures are completed from the totals. The start position is stored in its own columns.
+ */
+export function buildFacts(input: {
+  sport: Sport;
+  summary?: ActivityFacts;
+  fit?: ActivityFacts;
+  stored: ActivityStreams | null;
+  previous?: ActivityFacts;
+  distanceM?: number;
+  strokes?: number;
+  /** Pool lengths: when present, stroke figures come from them (they are what the watch counted). */
+  swimLengths?: Array<{ strokes?: number; isRest?: boolean }>;
+}): ActivityFacts {
+  const derived = streamFacts(input.stored, { sport: input.sport });
+  const f = mergeFacts(only(input.summary, SUMMARY_FIRST), input.fit, input.summary, derived, input.previous);
+  const active = input.swimLengths?.filter((l) => !l.isRest && l.strokes !== undefined && l.strokes > 0) ?? [];
+  const lenStrokes = active.reduce((s, l) => s + (l.strokes ?? 0), 0);
+  const strokes = lenStrokes > 0 ? lenStrokes : input.strokes;
+  const lengths = active.length || f.activeLengths;
+  if (input.sport === 'swim' && strokes && strokes > 0) {
+    if (f.avgStrokesPerLength === undefined && lengths) f.avgStrokesPerLength = Math.round((strokes / lengths) * 10) / 10;
+    // distance swum on the lengths that carry strokes (drill / kick lengths count no strokes)
+    const share = lenStrokes > 0 && f.activeLengths ? Math.min(1, active.length / f.activeLengths) : 1;
+    if (f.avgDistancePerStrokeM === undefined && input.distanceM) f.avgDistancePerStrokeM = Math.round(((input.distanceM * share) / strokes) * 100) / 100;
+  }
+  return f;
+}
 
 function defaultTitle(sport: Sport, subSport?: SubSport): string {
   const label = SPORT_META[sport]?.label ?? 'Activity';
@@ -390,7 +435,8 @@ export const ingestActivity: IngestActivity = async (env, input) => {
   const utcOffsetMin = pick(s.utcOffsetMin, fit?.utcOffsetMin) ?? 0;
   const localDate: LocalDate = pick(s.localDate, fit?.localDate) ?? localDateOf(startedAt, utcOffsetMin);
   const upstreamTitle = pick(s.title, fit?.workoutName) ?? defaultTitle(sport, subSport);
-  const laps = input.laps ?? fit?.laps ?? [];
+  let laps = input.laps ?? fit?.laps ?? [];
+  const swimLengths = input.swimLengths ?? fit?.swimLengths;
   const strengthSets = input.strengthSets ?? fit?.strengthSets;
 
   // ── existing row: by Garmin id; otherwise (or for a FIT uploaded before the Garmin sync saw it)
@@ -425,8 +471,10 @@ export const ingestActivity: IngestActivity = async (env, input) => {
     reuseStored = !!stored;
   }
 
+  if (stored && laps.length) laps = enrichLaps(laps, stored, { sport });
+
   const [thresholds, settings] = await Promise.all([thresholdsOn(db, localDate, sport), getSettings(db)]);
-  const rpe = existing ? (existing.rpe ?? undefined) : input.user?.rpe;
+  const rpe = existing ? (existing.rpe ?? undefined) : (input.user?.rpe ?? fit?.rpe);
   const loadManual = existing ? (existing.load_manual ?? undefined) : input.user?.loadManual;
   const intensityOverride = existing?.intensity_override ?? undefined;
   const { columns } = analyzeActivity({
@@ -455,6 +503,22 @@ export const ingestActivity: IngestActivity = async (env, input) => {
     sex: settings.sex,
   });
 
+  const strokes = pick(s.strokes, fs.strokes);
+  const facts = buildFacts({
+    sport,
+    summary: s.facts,
+    fit: fit?.facts,
+    stored,
+    previous: existing ? parseJson<ActivityFacts>(existing.facts, {}) : undefined,
+    distanceM: (columns.distance_m as number | undefined) ?? undefined,
+    strokes,
+    swimLengths,
+  });
+  const startLat = pick(s.startLat, facts.startLat);
+  const startLng = pick(s.startLng, facts.startLng);
+  delete facts.startLat;
+  delete facts.startLng;
+
   const now = new Date().toISOString();
   const upstream: Record<string, unknown> = {
     source: existing ? undefined : input.source,
@@ -470,13 +534,18 @@ export const ingestActivity: IngestActivity = async (env, input) => {
     aerobic_effect: pick(s.aerobicEffect, fs.aerobicEffect),
     anaerobic_effect: pick(s.anaerobicEffect, fs.anaerobicEffect),
     pool_length_m: pick(s.poolLengthM, fs.poolLengthM),
-    strokes: pick(s.strokes, fs.strokes),
+    strokes,
     avg_swolf: pick(s.avgSwolf, fs.avgSwolf),
     total_sets: pick(s.totalSets, fs.totalSets),
     total_reps: pick(s.totalReps, fs.totalReps),
     volume_kg: columns.volume_kg ?? fs.volumeKg,
     laps,
     strength_sets: strengthSets ?? null,
+    location_name: s.locationName,
+    start_lat: startLat !== undefined && startLng !== undefined ? startLat : undefined,
+    start_lng: startLat !== undefined && startLng !== undefined ? startLng : undefined,
+    facts,
+    swim_lengths: swimLengths?.length ? swimLengths : undefined,
     summary_hash: s.editHash,
     upstream_title: upstreamTitle,
     updated_at: now,
@@ -484,7 +553,7 @@ export const ingestActivity: IngestActivity = async (env, input) => {
   if (existing) {
     delete upstream.source;
     // Identity fields this ingest does not know about are kept (e.g. a FIT re-upload of a synced activity).
-    for (const k of ['garmin_activity_id', 'garmin_type_key', 'summary_hash']) if (upstream[k] === undefined) delete upstream[k];
+    for (const k of ['garmin_activity_id', 'garmin_type_key', 'summary_hash', 'location_name', 'start_lat', 'start_lng', 'swim_lengths']) if (upstream[k] === undefined) delete upstream[k];
     if (s.title === undefined) {
       // no explicit title (e.g. a FIT re-upload): keep the stored title and its upstream origin
       delete upstream.upstream_title;
@@ -493,8 +562,8 @@ export const ingestActivity: IngestActivity = async (env, input) => {
     const u = input.user ?? {};
     Object.assign(upstream, {
       title: upstreamTitle,
-      rpe: u.rpe,
-      feel: u.feel,
+      rpe: u.rpe ?? fit?.rpe,
+      feel: u.feel ?? fit?.feel,
       post_note: u.postNote,
       tags: u.tags ?? [],
       is_key: u.isKey ? 1 : 0,

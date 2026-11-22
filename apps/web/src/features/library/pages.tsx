@@ -19,6 +19,7 @@ import {
   IconButton,
   InlineEdit,
   Input,
+  IntensityDot,
   IntensityPicker,
   IntensityPips,
   Menu,
@@ -141,14 +142,14 @@ export function LibraryPage() {
             onChange={(v) => navigate({ search: (s) => ({ ...s, sport: v === 'all' ? undefined : (v as Sport) }), replace: true })}
             options={[{ value: 'all', label: 'All' }, ...sports.map((s) => ({ value: s, label: SPORT_META[s].label }))]}
           />
-          <div className="flex items-center gap-2 sm:ml-auto">
+          <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 sm:ml-auto">
             <Select<string>
               size="sm"
               hideLabel
               label="Intensity"
               value={search.intensity ?? 'all'}
               onValueChange={(v) => navigate({ search: (s) => ({ ...s, intensity: v === 'all' ? undefined : (v as IntensityClass) }), replace: true })}
-              options={[{ value: 'all', label: 'Any intensity' }, ...INTENSITY_CLASSES.filter((c) => c !== 'race').map((c) => ({ value: c, label: INTENSITY_META[c].label }))]}
+              options={[{ value: 'all', label: 'Any intensity' }, ...INTENSITY_CLASSES.filter((c) => c !== 'race').map((c) => ({ value: c, label: INTENSITY_META[c].label, icon: <IntensityDot intensity={c} /> }))]}
             />
             {folders.length > 0 && (
               <Select<string>

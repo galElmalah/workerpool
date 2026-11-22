@@ -128,7 +128,15 @@ export const DayCell = memo(function DayCell({ day, cards, copyGhost, today, wee
           )}
         </div>
         {!day.loaded ? (
-          <Skeleton className={mini ? 'h-6' : 'h-7'} />
+          // Two chip-sized placeholders ≈ a typical loaded day, so rows don't jump when data lands (DESIGN_V2 §9).
+          mini ? (
+            <Skeleton className="h-6" />
+          ) : (
+            <div className="flex flex-col gap-1.5" aria-hidden>
+              <Skeleton className="h-11" />
+              <Skeleton className="h-11" />
+            </div>
+          )
         ) : (
           <>
             {day.events.length > 0 && (

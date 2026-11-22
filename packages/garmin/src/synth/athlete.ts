@@ -11,6 +11,7 @@ import { athleteVoice, RANDOM_DAY_NOTES, weekReflection } from './notes';
 import { buildPlan } from './plan';
 import { rngFor } from './prng';
 import { buildProfile, buildThresholdHistory, PROFILE_BASE, thresholdsAfter, thresholdsAt } from './profile';
+import { renderDynamics, summaryExtras } from './extras';
 import { render } from './render';
 import { buildSeason, inRange, seasonMarkers, type Season } from './season';
 import { BasePool, simulate } from './simulate';
@@ -248,6 +249,7 @@ export function generateAthlete(opts: SynthOptions): SynthAthlete {
       totalReps: s.totalReps,
       hasGps: p.model.hasGps,
       plannedKey: h.plannedKey,
+      ...summaryExtras(p.model, base, s),
     });
     const logged = p.model.isRace || p.model.isTest || p.model.exec.kind !== 'on' || !!p.planned?.isKey || rngFor(seed, 'log', h.id).chance(0.7);
     if (logged) {
@@ -428,6 +430,8 @@ export function generateActivityDetail(athlete: SynthAthlete, garminActivityId: 
   const r = render(model, base);
   const detail: SynthActivityDetail = { activity: a, laps: r.laps };
   if (r.streams) detail.streams = r.streams;
+  const dyn = r.streams ? renderDynamics(model, r.streams.t, r.streams.speed, r.streams.cadence) : undefined;
+  if (dyn) detail.dynamics = dyn;
   if (r.strengthSets) detail.strengthSets = r.strengthSets;
   return detail;
 }

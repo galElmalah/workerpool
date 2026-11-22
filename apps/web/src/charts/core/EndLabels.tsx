@@ -17,6 +17,8 @@ export interface EndLabel {
   /** Optional trailing text in fg-3, e.g. "projected". */
   suffix?: string;
   dashed?: boolean;
+  /** Mark colour overriding `tone` (a data colour); the text stays ink. */
+  color?: string;
 }
 
 /** Resolve overlaps: sort by y, push down to `gap`, then shift the block back inside [top,bottom]. */
@@ -56,10 +58,10 @@ export function EndLabels({ labels, x, top = 0, bottom = Infinity, gap = 16 }: {
               style={{ stroke: T.line2 }}
             />
           )}
-          <circle cx={x + 3} cy={0} r={2.5} style={{ fill: l.dashed ? T.bg : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
+          <circle cx={x + 3} cy={0} r={2.5} style={{ fill: l.dashed ? T.bg : (l.color ?? toneStroke[l.tone]), stroke: l.color ?? toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
           <text x={x + 10} y={0} dominantBaseline="central" style={{ ...TXT, fill: T.fg1, fontWeight: 500 }}>
             {l.value}
-            <tspan dx={l.value ? 5 : 0} style={{ fontWeight: 400, fill: l.value ? T.fg3 : l.tone === 'accent' ? T.fg2 : T.fg3 }}>
+            <tspan dx={l.value ? 5 : 0} style={{ fontWeight: 400, fill: l.value ? T.fg3 : l.tone === 'accent' || l.tone === 'series1' ? T.fg2 : T.fg3 }}>
               {l.name}
             </tspan>
             {l.suffix && (
@@ -81,7 +83,7 @@ export function EndLabelRow({ labels }: { labels: Omit<EndLabel, 'y'>[] }) {
       {labels.map((l) => (
         <span key={l.id} className="inline-flex items-center gap-1.5">
           <svg width="8" height="8">
-            <circle cx="4" cy="4" r="2.5" style={{ fill: l.dashed ? 'none' : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
+            <circle cx="4" cy="4" r="2.5" style={{ fill: l.dashed ? 'none' : (l.color ?? toneStroke[l.tone]), stroke: l.color ?? toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
           </svg>
           {l.value && <span className="num text-label font-medium text-fg-1">{l.value}</span>}
           <span className="text-label text-fg-3">{l.name}</span>

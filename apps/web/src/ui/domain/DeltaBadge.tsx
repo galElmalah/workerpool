@@ -1,10 +1,12 @@
 /**
- * DeltaBadge — design.md §2.4 "Positive vs negative deltas: arrow, sign and weight. Never red/green."
+ * DeltaBadge — arrow, sign and weight carry the direction; colour only when the caller knows what
+ * the direction means (DESIGN_V2 §8.3). The number always stays in text colour.
  *  up (≥ +1%):  ↗ +12%  weight 500, fg-1
  *  down:        ↘ −8%   weight 400, fg-2
  *  flat:        → ±0%   weight 400, fg-3
- *  good:        the arrow turns fg-1 (good direction) — never accent (DESIGN_V2 rule 4)
- *  warning:     ⚠ +18%  500, fg-1, value dotted-underlined
+ *  good:        the arrow turns `good` (the caller says this direction is good)
+ *  bad:         the arrow turns `warn` (the caller says this direction is bad)
+ *  warning:     ⚠ +18%  500, fg-1, value dotted-underlined, the ⚠ in `warn`
  * The arrow is one glyph rotated between directions, so a changing delta morphs (smooth spring).
  */
 import { ArrowRight, TriangleAlert } from 'lucide-react';
@@ -20,8 +22,10 @@ export interface DeltaBadgeProps {
   decimals?: number;
   /** |value| below this is flat (default 0.01 for percent, 0.5 for number). */
   flatBelow?: number;
-  /** Good direction (e.g. fitness up): arrow in fg-1. */
+  /** The shown direction is good (e.g. fitness up): arrow in the `good` status colour. */
   good?: boolean;
+  /** The shown direction is bad (e.g. pace slower): arrow in the `warn` status colour. */
+  bad?: boolean;
   warning?: boolean;
   /** Trailing context ("vs last wk"). */
   suffix?: string;
@@ -31,7 +35,7 @@ export interface DeltaBadgeProps {
 
 const ROT: Record<DeltaDirection, number> = { up: -45, down: 45, flat: 0 };
 
-export function DeltaBadge({ value, kind = 'percent', decimals = 0, flatBelow, good, warning, suffix, size = 'md', className }: DeltaBadgeProps) {
+export function DeltaBadge({ value, kind = 'percent', decimals = 0, flatBelow, good, bad, warning, suffix, size = 'md', className }: DeltaBadgeProps) {
   if (value == null || !Number.isFinite(value)) return <span className={cn('text-label text-fg-4', className)}>—</span>;
   const dir = deltaDirection(value, flatBelow ?? (kind === 'percent' ? 0.01 : 0.5));
   const text =
@@ -47,9 +51,9 @@ export function DeltaBadge({ value, kind = 'percent', decimals = 0, flatBelow, g
   return (
     <span className={cn('inline-flex items-center gap-0.5 whitespace-nowrap', size === 'sm' ? 'text-label' : 'text-body-sm', tone, className)}>
       {warning ? (
-        <TriangleAlert className={cn(icon, 'shrink-0')} aria-hidden />
+        <TriangleAlert className={cn(icon, 'shrink-0 text-warn')} aria-hidden />
       ) : (
-        <motion.span initial={false} animate={{ rotate: ROT[dir] }} transition={spring.smooth} className={cn('inline-flex shrink-0', good && 'text-fg-1')} aria-hidden>
+        <motion.span initial={false} animate={{ rotate: ROT[dir] }} transition={spring.smooth} className={cn('inline-flex shrink-0', dir !== 'flat' && good && 'text-good', dir !== 'flat' && !good && bad && 'text-warn')} aria-hidden>
           <ArrowRight className={icon} strokeWidth={2} />
         </motion.span>
       )}

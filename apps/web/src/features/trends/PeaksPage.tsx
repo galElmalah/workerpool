@@ -7,7 +7,7 @@ import { PaceCurve, PowerCurve, effortsToPoints, type CurveSeries } from '@/char
 import { cn } from '@/lib/cn';
 import { distanceParts, formatDateMedium, formatDuration, formatNumber, formatPace, formatSigned } from '@/lib/format';
 import { useUnits } from '@/lib/units';
-import { Segmented, SportGlyph } from '@/ui';
+import { Segmented, SportGlyph, TableScroll } from '@/ui';
 import { usePeaks, useThresholdHistory } from './data';
 import { ChartCard, InlineError, TrendsFrame, useTrendsSearch } from './shared';
 
@@ -147,6 +147,7 @@ const durLabel = (s: number) => (s < 60 ? `${s} s` : s < 3600 ? `${s / 60} min` 
 function PowerTable({ points, all, weight }: { points: SourcedPoint[]; all: SourcedPoint[]; weight?: number }) {
   const at = (ps: SourcedPoint[], d: number) => ps.find((p) => p.durationSec === d);
   return (
+    <TableScroll>
     <table className="w-full text-left">
       <thead>
         <tr className="border-b border-line-1 text-label text-fg-3">
@@ -185,6 +186,7 @@ function PowerTable({ points, all, weight }: { points: SourcedPoint[]; all: Sour
         })}
       </tbody>
     </table>
+    </TableScroll>
   );
 }
 
@@ -192,6 +194,7 @@ function EffortTable({ sport, efforts, all }: { sport: Sport; efforts: { distanc
   const units = useUnits();
   if (!efforts.length) return <p className="text-body text-fg-3">No best efforts recorded in this range.</p>;
   return (
+    <TableScroll>
     <table className="w-full text-left">
       <thead>
         <tr className="border-b border-line-1 text-label text-fg-3">
@@ -224,6 +227,7 @@ function EffortTable({ sport, efforts, all }: { sport: Sport; efforts: { distanc
         })}
       </tbody>
     </table>
+    </TableScroll>
   );
 }
 

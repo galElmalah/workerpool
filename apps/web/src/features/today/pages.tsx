@@ -22,7 +22,7 @@ import { Ticker } from '@/motion/Ticker';
 import { PageItem } from '@/motion/PageTransition';
 import { spring, tween } from '@/motion/tokens';
 import { links } from '@/shell/links';
-import { Banner, Button, ButtonLink, ComplianceGlyph, FORM_ZONE_META, KeyStar, Page, PageHeader, Section, Skeleton, SportGlyph, Tooltip } from '@/ui';
+import { Banner, bySportOrder, Button, ButtonLink, ComplianceGlyph, sportColor, FORM_ZONE_META, KeyStar, Page, PageHeader, Section, Skeleton, SportGlyph, Tooltip } from '@/ui';
 import {
   ActivityLogger,
   CHECKIN_FEEL,
@@ -411,6 +411,7 @@ function WeekSoFar({ d }: { d: TodayData }) {
         format={hm}
         size="md"
         caption={`of ${hm(wk.plannedSec)} planned`}
+        segments={[...wk.bySport].sort((a, b) => bySportOrder(a.sport, b.sport)).map((x) => ({ key: x.sport, value: x.doneSec, color: sportColor(x.sport) }))}
         ariaLabel={`This week: ${hm(wk.doneSec)} of ${hm(wk.plannedSec)} hours, load ${formatLoad(wk.doneLoad)} of ${formatLoad(wk.plannedLoad)}`}
       />
         </div>

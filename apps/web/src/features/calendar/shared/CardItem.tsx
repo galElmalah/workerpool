@@ -10,6 +10,7 @@ import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/format';
 import type { CalendarCard } from '@/lib/queries/training';
 import { useIsMorphTarget, vt, vtName } from '@/motion/morph';
+import { sportVars } from '@/ui/domain/dataColor';
 import { SportGlyph } from '@/ui/domain/SportGlyph';
 import { cardTone, WorkoutCard, type CardDensity } from '@/ui/domain/WorkoutCard';
 import type { CardActions } from './actions';
@@ -40,11 +41,11 @@ function MiniChip({ card, style }: { card: CalendarCard; style?: CSSProperties }
   return (
     <div
       className={cn('relative flex h-6 min-w-0 items-center justify-center gap-0.5 overflow-hidden rounded-sm px-0.5', t.fill)}
-      style={{ ...style, ...vt(on, 'card') }}
+      style={{ ...sportVars(m.sport), ...style, ...vt(on, 'card') }}
       data-morph-id={m.id}
       aria-label={`${m.title}, ${formatDuration(m.durationSec, 'short')}`}
     >
-      <SportGlyph sport={m.sport} size={14} className={cn('shrink-0', t.glyph)} style={vt(on, 'glyph')} />
+      <SportGlyph sport={m.sport} size={14} neutral={t.neutralGlyph} className={cn('shrink-0', t.glyph)} style={vt(on, 'glyph')} />
       <span className={cn('truncate text-label num max-[360px]:hidden', t.meta, m.isKey && 'font-semibold text-fg-1')}>
         {m.durationSec && m.durationSec >= 3600 ? `${Math.round(m.durationSec / 3600)}h` : formatDuration(m.durationSec).replace(/^0:/, ':')}
       </span>

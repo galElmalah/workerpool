@@ -1,14 +1,17 @@
 /**
  * WorkoutCard — the shared card for planned workouts, activities and paired items (DESIGN_V2 §5).
- * Calm by default: no borders, no edge rails, one tint at most (the intensity dot).
+ * Calm by default: no borders, no edge rails. Colour carries data only (DESIGN_V2 §8): the glyph
+ * wears the sport colour, a completed card gets a soft (12%) sport tint as its fill, the intensity
+ * dot wears its zone colour; the key star and all text stay neutral.
  *   chip    (month view): glyph · [key star] title (one line when it fits, two at most; 28 → 44px)
- *           · intensity dot (hard sessions only) · duration, top-right on the first line
+ *           · intensity dot · duration, top-right on the first line
  *   compact / full (week view, lists): glyph · [star] title (≤ 2 lines; a compliance mark floats
  *           right only when it deviates from plan); then intensity dot · duration (· distance-or-load
  *           in full) in fg-3. Glyph and star are inline so the title keeps the card's full width.
  *           `profile` adds the step-profile sparkline (workout page / Today only); `meta` adds the
  *           note and Garmin icons.
- * Done = one surface step; planned = no fill; missed = fg-4 struck through; skipped = fg-4.
+ * Done = sport-tinted surface step; planned = no fill, tinted glyph; missed = fg-4 struck through
+ * and a neutral glyph; skipped = fg-4, neutral glyph.
  *
  * Morph: carries `wk-card` / `wk-glyph` / `wk-title` ONLY while it is the morph target (set just
  * in time on click), so names stay unique on the page. Pass `link` to make it a TanStack Link.
@@ -25,6 +28,7 @@ import { useUnits } from '@/lib/units';
 import { morph, useIsMorphTarget, vt } from '@/motion/morph';
 import { onSpotlightMove } from '@/motion/pointer';
 import { ComplianceGlyph, complianceDeviates, complianceStyles } from './Compliance';
+import { sportVars } from './dataColor';
 import { IntensityDot } from './Intensity';
 import { KeyStar } from './KeyStar';
 import { MiniProfile } from './MiniProfile';
@@ -90,13 +94,18 @@ export function morphSourceProps(id: string) {
 type Tone = 'done' | 'planned' | 'missed' | 'skipped';
 const toneOf = (state: ComplianceState): Tone => (state === 'planned' ? 'planned' : state === 'missed' ? 'missed' : state === 'excused' ? 'skipped' : 'done');
 
-/** Card-state classes shared with the calendar's own faces (CardItem). */
+/**
+ * Card-state classes shared with the calendar's own faces (CardItem). The done fill is the sport
+ * tint: set `--sport` on the same element with `sportVars(sport)` (neutral without it).
+ * `neutralGlyph`: missed / skipped cards draw their glyph without the sport colour.
+ */
 export function cardTone(state: ComplianceState) {
   const tone = toneOf(state);
   return {
     tone,
-    fill: tone === 'done' ? 'bg-surface-2' : 'bg-transparent',
-    hover: tone === 'done' ? 'hover:bg-surface-3' : 'hover:bg-surface-2',
+    fill: tone === 'done' ? 'bg-sport-tint' : 'bg-transparent',
+    hover: tone === 'done' ? 'hover:bg-sport-tint-hover' : 'hover:bg-surface-2',
+    neutralGlyph: tone === 'missed' || tone === 'skipped',
     title: tone === 'done' ? 'text-fg-1' : tone === 'planned' ? 'text-fg-2' : tone === 'missed' ? 'text-fg-4 line-through decoration-fg-4' : 'text-fg-4',
     meta: tone === 'done' ? 'text-fg-3' : tone === 'planned' ? 'text-fg-3' : tone === 'missed' ? 'text-fg-4 line-through decoration-fg-4' : 'text-fg-4',
     glyph: tone === 'done' ? 'text-fg-2' : tone === 'planned' ? 'text-fg-3' : 'text-fg-4',
@@ -130,7 +139,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
           <IntensityDot intensity={m.intensity} />
           <span className={cn('text-label num', t.meta)}>{formatDuration(m.durationSec)}</span>
         </span>
-        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className={cn('mr-1 align-[-2px]', t.glyph)} />
+        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} neutral={t.neutralGlyph} className={cn('mr-1 align-[-2px]', t.glyph)} />
         {m.isKey && <KeyStar pressed readOnly size="xs" className="mr-1 inline align-[-1px]" />}
         {m.title}
       </span>
@@ -146,7 +155,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
             <ComplianceGlyph state={state} />
           </span>
         )}
-        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className={cn('mr-1.5 align-[-2px]', t.glyph)} />
+        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} neutral={t.neutralGlyph} className={cn('mr-1.5 align-[-2px]', t.glyph)} />
         {m.isKey && <KeyStar pressed readOnly size="xs" className="mr-1 inline align-[-1px]" />}
         {m.title}
       </span>
@@ -197,7 +206,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
 
   const shared = {
     className: cls,
-    style: { ...style, ...vt(on, 'card') },
+    style: { ...sportVars(m.sport), ...style, ...vt(on, 'card') },
     'data-morph-id': mid,
     'aria-label': label,
     onPointerMove: density === 'full' && interactive ? onSpotlightMove : undefined,

@@ -28,6 +28,8 @@ sleep 1
 
 echo "· resetting state"
 rm -rf .wrangler/vid && cp -r .wrangler/seed-master .wrangler/vid
+# bring the seeded copy up to the current schema (seed-master can lag behind new migrations)
+npx wrangler d1 migrations apply DB --local --persist-to .wrangler/vid >/dev/null
 rm -rf .wrangler/vid-fresh
 npx wrangler d1 migrations apply DB --local --persist-to .wrangler/vid-fresh >/dev/null
 

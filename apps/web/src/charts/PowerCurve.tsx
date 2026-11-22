@@ -1,6 +1,7 @@
 /**
  * EffortCurve / PowerCurve / PaceCurve — mean-maximal curves on a log-time axis (1 s → 5 h).
- * Primary period = accent 2px + soft fade (the hero), secondary = fg-3 1.25px, comparison =
+ * Primary period = the one coloured series (DESIGN_V2 §8: the metric colour — power blue
+ * `series-1`, pace aqua `series-3`; 2px + a ≤ 12% fade), secondary = fg-3 1.25px, comparison =
  * fg-4 1px dashed. PB markers are small dots; their values are in the readout and tooltip.
  * product.md §5.1 item 9 and §6.2 /trends/peaks; v2 look per DESIGN_V2 §5 "Charts".
  */
@@ -25,12 +26,14 @@ export interface CurveSeries {
   id: string;
   label: string;
   points: PeakPoint[];
-  /** primary = accent 2px (this period) · secondary = fg-3 1.25px · comparison = fg-4 1px dashed */
+  /** primary = the metric colour 2px (this period) · secondary = fg-3 1.25px · comparison = fg-4 1px dashed */
   variant?: 'primary' | 'secondary' | 'comparison';
 }
 
 export interface EffortCurveProps {
   series: CurveSeries[];
+  /** Colour of the primary series (default 'series1' = power blue; PaceCurve uses 'series3' = pace aqua). */
+  primaryTone?: Tone;
   /** Value formatter for readouts (default integer). */
   format?: (v: number) => string;
   unit?: string;
@@ -56,8 +59,12 @@ export interface EffortCurveProps {
 }
 
 const LOG_TICKS = [1, 5, 15, 60, 300, 1200, 3600, 7200, 18000];
+const variantOf = (s: CurveSeries, primaryTone: Tone = 'series1') => {
+  const v = VARIANT[s.variant ?? 'primary'];
+  return (s.variant ?? 'primary') === 'primary' ? { ...v, tone: primaryTone } : v;
+};
 const VARIANT: Record<NonNullable<CurveSeries['variant']>, { tone: Tone; width: number; dash?: string }> = {
-  primary: { tone: 'accent', width: 2 },
+  primary: { tone: 'series1', width: 2 },
   secondary: { tone: 'fg3', width: 1.25 },
   comparison: { tone: 'fg4', width: 1, dash: '3 3' },
 };
@@ -89,7 +96,7 @@ export function EffortCurve(props: EffortCurveProps) {
   );
 }
 
-function CurveInner({ series, width, height, format = fmtInt, unit = '', secondary, secondaryUnit = '', markers = [5, 60, 300, 1200, 3600], showMarkerLabels = false, model, zeroBased = true, sync: ext, focusSec = 1200, yTickValues }: EffortCurveProps & { width: number; height: number }) {
+function CurveInner({ series, width, height, format = fmtInt, unit = '', secondary, secondaryUnit = '', markers = [5, 60, 300, 1200, 3600], showMarkerLabels = false, model, zeroBased = true, sync: ext, focusSec = 1200, yTickValues, primaryTone = 'series1' }: EffortCurveProps & { width: number; height: number }) {
   const defs = useChartDefs();
   const id = useId();
   const sync = useHoverSync<number>(ext);
@@ -143,7 +150,7 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
 
   return (
     <div className="relative">
-      <Readout series={series} sync={sync} focusSec={focusSec} format={format} unit={unit} secondary={secondary} secondaryUnit={secondaryUnit} />
+      <Readout series={series} sync={sync} focusSec={focusSec} format={format} unit={unit} secondary={secondary} secondaryUnit={secondaryUnit} primaryTone={primaryTone} />
       <svg
         width={width}
         height={plotB + L.bottom}
@@ -175,11 +182,11 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
           {[...series]
             .sort((a, b) => order(a) - order(b))
             .map((s) => {
-              const v = VARIANT[s.variant ?? 'primary'];
+              const v = variantOf(s, primaryTone);
               return (
                 <g key={s.id}>
                   {(s.variant ?? 'primary') === 'primary' && (
-                    <MorphPath d={(area0(s.points, x, y, plotB) as string) ?? ''} style={{ fill: defs.fadeAccent }} />
+                    <MorphPath d={(area0(s.points, x, y, plotB) as string) ?? ''} style={{ fill: primaryTone === 'series3' ? defs.fadeSeries3 : defs.fadeSeries1 }} />
                   )}
                   <MorphPath d={gen(s.points) ?? ''} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: toneStroke[v.tone], strokeWidth: v.width, strokeDasharray: v.dash }} />
                 </g>
@@ -192,7 +199,7 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
             if (pv == null || m > maxDur) return null;
             return (
               <motion.g key={m} initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...spring.smooth, delay: 0.4 + k * 0.05 }} aria-hidden>
-                <circle cx={x(m)} cy={y(pv)} r={2.75} style={{ fill: T.accent, stroke: T.bg, strokeWidth: 1.5 }} />
+                <circle cx={x(m)} cy={y(pv)} r={2.75} style={{ fill: toneStroke[primaryTone], stroke: T.bg, strokeWidth: 1.5 }} />
                 {!compact && showMarkerLabels && (
                   <text x={k % 2 ? x(m) - 6 : x(m) + 6} y={k % 2 ? y(pv) + 16 : y(pv) - 8} textAnchor={k % 2 ? 'end' : 'start'} style={{ ...TXT, fill: T.fg2 }}>
                     {format(pv)}
@@ -204,9 +211,9 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
               </motion.g>
             );
           })}
-        <Overlay series={series} sync={sync} x={x} y={y} top={L.top} bottom={plotB} />
+        <Overlay series={series} sync={sync} x={x} y={y} top={L.top} bottom={plotB} primaryTone={primaryTone} />
       </svg>
-      <Tip series={series} sync={sync} x={x} width={width} top={L.top + 20} format={format} unit={unit} secondary={secondary} secondaryUnit={secondaryUnit} />
+      <Tip series={series} sync={sync} x={x} width={width} top={L.top + 20} format={format} unit={unit} secondary={secondary} secondaryUnit={secondaryUnit} primaryTone={primaryTone} />
       <span className="sr-only" aria-live="polite">
         {live}
       </span>
@@ -238,7 +245,7 @@ export function valueAt(points: PeakPoint[], sec: number): number | null {
   return a.value + (b.value - a.value) * f;
 }
 
-function Overlay({ series, sync, x, y, top, bottom }: { series: CurveSeries[]; sync: HoverSync<number>; x: (v: number) => number; y: (v: number) => number; top: number; bottom: number }) {
+function Overlay({ series, sync, x, y, top, bottom, primaryTone }: { series: CurveSeries[]; sync: HoverSync<number>; x: (v: number) => number; y: (v: number) => number; top: number; bottom: number; primaryTone: Tone }) {
   const k = useHoverValue(sync);
   if (k == null) return null;
   return (
@@ -246,32 +253,32 @@ function Overlay({ series, sync, x, y, top, bottom }: { series: CurveSeries[]; s
       <CrosshairRule x={Math.round(x(k)) + 0.5} y0={top} y1={bottom} />
       {series.map((s) => {
         const v = valueAt(s.points, k);
-        return v == null ? null : <CrosshairDot key={s.id} x={x(k)} y={y(v)} tone={VARIANT[s.variant ?? 'primary'].tone} />;
+        return v == null ? null : <CrosshairDot key={s.id} x={x(k)} y={y(v)} tone={variantOf(s, primaryTone).tone} />;
       })}
     </g>
   );
 }
 
-function rowsFor(series: CurveSeries[], k: number, format: (v: number) => string, unit: string, secondary?: (v: number) => string, secondaryUnit?: string): TooltipRow[] {
+function rowsFor(series: CurveSeries[], k: number, format: (v: number) => string, unit: string, secondary: ((v: number) => string) | undefined, secondaryUnit: string | undefined, primaryTone: Tone): TooltipRow[] {
   return series.map((s) => {
     const v = valueAt(s.points, k);
-    const vv = VARIANT[s.variant ?? 'primary'];
+    const vv = variantOf(s, primaryTone);
     return { label: s.label, value: v == null ? '—' : `${format(v)}${unit ? ` ${unit}` : ''}`, hint: v != null && secondary ? `${secondary(v)}${secondaryUnit ? ` ${secondaryUnit}` : ''}` : undefined, strong: (s.variant ?? 'primary') === 'primary', swatch: { tone: vv.tone, width: vv.width, dash: vv.dash } };
   });
 }
 
-function Tip({ series, sync, x, width, top, format, unit, secondary, secondaryUnit }: { series: CurveSeries[]; sync: HoverSync<number>; x: (v: number) => number; width: number; top: number; format: (v: number) => string; unit: string; secondary?: (v: number) => string; secondaryUnit?: string }) {
+function Tip({ series, sync, x, width, top, format, unit, secondary, secondaryUnit, primaryTone }: { series: CurveSeries[]; sync: HoverSync<number>; x: (v: number) => number; width: number; top: number; format: (v: number) => string; unit: string; secondary?: (v: number) => string; secondaryUnit?: string; primaryTone: Tone }) {
   const k = useHoverValue(sync);
   const kk = k ?? 60;
   return (
     <ChartTooltip x={x(kk)} y={top} containerWidth={width} visible={k != null}>
-      <TooltipBody title={`Best ${fmtDurShort(kk)}`} rows={rowsFor(series, kk, format, unit, secondary, secondaryUnit)} />
+      <TooltipBody title={`Best ${fmtDurShort(kk)}`} rows={rowsFor(series, kk, format, unit, secondary, secondaryUnit, primaryTone)} />
     </ChartTooltip>
   );
 }
 
 /** Legend that doubles as a readout for the hovered (or focus) duration. */
-function Readout({ series, sync, focusSec, format, unit, secondary, secondaryUnit }: { series: CurveSeries[]; sync: HoverSync<number>; focusSec: number; format: (v: number) => string; unit: string; secondary?: (v: number) => string; secondaryUnit: string }) {
+function Readout({ series, sync, focusSec, format, unit, secondary, secondaryUnit, primaryTone }: { series: CurveSeries[]; sync: HoverSync<number>; focusSec: number; format: (v: number) => string; unit: string; secondary?: (v: number) => string; secondaryUnit: string; primaryTone: Tone }) {
   const k = useHoverValue(sync) ?? focusSec;
   return (
     <div className="mb-4 flex flex-wrap items-end gap-x-8 gap-y-2" aria-hidden>
@@ -281,7 +288,7 @@ function Readout({ series, sync, focusSec, format, unit, secondary, secondaryUni
       </div>
       {series.map((s) => {
         const v = valueAt(s.points, k);
-        const vv = VARIANT[s.variant ?? 'primary'];
+        const vv = variantOf(s, primaryTone);
         return (
           <div key={s.id} className="flex flex-col gap-0.5">
             <span className="flex items-center gap-1.5 text-label text-fg-3">
@@ -291,7 +298,7 @@ function Readout({ series, sync, focusSec, format, unit, secondary, secondaryUni
               {s.label}
             </span>
             <span className="flex items-baseline gap-1.5">
-              <span className={`num ${vv.tone === 'accent' ? 'text-stat-sm text-fg-1' : 'text-body-lg text-fg-2'}`}>{v == null ? '—' : format(v)}</span>
+              <span className={`num ${(s.variant ?? 'primary') === 'primary' ? 'text-stat-sm text-fg-1' : 'text-body-lg text-fg-2'}`}>{v == null ? '—' : format(v)}</span>
               <span className="text-label text-fg-3">{unit}</span>
               {secondary && v != null && (
                 <span className="num text-label text-fg-3">
@@ -322,7 +329,7 @@ export function PaceCurve({ per = 1000, ...rest }: Omit<EffortCurveProps, 'forma
     for (let s = Math.ceil(sLo / step) * step; s <= sHi; s += step) out.push(per / s);
     return out;
   };
-  return <EffortCurve {...rest} zeroBased={false} yTickValues={ticks} format={(v) => fmtPace(v, per)} unit={per === 1000 ? '/km' : per === 100 ? '/100m' : '/500m'} />;
+  return <EffortCurve primaryTone="series3" {...rest} zeroBased={false} yTickValues={ticks} format={(v) => fmtPace(v, per)} unit={per === 1000 ? '/km' : per === 100 ? '/100m' : '/500m'} />;
 }
 
 /** BestEffort[] (fixed distances) → PeakPoint[] (duration → speed m/s) for PaceCurve. */

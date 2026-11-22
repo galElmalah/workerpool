@@ -11,7 +11,7 @@
  */
 import { Decoder, Profile, Stream, Utils } from '@garmin/fitsdk';
 import { unzipSync } from 'fflate';
-import type { ActivityStreams, Lap, Sport, StrengthSet, SubSport } from '@cadence/core/domain';
+import type { ActivityFacts, ActivitySensor, ActivityStreams, Lap, Sport, StrengthSet, SubSport, SwimLength } from '@cadence/core/domain';
 import { camelToUpperSnake, humanizeExercise } from './exercises';
 import { compact, round, toIsoInstant, utcDate } from './util';
 
@@ -67,6 +67,13 @@ export interface FitParseResult {
   /** Name of the executed workout (FIT `workout.wkt_name`) — may carry our tag. */
   workoutName?: string;
   sessionCount: number;
+  /** Everything else the file reports (position, dynamics, temperature, device…); see domain ActivityFacts. */
+  facts?: ActivityFacts;
+  /** Pool swims: every length (active and idle). */
+  swimLengths?: SwimLength[];
+  /** Post-workout self-evaluation recorded on the watch (session.workout_rpe / workout_feel). */
+  rpe?: number;
+  feel?: number;
 }
 
 const SEMICIRCLE_TO_DEG = 180 / 2 ** 31;
@@ -277,6 +284,11 @@ function fillFromMessages(messages: Record<string, M[] | undefined>, r: FitParse
       activeLengths: n(session, 'numActiveLengths'),
     });
   }
+  r.facts = sessionFacts(session, records, r.sport, legSport, sessCadFactor, messages);
+  const rpe = n(session, 'workoutRpe');
+  if (rpe !== undefined && rpe > 0) r.rpe = Math.max(1, Math.min(10, Math.round(rpe / 10)));
+  const feel = n(session, 'workoutFeel');
+  if (feel !== undefined && feel >= 0 && feel <= 100) r.feel = Math.max(1, Math.min(5, Math.round(feel / 25) + 1));
 
   // ── streams
   if (records.length && startMs !== undefined) {
@@ -376,6 +388,7 @@ function fillFromMessages(messages: Record<string, M[] | undefined>, r: FitParse
             : undefined,
           swolf: isSwim ? (n(lap, 'avgSwolf') ?? swolfOf(lapLengths)) : undefined,
           isRest: isSwim && (activeCount === 0 || (!dist && lapLengths.length === 0)) ? true : undefined,
+          ...lapExtras(lap, r.sport, legSport),
         }),
       );
     });
@@ -409,6 +422,7 @@ function fillFromMessages(messages: Record<string, M[] | undefined>, r: FitParse
     }
     flush(false, group);
   }
+  if (r.sport === 'swim' && lengths.length) r.swimLengths = swimLengthsOf(lengths, laps, lapStart);
   if (r.sport === 'swim' && r.summary.avgSwolf === undefined && activeLen.length) r.summary.avgSwolf = swolfOf(activeLen);
   if (r.sport === 'swim' && r.summary.activeLengths === undefined && activeLen.length) r.summary.activeLengths = activeLen.length;
 
@@ -451,6 +465,243 @@ function fillFromMessages(messages: Record<string, M[] | undefined>, r: FitParse
 
   const wkt = messages.workoutMesgs?.[0];
   if (wkt && typeof wkt.wktName === 'string') r.workoutName = wkt.wktName;
+}
+
+// ───────────────────────────── facts ─────────────────────────────
+
+const r1 = (v: number | undefined) => (v === undefined ? undefined : round(v, 1));
+const r3 = (v: number | undefined) => (v === undefined ? undefined : round(v, 3));
+
+/** Average of a record field over records where it is present and > 0. */
+function recordMean(records: M[], key: string): number | undefined {
+  let s = 0;
+  let c = 0;
+  for (const x of records) {
+    const v = n(x, key);
+    if (v !== undefined && v > 0) {
+      s += v;
+      c++;
+    }
+  }
+  return c ? s / c : undefined;
+}
+
+/**
+ * FIT `left_right_balance(_100)`: low 14 bits (or 7 for the 8-bit form) = percent contribution of
+ * the side flagged by the high bit ("right" when set, else unknown). Returns the LEFT share, or
+ * undefined when the side is unknown or the value is implausible.
+ */
+export function leftBalancePct(raw: unknown, hundredths = true): number | undefined {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return undefined;
+  const rightFlag = hundredths ? 0x8000 : 0x80;
+  const mask = hundredths ? 0x3fff : 0x7f;
+  if (!(raw & rightFlag)) return undefined;
+  const right = hundredths ? (raw & mask) / 100 : raw & mask;
+  if (right <= 0 || right >= 100) return undefined;
+  return round(100 - right, 1);
+}
+
+const PRODUCT_NAMES: Record<string, string> = {
+  hrmPro: 'HRM-Pro',
+  hrmProPlus: 'HRM-Pro Plus',
+  hrmDual: 'HRM-Dual',
+  hrmRun: 'HRM-Run',
+  hrmTri: 'HRM-Tri',
+  hrmSwim: 'HRM-Swim',
+  hrm600: 'HRM 600',
+  hrmFit: 'HRM-Fit',
+  edgeExplore2: 'Edge Explore 2',
+  rally200: 'Rally 200',
+  vectorSs: 'Vector S',
+  vector3: 'Vector 3',
+  varia: 'Varia',
+};
+
+/** Garmin product key from the FIT profile ('fr965', 'edge840', 'fenix7xPro') → marketing name. */
+export function garminProductName(key: string | undefined): string | undefined {
+  if (!key || /^\d+$/.test(key)) return undefined;
+  if (PRODUCT_NAMES[key]) return PRODUCT_NAMES[key];
+  const words = (s: string) => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/(\d)([a-zA-Z])/g, '$1 $2');
+  const tail = (s: string) => words(s).replace(/\b(Apac|Asia|Japan|Taiwan|China|Korea|Sea|India)\b/g, '').replace(/\s+/g, ' ').trim();
+  let m = /^fr(\d+)(.*)$/.exec(key);
+  if (m) return `Forerunner ${m[1]}${tail(m[2]!) ? ' ' + tail(m[2]!) : ''}`.trim();
+  m = /^(fenix|epix|edge|venu|vivoactive|instinct|enduro|approach|descent|marq|quatix|tactix|vivomove|lily|swim)(.*)$/.exec(key);
+  if (m) {
+    const brand = m[1] === 'fenix' ? 'fēnix' : m[1] === 'vivoactive' ? 'vívoactive' : m[1] === 'vivomove' ? 'vívomove' : m[1] === 'marq' ? 'MARQ' : m[1]![0]!.toUpperCase() + m[1]!.slice(1);
+    const rest = tail(m[2]!);
+    return rest ? `${brand} ${rest}` : brand;
+  }
+  if (/^hrm/.test(key)) return `HRM ${tail(key.slice(3))}`.trim();
+  const w = words(key);
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}
+
+const SENSOR_KIND: Record<string, string> = {
+  heartRate: 'Heart rate',
+  bikePower: 'Power',
+  bikeSpeedCadence: 'Speed & cadence',
+  bikeCadence: 'Cadence',
+  bikeSpeed: 'Speed',
+  strideSpeedDistance: 'Foot pod',
+  fitnessEquipment: 'Trainer',
+  bikeRadar: 'Radar',
+  bikeLightMain: 'Light',
+  bikeLightShared: 'Light',
+  shifting: 'Shifting',
+  muscleOxygen: 'Muscle oxygen',
+  envSensor: 'Temperature',
+  environmentSensorLegacy: 'Temperature',
+  runningDynamics: 'Running dynamics',
+};
+
+/** device_info messages → the recording device + paired sensors. Internal (local) sensors are skipped. */
+export function deviceFacts(messages: Record<string, M[] | undefined>): Pick<ActivityFacts, 'deviceName' | 'deviceSoftware' | 'sensors'> {
+  const out: Pick<ActivityFacts, 'deviceName' | 'deviceSoftware' | 'sensors'> = {};
+  const infos = messages.deviceInfoMesgs ?? [];
+  const fileId = messages.fileIdMesgs?.[0];
+  const isCreator = (d: M) => d.deviceIndex === 'creator' || d.deviceIndex === 0;
+  const creator = infos.find((d) => isCreator(d) && (d.productName || d.garminProduct || d.product)) ?? infos.find(isCreator);
+  const nameOf = (d: M | undefined): string | undefined => {
+    if (!d) return undefined;
+    if (typeof d.productName === 'string' && d.productName.trim()) return d.productName.trim();
+    if (typeof d.garminProduct === 'string') return garminProductName(d.garminProduct);
+    return undefined;
+  };
+  out.deviceName = nameOf(creator) ?? nameOf(fileId);
+  const sw = n(creator, 'softwareVersion');
+  if (sw !== undefined && sw > 0) out.deviceSoftware = sw.toFixed(2);
+  const sensors: ActivitySensor[] = [];
+  const seen = new Set<string>();
+  for (const d of infos) {
+    if (isCreator(d) || d.sourceType === 'local') continue;
+    const name = nameOf(d);
+    const type = typeof d.antplusDeviceType === 'string' ? d.antplusDeviceType : typeof d.bleDeviceType === 'string' ? d.bleDeviceType : undefined;
+    let kind = type ? SENSOR_KIND[type] : undefined;
+    if (!kind && name) kind = /^hrm/i.test(name) ? 'Heart rate' : /rally|vector|assioma|power/i.test(name) ? 'Power' : /kickr|tacx|neo|trainer/i.test(name) ? 'Trainer' : /varia|radar/i.test(name) ? 'Radar' : undefined;
+    if (!kind) continue;
+    const key = `${kind}|${name ?? ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    sensors.push(name ? { kind, name } : { kind });
+  }
+  if (sensors.length) out.sensors = sensors;
+  return compact(out);
+}
+
+function sessionFacts(
+  session: M | undefined,
+  records: M[],
+  sport: Sport | undefined,
+  legSport: boolean,
+  cadFactor: number,
+  messages: Record<string, M[] | undefined>,
+): ActivityFacts {
+  const s = session;
+  const elapsed = n(s, 'totalElapsedTime');
+  const timer = n(s, 'totalTimerTime');
+  const events = (messages.eventMesgs ?? []).filter((e) => e.event === 'timer');
+  // A pause = a timer stop that is followed by a later start.
+  let pauses = 0;
+  let stopped = false;
+  for (const e of events) {
+    if (e.eventType === 'stop' || e.eventType === 'stopAll' || e.eventType === 'stopDisable' || e.eventType === 'stopDisableAll') stopped = true;
+    else if (e.eventType === 'start' && stopped) {
+      pauses++;
+      stopped = false;
+    }
+  }
+  const maxCad = n(s, 'maxRunningCadence', 'maxCadence');
+  const stance = n(s, 'avgStanceTime') ?? recordMean(records, 'stanceTime');
+  const vo = n(s, 'avgVerticalOscillation') ?? recordMean(records, 'verticalOscillation');
+  const vr = n(s, 'avgVerticalRatio') ?? recordMean(records, 'verticalRatio');
+  const step = n(s, 'avgStepLength') ?? recordMean(records, 'stepLength');
+  const gctBal = n(s, 'avgStanceTimeBalance') ?? recordMean(records, 'stanceTimeBalance');
+  const cycles = n(s, 'totalCycles', 'totalStrokes');
+  const negGrade = n(s, 'maxNegGrade');
+  const sportProfile = typeof s?.sportProfileName === 'string' ? s.sportProfileName : typeof messages.sportMesgs?.[0]?.name === 'string' ? (messages.sportMesgs[0]!.name as string) : undefined;
+  const runLike = legSport && sport === 'run';
+  return compact<ActivityFacts>({
+    startLat: deg(n(s, 'startPositionLat')) ?? undefined,
+    startLng: deg(n(s, 'startPositionLong')) ?? undefined,
+    endLat: deg(n(s, 'endPositionLat')) ?? undefined,
+    endLng: deg(n(s, 'endPositionLong')) ?? undefined,
+    timerSec: r1(timer),
+    pausedSec: elapsed !== undefined && timer !== undefined && elapsed - timer >= 1 ? Math.round(elapsed - timer) : undefined,
+    pauseCount: pauses || undefined,
+    maxSpeedMps: sport === 'swim' ? undefined : r3(n(s, 'enhancedMaxSpeed', 'maxSpeed')),
+    elevationLossM: n(s, 'totalDescent'),
+    minAltitudeM: r1(n(s, 'enhancedMinAltitude', 'minAltitude')),
+    maxAltitudeM: r1(n(s, 'enhancedMaxAltitude', 'maxAltitude')),
+    maxGradePct: n(s, 'maxPosGrade'),
+    minGradePct: negGrade === undefined ? undefined : -Math.abs(negGrade),
+    minHr: n(s, 'minHeartRate'),
+    powerBalanceLeftPct: leftBalancePct(s?.leftRightBalance),
+    maxCadence: maxCad === undefined ? undefined : Math.round(maxCad * cadFactor),
+    avgGroundContactMs: stance === undefined ? undefined : round(stance, 0),
+    avgGroundContactBalanceLeftPct: gctBal === undefined || gctBal <= 0 || gctBal >= 100 ? undefined : round(gctBal, 1),
+    avgVerticalOscillationCm: vo === undefined ? undefined : round(vo / 10, 1),
+    avgVerticalRatioPct: vr === undefined ? undefined : round(vr, 1),
+    avgStrideLengthM: step === undefined ? undefined : round(step / 1000, 2),
+    steps: runLike && cycles !== undefined ? Math.round(cycles * 2) : undefined,
+    activeLengths: sport === 'swim' ? n(s, 'numActiveLengths') : undefined,
+    avgStrokesPerLength: sport === 'swim' ? n(s, 'avgStrokesPerLength', 'avgStrokeCount') : undefined,
+    avgDistancePerStrokeM: sport === 'swim' || sport === 'row' ? n(s, 'avgStrokeDistance') : undefined,
+    totalStrokes: sport === 'row' ? cycles : undefined,
+    avgTempC: n(s, 'avgTemperature'),
+    minTempC: n(s, 'minTemperature'),
+    maxTempC: n(s, 'maxTemperature'),
+    sportProfile,
+    ...deviceFacts(messages),
+  });
+}
+
+function lapExtras(lap: M, sport: Sport | undefined, legSport: boolean): Partial<Lap> {
+  const maxCad = n(lap, 'maxRunningCadence', 'maxCadence');
+  const stance = n(lap, 'avgStanceTime');
+  const vo = n(lap, 'avgVerticalOscillation');
+  const step = n(lap, 'avgStepLength');
+  return {
+    maxPower: n(lap, 'maxPower'),
+    maxSpeedMps: sport === 'swim' ? undefined : n(lap, 'enhancedMaxSpeed', 'maxSpeed'),
+    maxCadence: maxCad === undefined ? undefined : Math.round(maxCad * (legSport && maxCad <= 130 ? 2 : 1)),
+    elevationLossM: n(lap, 'totalDescent'),
+    avgTempC: n(lap, 'avgTemperature'),
+    calories: n(lap, 'totalCalories'),
+    strokes: sport === 'swim' || sport === 'row' ? n(lap, 'totalCycles', 'totalStrokes') : undefined,
+    avgGroundContactMs: stance === undefined ? undefined : round(stance, 0),
+    avgVerticalOscillationCm: vo === undefined ? undefined : round(vo / 10, 1),
+    avgVerticalRatioPct: n(lap, 'avgVerticalRatio'),
+    avgStrideLengthM: step === undefined ? undefined : round(step / 1000, 2),
+  };
+}
+
+function swimLengthsOf(lengths: M[], laps: M[], startMs: number): SwimLength[] {
+  const lapOf = (i: number): number | undefined => {
+    for (let k = 0; k < laps.length; k++) {
+      const first = n(laps[k], 'firstLengthIndex');
+      const count = n(laps[k], 'numLengths');
+      if (first !== undefined && count !== undefined && i >= first && i < first + count) return k;
+    }
+    return undefined;
+  };
+  return lengths.map((l, i) => {
+    const st = ms(l.startTime) ?? ms(l.timestamp);
+    const dur = n(l, 'totalElapsedTime', 'totalTimerTime') ?? 0;
+    const rest = l.lengthType === 'idle';
+    const strokes = n(l, 'totalStrokes');
+    const stroke = typeof l.swimStroke === 'string' ? (STROKE_MAP[l.swimStroke] ?? l.swimStroke) : undefined;
+    return compact<SwimLength>({
+      index: i,
+      lapIndex: lapOf(i),
+      startSec: st === undefined ? 0 : round((st - startMs) / 1000, 1),
+      durationSec: round(dur, 1),
+      stroke: rest ? undefined : stroke,
+      strokes: rest ? undefined : strokes,
+      strokeRate: rest ? undefined : n(l, 'avgSwimmingCadence'),
+      swolf: !rest && strokes !== undefined && dur > 0 ? Math.round(strokes + dur) : undefined,
+      isRest: rest || undefined,
+    });
+  });
 }
 
 function median(v: number[]): number {

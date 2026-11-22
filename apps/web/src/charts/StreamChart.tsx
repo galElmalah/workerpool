@@ -8,8 +8,10 @@
  *   RouteMap or anything else can follow it at 60 fps.
  * - Drag = select (→ onSelect), ⌘/Ctrl+wheel or pinch = zoom, Shift+wheel / overview drag = pan,
  *   double-click = reset, keyboard: ←/→ cursor, +/− zoom, Z zoom to selection, 0 reset, Esc clear.
- * v2 look (DESIGN_V2 §5 "Charts"): power is the one accent track (line + soft fade), every other
- * track is neutral; one quiet gridline per track, sentence-case labels, faint lap rules, a
+ * v2.1 look (DESIGN_V2 §8): every metric keeps one colour (METRIC_COLOR in core/tokens.ts —
+ * power blue, heart rate red, pace/speed aqua, cadence violet, elevation a neutral area); the
+ * primary track (power when present) gets a ≤ 12% fade; labels and readouts stay ink beside a
+ * coloured mark; zone shading uses z1..z7; one quiet gridline per track, sentence-case labels, faint lap rules, a
  * neutral selection wash without edge lines.
  * product.md §5.1 item 6.
  */
@@ -18,7 +20,7 @@ import { animate, useMotionValue, useReducedMotion, type MotionValue } from 'mot
 import type { ActivityStreams, Lap, Sport } from '@cadence/core';
 import { ChartFrame } from './core/ChartFrame';
 import { ChartSegmented } from './core/controls';
-import { useCanvasTokens, type CanvasTokens } from './core/tokens';
+import { useCanvasTokens, type CanvasTokens, type StreamMetric } from './core/tokens';
 import { fitCanvas, useChartSize, useRafCallback } from './core/useChartSize';
 import { lowerBound, lttbIndices, rollingMeanF64, toF64 } from './core/lttb';
 import { useStreamCursor } from './core/hover';
@@ -462,16 +464,15 @@ function StreamInner({
         if (tr.key === 'power' && zoneShading && ftp) {
           drawZoneDensity(ctx, idx, xs, tr, X, Y, bot, ftp, zoneBounds, tk);
         } else {
-          // soft vertical fade of the accent (≤ 12 %)
+          // soft vertical fade of the metric colour (≤ 12 %)
+          const fade = tk.metricFade[tr.key as StreamMetric] ?? [tk.a3, tk.a1];
           const g = ctx.createLinearGradient(0, top, 0, bot);
-          g.addColorStop(0, tk.a3);
-          g.addColorStop(1, tk.a1);
+          g.addColorStop(0, fade[0]);
+          g.addColorStop(1, fade[1]);
           ctx.fillStyle = g;
-          ctx.globalAlpha = 0.75;
           ctx.fill(fillPath);
-          ctx.globalAlpha = 1;
         }
-        ctx.strokeStyle = tk.accent;
+        ctx.strokeStyle = tk.metrics[tr.key as StreamMetric] ?? tk.accent;
         ctx.lineWidth = 1.25;
       } else if (tr.key === 'altitude') {
         ctx.fillStyle = tk.s2;
@@ -479,9 +480,9 @@ function StreamInner({
         ctx.strokeStyle = tk.fg4;
         ctx.lineWidth = 1;
       } else {
-        ctx.strokeStyle = tr.key === 'hr' ? tk.fg2 : tk.fg3;
+        ctx.strokeStyle = tk.metrics[tr.key as StreamMetric] ?? tk.fg3;
         ctx.lineWidth = tr.key === 'hr' ? 1.25 : 1;
-        if (tr.key === 'cadence') ctx.globalAlpha = 0.8;
+        if (tr.key === 'cadence') ctx.globalAlpha = 0.85;
       }
       ctx.lineJoin = 'round';
       ctx.stroke(path);
@@ -638,7 +639,7 @@ function StreamInner({
           const py = tr.top + tr.h - ((v - tr.lo) / (tr.hi - tr.lo)) * tr.h;
           ctx.beginPath();
           ctx.arc(px, Math.max(tr.top, Math.min(tr.top + tr.h, py)), 3, 0, Math.PI * 2);
-          ctx.fillStyle = tr.key === primaryKey ? tk.accent : tr.key === 'hr' ? tk.fg2 : tk.fg3;
+          ctx.fillStyle = tk.metrics[tr.key as StreamMetric] ?? tk.fg3;
           ctx.strokeStyle = bgRef.current || tk.canvas;
           ctx.lineWidth = 2;
           ctx.stroke();
@@ -960,7 +961,7 @@ function StreamInner({
         {tracks.map((tr) => (
           <div key={tr.key} className="flex flex-col gap-0.5">
             <span className="flex items-center gap-1.5 text-label text-fg-3">
-              <span className="h-0.5 w-2.5 rounded-full" style={{ background: tr.key === primaryKey ? tk.accent : tr.key === 'hr' ? tk.fg2 : tk.fg4 }} />
+              <span className="h-0.5 w-2.5 rounded-full" style={{ background: tk.metrics[tr.key as StreamMetric] ?? tk.fg4 }} />
               {tr.label}
             </span>
             <span className="flex items-baseline gap-1">

@@ -22,3 +22,18 @@ export {
 } from './WorkoutCard';
 export { DeltaBadge, type DeltaBadgeProps } from './DeltaBadge';
 export { SyncDot, GarminStateIcon, FormZoneLabel, FORM_ZONE_META, type SyncState, type GarminState } from './Status';
+export {
+  SPORT_STACK_ORDER,
+  sportColor,
+  sportVars,
+  bySportOrder,
+  INTENSITY_ZONE,
+  zoneColor,
+  intensityColor,
+  zoneOfFraction,
+  STATUS_COLOR,
+  complianceTone,
+  SERIES,
+  type StatusTone,
+} from './dataColor';
+export { ShareBar, Legend, type ShareBarProps, type SharePart, type LegendItem } from './ShareBar';

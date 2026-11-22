@@ -30,6 +30,9 @@ import type { CalendarCard } from '@/lib/queries/training';
 import { useUnits } from '@/lib/units';
 import { tween } from '@/motion/tokens';
 import { ComplianceBar, ComplianceGlyph, complianceLabel } from '@/ui/domain/Compliance';
+import { bySportOrder, sportColor, zoneColor } from '@/ui/domain/dataColor';
+import { IntensityDot } from '@/ui/domain/Intensity';
+import { ShareBar } from '@/ui/domain/ShareBar';
 import { KeyStar } from '@/ui/domain/KeyStar';
 import { MiniProfile } from '@/ui/domain/MiniProfile';
 import { SPORT_SHORT, SportGlyph } from '@/ui/domain/SportGlyph';
@@ -197,6 +200,7 @@ function CardPeek({ card }: { card: CalendarCard }) {
           {m.intensity && (
             <>
               {sep}
+              <IntensityDot intensity={m.intensity} />
               {INTENSITY_META[m.intensity].label}
             </>
           )}
@@ -254,7 +258,8 @@ function WeekPeek({ week }: { week: WeekData }) {
   const sports = s.bySport
     .filter((x) => x.plannedCount + x.doneCount > 0)
     .sort((a, b) => b.plannedSec + b.doneSec - (a.plannedSec + a.doneSec))
-    .slice(0, 4);
+    .slice(0, 4)
+    .sort((a, b) => bySportOrder(a.sport, b.sport)); // legend order = stack order
   const it = s.intensitySec;
   const itT = it.easy + it.moderate + it.hard;
   const proj = s.isProjected;
@@ -296,9 +301,27 @@ function WeekPeek({ week }: { week: WeekData }) {
             </>,
           )}
         {itT > 0 && row('Easy · moderate · hard', `${pct(it.easy, itT)} · ${pct(it.moderate, itT)} · ${pct(it.hard, itT)}%`)}
+        {itT > 0 && (
+          <ShareBar
+            height={4}
+            className="mt-0.5"
+            parts={[
+              { key: 'easy', value: it.easy, color: zoneColor(2), label: `Easy ${pct(it.easy, itT)}%` },
+              { key: 'moderate', value: it.moderate, color: zoneColor(3), label: `Moderate ${pct(it.moderate, itT)}%` },
+              { key: 'hard', value: it.hard, color: zoneColor(5), label: `Hard ${pct(it.hard, itT)}%` },
+            ]}
+          />
+        )}
       </div>
       {sports.length > 0 && (
         <div className="flex flex-col gap-1 text-body-sm">
+          {sports.some((x) => x.doneSec > 0) && (
+            <ShareBar
+              height={4}
+              className="mb-1"
+              parts={sports.map((x) => ({ key: x.sport, value: x.doneSec, color: sportColor(x.sport), label: `${SPORT_SHORT[x.sport]} ${formatDuration(x.doneSec)}` }))}
+            />
+          )}
           {sports.map((x) => {
             const useDist = DIST.has(x.sport) && (x.plannedDistanceM > 0 || x.doneDistanceM > 0);
             const fmtSport = x.sport === 'swim' && Math.max(x.doneDistanceM, x.plannedDistanceM) >= 1000 ? 'run' : x.sport;
@@ -306,7 +329,7 @@ function WeekPeek({ week }: { week: WeekData }) {
             const p = distanceParts(x.plannedDistanceM, fmtSport, units, fmtSport === 'swim' ? undefined : 1);
             return (
               <div key={x.sport} className="flex items-center gap-2">
-                <SportGlyph sport={x.sport} size={14} className="text-fg-3" />
+                <SportGlyph sport={x.sport} size={14} />
                 <span className="flex-1 text-fg-3">{SPORT_SHORT[x.sport]}</span>
                 <span className="text-fg-2 num">
                   {useDist ? (

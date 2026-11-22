@@ -247,8 +247,12 @@ export interface StatBarProps {
   caption?: ReactNode;
   /** Optional reference on the bar (e.g. the plan or a target), drawn as a short fg-3 tick. */
   marker?: number;
-  /** 'fg' (default, neutral) or 'accent' for the page's one hero quantity. */
-  tone?: 'fg' | 'accent';
+  /** 'fg' (default, neutral), 'accent' for the page's one hero quantity, or a status fill. */
+  tone?: 'fg' | 'accent' | 'good' | 'warn' | 'critical';
+  /** Any data colour for the fill (e.g. `sportColor('run')`); overrides `tone`. */
+  color?: string;
+  /** Split the fill into coloured parts (e.g. hours by sport, in the fixed sport order) with 2px gaps. */
+  segments?: { key: string; value: number; color: string }[];
   /** Value size: 'md' = stat-md (hero), 'sm' = stat-sm (default). */
   size?: 'sm' | 'md';
   ariaLabel?: string;
@@ -259,7 +263,10 @@ export interface StatBarProps {
  * StatBar — the plain v2 alternative to a gauge or ring (research rule 12: position and
  * length beat angles): label, value, a 4px bar and at most one line of context.
  */
-export function StatBar({ label, value, max, min = 0, format = (v) => fmtNum(v), unit, caption, marker, tone = 'fg', size = 'sm', ariaLabel, className }: StatBarProps) {
+const STATBAR_FILL = { fg: 'bg-fg-2', accent: 'bg-accent', good: 'bg-good', warn: 'bg-warn', critical: 'bg-critical' } as const;
+
+export function StatBar({ label, value, max, min = 0, format = (v) => fmtNum(v), unit, caption, marker, tone = 'fg', color, segments, size = 'sm', ariaLabel, className }: StatBarProps) {
+  const segs = segments?.filter((x) => x.value > 0) ?? [];
   const reduce = useReducedMotion();
   const span = max - min || 1;
   const f = Math.max(0, Math.min(1, (value - min) / span));
@@ -273,12 +280,16 @@ export function StatBar({ label, value, max, min = 0, format = (v) => fmtNum(v),
       </span>
       <span className="relative mt-1 block h-1 w-full rounded-full bg-surface-3" aria-hidden>
         <motion.span
-          className={`absolute inset-y-0 left-0 block origin-left rounded-full ${tone === 'accent' ? 'bg-accent' : 'bg-fg-2'}`}
-          style={{ width: `${f * 100}%` }}
+          className={`absolute inset-y-0 left-0 flex origin-left gap-[2px] overflow-hidden rounded-full ${color || segs.length ? '' : STATBAR_FILL[tone]}`}
+          style={{ width: `${f * 100}%`, ...(color && !segs.length ? { backgroundColor: color } : null) }}
           initial={reduce ? false : { scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={reduce ? { duration: 0 } : spring.smooth}
-        />
+        >
+          {segs.map((x) => (
+            <span key={x.key} className="h-full min-w-[2px]" style={{ flexGrow: x.value, flexBasis: 0, backgroundColor: x.color }} />
+          ))}
+        </motion.span>
         {m != null && <span className="absolute -inset-y-0.5 block w-px rounded-full bg-fg-3" style={{ left: `${m * 100}%` }} />}
       </span>
       {caption && <span className="num text-label text-fg-3">{caption}</span>}

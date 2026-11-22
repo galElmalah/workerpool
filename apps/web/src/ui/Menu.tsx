@@ -36,7 +36,8 @@ const itemCls =
   'flex h-8 cursor-default select-none items-center gap-2 rounded-sm px-2 text-body text-fg-1 outline-none ' +
   'transition-colors duration-(--dur-fast) data-[highlighted]:bg-surface-3 data-[disabled]:opacity-40 ' +
   'data-[popup-open]:bg-surface-3 [&_svg]:size-4 [&_svg]:shrink-0';
-const popupCls = 'ui-popup min-w-48 max-w-80 rounded-lg p-1';
+// Stays inside the viewport (DESIGN_V2 §9): capped to the space Base UI reports, scrolls inside.
+const popupCls = 'ui-popup max-h-(--available-height) min-w-48 max-w-[min(20rem,var(--available-width))] overflow-y-auto overscroll-contain rounded-lg p-1';
 
 type Parts = typeof BaseMenu | typeof BaseContextMenu;
 
@@ -60,7 +61,7 @@ function Entries({ items, P }: { items: MenuEntry[]; P: Parts }) {
                 <ChevronRight className="!size-3.5 text-fg-3" />
               </P.SubmenuTrigger>
               <P.Portal>
-                <P.Positioner sideOffset={4} alignOffset={-4} className="z-(--z-popover)">
+                <P.Positioner sideOffset={4} alignOffset={-4} collisionPadding={8} className="z-(--z-popover)">
                   <P.Popup className={popupCls}>
                     <Entries items={it.items} P={P} />
                   </P.Popup>
@@ -109,7 +110,7 @@ export function ContextMenu({ items, children, className }: { items: MenuEntry[]
     <BaseContextMenu.Root>
       <BaseContextMenu.Trigger className={className}>{children}</BaseContextMenu.Trigger>
       <BaseContextMenu.Portal>
-        <BaseContextMenu.Positioner className="z-(--z-popover)">
+        <BaseContextMenu.Positioner collisionPadding={8} className="z-(--z-popover)">
           <BaseContextMenu.Popup className={popupCls}>
             <Entries items={items} P={BaseContextMenu} />
           </BaseContextMenu.Popup>

@@ -84,6 +84,56 @@ function swimStroke(name: string | undefined): number | undefined {
   }
 }
 
+/** Per-lap maxima, descent, temperature and running dynamics from the 1 Hz streams. */
+function lapStats(detail: SynthActivityDetail, l: Lap, isRun: boolean): Record<string, number> {
+  const st = detail.streams!;
+  const out: Record<string, number> = {};
+  let i0 = 0;
+  while (i0 < st.t.length && st.t[i0]! < l.startSec) i0++;
+  let i1 = i0;
+  while (i1 < st.t.length && st.t[i1]! < l.startSec + l.durationSec) i1++;
+  if (i1 - i0 < 2) return out;
+  const max = (ch: ReadonlyArray<number | null> | undefined) => {
+    let m = -Infinity;
+    if (ch) for (let i = i0; i < i1; i++) if (ch[i] != null && ch[i]! > m) m = ch[i]!;
+    return Number.isFinite(m) && m > 0 ? m : undefined;
+  };
+  const mean = (ch: ReadonlyArray<number | null> | undefined) => {
+    let s = 0;
+    let c = 0;
+    if (ch) for (let i = i0; i < i1; i++) if (ch[i] != null) (s += ch[i]!), c++;
+    return c ? s / c : undefined;
+  };
+  const mp = max(st.power);
+  if (mp !== undefined) out.maxPower = Math.round(mp);
+  const ms = detail.activity.sport === 'swim' ? undefined : max(st.speed);
+  if (ms !== undefined) out.enhancedMaxSpeed = ms;
+  const mc = max(st.cadence);
+  if (mc !== undefined) out.maxCadence = Math.min(254, Math.round(isRun ? mc / 2 : mc));
+  if (st.altitude) {
+    let down = 0;
+    for (let i = i0 + 1; i < i1; i++) {
+      const d = (st.altitude[i - 1] ?? 0) - (st.altitude[i] ?? 0);
+      if (d > 0) down += d;
+    }
+    out.totalDescent = Math.round(down);
+  }
+  const tm = mean(st.temp);
+  if (tm !== undefined) out.avgTemperature = Math.round(tm);
+  const dy = detail.dynamics;
+  if (dy) {
+    const g = mean(dy.gct);
+    const v = mean(dy.vo);
+    const r = mean(dy.vr);
+    const s = mean(dy.step);
+    if (g !== undefined) out.avgStanceTime = Math.round(g * 10) / 10;
+    if (v !== undefined) out.avgVerticalOscillation = Math.round(v * 10);
+    if (r !== undefined) out.avgVerticalRatio = Math.round(r * 100) / 100;
+    if (s !== undefined) out.avgStepLength = Math.round(s * 1000);
+  }
+  return out;
+}
+
 export function encodeFit(detail: SynthActivityDetail): Uint8Array {
   const a = detail.activity;
   const st = detail.streams;
@@ -117,7 +167,8 @@ export function encodeFit(detail: SynthActivityDetail): Uint8Array {
     write(enc, MN.DEVICE_INFO!, {
       timestamp: start,
       deviceIndex: 1,
-      antplusDeviceType: enumVal('antplusDeviceType', 'heartRate', 120),
+      deviceType: enumVal('antplusDeviceType', 'heartRate', 120),
+      sourceType: enumVal('sourceType', 'antplus', 1),
       manufacturer: enumVal('manufacturer', 'garmin', 1),
       product: enumVal('garminProduct', 'hrmPro'),
       serialNumber: 1_234_567 + (a.garminActivityId % 1000),
@@ -128,7 +179,8 @@ export function encodeFit(detail: SynthActivityDetail): Uint8Array {
     write(enc, MN.DEVICE_INFO!, {
       timestamp: start,
       deviceIndex: 2,
-      antplusDeviceType: enumVal('antplusDeviceType', 'bikePower', 11),
+      deviceType: enumVal('antplusDeviceType', a.subSport === 'indoor' ? 'fitnessEquipment' : 'bikePower', 11),
+      sourceType: enumVal('sourceType', 'antplus', 1),
       manufacturer: enumVal('manufacturer', a.subSport === 'indoor' ? 'wahooFitness' : 'garmin', 1),
       serialNumber: 98_765 + (a.garminActivityId % 1000),
       productName: a.subSport === 'indoor' ? 'KICKR' : 'Rally XC200',
@@ -170,6 +222,14 @@ export function encodeFit(detail: SynthActivityDetail): Uint8Array {
       if (p != null) r.power = p;
       const tmp = st.temp?.[i];
       if (tmp != null) r.temperature = tmp;
+      const dy = detail.dynamics;
+      if (dy && dy.gct[i] != null) {
+        r.stanceTime = dy.gct[i]!;
+        r.verticalOscillation = Math.round(dy.vo[i]! * 10); // mm
+        r.verticalRatio = dy.vr[i]!;
+        r.stepLength = Math.round(dy.step[i]! * 1000); // mm
+        if (a.avgGroundContactBalancePct !== undefined) r.stanceTimeBalance = a.avgGroundContactBalancePct;
+      }
       write(enc, MN.RECORD!, r);
     }
     totalTimer = n;
@@ -178,6 +238,7 @@ export function encodeFit(detail: SynthActivityDetail): Uint8Array {
   // pool lengths: reconstructed per active lap from the distance stream (boundaries at k × pool length)
   const swimLaps = a.poolLengthM !== undefined;
   let lengthIdx = 0;
+  const firstLength = new Map<number, number>();
   if (swimLaps && st?.distance) {
     const L = a.poolLengthM!;
     const dist = st.distance;
@@ -185,6 +246,7 @@ export function encodeFit(detail: SynthActivityDetail): Uint8Array {
       if (l.isRest || !l.lengths) continue;
       let i = st.t.findIndex((t) => t >= l.startSec);
       if (i < 0) continue;
+      firstLength.set(l.index, lengthIdx);
       const d0 = i > 0 ? (dist[i - 1] ?? 0) : 0;
       let tPrev = l.startSec;
       for (let k = 1; k <= l.lengths; k++) {
@@ -237,8 +299,10 @@ export function encodeFit(detail: SynthActivityDetail): Uint8Array {
     if (l.avgCadence !== undefined) lm.avgCadence = Math.min(254, isRun ? Math.round(l.avgCadence / 2) : l.avgCadence);
     if (l.elevationGainM !== undefined) lm.totalAscent = l.elevationGainM;
     if (l.movingSec !== undefined) lm.totalMovingTime = l.movingSec;
+    if (st) Object.assign(lm, lapStats(detail, l, isRun));
     if (swimLaps) {
-      lm.numLengths = l.lengths ?? 0;
+      lm.numLengths = l.isRest ? 0 : (l.lengths ?? 0);
+      if (firstLength.has(l.index)) lm.firstLengthIndex = firstLength.get(l.index)!;
       lm.numActiveLengths = l.isRest ? 0 : (l.lengths ?? 0);
       lm.intensity = enumVal('intensity', l.isRest ? 'rest' : 'active');
       const ss = swimStroke(l.stroke);
@@ -324,6 +388,38 @@ export function encodeFit(detail: SynthActivityDetail): Uint8Array {
       sm.startPositionLong = semi(st.lng![i0]!);
     }
   }
+  // detail extras (what a Forerunner / Edge writes in the session message)
+  const ext: Record<string, number | undefined> = {
+    totalDescent: a.elevationLossM,
+    enhancedMinAltitude: a.minElevationM,
+    enhancedMaxAltitude: a.maxElevationM,
+    avgTemperature: a.avgTempC,
+    minTemperature: a.minTempC,
+    maxTemperature: a.maxTempC,
+    maxCadence: a.maxCadence === undefined ? undefined : Math.min(254, isRun ? Math.round(a.maxCadence / 2) : a.maxCadence),
+    avgStanceTime: a.avgGroundContactMs,
+    avgStanceTimeBalance: a.avgGroundContactBalancePct,
+    avgVerticalOscillation: a.avgVerticalOscillationCm === undefined ? undefined : Math.round(a.avgVerticalOscillationCm * 10),
+    avgVerticalRatio: a.avgVerticalRatioPct,
+    avgStepLength: a.avgStrideLengthM === undefined ? undefined : Math.round(a.avgStrideLengthM * 1000),
+    leftRightBalance: a.powerBalanceLeftPct === undefined ? undefined : 0x8000 | Math.round((100 - a.powerBalanceLeftPct) * 100),
+  };
+  if (isRun && a.steps !== undefined && a.sport === 'run') ext.totalCycles = Math.round(a.steps / 2);
+  if (a.sport === 'row' && st?.cadence) {
+    let strokes = 0;
+    for (const c of st.cadence) if (c != null && c > 0) strokes += c / 60;
+    ext.totalCycles = Math.round(strokes);
+    if (a.distanceM && strokes > 0) ext.avgStrokeDistance = Math.round((a.distanceM / strokes) * 100) / 100;
+  }
+  if (st?.lat) {
+    let j = st.lat.length - 1;
+    while (j >= 0 && (st.lat[j] == null || st.lng?.[j] == null)) j--;
+    if (j >= 0) {
+      ext.endPositionLat = semi(st.lat[j]!);
+      ext.endPositionLong = semi(st.lng![j]!);
+    }
+  }
+  for (const [k, v] of Object.entries(ext)) if (v !== undefined) sm[k] = v;
   if (a.rpe !== undefined) sm.workoutRpe = a.rpe * 10;
   if (a.feel !== undefined) sm.workoutFeel = (a.feel - 1) * 25;
   write(enc, MN.SESSION!, sm);

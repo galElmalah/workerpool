@@ -6,8 +6,8 @@ import { INTENSITY_META, SPORT_META, type ActivityDetail, type IntensityClass, t
 import { rpeLoad } from '@cadence/core/metrics';
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, ArrowRight, ChevronDown, Download, FileDown, Info, MoreHorizontal, RotateCcw, SearchX, Trash2, TriangleAlert, Unlink, Upload as UploadIcon, Watch, PencilLine } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { ArrowLeftRight, ArrowRight, Download, FileDown, Info, MapPin, MoreHorizontal, RotateCcw, SearchX, Trash2, TriangleAlert, Unlink, Upload as UploadIcon, Watch, PencilLine } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Button,
@@ -40,18 +40,21 @@ import {
   type MenuEntry,
 } from '@/ui';
 import { PageItem } from '@/motion';
-import { Ticker } from '@/motion/Ticker';
-import { spring, tween } from '@/motion/tokens';
+import { spring } from '@/motion/tokens';
 import { cn } from '@/lib/cn';
 import { formatDateLong, formatInstantTime } from '@/lib/format';
 import { qk } from '@/lib/query';
 import { useUnits } from '@/lib/units';
 import { usePatchActivity } from '@/lib/queries/training';
 import { links } from '@/shell/links';
-import { useActivity, useDeleteActivity, usePairing, useRestoreActivity } from './data';
-import { deltaOf, statsFor, type Stat } from './stats';
-import { StreamsSection, LapsSection, ZonesSection, PeaksSection } from './Analysis';
+import { useActivity, useDeleteActivity, usePairing, useRestoreActivity, useStreams } from './data';
+import { deltaOf, heroStats, type Stat } from './stats';
+import { hasPeaks, lapsTitle, LapsSection, PeaksSection, StreamsSection, ZonesSection } from './Analysis';
 import { PlanSection, PreviousSection } from './Context';
+import { FiguresSection } from './figures';
+import { SPORT_TEXT } from './fmt';
+import { hasRoute, MapSection, MapSkeleton } from './MapSection';
+import { ActivitySyncProvider } from './sync';
 
 const route = getRouteApi('/_app/activities/$id');
 
@@ -86,43 +89,53 @@ export function ActivityPage() {
 
 // ───────────────────────────── page ─────────────────────────────
 
-const NAV = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'charts', label: 'Charts' },
-  { id: 'laps', label: 'Laps' },
-  { id: 'zones', label: 'Zones' },
-  { id: 'peaks', label: 'Peaks' },
-  { id: 'notes', label: 'Notes' },
-] as const;
-type NavId = (typeof NAV)[number]['id'];
-/** Laps, zones, peaks and notes share one place under the charts; the section nav switches between them. */
-const PANELS: NavId[] = ['laps', 'zones', 'peaks', 'notes'];
+type NavId = 'overview' | 'map' | 'figures' | 'charts' | 'laps' | 'zones' | 'peaks' | 'plan' | 'notes';
+
+const INDOOR = new Set(['indoor', 'virtual', 'treadmill', 'pool', 'erg']);
 
 /**
- * Hero = title, when, and 4 key figures (+ one plan line and a quiet row of secondary figures);
- * then the synchronized chart stack; then ONE detail panel (laps · zones · peaks · notes) switched by
- * the sticky pill nav; then "compared with last time".
+ * Hero (title, sport, when, where + 4–6 headline figures and the plan line), then everything else
+ * openly, in this order: map (outdoor) · all figures (grouped definition lists) · the synchronized
+ * chart stack · laps · time in zones · peaks · plan vs actual · how it felt · compared with last
+ * time. A sticky section nav scroll-spies the sections. Map, charts and laps share one cursor and
+ * selection (`ActivitySyncProvider`).
  */
 function ActivityView({ a }: { a: ActivityDetail }) {
+  return (
+    <ActivitySyncProvider>
+      <ActivityBody a={a} />
+    </ActivitySyncProvider>
+  );
+}
+
+function ActivityBody({ a }: { a: ActivityDetail }) {
   const units = useUnits();
   const patch = usePatchActivity();
   const set = (p: Parameters<typeof patch.mutate>[0]['patch']) => patch.mutateAsync({ id: a.id, patch: p });
   const [rpe, setRpe] = useState<number | null>(a.rpe ?? null);
   useEffect(() => setRpe(a.rpe ?? null), [a.rpe]);
   const liveLoad = a.loadSource === 'rpe' && rpe ? rpeLoad(rpe, a.durationSec) : undefined;
-  const stats = useMemo(() => statsFor(a, units, liveLoad), [a, units, liveLoad]);
-  const hasStreams = a.hasStreams;
-  const has: Record<NavId, boolean> = {
-    overview: true,
-    charts: hasStreams,
-    laps: a.laps.length > 1 || !!a.strengthSets?.length,
-    zones: !!(a.zones.hr || a.zones.power || a.zones.pace),
-    peaks: !!(a.peaks.power?.length || a.peaks.efforts?.length || a.peaks.speed?.length),
-    notes: true,
-  };
-  const nav = NAV.filter((n) => has[n.id]);
-  const [panel, setPanel] = useState<NavId>(() => PANELS.find((p) => has[p]) ?? 'notes');
+  const hero = useMemo(() => heroStats(a, units, liveLoad), [a, units, liveLoad]);
+  const sq = useStreams(a.id, a.hasStreams);
+  const streams = sq.data;
+  const likelyOutdoor = a.hasStreams && (a.facts?.startLat != null || !!a.locationName || (SPORT_META[a.sport].hasDistance && !INDOOR.has(a.subSport ?? '')));
+  const showMap = !!streams && hasRoute(streams);
+  const mapPending = !streams && sq.isPending && likelyOutdoor;
+  const zones = !!(a.zones.hr?.some((z) => z.seconds > 0) || a.zones.power?.some((z) => z.seconds > 0) || a.zones.pace?.some((z) => z.seconds > 0));
+  const laps = a.laps.length > 1 || !!a.strengthSets?.length;
+  const nav: { id: NavId; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    ...(showMap || mapPending ? [{ id: 'map' as const, label: 'Map' }] : []),
+    { id: 'figures', label: 'Figures' },
+    ...(a.hasStreams ? [{ id: 'charts' as const, label: 'Charts' }] : []),
+    ...(laps ? [{ id: 'laps' as const, label: lapsTitle(a) === 'Laps' ? 'Laps' : lapsTitle(a) }] : []),
+    ...(zones ? [{ id: 'zones' as const, label: 'Zones' }] : []),
+    ...(hasPeaks(a) ? [{ id: 'peaks' as const, label: 'Peaks' }] : []),
+    { id: 'plan', label: 'Plan' },
+    { id: 'notes', label: 'Notes' },
+  ];
   const empty = a.rpe == null && !a.postNote && a.feel == null;
+  const cols = hero.length >= 6 ? 'lg:grid-cols-6' : hero.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4';
 
   return (
     <Page
@@ -131,7 +144,7 @@ function ActivityView({ a }: { a: ActivityDetail }) {
           morph
           back={links.activities()}
           breadcrumb={[{ label: 'Activities', link: links.activities() }]}
-          glyph={<SportGlyph sport={a.sport} subSport={a.subSport} size={32} />}
+          glyph={<SportGlyph sport={a.sport} subSport={a.subSport} size={32} className={SPORT_TEXT[a.sport]} />}
           eyebrow={
             <span className="flex flex-wrap items-center gap-x-2">
               <span>{formatDateLong(a.localDate, true)}</span>
@@ -139,6 +152,15 @@ function ActivityView({ a }: { a: ActivityDetail }) {
               <span>{formatInstantTime(a.startedAt, a.utcOffsetMin)}</span>
               <span className="text-fg-4">·</span>
               <span>{SPORT_META[a.sport].label}{a.subSport && a.subSport !== 'generic' ? ` · ${a.subSport.replace('_', ' ')}` : ''}</span>
+              {a.locationName && (
+                <>
+                  <span className="text-fg-4">·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="size-3.5 text-fg-3" aria-hidden />
+                    {a.locationName}
+                  </span>
+                </>
+              )}
             </span>
           }
           titleText={a.title}
@@ -148,37 +170,30 @@ function ActivityView({ a }: { a: ActivityDetail }) {
         />
       }
     >
-      <SectionNav items={nav} panel={panel} onPanel={setPanel} />
+      <SectionNav items={nav} />
       <Section id="overview" className="-mt-4 md:-mt-6">
         <div className="flex flex-col gap-8">
-          <StatRow columns={4}>
-            {stats.slice(0, 4).map((s) => (
+          <div className={cn('grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:gap-x-8', cols)}>
+            {hero.map((s) => (
               <HeroStat key={s.key} s={s} hasPrev={!!a.previousSimilar} />
             ))}
-          </StatRow>
-          <PlanLine a={a} />
-          <div className="flex flex-col gap-3">
-            {empty && (
-              <button type="button" onClick={() => { setPanel('notes'); requestAnimationFrame(() => document.getElementById('details')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }} className="group inline-flex w-fit items-center gap-1.5 text-body text-fg-2 transition-colors hover:text-fg-1">
-                <PencilLine className="size-4 text-fg-3" aria-hidden /> How did it feel? Add RPE and a note
-              </button>
-            )}
-            <MoreStats stats={stats.slice(4)} hasPrev={!!a.previousSimilar} />
           </div>
+          <PlanLine a={a} />
+          {empty && (
+            <button type="button" onClick={() => document.getElementById('notes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="group inline-flex w-fit items-center gap-1.5 text-body text-fg-2 transition-colors hover:text-fg-1">
+              <PencilLine className="size-4 text-fg-3" aria-hidden /> How did it feel? Add RPE and a note
+            </button>
+          )}
         </div>
       </Section>
-      {hasStreams && <StreamsSection a={a} />}
-      <div id="details" className="scroll-mt-32">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={panel} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0, transition: spring.smooth }} exit={{ opacity: 0, transition: tween('fast', 'in') }}>
-            {panel === 'laps' && has.laps && <LapsSection a={a} />}
-            {panel === 'zones' && has.zones && <ZonesSection a={a} />}
-            {panel === 'peaks' && has.peaks && <PeaksSection a={a} />}
-            {panel === 'notes' && <NotesSection a={a} rpe={rpe} setRpe={setRpe} set={set} />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-      {!a.plannedWorkout && <PlanSection a={a} />}
+      {showMap ? <MapSection a={a} streams={streams!} /> : mapPending ? <MapSkeleton /> : null}
+      <FiguresSection a={a} />
+      {a.hasStreams && <StreamsSection a={a} streams={streams} loading={sq.isPending} error={sq.isError} onRetry={() => sq.refetch()} />}
+      {laps && <LapsSection a={a} />}
+      {zones && <ZonesSection a={a} />}
+      {hasPeaks(a) && <PeaksSection a={a} />}
+      <PlanSection a={a} />
+      <NotesSection a={a} rpe={rpe} setRpe={setRpe} set={set} />
       {a.previousSimilar && <PreviousSection a={a} />}
     </Page>
   );
@@ -277,48 +292,6 @@ function HeroStat({ s, hasPrev }: { s: Stat; hasPrev: boolean }) {
   );
 }
 
-/**
- * Secondary figures behind one quiet disclosure ("All figures"): a grid of label / value pairs; the
- * change vs last time is in each pair's tooltip. Collapsed by default so the charts sit above the fold.
- */
-function MoreStats({ stats, hasPrev }: { stats: Stat[]; hasPrev: boolean }) {
-  const [open, setOpen] = useState(false);
-  if (!stats.length) return null;
-  return (
-    <div className="flex flex-col gap-5">
-      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="group inline-flex w-fit items-center gap-1.5 text-body text-fg-2 transition-colors hover:text-fg-1">
-        <ChevronDown className={cn('size-4 text-fg-3 transition-transform duration-(--dur-fast)', open && 'rotate-180')} aria-hidden />
-        {open ? 'Fewer figures' : `All figures · ${stats.length} more`}
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.dl
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto', transition: spring.smooth }}
-            exit={{ opacity: 0, height: 0, transition: tween('fast', 'in') }}
-            className="grid grid-cols-2 gap-x-8 gap-y-5 overflow-hidden sm:grid-cols-3 lg:grid-cols-6"
-          >
-            {stats.map((s) => {
-              const d = hasPrev ? deltaOf(s) : undefined;
-              return (
-                <div key={s.key} className="flex min-w-0 flex-col gap-0.5" title={d != null ? `${d > 0 ? '+' : d < 0 ? '−' : '±'}${Math.abs(Math.round(d * 100))}% vs last time` : undefined}>
-                  <dt className="text-body-sm text-fg-3">
-                    <StatLabel s={s} />
-                  </dt>
-                  <dd className="flex items-baseline gap-1 text-body-lg text-fg-1">
-                    {s.value == null ? <span className="text-fg-4">—</span> : <Ticker value={s.value} format={s.format} />}
-                    {s.unit && <span className="text-body-sm text-fg-3">{s.unit}</span>}
-                  </dd>
-                </div>
-              );
-            })}
-          </motion.dl>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 const SPORT_CHOICES: Sport[] = ['bike', 'run', 'swim', 'row', 'strength', 'hike', 'walk', 'yoga', 'ski', 'other'];
 
 function ActionsMenu({ a, set }: { a: ActivityDetail; set: Setter }) {
@@ -379,39 +352,46 @@ function ActionsMenu({ a, set }: { a: ActivityDetail; set: Setter }) {
 
 // ───────────────────────────── section nav ─────────────────────────────
 
-/**
- * Sticky pill nav. Overview and Charts scroll to their section; Laps, Zones, Peaks and Notes switch
- * the detail panel under the charts (and scroll to it). Scroll-spy keeps the pill in sync.
- */
-function SectionNav({ items, panel, onPanel }: { items: readonly { id: NavId; label: string }[]; panel: NavId; onPanel: (p: NavId) => void }) {
-  const [spy, setSpy] = useState<'overview' | 'charts' | 'details'>('overview');
+/** Sticky pill nav: each item scrolls to its section; scroll-spy keeps the pill in sync. */
+function SectionNav({ items }: { items: readonly { id: NavId; label: string }[] }) {
+  const [active, setActive] = useState<NavId>('overview');
   const lock = useRef(0);
+  const navRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const onScroll = () => {
       if (Date.now() < lock.current) return;
-      const y = 160;
-      let cur: 'overview' | 'charts' | 'details' = 'overview';
-      for (const id of ['overview', 'charts', 'details'] as const) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top - y <= 0) cur = id;
+      const y = 180;
+      let cur: NavId = items[0]?.id ?? 'overview';
+      for (const i of items) {
+        const el = document.getElementById(i.id);
+        if (el && el.getBoundingClientRect().top - y <= 0) cur = i.id;
       }
-      setSpy(cur);
+      // at the very bottom the last short sections can never reach the top: pick the last visible
+      const doc = document.scrollingElement;
+      if (doc && doc.scrollTop + doc.clientHeight >= doc.scrollHeight - 4) {
+        const last = [...items].reverse().find((i) => {
+          const el = document.getElementById(i.id);
+          return el && el.getBoundingClientRect().top < window.innerHeight * 0.6;
+        });
+        if (last) cur = last.id;
+      }
+      setActive(cur);
     };
     window.addEventListener('scroll', onScroll, { passive: true, capture: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll, { capture: true });
   }, [items]);
-  const active: NavId = spy === 'details' ? panel : spy;
+  useEffect(() => {
+    navRef.current?.querySelector<HTMLElement>('[aria-current="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [active]);
   const go = (id: NavId) => {
-    const isPanel = PANELS.includes(id);
-    if (isPanel) onPanel(id);
-    setSpy(isPanel ? 'details' : (id as 'overview' | 'charts'));
-    lock.current = Date.now() + 800;
-    requestAnimationFrame(() => document.getElementById(isPanel ? 'details' : id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    setActive(id);
+    lock.current = Date.now() + 900;
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
   return (
     <PageItem className="sticky top-(--header-h) z-(--z-sticky) -mx-4 -mt-6 bg-canvas/85 px-4 backdrop-blur-md md:-mx-6 md:-mt-8 md:px-6 xl:-mx-12 xl:px-12">
-      <nav aria-label="Sections" className="-ml-3 flex h-12 items-center gap-1 overflow-x-auto [scrollbar-width:none] max-md:ml-0">
+      <nav ref={navRef} aria-label="Sections" className="-ml-3 flex h-12 items-center gap-1 overflow-x-auto [scrollbar-width:none] max-md:ml-0">
         {items.map((i) => (
           <button
             key={i.id}

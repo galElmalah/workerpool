@@ -129,6 +129,6 @@ export function CrosshairRule({ x, y0, y1 }: { x: number; y0: number; y1: number
 }
 
 /** 7px datum dot with a 2px ring in the chart's background colour. */
-export function CrosshairDot({ x, y, tone = 'fg1', ring = T.bg }: { x: number; y: number; tone?: Tone; ring?: string }) {
-  return <circle cx={x} cy={y} r={3.5} pointerEvents="none" style={{ fill: toneStroke[tone], stroke: ring, strokeWidth: 2 }} />;
+export function CrosshairDot({ x, y, tone = 'fg1', ring = T.bg, color }: { x: number; y: number; tone?: Tone; ring?: string; color?: string }) {
+  return <circle cx={x} cy={y} r={3.5} pointerEvents="none" style={{ fill: color ?? toneStroke[tone], stroke: ring, strokeWidth: 2 }} />;
 }

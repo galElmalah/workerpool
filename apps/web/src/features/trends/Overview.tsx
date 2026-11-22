@@ -149,7 +149,7 @@ export function OverviewPage() {
         {weekly.isError ? (
           <InlineError onRetry={() => weekly.refetch()} />
         ) : (
-          <WeeklyBars weeks={weeks} loading={!weekly.data} metric={metric} onMetricChange={(m) => set({ metric: m })} showMetricToggle={false} stack="total" sync={weekSync} height={240} onWeekClick={openWeek} />
+          <WeeklyBars weeks={weeks} loading={!weekly.data} metric={metric} onMetricChange={(m) => set({ metric: m })} showMetricToggle={false} stack="sport" sync={weekSync} height={240} onWeekClick={openWeek} />
         )}
       </Section>
 

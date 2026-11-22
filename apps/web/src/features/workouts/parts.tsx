@@ -6,8 +6,8 @@ import { INTENSITY_META, SPORT_META, type IntensityClass, type Sport, type SubSp
 import { describeStep, estimateWorkout, fmtClock, type AnyNode, type WorkoutEstimate } from '@cadence/core/workout';
 import { motion } from 'motion/react';
 import { useMemo, type ReactNode } from 'react';
-import type { ProfileBlock } from '@/charts';
-import { StatRow, StatTile, SportGlyph } from '@/ui';
+import { levelFor, type ProfileBlock } from '@/charts';
+import { IntensityDot, StatRow, StatTile, SportGlyph, zoneColor } from '@/ui';
 import { cn } from '@/lib/cn';
 import { distanceParts, formatDuration, formatIF } from '@/lib/format';
 import { useUnits } from '@/lib/units';
@@ -44,8 +44,9 @@ export function TotalsTiles({ totals, sport, size = 'md', loading }: { totals: T
 
 /**
  * Readable steps: one line per step — role, description with % and absolute targets, duration.
- * Repeats are an indented group on one quiet surface step. Hovering a step highlights its blocks
- * in the profile above (and vice versa), so the list itself needs no colour.
+ * Repeats are an indented group on one quiet surface step. Each step carries a small dot in the
+ * zone colour of its block in the profile above (DESIGN_V2 §8.2; no edge stripes). Hovering a step
+ * highlights its blocks in the profile (and vice versa).
  */
 export function StepsReadable({
   structure,
@@ -68,6 +69,15 @@ export function StepsReadable({
     for (const b of estimate.profile) if (!m.has(b.stepId)) m.set(b.stepId, b.durationSec);
     return m;
   }, [estimate]);
+  const zones = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const b of estimate.profile) if (!m.has(b.stepId)) m.set(b.stepId, levelFor(Math.max(b.intensity, b.rampTo ?? 0, b.rampFrom ?? 0)));
+    return m;
+  }, [estimate]);
+  const dot = (id: string) => {
+    const z = zones.get(id);
+    return z ? <span className="mr-2 inline-block size-2 shrink-0 rounded-full align-[1px]" style={{ backgroundColor: zoneColor(z) }} title={`Zone ${z}`} aria-label={`Zone ${z}`} role="img" /> : null;
+  };
   const render = (nodes: readonly AnyNode[]): ReactNode =>
     nodes.map((n) =>
       n.kind === 'repeat' ? (
@@ -85,9 +95,15 @@ export function StepsReadable({
           onPointerLeave={() => onHover?.(null)}
           className={cn('flex min-h-11 items-baseline gap-4 rounded-md px-4 py-2.5 transition-colors duration-(--dur-fast)', hovered === n.id ? 'bg-surface-2' : 'hover:bg-surface-2')}
         >
-          <span className="w-24 shrink-0 text-body-sm text-fg-3 max-sm:hidden">{roleLabel(n.role)}</span>
+          <span className="w-24 shrink-0 text-body-sm text-fg-3 max-sm:hidden">
+            {dot(n.id)}
+            {roleLabel(n.role)}
+          </span>
           <span className="min-w-0 flex-1 text-body text-fg-1">
-            <span className="block text-body-sm text-fg-3 sm:hidden">{roleLabel(n.role)}</span>
+            <span className="block text-body-sm text-fg-3 sm:hidden">
+              {dot(n.id)}
+              {roleLabel(n.role)}
+            </span>
             {describeStep(n, sport, units.system, thresholds)}
             {n.cue && <span className="mt-0.5 block text-body-sm text-fg-3">{n.cue}</span>}
           </span>
@@ -155,7 +171,8 @@ export function SubSportChips({ sport, value, onChange }: { sport: Sport; value?
  * A small neutral step profile (width ∝ duration, height ∝ intensity) for lists and cards, where
  * the zone colours would be noise. The coloured profile lives on the workout / template page.
  */
-export function NeutralProfile({ blocks, height = 24, className }: { blocks: readonly ProfileBlock[]; height?: number; className?: string }) {
+/** Compact step profile: neutral by default, or each block in its zone colour with `zone` (DESIGN_V2 §8.2). */
+export function NeutralProfile({ blocks, height = 24, className, zone }: { blocks: readonly ProfileBlock[]; height?: number; className?: string; zone?: boolean }) {
   const total = blocks.reduce((a, b) => Math.max(a, b.startSec + b.durationSec), 0) || 1;
   const W = 1000;
   const k = W / total;
@@ -167,13 +184,14 @@ export function NeutralProfile({ blocks, height = 24, className }: { blocks: rea
         const w = Math.max(1, b.durationSec * k - (b.durationSec * k > 8 ? 4 : 0));
         const a = y(b.intensity);
         const e = y(b.intensityEnd ?? b.intensity);
-        return <path key={b.id} d={`M${x} ${height}L${x} ${a}L${x + w} ${e}L${x + w} ${height}Z`} fill="currentColor" />;
+        const fill = zone ? zoneColor(b.level ?? levelFor(Math.max(b.intensity, b.intensityEnd ?? 0))) : 'currentColor';
+        return <path key={b.id} d={`M${x} ${height}L${x} ${a}L${x + w} ${e}L${x + w} ${height}Z`} style={{ fill }} />;
       })}
     </svg>
   );
 }
 
-/** Template card body: glyph + title, a neutral profile, then duration · intensity. */
+/** Template card body: tinted glyph + title, the step profile in zone colours, then duration · intensity dot + label. */
 export function TemplateMini({ t, thresholds }: { t: Pick<Template, 'sport' | 'structure' | 'plannedDurationSec' | 'plannedLoad' | 'intensity' | 'title' | 'subSport'>; thresholds: ThresholdSnapshot }) {
   const blocks = useMemo(() => (t.structure?.steps.length ? chartBlocks(estimateWorkout(t.structure, t.sport, thresholds), t.structure).blocks : []), [t.structure, t.sport, thresholds]);
   return (
@@ -182,10 +200,11 @@ export function TemplateMini({ t, thresholds }: { t: Pick<Template, 'sport' | 's
         <SportGlyph sport={t.sport} subSport={t.subSport} size={16} className="text-fg-3" />
         <span className="min-w-0 flex-1 truncate text-body font-medium text-fg-1">{t.title}</span>
       </div>
-      <div className="h-6">{blocks.length ? <NeutralProfile blocks={blocks} /> : <div className="mt-4 h-2 rounded-xs bg-surface-3" />}</div>
+      <div className="h-6">{blocks.length ? <NeutralProfile blocks={blocks} zone /> : <div className="mt-4 h-2 rounded-xs bg-surface-3" />}</div>
       <div className="flex items-center gap-1.5 text-body-sm text-fg-3">
         {t.plannedDurationSec ? <span className="text-fg-2">{formatDuration(t.plannedDurationSec, 'clock')}</span> : null}
         {t.plannedDurationSec ? <span className="text-fg-4">·</span> : null}
+        <IntensityDot intensity={t.intensity as IntensityClass} />
         <span>{INTENSITY_META[t.intensity as IntensityClass]?.label}</span>
       </div>
     </div>

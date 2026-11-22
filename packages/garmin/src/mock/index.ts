@@ -21,4 +21,4 @@ export {
   type MockScenario,
   type MockSchedule,
 } from './server';
-export { MOCK_ACTIVITY_TYPES, MOCK_DEVICE_ID, MOCK_PROFILE_ID } from './wire';
+export { MOCK_ACTIVITY_TYPES, MOCK_DEVICE_ID, MOCK_PROFILE_ID, activityListItem, activityDetail } from './wire';

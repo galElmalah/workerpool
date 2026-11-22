@@ -14,7 +14,7 @@ import { cn } from '@/lib/cn';
 import { spring } from '@/motion/tokens';
 import { useReducedMotionPref } from '@/motion/prefs';
 import type { TrendsSearch } from '@/shell/search';
-import { Button, Chip, Page, PageHeader, Popover, Segmented, SportGlyph } from '@/ui';
+import { Button, Chip, Page, PageHeader, Popover, Segmented, SportGlyph, TableScroll } from '@/ui';
 import { COMPARE_LABEL, RANGE_OPTIONS, type CompareKey, type TrendRange } from './data';
 
 // ───────────────────────── URL state ─────────────────────────
@@ -302,12 +302,12 @@ export function Readout({ label, children, className }: { label: ReactNode; chil
 /** A plain table in the v2 style (44px rows, line-1 rules, sentence-case `label fg-3` headers). */
 export function QuietTable({ head, children, minWidth, className }: { head: { label: ReactNode; numeric?: boolean; className?: string }[]; children: ReactNode; minWidth?: number; className?: string }) {
   return (
-    <div className={cn('relative -mx-4 overflow-x-auto px-4 md:mx-0 md:px-0', className)}>
+    <TableScroll bleed className={className}>
       <table className="w-full text-left" style={minWidth ? { minWidth } : undefined}>
         <thead>
           <tr className="border-b border-line-1">
             {head.map((h, i) => (
-              <th key={i} className={cn('h-9 pr-4 text-label font-medium text-fg-3 last:pr-0', h.numeric && 'text-right', h.className)}>
+              <th key={i} className={cn('h-9 pr-4 text-label font-medium whitespace-nowrap text-fg-3 last:pr-0', h.numeric && 'text-right', h.className)}>
                 {h.label}
               </th>
             ))}
@@ -315,12 +315,12 @@ export function QuietTable({ head, children, minWidth, className }: { head: { la
         </thead>
         <tbody className="num text-body">{children}</tbody>
       </table>
-    </div>
+    </TableScroll>
   );
 }
 /** Row + cell classes matching QuietTable. */
 export const qtRow = 'h-11 border-b border-line-1 last:border-0';
-export const qtCell = (numeric?: boolean) => cn('pr-4 last:pr-0', numeric && 'text-right');
+export const qtCell = (numeric?: boolean) => cn('pr-4 last:pr-0', numeric && 'text-right whitespace-nowrap');
 
 /**
  * A titled chart block in the v2 style: `title-3` heading (optionally a link to its sub-page), one

@@ -153,7 +153,10 @@ function DayBody({ date }: { date: LocalDate }) {
         )}
       </div>
 
-      <aside className="flex min-w-0 flex-col gap-12 lg:sticky lg:top-[calc(var(--header-h)+2rem)]" aria-label="Fitness and week">
+      <aside
+        className="flex min-w-0 flex-col gap-12 lg:sticky lg:top-[calc(var(--header-h)+2rem)] lg:max-h-[calc(100dvh-var(--header-h)-4rem)] lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-width:thin]"
+        aria-label="Fitness and week"
+      >
         <FitnessAside date={date} />
         {week && (
           <section className="flex flex-col gap-4" aria-label="Week">

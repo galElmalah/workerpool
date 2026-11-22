@@ -63,6 +63,11 @@ targets:
           NSAllowsLocalNetworking: true
         NSLocalNetworkUsageDescription: Cadence connects to a development server on your local network when you enter its address.
         ITSAppUsesNonExemptEncryption: false
+        # Background app refresh keeps the widget snapshot fresh (App/Core/BackgroundRefresh.swift).
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - $(PRODUCT_BUNDLE_IDENTIFIER).refresh
     entitlements:
       path: App/Cadence.entitlements
       properties:
@@ -86,11 +91,16 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: Widgets
+      # Shared (Theme, DataColor, components) and Shared/Intents (App Intents) are compiled into
+      # both targets; the AppShortcutsProvider is app-only (one per app bundle).
       - path: Shared
+        excludes:
+          - "Intents/AppOnly/**"
     dependencies:
       - package: CadenceKit
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
+      - sdk: AppIntents.framework
     info:
       path: Widgets/Info.plist
       properties:

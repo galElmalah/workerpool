@@ -16,14 +16,16 @@ import { formatDayShort, formatDuration, formatNumber, monthShort, paceParts } f
 import { useUnits } from '@/lib/units';
 import { links } from '@/shell/links';
 import { detailQuery, streamsKey } from './data';
+import { SPORT_TEXT } from './fmt';
 
 const route = getRouteApi('/_app/activities/$id/compare');
 const PACE = new Set<Sport>(['run', 'swim', 'row', 'walk', 'hike']);
 type Metric = 'power' | 'hr' | 'speed';
 const STROKES = [
-  { cls: '', c: 'var(--color-accent)', w: 2, dash: undefined, label: 'text-fg-1' },
-  { cls: '', c: 'var(--color-fg-1)', w: 1.5, dash: undefined, label: 'text-fg-1' },
-  { cls: '', c: 'var(--color-fg-3)', w: 1.25, dash: '4 3', label: 'text-fg-2' },
+  // DESIGN_V2 §8: multi-series charts take series-1..3 in order (dash keeps them apart without colour)
+  { cls: '', c: 'var(--color-series-1)', w: 2, dash: undefined, label: 'text-fg-1' },
+  { cls: '', c: 'var(--color-series-2)', w: 1.5, dash: undefined, label: 'text-fg-1' },
+  { cls: '', c: 'var(--color-series-3)', w: 1.25, dash: '4 3', label: 'text-fg-2' },
 ];
 
 export function ActivityComparePage() {
@@ -67,7 +69,7 @@ export function ActivityComparePage() {
                 d.data ? (
                   <span key={d.data.id} className="flex h-9 items-center gap-2 rounded-md bg-surface-1 pr-1 pl-3">
                     <svg width="18" height="6" aria-hidden><line x1="0" y1="3" x2="18" y2="3" style={{ stroke: STROKES[i].c }} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
-                    <SportGlyph sport={d.data.sport} size={14} />
+                    <SportGlyph sport={d.data.sport} size={14} className={SPORT_TEXT[d.data.sport]} />
                     <Link {...links.activity(d.data.id)} className="max-w-56 truncate text-body-sm text-fg-1 hover:underline">{d.data.title}</Link>
                     <span className="text-body-sm text-fg-3">{formatDayShort(d.data.localDate)} {monthShort(d.data.localDate)}</span>
                     {i > 0 ? <IconButton size="sm" label="Remove" icon={<X />} onClick={() => setWith(others.filter((o) => o !== d.data!.id))} /> : <span className="w-2" />}
@@ -113,7 +115,7 @@ function AddPicker({ base, exclude, onPick }: { base: ActivityDetail; exclude: s
           {q.isPending && <Skeleton className="h-24" />}
           {suggestions.map(({ a }) => (
             <button key={a.id} type="button" onClick={() => { onPick(a.id); close(); }} className="flex items-center gap-2 rounded-sm px-2 py-2 text-left transition-colors duration-(--dur-fast) hover:bg-surface-3">
-              <SportGlyph sport={a.sport} subSport={a.subSport} size={16} />
+              <SportGlyph sport={a.sport} subSport={a.subSport} size={16} className={SPORT_TEXT[a.sport]} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-body text-fg-1">{a.title}</span>
                 <span className="text-body-sm text-fg-3">{formatDayShort(a.localDate)} {monthShort(a.localDate)} · {formatDuration(a.movingSec || a.durationSec)} · {Math.round(a.load)} load</span>

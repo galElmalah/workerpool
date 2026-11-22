@@ -33,10 +33,10 @@ export function Tooltip({ content, kbd, side = 'top', align = 'center', children
     <BaseTooltip.Root>
       <BaseTooltip.Trigger render={children} />
       <BaseTooltip.Portal>
-        <BaseTooltip.Positioner side={side} align={align} sideOffset={sideOffset} className="z-(--z-popover)">
+        <BaseTooltip.Positioner side={side} align={align} sideOffset={sideOffset} collisionPadding={8} className="z-(--z-popover)">
           <BaseTooltip.Popup
             className={cn(
-              'ui-tooltip flex max-w-80 items-center gap-2 rounded-sm px-2 py-1 text-body-sm text-fg-1',
+              'ui-tooltip flex max-w-[min(20rem,var(--available-width))] items-center gap-2 rounded-sm px-2 py-1 text-body-sm text-fg-1',
               className,
             )}
           >

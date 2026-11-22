@@ -25,6 +25,8 @@ export interface RouteMapProps {
   onHoverSec?: (sec: number | null) => void;
   elevationShading?: boolean;
   kmMarkers?: boolean;
+  /** The route line and cursor wear this sport's colour (DESIGN_V2 §8.1); default accent. */
+  sport?: string | null;
   height?: number;
   loading?: boolean;
   className?: string;
@@ -48,7 +50,8 @@ export function RouteMap(props: RouteMapProps) {
   );
 }
 
-function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = false, kmMarkers = true, width, height }: RouteMapProps & { width: number; height: number }) {
+function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = false, kmMarkers = true, sport, width, height }: RouteMapProps & { width: number; height: number }) {
+  const routeColor = sport ? T.sport(sport) : T.accent;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const reduce = useReducedMotion();
   const geo = useMemo(() => {
@@ -246,9 +249,9 @@ function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = f
       <g mask={`url(#${uid}-draw)`}>
         <path d={poly.d} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: T.bg, strokeWidth: 6 }} />
         {shaded ? (
-          shaded.map((d, b) => <path key={b} d={d} fill="none" strokeLinecap="round" style={{ stroke: T.accent, strokeWidth: 2, opacity: 0.35 + (b / (shaded.length - 1)) * 0.65 }} />)
+          shaded.map((d, b) => <path key={b} d={d} fill="none" strokeLinecap="round" style={{ stroke: routeColor, strokeWidth: 2, opacity: 0.35 + (b / (shaded.length - 1)) * 0.65 }} />)
         ) : (
-          <path d={poly.d} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: T.accent, strokeWidth: 2 }} />
+          <path d={poly.d} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: routeColor, strokeWidth: 2 }} />
         )}
       </g>
       {selD && <path d={selD} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: T.fg1, strokeWidth: 3 }} />}

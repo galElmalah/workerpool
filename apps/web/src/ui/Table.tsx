@@ -1,5 +1,9 @@
 /**
- * Table — DESIGN_V2 §4: header `label` fg-3 sentence case, sticky (under the page bar), line-1 rule;
+ * Table — DESIGN_V2 §4 + §9: the table lives in its own `overflow-x: auto` container (it never
+ * widens the page), numeric cells never wrap, the header is sticky inside that container, and
+ * `maxHeight` turns a secondary table (laps, sync log, zones) into an internally scrolling box so it
+ * does not push the rest of the page away. `stickyFirstColumn` keeps the row label visible while
+ * the columns scroll sideways. Header `label` fg-3 sentence case, line-1 rule;
  * rows 44px `body`, line-1 row rules only, never zebra; numeric columns right-aligned sans with
  * tabular figures; row hover surface-2. Sortable headers (animated arrow), rows re-order with
  * `layout` (smooth). Selected row = surface-3 fill (no rail, no accent). Keep it to ≤ 6 columns at
@@ -46,8 +50,14 @@ export interface TableProps<T> {
   onSortChange?: (s: SortState) => void;
   /** Footer row (totals). Keys match column keys. */
   totals?: Partial<Record<string, ReactNode>>;
-  /** Sticky header offset (default: under the page bar). */
+  /** Sticky header offset inside the scroll container (default 0). @deprecated the header sticks inside the table's own container now. */
   stickyTop?: string;
+  /** Cap the height and scroll vertically inside the table (sticky header). For secondary tables. */
+  maxHeight?: number | string;
+  /** Minimum table width before it scrolls sideways (px or CSS length). */
+  minWidth?: number | string;
+  /** Keep the first column visible while scrolling sideways. */
+  stickyFirstColumn?: boolean;
   empty?: ReactNode;
   className?: string;
   'aria-label'?: string;
@@ -69,7 +79,10 @@ export function Table<T>({
   defaultSort,
   onSortChange,
   totals,
-  stickyTop = 'var(--header-h)',
+  stickyTop = '0px',
+  maxHeight,
+  minWidth,
+  stickyFirstColumn,
   empty,
   className,
   animateRows = true,
@@ -101,13 +114,15 @@ export function Table<T>({
   };
 
   const alignOf = (c: Column<T>) => c.align ?? (c.numeric ? 'right' : 'left');
+  const bg = surface === 'canvas' ? 'bg-canvas' : surface === 'surface-1' ? 'bg-surface-1' : 'bg-surface-2';
+  const first = (i: number) => stickyFirstColumn && i === 0 && cn('sticky left-0 z-[1]', bg);
 
   return (
-    <div className={cn('w-full', className)}>
-      <table className="w-full border-separate border-spacing-0 text-body" aria-label={aria['aria-label']}>
+    <TableScroll className={className} maxHeight={maxHeight} label={aria['aria-label']} surface={surface}>
+      <table className="w-full border-separate border-spacing-0 text-body" style={minWidth != null ? { minWidth } : undefined} aria-label={aria['aria-label']}>
         <thead>
           <tr>
-            {columns.map((c) => {
+            {columns.map((c, ci) => {
               const active = sort?.key === c.key;
               const al = alignOf(c);
               return (
@@ -117,9 +132,10 @@ export function Table<T>({
                   style={{ width: c.width, top: stickyTop }}
                   aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   className={cn(
-                    'sticky z-(--z-sticky) h-10 border-b border-line-1 px-3 align-middle text-label font-normal text-fg-3 first:pl-4 last:pr-4',
+                    'sticky h-10 border-b border-line-1 px-3 align-middle text-label font-normal whitespace-nowrap text-fg-3 first:pl-4 last:pr-4',
                     al === 'right' ? 'text-right' : al === 'center' ? 'text-center' : 'text-left',
-                    surface === 'canvas' ? 'bg-canvas' : surface === 'surface-1' ? 'bg-surface-1' : 'bg-surface-2',
+                    bg,
+                    stickyFirstColumn && ci === 0 ? 'left-0 z-[3]' : 'z-[2]',
                     c.hideBelow && hide[c.hideBelow],
                     c.className,
                   )}
@@ -173,14 +189,15 @@ export function Table<T>({
                     sel && 'bg-surface-3',
                   )}
                 >
-                  {columns.map((c) => {
+                  {columns.map((c, ci) => {
                     const al = alignOf(c);
                     return (
                       <td
                         key={c.key}
                         className={cn(
                           'relative h-11 border-b border-line-1 px-3 align-middle first:pl-4 last:pr-4',
-                          c.numeric ? 'num text-fg-1' : 'text-fg-1',
+                          c.numeric ? 'num whitespace-nowrap text-fg-1' : 'text-fg-1',
+                          first(ci),
                           al === 'right' ? 'text-right' : al === 'center' ? 'text-center' : 'text-left',
                           c.hideBelow && hide[c.hideBelow],
                           c.className,
@@ -198,12 +215,13 @@ export function Table<T>({
         {totals && (
           <tfoot>
             <tr>
-              {columns.map((c) => (
+              {columns.map((c, ci) => (
                 <td
                   key={c.key}
                   className={cn(
                     'h-11 px-3 align-middle first:pl-4 last:pr-4',
-                    c.numeric ? 'num font-medium text-fg-1' : 'text-label font-normal text-fg-3',
+                    c.numeric ? 'num font-medium whitespace-nowrap text-fg-1' : 'text-label font-normal text-fg-3',
+                    first(ci),
                     alignOf(c) === 'right' ? 'text-right' : 'text-left',
                     c.hideBelow && hide[c.hideBelow],
                   )}
@@ -215,6 +233,46 @@ export function Table<T>({
           </tfoot>
         )}
       </table>
+    </TableScroll>
+  );
+}
+
+export interface TableScrollProps {
+  children: ReactNode;
+  /** Cap the height; the table scrolls inside with its header stuck to the top. */
+  maxHeight?: number | string;
+  /** Accessible name of the scroll region (it is focusable so keyboard users can scroll it). */
+  label?: string;
+  /** Background behind the sticky header cells of a hand-written `<table>` (default canvas). */
+  surface?: 'canvas' | 'surface-1' | 'surface-2';
+  /** Bleed to the page gutters on phones so a wide table can use the full width. */
+  bleed?: boolean;
+  className?: string;
+}
+
+/**
+ * TableScroll — the scroll container every table sits in (DESIGN_V2 §9): horizontal overflow stays
+ * inside it, `maxHeight` adds an internal vertical scroll, and the `<thead>` cells of the table
+ * inside are sticky to its top (on the given surface). Wrap hand-written `<table>`s with it.
+ */
+export function TableScroll({ children, maxHeight, label, surface = 'canvas', bleed, className }: TableScrollProps) {
+  const scrollsY = maxHeight != null;
+  return (
+    <div
+      role={label ? 'region' : undefined}
+      aria-label={label}
+      tabIndex={label ? 0 : undefined}
+      className={cn(
+        'relative w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain focus-visible:outline-offset-2',
+        scrollsY && 'overflow-y-auto overscroll-y-contain',
+        bleed && '-mx-4 w-auto px-4 md:mx-0 md:px-0',
+        '[&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-[2]',
+        surface === 'canvas' ? '[&_thead_th]:bg-canvas' : surface === 'surface-1' ? '[&_thead_th]:bg-surface-1' : '[&_thead_th]:bg-surface-2',
+        className,
+      )}
+      style={scrollsY ? { maxHeight } : undefined}
+    >
+      {children}
     </div>
   );
 }

@@ -1,10 +1,10 @@
 # Chart kit (`@/charts`)
 
-Hand-rolled SVG + d3 math + Motion, Canvas 2D for 1 Hz streams. v2 look (`docs/DESIGN_V2.md`
-§5 "Charts"): quiet neutrals and **one accent series per chart** (the user's accent: blue, green
-or rose via `<html data-accent>`). Every chart: typed domain props, responsive (ResizeObserver),
-loading skeleton, empty state, keyboard navigation, an sr-only summary + data table,
-reduced-motion support.
+Hand-rolled SVG + d3 math + Motion, Canvas 2D for 1 Hz streams. v2.1 look (`docs/DESIGN_V2.md`
+§5 "Charts" + §8 "Colour for data"): quiet neutral chrome, and **colour that carries data meaning** in
+fixed vocabularies — sport, zone, status, series, metric (below). Every chart: typed domain props,
+responsive (ResizeObserver), loading skeleton at the final size, empty state, keyboard navigation, an
+sr-only summary + data table, reduced-motion support.
 
 Import everything from the barrel: `import { FitnessChart, WeeklyBars, … } from '@/charts';`
 Live catalogue: `/dev/charts` (or `/charts-gallery.html` standalone). Mock data: `@/charts/mock`.
@@ -16,14 +16,39 @@ Live catalogue: `/dev/charts` (or `/charts-gallery.html` standalone). Mock data:
   `var()` / `color-mix()` / relative-colour tokens through a probe element into colours a 2D
   context accepts, and re-resolves (and redraws) when `data-theme`, `data-accent`, `class` or
   `style` on `<html>` change.
-- **One accent series per chart** (line + a ≤ 12 % fade); everything else is neutral and told
-  apart by weight, dash and tone: Fitness = accent 2px + fade (the hero), Fatigue = fg-3 1.25px,
-  Form = fg-2 1.25px, projection = dashed `2 4`, comparison = fg-4 1px dashed. Power is the accent
-  track in StreamChart, HRV the accent line in WellnessChart, the primary period in curves.
-  Intensity uses the opaque zone ramp `z1…z7`. Stat numbers are never accent (fg-1).
-- Sports in stacks use the monochrome ramp `SPORT_RAMP` (mid-grey bike gray-10 … strength gray-6 +
-  hatch, other gray-6 + dots; labels sentence case). Deltas: arrow + sign + weight (`DeltaBadge`),
-  never red/green. Cautions are a ⚠ glyph + fg-1/fg-2, never an outline or a coloured edge.
+- **Colour by job (DESIGN_V2 §8).** Tokens: `T.series1..3`, `T.sport(s)`, `T.zone(n)`, `T.metric(k)`,
+  `T.good|warn|serious|critical` (SVG) and the same, resolved, on `useCanvasTokens()` (`series`,
+  `sports`, `zones`, `metrics`, `metricFade`, `good`…). Text never wears a data colour: values and
+  labels stay `fg-*`, a coloured mark (dot, line sample, swatch) sits beside them.
+  - **Series:** Fitness = `series-1` blue (2px + the only ≤ 12 % fade), Fatigue = `series-2` orange
+    1.25px, Form = `series-3` aqua 1.5px; projections dashed `2 4`. Any other multi-series chart takes
+    the three in that order; comparison / ghost series stay neutral (fg-3 / fg-4 dashed).
+  - **Sport:** stacks use `SPORT_RAMP` = the sport colours in the fixed palette order bike → run → swim
+    → walk → strength → hike → row → ski → other (yoga / unknown = neutral "Other"), 2px surface gaps
+    between stacked segments, a legend whenever ≥ 2 sports show. A sport keeps its colour everywhere
+    (route lines: `RouteMap sport=…`; one-sport bars: `WeeklyBars stack="total" totalColor={T.sport(s)}`).
+  - **Zones:** `z1` grey · `z2` blue · `z3` aqua · `z4` yellow · `z5` red · `z6` violet · `z7` magenta,
+    always paired with a label, height or position. `zoneFill(i, count)` maps an N-zone model (3-zone =
+    easy z2 · moderate z3 · hard z5); easy / moderate / hard splits use z2 / z3 / z5.
+  - **Per-metric stream colours (`METRIC_COLOR` in `core/tokens.ts`)** — the same in StreamChart,
+    curves, wellness, readouts and legends:
+
+    | Metric | Colour | Token |
+    |---|---|---|
+    | Power | blue | `series-1` |
+    | Heart rate (incl. resting HR) | red | `--c-red` |
+    | Pace / speed | aqua | `series-3` |
+    | Cadence | violet | `--c-violet` |
+    | Elevation | neutral area | `fg-4` line on `surface-2` |
+
+    The primary track (power when present) gets a ≤ 12 % fade in its own colour; zone shading uses
+    `z1..z7`. `PowerCurve` primary = blue, `PaceCurve` primary = aqua (`primaryTone`), comparisons neutral.
+  - **Status:** caution / ramp warnings = `warn` (+ ⚠ glyph, ink label), risky ramp = `serious`. Never
+    for a series.
+  - **One hue:** `ConsistencyHeatmap` = accent tints (16 → 85 %) at load quartiles. `StatBar` = neutral
+    track + `fg` / `accent` / status fill, or `color` / `segments` (e.g. hours by sport).
+- Deltas: arrow + sign + weight (`DeltaBadge`); the arrow turns `good` / `warn` only when the caller
+  says the direction is good (`good`) or bad (`bad`).
 - Data-ink: ≤ 3 horizontal `line-1` gridlines (`linearTicks` defaults to 3) plus a `line-2`
   baseline, no vertical grid, no axis lines or tick marks, fewer tick labels (`thinTicks` keeps
   ≥ 20px between labels, `dateTicks` ≈ one per 96px).

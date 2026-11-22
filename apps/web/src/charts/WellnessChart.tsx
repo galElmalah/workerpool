@@ -3,8 +3,9 @@
  * /trends/wellness): HRV (daily dots, 7-day mean, 60-day baseline band ±1 SD), resting HR
  * (same treatment), sleep (bars + 8 h reference), weight (dots + 7-day mean). Optional faint
  * daily-load bars under HRV to read load → HRV response. No dual axes: one panel per measure.
- * v2: the first panel's 7-day mean (HRV by default) is the one accent line; everything else is
- * neutral (other means fg-1, daily values small fg-4 dots, the normal band a faint wash),
+ * v2.1 (DESIGN_V2 §8): the 7-day means wear their metric colour — HRV `series-1`, resting HR the
+ * heart-rate red (METRIC_COLOR.hr); sleep and weight stay neutral (fg-2 / fg-1); daily values are
+ * small fg-4 dots, the normal band a faint wash; labels stay ink,
  * sentence-case panel labels, ≤ 2 gridlines per panel.
  */
 import { useCallback, useId, useMemo } from 'react';
@@ -18,6 +19,9 @@ import { dateTicks, thinTicks } from './core/Axis';
 import { EndLabels } from './core/EndLabels';
 import { FadeIn, Reveal } from './core/animated';
 import { T, TXT } from './core/tokens';
+
+/** 7-day mean colour per measure (labels stay ink). */
+const wellnessStroke = (k: string) => (k === 'hrv' ? T.series1 : k === 'rhr' ? T.metric('hr') : k === 'sleep' ? T.fg2 : T.fg1);
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -232,9 +236,9 @@ function WellInner({ days, metrics = [], loads, baselineDays = 60, rollingDays =
                       const out = s.band && s.band.lo[i] != null && (v < s.band.lo[i]! || v > s.band.hi[i]!);
                       return <circle key={i} cx={X(ms[i])} cy={Y(v)} r={out ? 2 : 1.5} style={out ? { fill: 'none', stroke: T.fg3, strokeWidth: 1 } : { fill: T.fg4, opacity: 0.8 }} />;
                     })}
-                <path d={ln(s.roll) ?? ''} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: s.key === heroKey ? T.accent : s.key === 'sleep' ? T.fg2 : T.fg1, strokeWidth: s.key === heroKey ? 1.75 : 1.25 }} />
+                <path d={ln(s.roll) ?? ''} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: wellnessStroke(s.key), strokeWidth: s.key === heroKey ? 1.75 : 1.5 }} />
               </Reveal>
-              {!compact && lastI >= 0 && <EndLabels labels={[{ id: s.key, y: Y(s.roll[lastI]!), value: s.fmt(s.roll[lastI]!), name: `${rollingDays}-d avg`, tone: s.key === heroKey ? 'accent' : 'fg1' }]} x={L.left + plotW + 8} top={top} bottom={bot} />}
+              {!compact && lastI >= 0 && <EndLabels labels={[{ id: s.key, y: Y(s.roll[lastI]!), value: s.fmt(s.roll[lastI]!), name: `${rollingDays}-d avg`, tone: s.key === 'hrv' ? 'series1' : 'fg1', ...(s.key === 'rhr' ? { color: T.metric('hr') } : null) }]} x={L.left + plotW + 8} top={top} bottom={bot} />}
             </g>
           );
         })}
@@ -265,7 +269,7 @@ function WellOverlay({ sync, keys, ms, X, panels }: { sync: HoverSync<LocalDate>
       <CrosshairRule x={Math.round(x) + 0.5} y0={panels[0].top} y1={panels[panels.length - 1].bot} />
       {panels.map(({ s, Y }) => {
         const v = s.roll[i] ?? s.raw[i];
-        return v == null ? null : <CrosshairDot key={s.key} x={x} y={Y(v)} tone={s.key === panels[0].s.key ? 'accent' : 'fg2'} />;
+        return v == null ? null : <CrosshairDot key={s.key} x={x} y={Y(v)} tone={s.key === 'hrv' ? 'series1' : 'fg2'} color={s.key === 'rhr' ? T.metric('hr') : undefined} />;
       })}
     </g>
   );

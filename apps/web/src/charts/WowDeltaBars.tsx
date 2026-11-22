@@ -1,6 +1,7 @@
 /**
- * WowDeltaBars — diverging week-over-week % change, all neutral: increase = fg-4, decrease =
- * fainter fg-4, beyond `cautionAbove` (+15 %) = fg-2 + ⚠ (never red, never an outline). Value labels
+ * WowDeltaBars — diverging week-over-week % change, neutral bars: increase = fg-4, decrease =
+ * fainter fg-4, beyond `cautionAbove` (+15 %) = the `warn` status colour + ⚠ (DESIGN_V2 §8.3;
+ * the label stays ink, never an outline). Value labels
  * thin out with the bar width (latest + caution weeks first); every value is in the tooltip.
  * Also exports `wowItems()` and `compareWeeks()` helpers for WoW tiles.
  */
@@ -207,7 +208,7 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
           const h = Math.max(dir === 'flat' ? 1 : 1.5, Math.abs(yv - zeroY));
           const x = xc(i) - barW / 2;
           const delay = reduce ? 0 : staggerDelay(i);
-          const fill = caution ? T.fg2 : T.fg4;
+          const fill = caution ? T.warn : T.fg4;
           return (
             <g key={it.key}>
               <motion.rect
@@ -230,7 +231,7 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
                   dominantBaseline={v >= 0 ? 'auto' : 'hanging'}
                   style={{ ...TXT, fill: caution ? T.fg1 : dir === 'down' ? T.fg3 : T.fg2, fontWeight: caution ? 500 : 400 }}
                 >
-                  {caution && '⚠ '}
+                  {caution && <tspan style={{ fill: T.warn }}>⚠ </tspan>}
                   <SvgTicker value={v} format={fmtV} />
                 </motion.text>
               )}

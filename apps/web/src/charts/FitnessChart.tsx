@@ -1,8 +1,9 @@
 /**
  * FitnessChart — Fitness / Fatigue / Form (PMC) with projection, annotations, range morph.
  * product.md §6.1 row 2 and §6.2 /trends/fitness; v2 look per DESIGN_V2 §5 "Charts":
- * Fitness is the hero (accent line + soft fade), Fatigue and Form are neutral, daily load is a
- * faint texture, phases are near-invisible washes, form zones and the ramp strip are opt-in.
+ * v2.1 (§8.4): Fitness `series-1` (2px + the only soft fade), Fatigue `series-2`, Form `series-3`
+ * (1.5px); names in ink beside coloured marks (end labels, header, tooltip). Daily load is a
+ * faint texture, ramp cautions use `warn` / `serious`, phases are near-invisible washes, form zones and the ramp strip are opt-in.
  */
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform, type MotionValue } from 'motion/react';
@@ -359,10 +360,10 @@ function FitnessInner({
   // Direct labels at the line ends: names only (values live in the header and the tooltip).
   const last = vis[1];
   const endLabels: EndLabel[] = [
-    { id: 'fit', y: yTop(p.fit[last]), value: '', name: 'Fitness', tone: 'accent' },
-    { id: 'fat', y: yTop(p.fat[last]), value: '', name: 'Fatigue', tone: 'fg3' },
+    { id: 'fit', y: yTop(p.fit[last]), value: '', name: 'Fitness', tone: 'series1' },
+    { id: 'fat', y: yTop(p.fat[last]), value: '', name: 'Fatigue', tone: 'series2' },
   ];
-  const formLabel: EndLabel = { id: 'form', y: yForm(p.form[last]), value: '', name: 'Form', tone: 'fg2' };
+  const formLabel: EndLabel = { id: 'form', y: yForm(p.form[last]), value: '', name: 'Form', tone: 'series3' };
 
   const flags = events.map((e) => ({ key: e.date + e.label, ms: dateMs(e.date), label: e.label, emphasis: e.priority === 'A', kind: e.kind ?? 'event' }));
   const clipId = defs.id('plot');
@@ -553,16 +554,16 @@ const Series = memo(function Series({ paths, defs, risk: showRisk }: { paths: Mo
   return (
     <g pointerEvents="none">
       <FadeIn>
-        <motion.path d={fitArea} style={{ fill: defs.fadeAccent }} />
-        <motion.path d={fitAreaF} style={{ fill: defs.fadeAccent, opacity: 0.45 }} />
+        <motion.path d={fitArea} style={{ fill: defs.fadeSeries1 }} />
+        <motion.path d={fitAreaF} style={{ fill: defs.fadeSeries1, opacity: 0.45 }} />
       </FadeIn>
       {showRisk && <motion.path d={risk} style={{ fill: defs.hatchFg, opacity: 0.6 }} />}
-      <motion.path d={fat} {...common} style={{ stroke: T.fg3, strokeWidth: 1.25, opacity: 0.85 }} />
-      <motion.path d={fatF} {...common} style={{ stroke: T.fg4, strokeWidth: 1.25, strokeDasharray: '2 4' }} />
-      <motion.path d={fit} {...common} style={{ stroke: T.accent, strokeWidth: 2 }} />
-      <motion.path d={fitF} {...common} style={{ stroke: T.accent, strokeWidth: 2, strokeDasharray: '2 4', opacity: 0.7 }} />
-      <motion.path d={form} {...common} style={{ stroke: T.fg2, strokeWidth: 1.25 }} />
-      <motion.path d={formF} {...common} style={{ stroke: T.fg3, strokeWidth: 1.25, strokeDasharray: '2 4' }} />
+      <motion.path d={fat} {...common} style={{ stroke: T.series2, strokeWidth: 1.25, opacity: 0.85 }} />
+      <motion.path d={fatF} {...common} style={{ stroke: T.series2, strokeWidth: 1.5, strokeDasharray: '2 4', opacity: 0.6 }} />
+      <motion.path d={fit} {...common} style={{ stroke: T.series1, strokeWidth: 2 }} />
+      <motion.path d={fitF} {...common} style={{ stroke: T.series1, strokeWidth: 2, strokeDasharray: '2 4', opacity: 0.7 }} />
+      <motion.path d={form} {...common} style={{ stroke: T.series3, strokeWidth: 1.5 }} />
+      <motion.path d={formF} {...common} style={{ stroke: T.series3, strokeWidth: 1.5, strokeDasharray: '2 4', opacity: 0.6 }} />
     </g>
   );
 });
@@ -676,8 +677,8 @@ function RampStrip({ p, L, x0, x1, defs, clipId }: { p: Prepared; L: Layout; x0:
       <line x1={L.left} x2={L.left + L.plotW} y1={mid} y2={mid} style={{ stroke: T.line1 }} />
       <g clipPath={`url(#${clipId})`}>
         <motion.path d={normal} style={{ fill: T.fg4, opacity: 0.5 }} />
-        <motion.path d={aggressive} style={{ fill: T.fg3 }} />
-        <motion.path d={risky} style={{ fill: T.fg1 }} />
+        <motion.path d={aggressive} style={{ fill: T.warn }} />
+        <motion.path d={risky} style={{ fill: T.serious }} />
       </g>
     </g>
   );
@@ -694,9 +695,9 @@ function Overlay({ p, sync, indexOf, toX, yTop, yForm, L }: { p: Prepared; sync:
   return (
     <g pointerEvents="none">
       <CrosshairRule x={Math.round(x) + 0.5} y0={L.top0} y1={L.form1} />
-      <CrosshairDot x={x} y={yTop(p.fat[i])} tone="fg3" />
-      <CrosshairDot x={x} y={yTop(p.fit[i])} tone="accent" />
-      <CrosshairDot x={x} y={yForm(p.form[i])} tone="fg2" />
+      <CrosshairDot x={x} y={yTop(p.fat[i])} tone="series2" />
+      <CrosshairDot x={x} y={yTop(p.fit[i])} tone="series1" />
+      <CrosshairDot x={x} y={yForm(p.form[i])} tone="series3" />
     </g>
   );
 }
@@ -712,9 +713,9 @@ function FitnessTooltip({ p, sync, indexOf, toX, L, events }: { p: Prepared; syn
   const zone = DEFAULT_FORM_BANDS.find((b) => p.form[j] > b.min && p.form[j] <= b.max);
   const ramp = j >= 7 ? p.fit[j] - p.fit[j - 7] : null;
   const rows: TooltipRow[] = [
-    { label: 'Fitness', value: fmtNum(p.fit[j]), strong: true, swatch: { tone: 'accent', width: 2 } },
-    { label: 'Fatigue', value: fmtNum(p.fat[j]), swatch: { tone: 'fg3', width: 1.5 } },
-    { label: 'Form', value: fmtNum(p.form[j]), hint: zone?.label, swatch: { tone: 'fg2', width: 1.5 } },
+    { label: 'Fitness', value: fmtNum(p.fit[j]), strong: true, swatch: { tone: 'series1', width: 2 } },
+    { label: 'Fatigue', value: fmtNum(p.fat[j]), swatch: { tone: 'series2', width: 1.5 } },
+    { label: 'Form', value: fmtNum(p.form[j]), hint: zone?.label, swatch: { tone: 'series3', width: 1.5 } },
     { label: projected ? 'Planned load' : 'Load', value: fmtNum(projected ? p.planned[j] : p.load[j]), muted: !(projected ? p.planned[j] : p.load[j]) },
   ];
   if (ramp != null) rows.push({ label: 'Ramp / 7d', value: fmtSigned(ramp, 1), muted: Math.abs(ramp) <= 5 });
@@ -769,7 +770,7 @@ function Stat({ label, value, delta, tone, caution, big }: { label: string; valu
     <div className="flex flex-col gap-0.5">
       <span className="flex items-center gap-1.5 text-label text-fg-3">
         <svg width="10" height="6" aria-hidden>
-          <line x1="0" x2="10" y1="3" y2="3" strokeLinecap="round" style={{ stroke: tone === 'accent' ? T.accent : label === 'Form' ? T.fg2 : T.fg3, strokeWidth: tone === 'accent' ? 2 : 1.5 }} />
+          <line x1="0" x2="10" y1="3" y2="3" strokeLinecap="round" style={{ stroke: label === 'Fitness' ? T.series1 : label === 'Fatigue' ? T.series2 : T.series3, strokeWidth: tone === 'accent' ? 2.5 : 2 }} />
         </svg>
         {label}
       </span>

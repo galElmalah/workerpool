@@ -201,6 +201,36 @@ export function statsFor(a: ActivityDetail, u: UnitPrefs, liveLoad?: number): St
   return out.filter((s, i) => i < 4 || has(s));
 }
 
+const HERO_KEYS: Partial<Record<Sport, string[]>> = {
+  bike: ['duration', 'distance', 'elev', 'wp', 'avgP', 'load', 'avgHr'],
+  run: ['duration', 'distance', 'Pace', 'elev', 'load', 'avgHr'],
+  walk: ['duration', 'distance', 'Pace', 'elev', 'load', 'avgHr'],
+  hike: ['duration', 'distance', 'elev', 'Pace', 'load', 'avgHr'],
+  swim: ['distance', 'duration', 'Pace', 'swolf', 'load', 'avgHr'],
+  row: ['distance', 'duration', 'Split', 'avgP', 'load', 'avgHr'],
+  strength: ['duration', 'sets', 'reps', 'vol', 'load', 'avgHr'],
+};
+
+/** The 4–6 headline figures of the hero, in sport order (absent figures are skipped). */
+export function heroStats(a: ActivityDetail, u: UnitPrefs, liveLoad?: number): Stat[] {
+  const all = statsFor(a, u, liveLoad);
+  const byKey = new Map(all.map((s) => [s.key, s]));
+  const keys = HERO_KEYS[a.sport] ?? ['duration', 'distance', 'load', 'avgHr', 'elev', 'cal'];
+  const ok = (s: Stat | undefined): s is Stat => !!s && s.value != null && Number.isFinite(s.value) && !(s.key === 'elev' && !s.value);
+  const out: Stat[] = [];
+  for (const k of keys) {
+    if (out.length >= 6) break;
+    if (k === 'avgP' && out.some((s) => s.key === 'wp')) continue;
+    const s = byKey.get(k);
+    if (ok(s)) out.push(s);
+  }
+  for (const s of all) {
+    if (out.length >= 4) break;
+    if (ok(s) && !out.includes(s)) out.push(s);
+  }
+  return out;
+}
+
 /** Fractional delta vs the previous session, or undefined (no tile delta row). */
 export function deltaOf(s: Stat): number | undefined {
   if (s.value == null || s.prev == null || !s.prev) return undefined;

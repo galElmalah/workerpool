@@ -7,6 +7,7 @@ import { rpeLoad } from '@cadence/core/metrics';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button, DatePicker, DurationField, Field, Input, NumberField, RpeSlider, SportGlyph, Textarea, toast } from '@/ui';
+import { SPORT_TEXT } from './fmt';
 import { Ticker } from '@/motion/Ticker';
 import { cn } from '@/lib/cn';
 import { distanceUnit, useUnits } from '@/lib/units';
@@ -74,7 +75,7 @@ export function ManualEntry({ today, onDone }: { today?: LocalDate; onDone: () =
             onClick={() => setSport(s)}
             className={cn('flex h-9 items-center gap-2 rounded-md px-3 text-body-sm transition-colors duration-(--dur-fast)', sport === s ? 'bg-surface-3 font-medium text-fg-1' : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1')}
           >
-            <SportGlyph sport={s} size={16} />
+            <SportGlyph sport={s} size={16} className={SPORT_TEXT[s]} />
             {SPORT_META[s].label}
           </button>
         ))}

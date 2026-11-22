@@ -4,7 +4,7 @@
  * hatched), phases as faint full-height bands with sentence-case labels (edit inline), A/B/C event flags, the projected
  * Fitness line over the season and a weekly target editor. Click a week → the calendar week.
  */
-import { PHASE_TYPES, type Event, type IsoWeek, type LocalDate, type Phase, type WeekSummary } from '@cadence/core/domain';
+import { PHASE_TYPES, type Event, type IsoWeek, type LocalDate, type Phase, type Sport, type WeekSummary } from '@cadence/core/domain';
 import { addDays, isoWeekOf, isoWeekStart, weekStart } from '@cadence/core/time';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -18,7 +18,7 @@ import { qk } from '@/lib/query';
 import { PageItem } from '@/motion/PageTransition';
 import { spring, tween } from '@/motion/tokens';
 import { links } from '@/shell/links';
-import { Banner, Button, IconButton, Input, NumberField, Page, PageHeader, Section, Select, Skeleton, toast, Tooltip } from '@/ui';
+import { Banner, Button, bySportOrder, IconButton, Input, NumberField, Page, PageHeader, Section, Select, Skeleton, SPORT_SHORT, SPORT_STACK_ORDER, sportColor, toast, Tooltip } from '@/ui';
 import { NewEventForm } from '../day/furniture';
 import { hm, useEvents, useFitnessTrend, usePhaseMutations, usePhases, useTodayData, useWeeklyTrend } from '../day/kit';
 
@@ -102,7 +102,7 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
               </span>
             </span>
           </div>
-          <Legend />
+          <Legend sports={seasonSports(weeks)} />
         </div>
         {weeksQ.isPending ? (
           <Skeleton className="h-72" />
@@ -186,13 +186,26 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
   );
 }
 
-function Legend() {
+/** Sports with done load in the season, in the fixed stack order. */
+const seasonSports = (weeks: WeekSummary[]) =>
+  SPORT_STACK_ORDER.filter((sp) => weeks.some((w) => w.bySport.some((x) => x.sport === sp && x.doneLoad > 0)));
+
+function Legend({ sports }: { sports: readonly Sport[] }) {
   return (
     <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-label font-normal text-fg-3" aria-hidden>
-      <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] bg-fg-4" />Load done</span>
+      {sports.length ? (
+        sports.map((sp) => (
+          <span key={sp} className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2 rounded-[2px]" style={{ backgroundColor: sportColor(sp) }} />
+            {SPORT_SHORT[sp]}
+          </span>
+        ))
+      ) : (
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] bg-fg-4" />Load done</span>
+      )}
       <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] border border-dashed border-fg-4" />Planned</span>
       <span className="flex items-center gap-1.5"><span className="h-px w-3 bg-fg-2" />Target</span>
-      <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 rounded-full bg-accent" />Fitness</span>
+      <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 rounded-full bg-series-1" />Fitness</span>
     </span>
   );
 }
@@ -298,7 +311,21 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
                 ) : (
                   w.plannedLoad > w.doneLoad && <span className="absolute inset-x-0.5 bottom-0 rounded-t-[2px] border border-b-0 border-dashed border-fg-4" style={{ height: `${plannedH}%` }} />
                 )}
-                <motion.span className="absolute inset-x-0.5 bottom-0 origin-bottom rounded-t-[2px] bg-fg-4 group-hover/bar:bg-fg-3" style={{ height: `${doneH}%` }} initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ ...spring.gentle, delay: Math.min(i * 0.008, 0.24) }} />
+                <motion.span
+                  className="absolute inset-x-0.5 bottom-0 flex origin-bottom flex-col-reverse gap-[2px] overflow-hidden rounded-t-[2px] opacity-75 transition-opacity duration-(--dur-fast) group-hover/bar:opacity-100"
+                  style={{ height: `${doneH}%` }}
+                  initial={{ scaleY: 0 }}
+                  animate={{ scaleY: 1 }}
+                  transition={{ ...spring.gentle, delay: Math.min(i * 0.008, 0.24) }}
+                >
+                  {/* done load stacked by sport (fixed order bottom-up, 2px surface gaps; DESIGN_V2 §8.1) */}
+                  {[...w.bySport]
+                    .filter((x) => x.doneLoad > 0)
+                    .sort((a, b) => bySportOrder(a.sport, b.sport))
+                    .map((x) => (
+                      <span key={x.sport} className="w-full min-h-px" style={{ flexGrow: x.doneLoad, flexBasis: 0, backgroundColor: sportColor(x.sport) }} />
+                    ))}
+                </motion.span>
                 {t && !projected ? <span className="absolute inset-x-0 h-px bg-fg-2" style={{ bottom: `${targetH}%` }} /> : null}
               </Link>
             );
@@ -306,8 +333,9 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
           {curIdx >= 0 && <span className="pointer-events-none absolute -top-1 bottom-0 w-px bg-fg-3" style={{ left: `${((curIdx + 0.5) / n) * 100}%` }} aria-hidden />}
           {/* fitness line */}
           <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            {done.length > 1 && <motion.polyline points={toPts(done)} fill="none" stroke="var(--color-accent)" strokeWidth={1.75} vectorEffect="non-scaling-stroke" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.gentle, delay: 0.2 }} />}
-            {proj.length > 1 && <polyline points={toPts(proj)} fill="none" stroke="var(--color-accent)" strokeOpacity={0.6} strokeWidth={2} strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />}
+            {done.length > 1 && <motion.polyline points={toPts(done)} fill="none" stroke="var(--color-canvas)" strokeWidth={5} strokeOpacity={0.7} vectorEffect="non-scaling-stroke" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.gentle, delay: 0.2 }} />}
+            {done.length > 1 && <motion.polyline points={toPts(done)} fill="none" stroke="var(--color-series-1)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.gentle, delay: 0.2 }} />}
+            {proj.length > 1 && <polyline points={toPts(proj)} fill="none" stroke="var(--color-series-1)" strokeOpacity={0.6} strokeWidth={2} strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />}
           </svg>
         </div>
         {/* months */}

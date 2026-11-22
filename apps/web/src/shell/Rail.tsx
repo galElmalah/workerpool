@@ -103,7 +103,8 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
       transition={spring.smooth}
       aria-label="Primary"
       className={cn(
-        'fixed inset-y-0 left-0 z-(--z-rail) flex flex-col overflow-hidden px-3 pt-4 pb-4',
+        // Scrolls on its own when the window is shorter than the rail (DESIGN_V2 §9); never sideways.
+        'fixed inset-y-0 left-0 z-(--z-rail) flex flex-col overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-4 pb-4 [scrollbar-width:none]',
         overlay ? 'glass' : 'bg-canvas',
       )}
     >
@@ -182,7 +183,7 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
           ))}
         </nav>
 
-        <div className="flex-1" />
+        <div className="min-h-6 flex-1" />
 
         {/* Bottom: sync + settings */}
         <div className="flex flex-col gap-1" onPointerLeave={() => setHover(null)}>

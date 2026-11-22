@@ -1,0 +1,98 @@
+/* ActivityMap markers and MapLibre chrome, in Cadence tokens (loaded only with the map chunk). */
+.cad-map .maplibregl-map {
+  font: inherit;
+}
+.cad-map .maplibregl-canvas:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* attribution: quiet, one surface step, no border */
+.cad-map .maplibregl-ctrl-attrib {
+  background: color-mix(in oklab, var(--color-surface-2) 88%, transparent);
+  color: var(--color-fg-3);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  border-radius: 6px;
+  margin: 0 8px 8px 0;
+}
+.cad-map .maplibregl-ctrl-attrib a {
+  color: var(--color-fg-2);
+}
+.cad-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  min-height: 24px;
+}
+.cad-map .maplibregl-ctrl-attrib-button {
+  background-color: transparent;
+  filter: var(--cad-attrib-filter, none);
+}
+:root:not([data-theme='light']) .cad-map {
+  --cad-attrib-filter: invert(1) opacity(0.7);
+}
+.cad-map .maplibregl-ctrl-attrib:not(:has(.maplibregl-ctrl-attrib-inner a)) {
+  display: none; /* plain surface: nothing to attribute */
+}
+
+/* start / finish */
+.cad-mk {
+  pointer-events: none;
+}
+.cad-mk-start,
+.cad-mk-finish,
+.cad-mk-both {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cad-mk-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 2px var(--color-canvas);
+}
+.cad-mk-start .cad-mk-dot,
+.cad-mk-both .cad-mk-dot {
+  background: var(--color-canvas);
+  border: 3px solid var(--color-fg-1);
+}
+.cad-mk-finish .cad-mk-dot {
+  background: var(--color-fg-1);
+}
+.cad-mk-label {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: var(--color-fg-1);
+  background: color-mix(in oklab, var(--color-surface-2) 90%, transparent);
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* lap numbers */
+.cad-mk-lap {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: var(--color-surface-3);
+  color: var(--color-fg-1);
+  font-size: 0.75rem;
+  line-height: 20px;
+  font-weight: 500;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--color-canvas);
+}
+
+/* scrub cursor */
+.cad-mk-cursor {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--color-fg-1);
+  box-shadow:
+    0 0 0 3px var(--color-canvas),
+    0 0 0 5px color-mix(in oklab, var(--color-fg-1) 25%, transparent);
+}

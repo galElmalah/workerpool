@@ -6,6 +6,7 @@
  * or start time, which is not an activity).
  */
 import type {
+  ActivityFacts,
   ActivityStreams,
   Lap,
   LocalDate,
@@ -226,6 +227,12 @@ export interface NormalizedActivity {
   parentActivityId?: string;
   childActivityIds?: string[];
   hasGps?: boolean;
+  /** Garmin's place name for the start ("Girona"); absent indoors / without GPS. */
+  locationName?: string;
+  startLat?: number;
+  startLng?: number;
+  /** Detail-page extras Garmin reports in the summary (elevation range, dynamics, temperature…). */
+  facts?: ActivityFacts;
   /** metadataDTO.lastUpdateDate (detail only) as ISO — the edit detector. */
   lastUpdatedAt?: string;
   /** Hash of the fields Garmin users edit (garmin.md §6.4). */
@@ -373,6 +380,10 @@ export function mapActivitySummary(json: unknown): NormalizedActivity {
     parentActivityId: str(o, 'parentId'),
     childActivityIds: childIds.length ? childIds : undefined,
     hasGps: bool(o, 'hasPolyline') ?? bool(meta, 'hasPolyline'),
+    locationName: str(o, 'locationName') ?? str(s, 'locationName'),
+    startLat: latLng(num(s, 'startLatitude'), 90),
+    startLng: latLng(num(s, 'startLongitude'), 180),
+    facts: summaryFacts(s, mapped.sport, { timer, elapsed, tz }),
     lastUpdatedAt: lastUpd === undefined ? undefined : toIsoInstant(lastUpd),
     editHash: activityEditHash(o),
   });
@@ -380,6 +391,69 @@ export function mapActivitySummary(json: unknown): NormalizedActivity {
 
 function positive(v: number | undefined): number | undefined {
   return v !== undefined && v > 0 ? v : undefined;
+}
+
+function latLng(v: number | undefined, lim: number): number | undefined {
+  return v !== undefined && Math.abs(v) <= lim && v !== 0 ? round(v, 6) : undefined;
+}
+
+/** Elevation in m; values > 9000 are taken as cm (UNVERIFIED unit on some list endpoints). */
+function elevationM(v: number | undefined): number | undefined {
+  if (v === undefined) return undefined;
+  return round(Math.abs(v) > 9000 ? v / 100 : v, 1);
+}
+
+/**
+ * Summary/detail JSON → ActivityFacts. Field names from Connect's activity list / summaryDTO
+ * (running dynamics UNVERIFIED: stride length in cm, vertical oscillation in cm, GCT in ms).
+ */
+function summaryFacts(s: JsonObject, sport: Sport, ctx: { timer?: number; elapsed: number; tz?: string }): ActivityFacts | undefined {
+  const legs = sport === 'run' || sport === 'walk' || sport === 'hike';
+  const stride = num(s, 'avgStrideLength');
+  const maxCadence = legs
+    ? num(s, 'maxDoubleCadence', 'maxRunningCadenceInStepsPerMinute', 'maxRunCadence')
+    : sport === 'bike'
+      ? num(s, 'maxBikingCadenceInRevPerMinute', 'maxBikeCadence')
+      : sport === 'swim'
+        ? num(s, 'maxSwimCadenceInStrokesPerMinute', 'maxSwimCadence')
+        : sport === 'row'
+          ? num(s, 'maxRowingCadenceInStrokesPerMinute', 'maxStrokeCadence')
+          : undefined;
+  const gctBal = num(s, 'avgGroundContactBalance');
+  const label = str(s, 'trainingEffectLabel');
+  const f = compact<ActivityFacts>({
+    startLat: latLng(num(s, 'startLatitude'), 90),
+    startLng: latLng(num(s, 'startLongitude'), 180),
+    endLat: latLng(num(s, 'endLatitude'), 90),
+    endLng: latLng(num(s, 'endLongitude'), 180),
+    timezone: ctx.tz,
+    timerSec: ctx.timer === undefined ? undefined : round(ctx.timer, 1),
+    pausedSec: ctx.timer !== undefined && ctx.elapsed - ctx.timer >= 1 ? Math.round(ctx.elapsed - ctx.timer) : undefined,
+    maxSpeedMps: sport === 'swim' ? undefined : positive(num(s, 'maxSpeed')),
+    elevationLossM: num(s, 'elevationLoss'),
+    minAltitudeM: elevationM(num(s, 'minElevation')),
+    maxAltitudeM: elevationM(num(s, 'maxElevation')),
+    minHr: positive(num(s, 'minHR', 'minHeartRate')),
+    powerBalanceLeftPct: num(s, 'avgLeftBalance', 'leftBalance'),
+    maxCadence: positive(maxCadence),
+    avgGroundContactMs: positive(num(s, 'avgGroundContactTime')),
+    avgGroundContactBalanceLeftPct: gctBal !== undefined && gctBal > 0 && gctBal < 100 ? gctBal : undefined,
+    avgVerticalOscillationCm: positive(num(s, 'avgVerticalOscillation')),
+    avgVerticalRatioPct: positive(num(s, 'avgVerticalRatio')),
+    avgStrideLengthM: stride !== undefined && stride > 0 ? round(stride / 100, 2) : undefined,
+    steps: legs ? positive(num(s, 'steps')) : undefined,
+    activeLengths: sport === 'swim' ? num(s, 'activeLengths', 'numberOfActiveLengths') : undefined,
+    avgStrokesPerLength: sport === 'swim' ? positive(num(s, 'avgStrokes', 'averageStrokes')) : undefined,
+    avgDistancePerStrokeM: sport === 'swim' || sport === 'row' ? positive(num(s, 'avgStrokeDistance', 'averageStrokeDistance')) : undefined,
+    totalStrokes: sport === 'row' ? positive(num(s, 'strokes', 'totalNumberOfStrokes')) : undefined,
+    avgTempC: num(s, 'averageTemperature', 'avgTemperature'),
+    minTempC: num(s, 'minTemperature'),
+    maxTempC: num(s, 'maxTemperature'),
+    deviceLoad: positive(num(s, 'activityTrainingLoad')),
+    trainingEffectLabel: label && label !== 'UNKNOWN' ? label : undefined,
+    sweatLossMl: positive(num(s, 'waterEstimated')),
+  });
+  return Object.keys(f).length ? f : undefined;
 }
 
 // ───────────────────────────── details JSON → streams (fallback) ─────────────────────────────

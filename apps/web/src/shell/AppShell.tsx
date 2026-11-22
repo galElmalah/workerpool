@@ -118,8 +118,10 @@ export function AppShell() {
       {!mobile && !wide && overlayOpen && (
         <div className="fixed inset-0 z-[19]" onPointerDown={() => setOverlayOpen(false)} aria-hidden />
       )}
-      <motion.div layout="position" layoutDependency={railW} transition={spring.smooth} style={{ marginLeft: railW }}>
-        <main id="main" data-vt-main className="min-h-dvh outline-none">
+      {/* overflow-x: clip (not hidden) keeps sticky headers working while making sure nothing inside
+          a page can ever scroll the body sideways (DESIGN_V2 §9); min-w-0 lets content shrink. */}
+      <motion.div layout="position" layoutDependency={railW} transition={spring.smooth} style={{ marginLeft: railW }} className="relative min-w-0 overflow-x-clip">
+        <main id="main" data-vt-main className="min-h-dvh min-w-0 outline-none">
           <Outlet />
         </main>
       </motion.div>

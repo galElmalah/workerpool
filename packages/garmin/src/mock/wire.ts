@@ -78,7 +78,7 @@ export function activityListItem(a: SynthActivity, edits: ActivityEdits = {}): J
     elapsedDuration: a.durationSec,
     movingDuration: a.movingSec,
     elevationGain: a.elevationGainM ?? null,
-    elevationLoss: a.elevationGainM ?? null,
+    elevationLoss: a.elevationLossM ?? a.elevationGainM ?? null,
     averageSpeed: a.avgSpeedMps ?? (a.distanceM && a.movingSec ? round(a.distanceM / a.movingSec, 3) : null),
     ownerId: MOCK_PROFILE_ID,
     calories: a.calories ?? null,
@@ -103,6 +103,33 @@ export function activityListItem(a: SynthActivity, edits: ActivityEdits = {}): J
     favorite: false,
     pr: false,
   };
+  // detail extras Connect puts on list items (only when the athlete's device reported them)
+  const extras: JsonObject = {
+    locationName: a.locationName,
+    startLatitude: a.startLat,
+    startLongitude: a.startLng,
+    endLatitude: a.endLat,
+    endLongitude: a.endLng,
+    minElevation: a.minElevationM,
+    maxElevation: a.maxElevationM,
+    maxSpeed: a.maxSpeedMps,
+    minTemperature: a.minTempC,
+    maxTemperature: a.maxTempC,
+    avgGroundContactTime: a.avgGroundContactMs,
+    avgGroundContactBalance: a.avgGroundContactBalancePct,
+    avgVerticalOscillation: a.avgVerticalOscillationCm,
+    avgVerticalRatio: a.avgVerticalRatioPct,
+    avgStrideLength: a.avgStrideLengthM === undefined ? undefined : round(a.avgStrideLengthM * 100, 1), // cm
+    steps: a.steps,
+    activityTrainingLoad: a.deviceLoad,
+    trainingEffectLabel: a.trainingEffectLabel,
+  };
+  for (const [k, v] of Object.entries(extras)) if (v !== undefined) o[k] = v;
+  if (a.maxCadence !== undefined) {
+    if (a.sport === 'run' || a.sport === 'walk' || a.sport === 'hike') o.maxDoubleCadence = a.maxCadence;
+    else if (a.sport === 'bike') o.maxBikingCadenceInRevPerMinute = a.maxCadence;
+    else if (a.sport === 'swim') o.maxSwimCadenceInStrokesPerMinute = a.maxCadence;
+  }
   if (a.sport === 'run' || a.sport === 'walk' || a.sport === 'hike') {
     if (a.avgCadence !== undefined) {
       o.averageRunningCadenceInStepsPerMinute = a.avgCadence;
@@ -155,6 +182,11 @@ export function activityDetail(a: SynthActivity, timezone: string, edits: Activi
     trainingEffect: list.aerobicTrainingEffect,
     anaerobicTrainingEffect: list.anaerobicTrainingEffect,
   };
+  for (const k of ['minElevation', 'maxElevation', 'maxSpeed', 'minTemperature', 'maxTemperature', 'startLatitude', 'startLongitude', 'endLatitude', 'endLongitude',
+    'avgGroundContactTime', 'avgGroundContactBalance', 'avgVerticalOscillation', 'avgVerticalRatio', 'avgStrideLength', 'steps', 'activityTrainingLoad', 'trainingEffectLabel']) {
+    if (list[k] !== undefined) summary[k] = list[k];
+  }
+  if (a.avgTempC !== undefined) summary.averageTemperature = a.avgTempC;
   if (a.avgCadence !== undefined) {
     if (a.sport === 'run' || a.sport === 'walk' || a.sport === 'hike') summary.averageRunCadence = a.avgCadence;
     else if (a.sport === 'bike') summary.averageBikeCadence = a.avgCadence;
@@ -168,6 +200,7 @@ export function activityDetail(a: SynthActivity, timezone: string, edits: Activi
     activityUUID: { uuid: `00000000-0000-4000-8000-${String(a.garminActivityId).padStart(12, '0').slice(-12)}` },
     activityName: list.activityName,
     description: list.description,
+    ...(list.locationName !== undefined ? { locationName: list.locationName } : {}),
     userProfileId: MOCK_PROFILE_ID,
     isMultiSportParent: false,
     activityTypeDTO: typeDto(a.garminTypeKey),

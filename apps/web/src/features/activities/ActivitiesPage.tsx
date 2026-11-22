@@ -37,6 +37,7 @@ import { links } from '@/shell/links';
 import { uploadFit, useActivityList, type ListFilters } from './data';
 import { FilterPopover, FilterSummary, activeOf } from '@/features/trends/shared';
 import { ManualEntry } from './ManualEntry';
+import { SPORT_TEXT } from './fmt';
 
 const route = getRouteApi('/_app/activities');
 
@@ -419,7 +420,7 @@ function Row({ a, prevMonth }: { a: Activity; prevMonth: string | null }) {
   const d = a.distanceM ? distanceParts(a.distanceM, a.sport, units) : null;
   const month = a.localDate.slice(0, 7);
   const out = outText(a, units);
-  const tip = [a.avgHr ? `Avg HR ${a.avgHr} bpm` : null, out, a.compliance && a.compliance.state !== 'unplanned' ? complianceLabel(a.compliance.state) : null, a.postNote ? 'Has a note' : null].filter(Boolean).join(' · ');
+  const tip = [a.locationName ?? null, a.avgHr ? `Avg HR ${a.avgHr} bpm` : null, out, a.compliance && a.compliance.state !== 'unplanned' ? complianceLabel(a.compliance.state) : null, a.postNote ? 'Has a note' : null].filter(Boolean).join(' · ');
   return (
     <>
       {prevMonth !== null && prevMonth !== month && (
@@ -437,9 +438,10 @@ function Row({ a, prevMonth }: { a: Activity; prevMonth: string | null }) {
       >
         <span className="text-fg-3">{formatDayShort(a.localDate)} {monthShort(a.localDate)}</span>
         <span className="flex min-w-0 items-center gap-2.5">
-          <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} className="shrink-0 text-fg-2" />
-          <span className={cn('truncate text-fg-1', a.isKey && 'font-medium')} style={vt(on, 'title')}>{a.title}</span>
+          <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} className={cn('shrink-0', SPORT_TEXT[a.sport])} />
+          <span className={cn('min-w-0 truncate text-fg-1', a.isKey && 'font-medium')} style={vt(on, 'title')}>{a.title}</span>
           {a.isKey && <KeyStar pressed readOnly size="sm" />}
+          {a.locationName && !a.title.includes(a.locationName) && <span className="min-w-0 max-w-40 shrink truncate text-body-sm text-fg-3 max-xl:hidden">{a.locationName}</span>}
         </span>
         <span className="text-right text-fg-1">{formatDuration(a.movingSec || a.durationSec)}</span>
         <span className="text-right text-fg-2">{d ? <>{d.value}<span className="text-fg-3"> {d.unit}</span></> : <span className="text-fg-4">—</span>}</span>
@@ -467,13 +469,14 @@ function MobileCard({ a, units }: { a: Activity; units: ReturnType<typeof useUni
   return (
     <Link {...links.activity(a.id)} {...morphSourceProps(a.id)} style={vt(on, 'card')} className="flex flex-col gap-1 rounded-lg bg-surface-1 px-4 py-3 outline-none active:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus">
       <div className="flex items-center gap-2">
-        <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} />
+        <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} className={SPORT_TEXT[a.sport]} />
         <span className={cn('min-w-0 flex-1 truncate text-body text-fg-1', a.isKey && 'font-medium')} style={vt(on, 'title')}>{a.title}</span>
         {a.isKey && <KeyStar pressed readOnly size="sm" />}
       </div>
       <div className="flex items-end gap-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 text-body-sm text-fg-3">
           <span>{formatDayShort(a.localDate)} {monthShort(a.localDate)}</span>
+          {a.locationName && <><span>·</span><span className="max-w-32 truncate">{a.locationName}</span></>}
           <span>·</span>
           <span className="text-fg-2">{formatDuration(a.movingSec || a.durationSec)}</span>
           {d && <><span>·</span><span>{d.value} {d.unit}</span></>}
