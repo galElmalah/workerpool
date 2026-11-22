@@ -473,7 +473,7 @@ function FitnessInner({
 
           <Overlay p={p} sync={sync} indexOf={indexOf} toX={toX} yTop={yTop} yForm={yForm} L={L} />
         </svg>
-        <FitnessTooltip p={p} sync={sync} indexOf={indexOf} toX={toX} L={L} />
+        <FitnessTooltip p={p} sync={sync} indexOf={indexOf} toX={toX} L={L} events={events} />
         <span className="sr-only" aria-live="polite">
           {live}
         </span>
@@ -598,7 +598,10 @@ function PhaseLabel({ w, x, left, label, y }: { w: MotionValue<number>; x: Motio
 
 function Flags({ flags, x0, x1, L, toX }: { flags: { key: string; ms: number; label: string; emphasis: boolean; kind: 'event' | 'threshold' | 'note' }[]; x0: MotionValue<number>; x1: MotionValue<number>; L: Layout; toX: (ms: number) => number }) {
   const vis = flags.filter((f) => toX(f.ms) >= L.left - 1 && toX(f.ms) <= L.left + L.plotW + 1);
-  const laid = layoutFlags(vis.map((f) => ({ key: f.key, x: toX(f.ms), label: f.label, emphasis: f.emphasis, kind: f.kind })));
+  // Races ('event') always carry their name; tests / notes are a bare marker once the view
+  // holds more than four flags (their names are in the hover tooltip).
+  const named = (f: (typeof vis)[number]) => f.kind === 'event' || vis.length <= 4;
+  const laid = layoutFlags(vis.map((f) => ({ key: f.key, x: toX(f.ms), label: named(f) ? f.label : '', emphasis: f.emphasis, kind: f.kind })));
   return (
     <g aria-hidden pointerEvents="none">
       <AnimatePresence initial={false}>
@@ -698,7 +701,7 @@ function Overlay({ p, sync, indexOf, toX, yTop, yForm, L }: { p: Prepared; sync:
   );
 }
 
-function FitnessTooltip({ p, sync, indexOf, toX, L }: { p: Prepared; sync: HoverSync<LocalDate>; indexOf: Map<LocalDate, number>; toX: (ms: number) => number; L: Layout }) {
+function FitnessTooltip({ p, sync, indexOf, toX, L, events }: { p: Prepared; sync: HoverSync<LocalDate>; indexOf: Map<LocalDate, number>; toX: (ms: number) => number; L: Layout; events: ChartEvent[] }) {
   const k = useHoverValue(sync);
   const i = k == null ? undefined : indexOf.get(k);
   const last = useRef(0);
@@ -715,6 +718,7 @@ function FitnessTooltip({ p, sync, indexOf, toX, L }: { p: Prepared; sync: Hover
     { label: projected ? 'Planned load' : 'Load', value: fmtNum(projected ? p.planned[j] : p.load[j]), muted: !(projected ? p.planned[j] : p.load[j]) },
   ];
   if (ramp != null) rows.push({ label: 'Ramp / 7d', value: fmtSigned(ramp, 1), muted: Math.abs(ramp) <= 5 });
+  const evs = events.filter((e) => e.date === p.dates[j]);
   const inPlot = x >= L.left && x <= L.left + L.plotW;
   return (
     <ChartTooltip x={x} y={L.top0 + 8} containerWidth={L.width} containerHeight={L.height} visible={i != null && inPlot}>
@@ -727,6 +731,7 @@ function FitnessTooltip({ p, sync, indexOf, toX, L }: { p: Prepared; sync: Hover
           </span>
         }
         rows={rows}
+        footer={evs.length ? evs.map((e) => e.label).join(' · ') : undefined}
       />
     </ChartTooltip>
   );

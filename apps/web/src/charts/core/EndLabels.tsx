@@ -53,7 +53,7 @@ export function EndLabels({ labels, x, top = 0, bottom = Infinity, gap = 16 }: {
               x2={x - 1}
               y2={0}
               transition={spring.gentle}
-              style={{ stroke: T.line3 }}
+              style={{ stroke: T.line2 }}
             />
           )}
           <circle cx={x + 3} cy={0} r={2.5} style={{ fill: l.dashed ? T.bg : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />

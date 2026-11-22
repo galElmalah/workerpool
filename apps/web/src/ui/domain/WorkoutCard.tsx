@@ -3,8 +3,9 @@
  * Calm by default: no borders, no edge rails, one tint at most (the intensity dot).
  *   chip    (month view): glyph · [key star] title (one line when it fits, two at most; 28 → 44px)
  *           · intensity dot (hard sessions only) · duration, top-right on the first line
- *   compact / full (week view, lists): title (≤ 2 lines, + star, + a compliance mark only when it
- *           deviates from plan); then intensity dot · duration (· distance-or-load in full) in fg-3.
+ *   compact / full (week view, lists): glyph · [star] title (≤ 2 lines; a compliance mark floats
+ *           right only when it deviates from plan); then intensity dot · duration (· distance-or-load
+ *           in full) in fg-3. Glyph and star are inline so the title keeps the card's full width.
  *           `profile` adds the step-profile sparkline (workout page / Today only); `meta` adds the
  *           note and Garmin icons.
  * Done = one surface step; planned = no fill; missed = fg-4 struck through; skipped = fg-4.
@@ -117,39 +118,39 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
   const label = `${m.title}, ${formatDuration(m.durationSec, 'short')}, ${s.label}${m.isKey ? ', key workout' : ''}`;
   const chip = density === 'chip';
 
+  // Glyph and star sit inline and the duration floats top-right, so only the first line yields
+  // width to them; the second line runs the full chip width (two lines at most, then an ellipsis).
   const body = chip ? (
     <>
-      <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className={cn('mt-px', t.glyph)} />
       <span
         className={cn('line-clamp-2 min-w-0 flex-1 text-body-sm leading-4 break-words', t.title, m.isKey && t.tone !== 'missed' && t.tone !== 'skipped' && 'font-semibold !text-fg-1')}
         style={vt(on, 'title')}
       >
+        <span className="float-right ml-1 flex h-4 items-center gap-1 font-normal no-underline">
+          <IntensityDot intensity={m.intensity} />
+          <span className={cn('text-label num', t.meta)}>{formatDuration(m.durationSec)}</span>
+        </span>
+        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className={cn('mr-1 align-[-2px]', t.glyph)} />
         {m.isKey && <KeyStar pressed readOnly size="xs" className="mr-1 inline align-[-1px]" />}
         {m.title}
-      </span>
-      <span className="flex h-4 shrink-0 items-center gap-1">
-        <IntensityDot intensity={m.intensity} />
-        <span className={cn('text-label num', t.meta)}>{formatDuration(m.durationSec)}</span>
       </span>
     </>
   ) : (
     <>
-      <div className="flex min-w-0 items-start gap-2">
-        <SportGlyph sport={m.sport} subSport={m.subSport} size={16} style={vt(on, 'glyph')} className={cn('mt-px', t.glyph)} />
-        <span
-          className={cn('min-w-0 flex-1 text-body-sm [overflow-wrap:anywhere]', m.isKey ? 'font-semibold' : 'font-medium', t.tone === 'planned' ? 'text-fg-1' : t.title, 'line-clamp-2')}
-          style={vt(on, 'title')}
-        >
-          {m.title}
-        </span>
-        {(m.isKey || complianceDeviates(state)) && (
-          <span className="mt-0.5 flex shrink-0 items-center gap-1.5">
-            {complianceDeviates(state) && <ComplianceGlyph state={state} />}
-            {m.isKey && <KeyStar pressed readOnly size="sm" />}
+      <span
+        className={cn('line-clamp-2 min-w-0 text-body-sm break-words', m.isKey ? 'font-semibold' : 'font-medium', t.tone === 'planned' ? 'text-fg-1' : t.title)}
+        style={vt(on, 'title')}
+      >
+        {complianceDeviates(state) && (
+          <span className="float-right mt-0.5 ml-1.5 flex no-underline">
+            <ComplianceGlyph state={state} />
           </span>
         )}
-      </div>
-      <div className="flex min-w-0 items-center gap-1.5 pl-6">
+        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className={cn('mr-1.5 align-[-2px]', t.glyph)} />
+        {m.isKey && <KeyStar pressed readOnly size="xs" className="mr-1 inline align-[-1px]" />}
+        {m.title}
+      </span>
+      <div className="flex min-w-0 items-center gap-1.5">
         <IntensityDot intensity={m.intensity} />
         <span className={cn('min-w-0 flex-1 truncate text-label num', t.meta)}>
           {formatDuration(m.durationSec)}
@@ -174,7 +175,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
         {meta && density === 'full' && m.kind === 'planned' && <GarminStateIcon state={m.garminState} />}
       </div>
       {density === 'full' && hasSpark && (
-        <div className="pt-1 pl-6">
+        <div className="pt-1">
           <MiniProfile values={m.sparkline!} height={16} className="min-w-0" />
         </div>
       )}
@@ -185,7 +186,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
   const cls = cn(
     'group/card relative flex min-w-0 overflow-hidden text-left outline-none transition-[background-color,opacity] duration-(--dur-fast) ease-out',
     'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-focus',
-    chip ? 'min-h-7 items-start gap-1.5 rounded-md px-1.5 py-1.5' : 'flex-col gap-1 rounded-lg px-3 py-2.5',
+    chip ? 'min-h-7 items-start gap-1.5 rounded-md px-1.5 py-1.5' : cn('flex-col gap-1 rounded-lg py-2.5', density === 'compact' ? 'px-2.5' : 'px-3'),
     density === 'full' && interactive && 'spotlight',
     t.fill,
     (interactive || hoverable) && t.hover,

@@ -154,7 +154,7 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
       const x = xc(c.i);
       const w = textW(c.v);
       const up = c.v >= 0;
-      if (x - w / 2 < 0 || x + w / 2 > width) continue;
+      if (x - w / 2 < L.left - 4 || x + w / 2 > width) continue;
       if (placed.some((p) => p.up === up && Math.abs(p.x - x) < (p.w + w) / 2 + 8)) continue;
       placed.push({ i: c.i, x, w, up });
     }

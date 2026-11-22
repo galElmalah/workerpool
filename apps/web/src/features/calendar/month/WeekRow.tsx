@@ -173,7 +173,7 @@ export const DayCell = memo(function DayCell({ day, cards, copyGhost, today, wee
       today={today}
       composerOnClick={!mini}
       style={dayFocus ? vtName('cal-focus') : undefined}
-      className={cn('group/day relative flex min-w-0 flex-col rounded-lg', mini ? 'gap-0.5 px-0.5 pt-1.5 pb-2' : 'gap-1 px-0.5 pt-2 pb-4')}
+      className={cn('group/day relative flex min-w-0 flex-col rounded-lg', mini ? 'gap-0.5 px-0.5 pt-1.5 pb-2' : 'gap-1 px-0 pt-2 pb-4')}
     >
       {content}
     </DropZone>

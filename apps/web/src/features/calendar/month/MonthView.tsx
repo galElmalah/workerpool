@@ -39,7 +39,7 @@ import { COL_GAP, COLS, WeekRow, type MonthLayout } from './WeekRow';
 
 const HALF = 520; // weeks each side of the anchor: effectively infinite
 const ROWS = HALF * 2 + 1;
-const EST: Record<MonthLayout, number> = { xl: 140, lg: 140, md: 176, sm: 120 };
+const EST: Record<MonthLayout, number> = { xl: 146, lg: 146, md: 200, sm: 124 };
 const WEEKDAYS = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'];
 
 /** Remembered position for Back navigation (card → page → back lands where you were). */
@@ -141,7 +141,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
     el.addEventListener('wheel', stop, { once: true, passive: true });
     el.addEventListener('pointerdown', stop, { once: true });
     el.addEventListener('keydown', stop, { once: true });
-    const timers = [0, 60, 180, 400].map((ms) => setTimeout(() => !cancelled && pin(), ms));
+    const timers = [0, 60, 180, 400, 800, 1300].map((ms) => setTimeout(() => !cancelled && pin(), ms));
     return () => {
       timers.forEach(clearTimeout);
       el.removeEventListener('wheel', stop);
@@ -329,7 +329,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
             <div ref={headerRef} role="row" className="sticky top-0 z-(--z-sticky) flex bg-canvas" aria-hidden>
               <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns: COLS[layout], columnGap: COL_GAP[layout] }}>
                 {WEEKDAYS.map((d, i) => (
-                  <div key={d} data-col={i} className={cn('flex h-8 items-center text-label text-fg-3', layout === 'sm' ? 'justify-center' : 'px-2')}>
+                  <div key={d} data-col={i} className={cn('flex h-8 items-center text-label text-fg-3', layout === 'sm' ? 'justify-center' : 'px-1.5')}>
                     {layout === 'sm' ? weekdayShort(d).slice(0, 1) : weekdayShort(d)}
                   </div>
                 ))}
