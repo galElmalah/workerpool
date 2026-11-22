@@ -192,20 +192,6 @@ public struct ActivityDetail: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
-extension ActivityZones {
-    public init() { self.init(hr: nil, power: nil, pace: nil) }
-}
-
-extension ActivityPeaks {
-    public init() { self.init(power: nil, hr: nil, speed: nil, efforts: nil) }
-}
-
-extension ThresholdSnapshot {
-    public init() {
-        self.init(ftp: nil, runThresholdMps: nil, swimCssMps: nil, rowThresholdW: nil, lthr: nil, hrMax: nil, hrRest: nil, weightKg: nil)
-    }
-}
-
 /// 1 Hz (resampled) series; every array has the length of `t`; `nil` = no sample.
 /// Request with `maxPoints` (the client always does) to get a thinned JSON payload.
 public struct ActivityStreams: Codable, Hashable, Sendable {

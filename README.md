@@ -16,7 +16,10 @@ glance. Built to replace TrainingPeaks for a single user, hosted on your own Clo
 - **Trends** — Load, Fitness, Fatigue and Form with a projection from your plan, weekly volume by
   sport, week-over-week progression, intensity distribution, power and pace curves, wellness, a
   weekly review page and a season planner.
-- Black, white and one green. Pages instead of modals. Everything animates.
+- Quiet by design: soft near-black or light, one rationed accent (calm blue by default; green and rose in
+  Settings → Appearance), no clutter. Pages instead of modals. Everything animates. The rules are in
+  `docs/DESIGN_V2.md`.
+- **iOS app with widgets** (`apps/ios`) that signs in to the same server with a revocable device token.
 
 ## Repository
 
@@ -24,6 +27,7 @@ glance. Built to replace TrainingPeaks for a single user, hosted on your own Clo
 packages/core     domain types, metrics engine (load, zones, fitness model), workout logic
 packages/garmin   Garmin client (Personal API + Connect), FIT parsing, mock Garmin, synthetic athlete
 apps/web          the deployable: Cloudflare Worker (Hono API + D1) and the React app
+apps/ios          the native iOS app and widgets (SwiftUI + WidgetKit; see apps/ios/README.md)
 docs/             architecture contract and the research behind the design
 ```
 
@@ -53,7 +57,7 @@ node scripts/seed-demo.mjs --base http://localhost:5173      # passphrase: caden
 ## Tests
 
 ```bash
-pnpm -r test          # 590 library tests + 183 Worker tests running in workerd (Miniflare)
+pnpm -r test          # 590 library tests + 203 Worker tests running in workerd (Miniflare)
 cd apps/web && pnpm typecheck
 PW_CHROMIUM_PATH=/path/to/chromium pnpm e2e   # Playwright smoke suite against a seeded dev server
 ```

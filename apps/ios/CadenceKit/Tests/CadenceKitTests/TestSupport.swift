@@ -58,12 +58,16 @@ final class MockTransport: HTTPTransport, @unchecked Sendable {
         return requests.last
     }
 
-    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
-        lock.lock()
+    /// Synchronous so the lock is never held across an await.
+    private func record(_ request: URLRequest) -> (Reply?, Error?) {
+        lock.lock(); defer { lock.unlock() }
         requests.append(request)
         let reply = replies.count > 1 ? replies.removeFirst() : replies.first
-        let error = self.error
-        lock.unlock()
+        return (reply, error)
+    }
+
+    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        let (reply, error) = record(request)
         if let error { throw error }
         guard let reply else { throw URLError(.badServerResponse) }
         let response = HTTPURLResponse(url: request.url!, statusCode: reply.status, httpVersion: "HTTP/1.1", headerFields: reply.headers)!

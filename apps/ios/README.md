@@ -71,20 +71,22 @@ Tools that need only Python 3 (no Swift):
 
 ## Verified vs unverified
 
-This foundation was written on Linux without Xcode or a Swift toolchain.
+Run everything below with `scripts/linux-test.sh` (set `SWIFT_BIN`, and `CADENCE_BASE_URL` +
+`CADENCE_PASSPHRASE` for the live parts).
 
-Verified here:
-- Every fixture is a real response from the seeded dev server (device-token flow on port 5240,
-  writes on a private copy): 50 fixtures, 0 errors / 0 warnings in `check_fixtures.py` against all
-  118 model structs (786 fields) and 45 enums.
-- `contract_smoke.py`: all 53 requests of the integration suite pass against a live server,
-  including undo (`POST /api/calendar/restore`) with bodies re-encoded from the Swift models, and
-  401 for a revoked token.
-- Date arithmetic (ISO weeks, weekdays, epoch days) cross-checked against Python's calendar.
-- `project.yml` parses as YAML; the colour conversion and icon were generated and inspected.
+Verified on Linux with the swift.org 6.2.1 toolchain (2026-11-22):
+- `swift build` of CadenceKit is clean (tools 5.9, Swift 5 language mode), and also clean in Swift 6
+  language mode with `-strict-concurrency=complete -warnings-as-errors`.
+- `swift test`: 57 tests, 0 failures — 54 unit tests (formatting, dates, every fixture decodes,
+  client behaviour with a mock transport, widget view-models, caches) plus the 3 live
+  IntegrationTests against the seeded server on port 5240 (device token create → every read
+  endpoint → reversible writes → revoked token gets 401; no devices left behind).
+- `check_fixtures.py --strict`: 50 real fixtures vs 118 model structs / 45 enums, 0 errors, 0 warnings.
+- `contract_smoke.py`: the same request sequence from Python, 53 requests, 0 failures.
+- Every Swift file in `App/`, `Widgets/`, `Shared/` written for the foundation passes `swiftc -parse`;
+  `Shared/Palette.generated.swift` also type-checks against the CadenceKit module.
 
-Not verified (needs a Swift toolchain / Xcode):
-- That CadenceKit compiles and its unit tests pass (`swift test`). Written for Swift 5.9 with no
-  experimental features; expected values in the tests were computed by hand / in Python.
-- The SwiftUI in `App/`, `Widgets/`, `Shared/`, `xcodegen` itself, signing, the keychain sharing
-  between app and widget, and how the widgets look on device.
+Not verified (needs Xcode on a Mac):
+- Type-checking and running the SwiftUI/WidgetKit code (SwiftUI does not exist on Linux), the
+  Keychain implementation (`Security` is Apple-only), `xcodegen`, signing, App Group / keychain
+  sharing between app and widget, and how the screens and widgets look.

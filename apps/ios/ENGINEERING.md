@@ -129,3 +129,5 @@ Components: `SportGlyph(sport:size:)`, `LabelledStat(label:value:unit:context:si
 - New endpoint or field: add it to the model (one `public var` per line), capture a fixture
   (`scripts/capture_fixtures.py`), list it in `Fixtures/index.json`, add the decoder entry in
   `FixtureDecodingTests.swift`, run `scripts/check_fixtures.py --strict`.
+- Before handing off: `SWIFT_BIN=… scripts/linux-test.sh` (build in Swift 5 and strict Swift 6 mode, tests,
+  fixture check, parse of App/Widgets/Shared). CadenceKit must stay warning-free in both modes.
