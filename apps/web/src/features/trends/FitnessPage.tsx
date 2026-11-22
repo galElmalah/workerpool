@@ -188,7 +188,7 @@ function RampStrip({ weeks }: { weeks: WeekSummary[] }) {
 function WeekTable({ weeks }: { weeks: WeekSummary[] }) {
   const rows = [...weeks].reverse();
   return (
-    <div className="-mx-4 overflow-x-auto md:mx-0">
+    <div className="relative -mx-4 overflow-x-auto md:mx-0">
       <table className="w-full min-w-[620px] text-left">
         <thead>
           <tr className="border-b border-line-1 text-micro uppercase text-fg-3">

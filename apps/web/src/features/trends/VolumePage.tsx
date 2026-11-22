@@ -156,7 +156,7 @@ function SportTable({ raw, n, metric }: { raw: WeekSummary[]; n: number; metric:
   const totalSec = rows.reduce((a, r) => a + r.sec, 0) || 1;
   if (!rows.length) return <p className="text-body text-fg-3">No completed sessions in this range.</p>;
   return (
-    <div className="-mx-4 overflow-x-auto md:mx-0">
+    <div className="relative -mx-4 overflow-x-auto md:mx-0">
       <table className="w-full min-w-[680px] text-left">
         <thead>
           <tr className="border-b border-line-1 text-micro uppercase text-fg-3">

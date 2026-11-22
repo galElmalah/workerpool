@@ -333,10 +333,10 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
               className={cn('relative grid min-w-0 grid-cols-[56px_1fr] items-start gap-x-3 gap-y-2 px-3 py-3 md:grid-cols-[72px_1fr_200px] md:px-4', isToday && 'bg-surface-2')}
             >
               {isToday && <span className="absolute inset-y-0 left-0 w-0.5 bg-accent" aria-hidden />}
-              <div className="flex flex-col pt-1">
+              <Link {...links.calendarDay(d.date)} aria-label={`Open ${weekdayShort(d.date)} ${formatDayMonth(d.date)}`} className="group/day flex flex-col self-start rounded-xs pt-1 outline-none focus-visible:outline-2 focus-visible:outline-focus">
                 <span className={cn('text-micro uppercase', isToday ? 'text-accent-ink' : 'text-fg-3')}>{isToday ? 'Today' : weekdayShort(d.date)}</span>
-                <span className="font-mono text-mono-sm text-fg-2">{formatDayMonth(d.date)}</span>
-              </div>
+                <span className="font-mono text-mono-sm text-fg-2 group-hover/day:text-fg-1 group-hover/day:underline">{formatDayMonth(d.date)}</span>
+              </Link>
               <div className="flex min-w-0 flex-wrap gap-2">
                 {d.markers.map((m) => (
                   <Chip key={m.id} tone="outline" className="self-center">

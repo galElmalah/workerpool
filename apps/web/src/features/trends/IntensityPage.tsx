@@ -92,7 +92,9 @@ function ZonesBySport({ list }: { list: SportZones[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Segmented aria-label="Sport" size="sm" value={cur.sport} onValueChange={setSport} options={sports.map((s) => ({ value: s.sport, label: <span className="inline-flex items-center gap-1.5"><SportGlyph sport={s.sport} size={14} />{SPORT_META[s.sport].label}</span> }))} />
+        <div className="-mx-1 max-w-full overflow-x-auto px-1 scrollbar-none">
+          <Segmented aria-label="Sport" size="sm" value={cur.sport} onValueChange={setSport} options={sports.map((s) => ({ value: s.sport, label: <span className="inline-flex items-center gap-1.5"><SportGlyph sport={s.sport} size={14} />{SPORT_META[s.sport].label}</span> }))} />
+        </div>
         {channels.length > 1 && <Segmented aria-label="Zone model" size="sm" value={channel} onValueChange={setCh} options={channels.map((c) => ({ value: c, label: c === 'hr' ? 'Heart rate' : c === 'power' ? 'Power' : 'Pace' }))} />}
       </div>
       <motion.div key={`${cur.sport}-${channel}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth}>

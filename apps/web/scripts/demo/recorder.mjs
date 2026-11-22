@@ -138,12 +138,14 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
   const captionDefaults = {};
   const marks = [];
   let startedAt = 0;
+  let pausedTotal = 0; // seconds cut out by pause()/resume()
+  let pausedAt = 0;
 
   cdp.on('Page.screencastFrame', ({ data, metadata, sessionId }) => {
     cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
     if (!recording) return;
     const file = path.join(framesDir, `f${String(frames.length).padStart(6, '0')}.jpg`);
-    frames.push({ file, t: metadata.timestamp });
+    frames.push({ file, t: metadata.timestamp - pausedTotal });
     writes = writes.then(() => writeFile(file, Buffer.from(data, 'base64')));
   });
 
@@ -168,6 +170,20 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
       recording = true;
       startedAt = Date.now();
       await cdp.send('Page.startScreencast', { format: 'jpeg', quality, maxWidth: width, maxHeight: height, everyNthFrame: 1 });
+    },
+    /** Stop capturing (a jump cut — use it to skip waiting); resume() continues the same timeline. */
+    async pause() {
+      await page.waitForTimeout(120);
+      recording = false;
+      pausedAt = Date.now();
+    },
+    async resume() {
+      pausedTotal += (Date.now() - pausedAt) / 1000;
+      startedAt += Date.now() - pausedAt;
+      recording = true;
+      // force a fresh frame right away so the cut lands now, not at the next paint
+      await page.mouse.move(mouse.x + 0.5, mouse.y).catch(() => {});
+      await page.mouse.move(mouse.x, mouse.y).catch(() => {});
     },
     async stop() {
       await page.waitForTimeout(300);
