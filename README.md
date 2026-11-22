@@ -53,8 +53,9 @@ node scripts/seed-demo.mjs --base http://localhost:5173      # passphrase: caden
 ## Tests
 
 ```bash
-pnpm -r test          # 550+ library tests, 175 Worker tests running in workerd (Miniflare)
-cd apps/web && pnpm typecheck && pnpm e2e
+pnpm -r test          # 590 library tests + 183 Worker tests running in workerd (Miniflare)
+cd apps/web && pnpm typecheck
+PW_CHROMIUM_PATH=/path/to/chromium pnpm e2e   # Playwright smoke suite against a seeded dev server
 ```
 
 Worker tests run inside the Workers runtime with a real local D1; Garmin is never mocked at the
