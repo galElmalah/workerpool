@@ -140,11 +140,14 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
   let startedAt = 0;
   let pausedTotal = 0; // seconds cut out by pause()/resume()
   let pausedAt = 0;
+  let clockOffset = null; // wall clock − screencast clock (s)
+  let stopT = null; // stop() time on the frame timeline, so a still last frame keeps its length
 
   cdp.on('Page.screencastFrame', ({ data, metadata, sessionId }) => {
     cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
     if (!recording) return;
     const file = path.join(framesDir, `f${String(frames.length).padStart(6, '0')}.jpg`);
+    if (clockOffset == null) clockOffset = Date.now() / 1000 - metadata.timestamp;
     frames.push({ file, t: metadata.timestamp - pausedTotal });
     writes = writes.then(() => writeFile(file, Buffer.from(data, 'base64')));
   });
@@ -188,6 +191,7 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
     async stop() {
       await page.waitForTimeout(300);
       recording = false;
+      if (clockOffset != null) stopT = Date.now() / 1000 - clockOffset - pausedTotal;
       await cdp.send('Page.stopScreencast').catch(() => {});
       await writes;
     },
@@ -195,13 +199,16 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
 
     /** Glide the visible cursor to a point with easing. */
     async moveTo(x, y, ms = 650) {
+      // Time-based (not step-based): on a heavy page each mouse event round-trip is slow, and a
+      // fixed number of steps would stretch the glide well past `ms`.
       const from = { ...mouse };
-      const steps = Math.max(8, Math.round(ms / 16));
-      for (let i = 1; i <= steps; i++) {
-        const k = ease(i / steps);
-        if (i === 1) await page.mouse.move(from.x, from.y).catch(() => {});
+      const t0 = Date.now();
+      for (;;) {
+        const f = Math.min(1, (Date.now() - t0) / ms);
+        const k = ease(f);
         await page.mouse.move(from.x + (x - from.x) * k, from.y + (y - from.y) * k);
-        await page.waitForTimeout(ms / steps);
+        if (f >= 1) break;
+        await page.waitForTimeout(12);
       }
       mouse = { x, y };
     },
@@ -243,12 +250,20 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
         await page.waitForTimeout(delay + Math.random() * 30);
       }
     },
-    async scroll(deltaY, { ms = 900, steps = 30 } = {}) {
-      for (let i = 0; i < steps; i++) {
-        const k0 = ease(i / steps);
-        const k1 = ease((i + 1) / steps);
-        await page.mouse.wheel(0, deltaY * (k1 - k0));
-        await page.waitForTimeout(ms / steps);
+    async scroll(deltaY, { ms = 900 } = {}) {
+      // time-based eased wheel, like moveTo
+      const t0 = Date.now();
+      let done = 0;
+      for (;;) {
+        const f = Math.min(1, (Date.now() - t0) / ms);
+        const target = deltaY * ease(f);
+        const step = target - done;
+        if (Math.abs(step) >= 1 || f >= 1) {
+          await page.mouse.wheel(0, step);
+          done = target;
+        }
+        if (f >= 1) break;
+        await page.waitForTimeout(16);
       }
     },
     /**
@@ -308,12 +323,12 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
     },
 
     /** Assemble frames (real timestamps → constant frame rate) into an H.264 MP4. */
-    async encode(outFile, { crf = 18, tail = 0.5 } = {}) {
+    async encode(outFile, { crf = 18, tail = 0.1 } = {}) {
       if (frames.length < 2) throw new Error('nothing recorded');
       const lines = ['ffconcat version 1.0'];
       for (let i = 0; i < frames.length; i++) {
         const next = frames[i + 1];
-        const d = next ? Math.max(0.001, next.t - frames[i].t) : tail;
+        const d = next ? Math.max(0.001, next.t - frames[i].t) : stopT != null ? Math.max(tail, stopT - frames[i].t) : tail;
         lines.push(`file '${frames[i].file}'`, `duration ${d.toFixed(4)}`);
       }
       lines.push(`file '${frames[frames.length - 1].file}'`);
@@ -325,7 +340,7 @@ export async function createRecorder({ outDir, width = 1600, height = 900, fps =
           '-movflags', '+faststart', outFile],
         { maxBuffer: 1 << 26 },
       );
-      const dur = frames[frames.length - 1].t - frames[0].t;
+      const dur = (stopT ?? frames[frames.length - 1].t) - frames[0].t;
       return { outFile, frames: frames.length, seconds: dur, capturedFps: frames.length / dur };
     },
     async close() {

@@ -70,10 +70,40 @@ async function settle(page, { timeout = 15000, quiet = 250 } = {}) {
   await page.waitForTimeout(quiet);
 }
 
-/** Wait for a URL (regex) after an in-app navigation, then for the page to settle. */
-async function arrive(page, re, opts) {
-  await page.waitForURL(re, { timeout: 15000 });
-  await settle(page, opts);
+const skeletonVisible = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('.skeleton, [aria-busy="true"][aria-label="Loading"]')].some((el) => {
+      if (el.closest('[role=progressbar]')) return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight;
+    }),
+  );
+
+/**
+ * After an in-app navigation: wait for the URL, let the view transition play on camera, then — if
+ * the page is still loading — cut the skeleton out (pause until the data is in), so no loading frame
+ * ever reaches the video.
+ */
+async function arrive(rec, re, { quiet = 250, timeout = 15000 } = {}) {
+  const { page } = rec;
+  await page.waitForURL(re, { timeout });
+  await page.waitForTimeout(420);
+  if (await skeletonVisible(page)) {
+    await rec.pause();
+    await settle(page, { quiet: 150 });
+    await rec.resume();
+  }
+  await settle(page, { quiet });
+}
+
+/** Mid-segment readiness: if something is still loading, cut the skeleton out of the video. */
+async function ready(rec, quiet = 200) {
+  if (await skeletonVisible(rec.page)) {
+    await rec.pause();
+    await settle(rec.page, { quiet: 150 });
+    await rec.resume();
+  }
+  await settle(rec.page, { quiet });
 }
 
 async function signIn(context, base) {
@@ -89,7 +119,17 @@ async function warm(page, base, routes) {
   }
 }
 
-const pause = (rec, ms = 1200) => rec.wait(ms);
+/** Pacing knobs: every cursor glide and every beat pause is scaled by these (tune the whole video in one place). */
+const MOVE = 0.9;
+const HOLD = 0.8;
+const pause = (rec, ms = 1200) => rec.wait(Math.round(ms * HOLD));
+
+function applyPacing(rec) {
+  const moveTo = rec.moveTo;
+  rec.moveTo = (x, y, ms = 650) => moveTo(x, y, Math.round(ms * MOVE)); // hover/click/drag glide through this too
+  const click = rec.click;
+  rec.click = (loc, o = {}) => click(loc, { ...o, after: Math.round((o.after ?? 500) * HOLD) });
+}
 
 // ───────────────────────────── segments ─────────────────────────────
 
@@ -141,10 +181,15 @@ async function onboarding(rec, base) {
   const demoBtn = page.getByRole('button', { name: 'Use the demo Garmin account' });
   await demoBtn.waitFor();
   await pause(rec, 400);
-  await rec.click(demoBtn, { after: 200 });
+  await rec.click(demoBtn, { after: 500 });
   const importBtn = page.getByRole('button', { name: /^Import .* of history$/ });
-  await importBtn.waitFor({ timeout: 20000 });
-  await pause(rec, 500);
+  if (!(await importBtn.isVisible())) {
+    await rec.pause(); // connecting to the (mock) Garmin account
+    await importBtn.waitFor({ timeout: 20000 });
+    await page.waitForTimeout(400);
+    await rec.resume();
+  }
+  await pause(rec, 600);
   await rec.click(importBtn, { after: 200 });
   // The first sync runs before the import can start, and the import then lands a few activities per
   // step: cut the waiting out and show the counter as a time-lapse (cursor still, so the cuts read as ticks).
@@ -174,28 +219,38 @@ async function onboarding(rec, base) {
 
   rec.mark('onboarding: thresholds');
   await page.getByRole('heading', { name: 'Your thresholds' }).waitFor();
-  await page.waitForFunction(() => {
-    const b = [...document.querySelectorAll('button')].find((x) => x.textContent?.trim() === 'Finish');
-    return b && !b.disabled;
-  }, null, { timeout: 20000 });
-  await settle(page, { quiet: 300 });
+  await page.waitForTimeout(450);
+  const finishReady = () =>
+    page.evaluate(() => {
+      const b = [...document.querySelectorAll('button')].find((x) => x.textContent?.trim() === 'Finish');
+      return !!b && !b.disabled && !document.querySelector('main .skeleton, .skeleton:not([role=progressbar] *)');
+    });
+  if (!(await finishReady())) {
+    await rec.pause(); // estimates load from the just-imported history
+    await page.waitForFunction(() => {
+      const b = [...document.querySelectorAll('button')].find((x) => x.textContent?.trim() === 'Finish');
+      return b && !b.disabled;
+    }, null, { timeout: 30000 });
+    await settle(page, { quiet: 300 });
+    await rec.resume();
+  }
   await rec.hover(page.getByText(/^FTP$/).first(), { ms: 700, dy: 18 }).catch(() => {});
-  await pause(rec, 700);
+  await pause(rec, 900);
   await rec.scroll(360, { ms: 700 });
-  await pause(rec, 250);
+  await pause(rec, 200);
   await rec.click(page.getByRole('button', { name: 'Finish' }), { after: 200 });
 
-  rec.mark('onboarding: calendar appears');
-  // (The "You're set" finale is skipped by the welcome gate — see report; the app lands straight on the calendar.)
-  await page.waitForURL(/\/calendar|\/today/, { timeout: 20000 });
+  // Saving re-dates the thresholds over the imported history; fade out on the button, and let the
+  // next segment open on the full calendar. (The "You're set" finale is skipped by the welcome gate —
+  // see report — and the fresh calendar is still filling in, so it is not shown here.)
+  rec.mark('onboarding: finish');
+  await rec.wait(500);
   await rec.caption('');
-  await settle(page, { quiet: 200 });
-  await rec.moveTo(W * 0.6, H * 0.42, 1000);
-  await pause(rec, 1200);
   await rec.cursor(false);
   await rec.fade(true, 900);
 }
 
+const rail = (page, name) => page.getByRole('complementary', { name: 'Primary' }).getByRole('link', { name, exact: true });
 const day = (page, date) => page.locator(`[data-day-cell="${date}"]`);
 const cardIn = (page, date, text) => day(page, date).locator('[data-morph-id]', { hasText: text }).first();
 
@@ -216,7 +271,19 @@ async function begin(rec, base, url, { fadeIn = false, ready } = {}) {
 // 2 — the calendar: season scroll, drag to move, type to plan, key/intensity, zoom to week.
 async function calendar(rec, base) {
   const { page } = rec;
-  await begin(rec, base, '/calendar', { fadeIn: true, ready: (p) => cardIn(p, '2026-11-27', 'Strength B').waitFor() });
+  await begin(rec, base, '/calendar', {
+    fadeIn: true,
+    ready: async (p) => {
+      await cardIn(p, '2026-11-27', 'Strength B').waitFor();
+      // pre-load the weeks the tour scrolls back to, then return to today
+      await p.mouse.move(820, 420);
+      await p.mouse.wheel(0, -900);
+      await settle(p, { quiet: 300 });
+      await p.keyboard.press('t');
+      await p.waitForTimeout(800);
+      await p.mouse.move(rec.mouse.x, rec.mouse.y);
+    },
+  });
   rec.mark('calendar: overview');
   await rec.caption('The calendar', 'Every week in one row: done vs planned, load, fitness and form, week-over-week.');
   const summary = page.locator('a', { hasText: /^W47$/ }).first();
@@ -228,18 +295,17 @@ async function calendar(rec, base) {
   rec.mark('calendar: scroll back to the A-race');
   await rec.moveTo(820, 420, 700);
   await rec.caption('The whole season', 'Training phases down the side, races as banners — the A-race was 18 October.');
-  await rec.scroll(-830, { ms: 2200, steps: 55 });
-  await settle(page, { quiet: 200 });
+  await rec.scroll(-830, { ms: 2000 });
+  await ready(rec, 200);
   const race = page.getByRole('link', { name: /Costa Brava Half Triathlon/ }).first();
-  await rec.hover(race, { ms: 800 });
+  await rec.moveTo(268, 330, 900); // the phase band
+  await rec.hover(race, { ms: 900 });
   await pause(rec, 1300);
-  await rec.moveTo(268, 260, 800); // the phase band
-  await pause(rec, 600);
 
   rec.mark('calendar: back to today (T)');
   await rec.moveTo(1416, 26, 700);
   await rec.press('t', { after: 1000 });
-  await settle(page, { quiet: 300 });
+  await ready(rec, 300);
 
   rec.mark('calendar: drag to move');
   await rec.caption('Plan by dragging', 'Move a session to another day — the week totals follow, and undo is one click away.');
@@ -265,11 +331,10 @@ async function calendar(rec, base) {
   const composer = page.getByRole('textbox', { name: /Quick add on 2026-11-27/ });
   await composer.waitFor();
   await pause(rec, 400);
-  await rec.type('run 45m easy @key', { delay: 65 });
+  await rec.type('run 45m easy @key', { delay: 55 });
   await pause(rec, 700);
-  await rec.press('Enter', { label: '↵', after: 700 });
-  await cardIn(page, '2026-11-27', /Easy|Run|run/).waitFor({ timeout: 5000 }).catch(() => {});
-  await rec.press('Escape', { show: false, after: 300 });
+  await rec.press('Enter', { label: '↵', after: 900 });
+  await rec.press('Escape', { show: false, after: 200 });
   await rec.moveTo(fb.x + fb.width - 20, fb.y + fb.height + 30, 600);
   await pause(rec, 900);
 
@@ -293,12 +358,12 @@ async function calendar(rec, base) {
   await rec.moveTo(1256, 26, 800);
   await pause(rec, 200);
   await rec.click(page.getByRole('button', { name: 'Week', exact: true }), { after: 400 });
-  await arrive(page, /\/calendar\/week\//);
-  await pause(rec, 1800);
+  await arrive(rec, /\/calendar\/week\//);
+  await pause(rec, 1500);
   await rec.moveTo(1200, 26, 600);
   await rec.click(page.getByRole('button', { name: 'Month', exact: true }), { after: 400 });
-  await arrive(page, /\/calendar(\/month\/|$|\?)/);
-  await pause(rec, 1200);
+  await arrive(rec, /\/calendar(\/month\/|$|\?)/);
+  await pause(rec, 800);
 }
 
 // 3 — a planned structured workout as a page (card → page morph), then to the watch.
@@ -310,19 +375,15 @@ async function workout(rec, base) {
   await rec.hover(card, { ms: 1000 });
   await pause(rec, 400);
   await rec.click(card, { ms: 200, after: 200 });
-  await arrive(page, /\/workouts\/wk_/);
+  await arrive(rec, /\/workouts\/wk_/);
   await rec.caption('Every workout is a page', 'Structure, targets in your own watts and paces, notes — no modals.');
   await pause(rec, 700);
   // trace the profile: the stride block, then the 800 m reps
-  await rec.moveTo(690, 360, 900);
-  await pause(rec, 500);
-  for (const x of [770, 860, 950, 1040]) {
-    await rec.moveTo(x, 330, 420);
-    await rec.wait(180);
-  }
-  await pause(rec, 500);
+  await rec.moveTo(690, 360, 800);
+  await rec.moveTo(1040, 330, 1300);
+  await pause(rec, 300);
   await rec.hover(page.getByText(/800 m · 800 m @/).first(), { ms: 800 });
-  await pause(rec, 1300);
+  await pause(rec, 1000);
 
   rec.mark('workout: send to Garmin');
   await rec.caption('One click to your watch', 'Planned sessions go to Garmin as structured workouts, with your targets.');
@@ -331,12 +392,12 @@ async function workout(rec, base) {
   await pause(rec, 300);
   await rec.click(send, { ms: 100, after: 300 });
   await page.getByText(/On your Garmin/).first().waitFor({ timeout: 15000 });
-  await pause(rec, 2000);
+  await pause(rec, 1600);
 
   rec.mark('workout: back to calendar (morph back)');
   await rec.caption('');
   await rec.click(page.getByRole('button', { name: 'Back' }), { after: 300 });
-  await arrive(page, /\/calendar/);
+  await arrive(rec, /\/calendar/);
   await pause(rec, 1000);
 }
 
@@ -352,7 +413,7 @@ async function builder(rec, base) {
   await rec.moveTo(tb.x + 40, tb.y + 12, 500);
   await pause(rec, 200);
   await rec.click(page.getByRole('link', { name: 'New workout on 2026-11-26' }), { ms: 600, after: 300 });
-  await arrive(page, /\/workouts\/new/);
+  await arrive(rec, /\/workouts\/new/);
   await rec.caption('Build it your way', 'Visual steps and a fast text syntax, always in sync — ride, run, swim, row, strength.');
   await pause(rec, 600);
   await rec.click(page.getByRole('radio', { name: 'Ride' }), { after: 500 });
@@ -373,7 +434,7 @@ async function builder(rec, base) {
   await pause(rec, 300);
   const lines = ['- 15m ramp 50-75%', '4x', '  - 8m 95-100%', '  - 4m 55%', '- 10m z1'];
   for (const [i, line] of lines.entries()) {
-    await rec.type(line, { delay: 48 });
+    await rec.type(line, { delay: 40 });
     if (i < lines.length - 1) await page.keyboard.press('Enter');
     await rec.wait(380);
   }
@@ -392,12 +453,12 @@ async function builder(rec, base) {
   await rec.scroll(380, { ms: 900 });
   await pause(rec, 300);
   await rec.click(page.getByRole('button', { name: 'Mark as key workout' }), { after: 500 });
-  const note = page.getByRole('textbox', { name: /Intent for the day/ });
+  const note = page.getByPlaceholder(/Intent for the day/);
   await rec.click(note, { after: 200 });
-  await rec.type('Fresh legs after the long ride. Hold the last rep.', { delay: 32 });
+  await rec.type('Hold the last rep.', { delay: 40 });
   await pause(rec, 700);
   await rec.click(page.getByRole('button', { name: /^Save/ }).filter({ hasText: /^Save(Ctrl|⌘)?/ }).last(), { after: 300 });
-  await arrive(page, /\/workouts\/wk_/);
+  await arrive(rec, /\/workouts\/wk_/);
   await pause(rec, 1800);
 }
 
@@ -406,94 +467,213 @@ async function today(rec, base) {
   const { page } = rec;
   await begin(rec, base, rec.prevUrl ?? '/calendar');
   rec.mark('today');
-  await rec.click(page.getByRole('link', { name: 'Today', exact: true }), { ms: 900, after: 300 });
-  await arrive(page, /\/today/);
-  await rec.caption('Today', 'Readiness, the plan, and a ten-second log of how it felt.');
-  await pause(rec, 500);
-  await rec.moveTo(516, 320, 900); // form dial
-  await pause(rec, 1000);
-  await rec.moveTo(860, 285, 800); // HRV
-  await pause(rec, 500);
-  await rec.moveTo(1380, 285, 900); // readiness
+  await rec.click(rail(page, 'Today'), { ms: 800, after: 200 });
+  await arrive(rec, /\/today/);
+  // top: the session card below runs to the bottom edge
+  await rec.caption('Today', 'Readiness, the plan, and a ten-second log of how it felt.', { pos: 'top', x: 880, maxWidth: 560 });
+  await rec.moveTo(516, 320, 800); // form dial
   await pause(rec, 700);
+  await rec.moveTo(1380, 285, 900); // readiness
+  await pause(rec, 400);
 
   rec.mark('today: morning check-in');
-  await rec.click(page.getByRole('radio', { name: '4 — Fresh' }), { ms: 900, after: 500 });
-  await rec.click(page.getByRole('radio', { name: '2 — A little' }), { ms: 600, after: 900 });
+  await rec.click(page.getByRole('radio', { name: '4 — Fresh' }), { ms: 800, after: 350 });
+  await rec.click(page.getByRole('radio', { name: '2 — A little' }), { ms: 500, after: 600 });
 
-  rec.mark('today: log RPE + feel');
-  await rec.moveTo(760, 600, 500);
-  await rec.scroll(640, { ms: 1100 });
-  await pause(rec, 300);
-  const log = page.locator('section, div').filter({ has: page.getByRole('link', { name: 'UT2 35′ r20' }) }).last();
-  await rec.click(log.getByRole('radio', { name: '5, Moderate' }).first(), { ms: 900, after: 500 });
-  await rec.click(log.getByRole('radio', { name: '4 — Good' }).first(), { ms: 700, after: 1200 });
-  await rec.moveTo(760, 300, 500);
-  await rec.scroll(-640, { ms: 1000 });
-  await pause(rec, 400);
+  // (Today's own session is already logged in the seed — RPE 4 · "Felt okay" shows on its card — so
+  // the check-in above is the ten-second log; the "Log how it went" list further down is skipped for time.)
 
   rec.mark('activity: open the long ride (morph)');
   const session = page.getByRole('link', { name: /Long ride 2h05 — Gavarres loop/ }).first();
-  await rec.hover(session, { ms: 900 });
-  await pause(rec, 300);
-  await rec.click(session, { ms: 100, after: 200 });
-  await arrive(page, /\/activities\/act_/, { quiet: 400 });
+  await rec.hover(session, { ms: 800 });
+  await pause(rec, 200);
+  await rec.click(session, { ms: 100, after: 100 });
+  await arrive(rec, /\/activities\/act_/, { quiet: 300 });
   const top = { pos: 'top', x: 1100, maxWidth: 640 };
+  const tab = (name) => page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name, exact: true });
   await rec.caption('Every session, understood', 'Power, heart rate, pace, zones, peaks — and how it compared with the plan.', top);
-  await pause(rec, 1800);
+  await pause(rec, 1500);
 
   rec.mark('activity: streams + route');
-  await rec.click(page.getByRole('button', { name: 'Charts', exact: true }), { ms: 800, after: 1100 });
-  await settle(page, { quiet: 200 });
-  const power = page.getByText('POWER', { exact: true }).last();
-  const pb = await power.boundingBox();
-  const y = pb.y + 50;
-  await rec.moveTo(470, y, 700);
-  await rec.moveTo(1380, y, 3800);
-  await pause(rec, 400);
+  await rec.click(tab('Charts'), { ms: 700, after: 900 });
+  await ready(rec, 150);
+  // the power trace sits just above the heart-rate panel's label
+  const hb = await page.getByText('Heart rate', { exact: true }).last().boundingBox();
+  const y = hb.y - 40;
+  await rec.moveTo(470, y, 500);
+  await rec.moveTo(1380, y, 3000);
 
   rec.mark('activity: drag-select a range');
-  await rec.moveTo(1000, y + 20, 700);
-  await rec.drag({ x: 1000, y: y + 20 }, { x: 1150, y: y + 20 }, { ms: 1200, hold: 80, settle: 600 });
-  await pause(rec, 1800);
+  await rec.moveTo(1000, y + 20, 600);
+  await rec.drag({ x: 1000, y: y + 20 }, { x: 1150, y: y + 20 }, { ms: 1000, hold: 80, settle: 400 });
+  await pause(rec, 1400);
 
   rec.mark('activity: laps, zones, peaks, plan vs actual');
-  await rec.click(page.getByRole('button', { name: 'Laps', exact: true }), { ms: 800, after: 1000 });
-  await rec.moveTo(700, 470, 700);
-  await rec.moveTo(700, 710, 1400);
-  await pause(rec, 500);
-  await rec.click(page.getByRole('button', { name: 'Zones', exact: true }), { ms: 800, after: 1100 });
-  await rec.moveTo(800, 700, 900);
-  await rec.moveTo(980, 700, 900);
-  await pause(rec, 700);
-  await rec.scroll(700, { ms: 1100 });
-  await pause(rec, 1600);
+  await rec.click(tab('Laps'), { ms: 700, after: 500 });
+  await rec.moveTo(700, 500, 700);
+  await pause(rec, 200);
+  await rec.click(tab('Zones'), { ms: 700, after: 600 });
+  await rec.moveTo(900, 700, 800);
+  await pause(rec, 200);
+  await rec.scroll(700, { ms: 900 });
+  await pause(rec, 1100);
 
   rec.mark('activities: multi-sport');
-  await rec.caption('Ride, run, swim, row, lift', 'Every sport in one list — swim pace per 100 m, strength sets and volume.');
-  await rec.click(page.getByRole('link', { name: 'Activities', exact: true }), { ms: 900, after: 300 });
-  await arrive(page, /\/activities(\?|$)/);
+  await rec.caption('Ride, run, swim, row, lift', 'Every sport in one list, with the numbers that matter for each.');
+  await rec.click(rail(page, 'Activities'), { ms: 800, after: 200 });
+  await arrive(rec, /\/activities(\?|$)/);
+  await pause(rec, 400);
+  const sportTab = (name) => page.getByRole('tab', { name, exact: true });
+  await rec.click(sportTab('Swim'), { after: 300 });
+  await ready(rec, 150);
+  await rec.moveTo(1250, 520, 800); // pace per 100 m
   await pause(rec, 600);
-  await rec.click(page.getByRole('tab', { name: 'Swim' }).or(page.getByRole('button', { name: 'Swim', exact: true })).first(), { after: 600 });
-  await settle(page, { quiet: 300 });
-  await pause(rec, 1200);
-  await rec.click(page.getByRole('tab', { name: 'Strength' }).or(page.getByRole('button', { name: 'Strength', exact: true })).first(), { after: 600 });
-  await settle(page, { quiet: 300 });
-  await pause(rec, 700);
-  const lift = page.getByRole('row').filter({ hasText: /strength/i }).first();
-  await rec.click(lift, { ms: 800, after: 300 });
-  await arrive(page, /\/activities\/act_/, { quiet: 400 });
-  await pause(rec, 1200);
-  await rec.moveTo(800, 600, 600);
-  await rec.scroll(520, { ms: 1000 });
-  await pause(rec, 1800);
+
 }
 
-async function trends() {
-  throw new Error('todo');
+// 7 — Trends and the weekly review.
+async function trends(rec, base) {
+  const { page } = rec;
+  const scrollTo = async (loc, offset, ms = 1000) => {
+    const y = (await loc.boundingBox()).y;
+    await rec.scroll(y - offset, { ms });
+    await ready(rec, 120);
+  };
+  await begin(rec, base, rec.prevUrl ?? '/activities');
+  rec.mark('trends: overview tiles');
+  await rec.click(rail(page, 'Trends'), { ms: 800, after: 200 });
+  await arrive(rec, /\/trends/);
+  await rec.caption('Progress at a glance', 'This week against last week at the same weekday — readable in two seconds.');
+  await rec.moveTo(490, 430, 800);
+  await pause(rec, 900);
+
+  // Week-over-week first, at 12 weeks (at 1Y its bar labels overlap — see report).
+  rec.mark('trends: week-over-week + consistency');
+  await rec.moveTo(900, 560, 300);
+  await scrollTo(page.getByText('Week-over-week progression', { exact: true }).first(), 90, 1300);
+  await rec.caption('Week over week', 'One plain sentence, the ramp against a caution line, and every day of the year.');
+  await rec.hover(page.getByText(/last week/).filter({ hasText: /caution|rose|fell|held|dropped/ }).first(), { ms: 700 }).catch(() => {});
+  await pause(rec, 1300);
+  await rec.moveTo(1200, 720, 800); // consistency heatmap
+  await pause(rec, 700);
+
+  rec.mark('trends: range 12W → 1Y, fitness · fatigue · form');
+  await rec.scroll(-6000, { ms: 1100 });
+  await ready(rec, 100);
+  await rec.caption('Fitness, fatigue and form', 'A year of training load, with the plan projected to race day.');
+  await rec.click(page.getByRole('button', { name: '1Y', exact: true }), { ms: 800, after: 500 });
+  await rec.moveTo(900, 600, 300);
+  await scrollTo(page.getByRole('link', { name: 'Fitness · Fatigue · Form' }).first(), 70, 1100);
+  await rec.moveTo(430, 330, 500);
+  await rec.moveTo(1320, 300, 2800);
+  await pause(rec, 300);
+
+  rec.mark('trends: weekly volume hours → load');
+  await rec.moveTo(900, 500, 300);
+  await scrollTo(page.getByText('Weekly volume', { exact: true }).first(), 70, 900);
+  await rec.click(page.getByRole('button', { name: 'Load', exact: true }).first(), { ms: 800, after: 1200 });
+
+  rec.mark('weekly review');
+  // the rightmost weekly bar is this week → its weekly review page
+  const bar = await page.evaluate(() => {
+    const h = [...document.querySelectorAll('h2,h3')].find((e) => e.textContent?.startsWith('Weekly volume'));
+    let card = h;
+    while (card && !card.querySelector('svg rect')) card = card.parentElement;
+    const rects = [...(card?.querySelectorAll('svg rect') ?? [])].map((r) => r.getBoundingClientRect()).filter((r) => r.height > 12 && r.width > 2 && r.width < 60 && r.bottom < innerHeight);
+    const last = rects.sort((a, b) => b.right - a.right)[0];
+    return last ? { x: last.x + last.width / 2, y: last.y + Math.min(last.height / 2, 30) } : null;
+  });
+  if (!bar) throw new Error('volume bars not found');
+  await rec.moveTo(bar.x, bar.y, 800);
+  await pause(rec, 250);
+  await page.mouse.down();
+  await rec.wait(60);
+  await page.mouse.up();
+  await arrive(rec, /\/week\//);
+  await rec.caption('A weekly ritual', 'Review the week, reflect, and roll the plan forward with progression.');
+  await pause(rec, 1100);
+  await rec.moveTo(900, 500, 300);
+  await scrollTo(page.getByRole('heading', { name: 'Reflection' }), 90, 1500);
+  await pause(rec, 700);
+  await scrollTo(page.getByRole('heading', { name: /^Plan week/ }), 160, 900);
+
+  rec.mark('weekly review: progression slider → +5%');
+  const tb = await page.locator('input[type=range]').first().boundingBox();
+  const cx = tb.x + tb.width / 2;
+  const cy = tb.y + tb.height / 2;
+  await rec.moveTo(cx, cy, 700);
+  await pause(rec, 150);
+  await page.mouse.down();
+  // move right until the button reads "+5 %"
+  const label = () => page.evaluate(() => document.body.innerText.match(/Copy to W\d+ at ([+−-]?\d+)\s*%/)?.[1] ?? '');
+  let x = cx;
+  for (let i = 0; i < 80; i++) {
+    x += 2;
+    await page.mouse.move(x, cy);
+    await rec.wait(26);
+    if (Number((await label()).replace('−', '-')) >= 5) break;
+  }
+  await page.mouse.up();
+  await rec.placeCursor(x, cy);
+  await pause(rec, 900);
+  await rec.moveTo(x + 120, cy + 110, 600);
+  await pause(rec, 900);
 }
-async function extras() {
-  throw new Error('todo');
+
+// 8–11 — library, command palette → a race day → event → season, Garmin settings, end card.
+async function extras(rec, base) {
+  const { page } = rec;
+  await begin(rec, base, rec.prevUrl ?? '/week/2026-W47');
+  rec.mark('library');
+  await rec.click(rail(page, 'Library'), { ms: 800, after: 200 });
+  await arrive(rec, /\/library/);
+  await rec.caption('A library', 'Your templates by sport and intensity, ready to drop on any day.');
+  await rec.click(page.getByRole('radio', { name: 'Run', exact: true }).first(), { ms: 700, after: 700 });
+  await ready(rec, 200);
+  await rec.moveTo(540, 360, 700);
+  await pause(rec, 900);
+
+  rec.mark('command palette: jump to a date');
+  await rec.caption('Everything is one keystroke away', 'Pages, dates, new workouts and actions from one box — Ctrl/⌘ K.');
+  await rec.press('Control+k', { after: 500 });
+  await rec.type('dec 27', { delay: 90 });
+  await pause(rec, 900);
+  await rec.press('Enter', { label: '↵', after: 200 });
+  await arrive(rec, /\/calendar\/day\/2026-12-27/);
+  await pause(rec, 900);
+
+  rec.mark('event → season');
+  const ev = page.locator('main a[href^="/events/"]').first();
+  await rec.click(ev, { ms: 800, after: 200 });
+  if (!/\/events\//.test(page.url())) await page.waitForURL(/\/events\//, { timeout: 3000 }).catch(() => rec.click(ev, { ms: 200, after: 200 }));
+  await arrive(rec, /\/events\//);
+  await pause(rec, 700);
+  await rec.click(page.getByRole('link', { name: 'Season', exact: true }).first(), { ms: 700, after: 0 });
+  void rec.caption('The season', 'Phases, races and weekly load targets for the whole year.');
+  await arrive(rec, /\/season/);
+  await rec.moveTo(900, 300, 700);
+  await rec.moveTo(1300, 300, 1200);
+  await pause(rec, 500);
+
+  rec.mark('settings: Garmin');
+  await rec.caption('Your Garmin, your data', 'Official Personal API for reading, encrypted tokens, sync every 30 minutes.');
+  await rec.press('Control+k', { after: 400 });
+  await rec.type('garmin', { delay: 80 });
+  await pause(rec, 500);
+  await rec.press('Enter', { label: '↵', after: 200 });
+  await arrive(rec, /\/settings\/garmin/);
+  await pause(rec, 600);
+  await rec.click(page.getByRole('button', { name: 'Sync now' }), { ms: 800, after: 400 });
+  await page.waitForFunction(() => !/Syncing…/.test(document.body.innerText), null, { timeout: 15000 }).catch(() => {});
+  await pause(rec, 1400);
+  await rec.click(page.getByRole('link', { name: 'Zones & thresholds' }), { ms: 800, after: 200 });
+  await arrive(rec, /\/settings\/zones/);
+  await rec.moveTo(900, 500, 800);
+  await pause(rec, 1300);
+
+  rec.mark('end card');
+  await rec.caption('');
+  await rec.titleCard('cadence', 'Black, white, one green.', 'One Cloudflare Worker + D1 · tested end to end in Miniflare · yours alone', 3600, { keep: true });
 }
 
 // ───────────────────────────── runner ─────────────────────────────
@@ -511,6 +691,7 @@ async function recordSegment(seg) {
   await mkdir(segOut, { recursive: true });
   const rec = await createRecorder({ outDir: segOut, width: W, height: H, timezoneId: TZ, locale: 'en-GB', headless: !args.headed, mouse });
   rec.captionDefaults({ x: CX, maxWidth: 700 });
+  applyPacing(rec);
   // where the previous segment ended (path only), so this one can start on the same frame
   rec.prevUrl = prevUrl && seg.server === 'base' ? prevUrl : undefined;
   const t0 = Date.now();
