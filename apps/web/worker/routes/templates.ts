@@ -7,7 +7,7 @@ import { badRequest, notFound } from '../lib/http';
 import { newId, nowIso } from '../lib/ids';
 import { first, run } from '../db/sql';
 import { thresholdsOn } from '../db/thresholds';
-import { getWorkout } from '../db/workouts';
+import { getWorkout, listWorkouts } from '../db/workouts';
 import {
   bumpTemplateUsage,
   countTemplates,
@@ -20,6 +20,7 @@ import {
 import { getToday, validate } from '../services/context';
 import { checkStructure, createWorkout, deriveWorkout } from '../services/planning';
 import { withCompliance } from '../services/compliance';
+import { rePairDates } from '../services/pairing';
 
 const TemplateInput = Template.omit({ id: true, usageCount: true, lastUsedAt: true, createdAt: true, updatedAt: true }).partial({
   intensity: true,
@@ -236,6 +237,10 @@ export const templatesRoutes = new Hono<AppEnv>()
         );
       }
       await bumpTemplateUsage(c.env.DB, t.id, created.length, nowIso());
-      return c.json({ workouts: await withCompliance(c.env, created), template: await mustGet(c.env, t.id) }, 201);
+      await rePairDates(c.env, dates);
+      const stored = await listWorkouts(c.env.DB, { ids: created.map((w) => w.id) });
+      const byId = new Map(stored.map((w) => [w.id, w]));
+      const fresh = created.map((w) => byId.get(w.id) ?? w);
+      return c.json({ workouts: await withCompliance(c.env, fresh), template: await mustGet(c.env, t.id) }, 201);
     },
   );

@@ -5,7 +5,7 @@
  * reorder by morphing each block's path (same command structure, so Motion interpolates it);
  * the compact variant is static and cheap for cards.
  */
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChartDefs, useChartDefs } from './core/ChartDefs';
 import { ChartFrame } from './core/ChartFrame';
@@ -26,6 +26,9 @@ export interface ProfileBlock {
   level?: number;
   role: 'warmup' | 'active' | 'recovery' | 'rest' | 'cooldown' | 'other';
   label?: string;
+  /** Optional group key (e.g. the step id shared by every repeat iteration): hover / selection
+   *  highlight every block of the group, and `selectedId` / `hoveredId` may name the group. */
+  group?: string;
 }
 export interface ProfileRepeat {
   id: string;
@@ -54,6 +57,8 @@ export interface IntensityProfileProps {
   hoveredId?: string | null;
   onHover?: (id: string | null) => void;
   showAxis?: boolean;
+  /** Y-axis caption (default "%FTP"). */
+  axisLabel?: string;
   loading?: boolean;
   className?: string;
 }
@@ -111,11 +116,17 @@ function CompactProfile({ blocks, width, height, maxIntensity = 1.4 }: Intensity
   );
 }
 
-function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, selectedId, onSelect, hoveredId: ctlHover, onHover, showAxis = true }: IntensityProfileProps & { width: number; height: number }) {
+function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, selectedId, onSelect, hoveredId: ctlHover, onHover, showAxis = true, axisLabel = '%FTP' }: IntensityProfileProps & { width: number; height: number }) {
   const defs = useChartDefs();
   const reduce = useReducedMotion();
   const uid = useId();
   const [hoverS, setHoverS] = useState<string | null>(null);
+  // Stagger only the first draw; later updates (hover dim, edits) must respond immediately.
+  const firstDraw = useRef(true);
+  useEffect(() => {
+    const t = setTimeout(() => (firstDraw.current = false), 400);
+    return () => clearTimeout(t);
+  }, []);
   const hovered = ctlHover !== undefined ? ctlHover : hoverS;
   const setHover = (id: string | null) => {
     setHoverS(id);
@@ -132,6 +143,9 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
   const ticks = [0.5, 0.75, 1, 1.2].filter((t) => t < maxIntensity);
   const timeStep = [60, 300, 600, 900, 1200, 1800, 3600].find((s) => (plotW / total) * s >= 64) ?? 3600;
   const focusId = hovered ?? null;
+  const keyOf = (b: ProfileBlock) => b.group ?? b.id;
+  const focusKey = focusId == null ? null : (blocks.find((b) => b.id === focusId) ? keyOf(blocks.find((b) => b.id === focusId)!) : focusId);
+  const selKey = selectedId == null ? null : (blocks.find((b) => b.id === selectedId) ? keyOf(blocks.find((b) => b.id === selectedId)!) : selectedId);
   return (
     <div className="relative">
       <svg width={width} height={axisY + (showAxis ? 16 : 0)} className="block select-none overflow-visible" role="list" aria-label="Workout steps">
@@ -150,8 +164,8 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
             const w = Math.max(1, b.durationSec * k - 1);
             const lvl = b.level ?? levelFor(Math.max(b.intensity, b.intensityEnd ?? 0));
             const d = blockPath(x, w, y(b.intensity), y(b.intensityEnd ?? b.intensity), base);
-            const dim = focusId != null && focusId !== b.id;
-            const sel = selectedId === b.id;
+            const dim = focusKey != null && focusKey !== keyOf(b);
+            const sel = selKey != null && selKey === keyOf(b);
             return (
               <motion.g
                 key={b.id}
@@ -161,7 +175,7 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
                 initial={reduce ? { opacity: 0 } : { opacity: 0, scaleY: 0 }}
                 animate={{ opacity: dim ? 0.4 : 1, scaleY: 1 }}
                 exit={reduce ? { opacity: 0 } : { opacity: 0, scaleY: 0, transition: { duration: 0.16, ease: [0.55, 0, 1, 0.45] } }}
-                transition={{ ...spring.smooth, delay: reduce ? 0 : Math.min(i * 0.02, 0.24) }}
+                transition={{ ...spring.smooth, delay: reduce || !firstDraw.current ? 0 : Math.min(i * 0.02, 0.24) }}
                 style={{ originY: 1, transformBox: 'fill-box', cursor: onSelect ? 'pointer' : 'default' }}
                 onPointerEnter={() => setHover(b.id)}
                 onPointerLeave={() => setHover(null)}
@@ -206,7 +220,7 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
           </g>
         )}
         <text x={L.left - 8} y={L.top - 8} textAnchor="end" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }} aria-hidden>
-          %FTP
+          {axisLabel}
         </text>
       </svg>
       <ProfileTip blocks={blocks} id={focusId} k={k} left={L.left} width={width} y={y} uid={uid} />
@@ -215,7 +229,7 @@ function FullProfile({ blocks, repeats = [], width, height, maxIntensity = 1.5, 
 }
 
 function ProfileTip({ blocks, id, k, left, width, y }: { blocks: ProfileBlock[]; id: string | null; k: number; left: number; width: number; y: (v: number) => number; uid: string }) {
-  const b = blocks.find((x) => x.id === id);
+  const b = blocks.find((x) => x.id === id) ?? blocks.find((x) => x.group === id);
   if (!b) return null;
   const cx = left + (b.startSec + b.durationSec / 2) * k;
   const top = Math.max(0, y(Math.max(b.intensity, b.intensityEnd ?? 0)) - 34);

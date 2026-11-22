@@ -132,6 +132,21 @@ export async function autoPairDates(env: Env, dates: LocalDate[]): Promise<numbe
   return result.pairs.length;
 }
 
+/**
+ * Re-pair after a planning change or an activity deletion: one `autoPairDates` call for the
+ * deduplicated dates. The triggering write has already been committed, so a pairing failure is
+ * logged rather than turned into an error response (a retry would duplicate the write).
+ */
+export async function rePairDates(env: Env, dates: Iterable<LocalDate | null | undefined>): Promise<void> {
+  const uniq = [...new Set([...dates].filter((d): d is LocalDate => !!d))];
+  if (!uniq.length) return;
+  try {
+    await autoPairDates(env, uniq);
+  } catch (e) {
+    console.error('re-pairing failed', uniq, e);
+  }
+}
+
 /** Pair a planned workout with an activity (any dates). Both rows become manual. */
 export async function pairManually(env: Env, workoutId: string, activityId: string): Promise<void> {
   const db = env.DB;

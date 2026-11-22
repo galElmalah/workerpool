@@ -42,6 +42,7 @@ import {
 } from '../db/workouts';
 import { all, chunk, placeholders } from '../db/sql';
 import { markWorkoutDirty, unpushWorkout } from './push';
+import { rePairDates } from './pairing';
 
 type Resolver = (date: LocalDate, sport: Sport) => ThresholdSnapshot;
 
@@ -178,12 +179,22 @@ function stripUndefined<T extends object>(o: T): T {
   return o;
 }
 
-/** Create and store a planned workout (thresholds effective on its date). */
+/**
+ * Create and store a planned workout (thresholds effective on its date). Does not re-pair: callers
+ * creating one or many call `rePairDates` once for the request (see routes/workouts, templates).
+ */
 export async function createWorkout(env: Env, input: PlannedWorkoutInput): Promise<PlannedWorkout> {
   const th = await thresholdsOn(env.DB, input.date, input.sport);
   const w = buildWorkout(input, th);
   await insertWorkouts(env.DB, [w]);
   return w;
+}
+
+/** Fields whose change can alter automatic pairing (date and sport gate candidates; the rest affect the score). */
+const PAIRING_FIELDS = ['date', 'sport', 'status', 'startTime', 'plannedDurationSec', 'plannedDistanceM', 'title', 'tags'] as const;
+
+export function pairingRelevantChange(a: PlannedWorkout, b: PlannedWorkout): boolean {
+  return PAIRING_FIELDS.some((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k]));
 }
 
 // ───────────────────────────── patch ─────────────────────────────
@@ -249,6 +260,8 @@ export async function patchWorkout(
   await updateWorkouts(env.DB, updated);
   const dirty = updated.filter((u, i) => isOnGarmin(targets[i]) && garminRelevantChange(targets[i], u));
   await Promise.all(dirty.map((u) => markWorkoutDirty(env, u.id)));
+  const repair = updated.flatMap((u, i) => (pairingRelevantChange(targets[i], u) ? [targets[i].date, u.date] : []));
+  await rePairDates(env, repair);
   const workout = (await getWorkout(env.DB, id)) ?? updated.find((u) => u.id === id)!;
   return { workout, updated };
 }
@@ -269,6 +282,8 @@ export async function deleteWorkoutsById(env: Env, ids: string[]): Promise<Plann
       .run();
   }
   await deleteWorkouts(env.DB, victimIds);
+  // Released activities become unplanned, or pair with another workout of their day.
+  await rePairDates(env, victims.map((w) => w.date));
   return victims;
 }
 
@@ -283,13 +298,17 @@ export async function restoreWorkouts(env: Env, workouts: PlannedWorkout[]): Pro
   const existing = new Map((await listWorkouts(env.DB, { ids: workouts.map((w) => w.id) })).map((w) => [w.id, w]));
   const activityIds = workouts.map((w) => w.pairedActivityId).filter((x): x is string => !!x);
   const activityPair = new Map<string, string | null>();
+  const activityDate = new Map<string, string>();
   for (const part of chunk(activityIds, 90)) {
-    const rows = await all<{ id: string; paired_workout_id: string | null }>(
+    const rows = await all<{ id: string; paired_workout_id: string | null; local_date: string }>(
       env.DB,
-      `SELECT id, paired_workout_id FROM activities WHERE deleted_at IS NULL AND id IN (${placeholders(part.length)})`,
+      `SELECT id, paired_workout_id, local_date FROM activities WHERE deleted_at IS NULL AND id IN (${placeholders(part.length)})`,
       ...part,
     );
-    for (const r of rows) activityPair.set(r.id, r.paired_workout_id);
+    for (const r of rows) {
+      activityPair.set(r.id, r.paired_workout_id);
+      activityDate.set(r.id, r.local_date);
+    }
   }
   const fresh: PlannedWorkout[] = [];
   const replaced: PlannedWorkout[] = [];
@@ -316,13 +335,21 @@ export async function restoreWorkouts(env: Env, workouts: PlannedWorkout[]): Pro
   await updateWorkouts(env.DB, replaced);
   // updateWorkouts does not touch pairing-only columns beyond paired_activity_id; re-link the activity side.
   if (relink.length) {
-    await env.DB.batch(
-      relink.map((w) =>
-        env.DB.prepare('UPDATE activities SET paired_workout_id = ? WHERE id = ? AND paired_workout_id IS NULL').bind(w.id, w.pairedActivityId!),
-      ),
-    );
+    const stmts: D1PreparedStatement[] = [];
+    for (const w of relink) {
+      stmts.push(env.DB.prepare('UPDATE activities SET paired_workout_id = ? WHERE id = ? AND paired_workout_id IS NULL').bind(w.id, w.pairedActivityId!));
+      // A cross-date pair can only have been made by hand: pin it so re-pairing below keeps it.
+      if (activityDate.get(w.pairedActivityId!) !== w.date) {
+        stmts.push(
+          env.DB.prepare('UPDATE activities SET pair_manual = 1 WHERE id = ? AND paired_workout_id = ?').bind(w.pairedActivityId!, w.id),
+          env.DB.prepare('UPDATE workouts SET pair_manual = 1 WHERE id = ? AND paired_activity_id = ?').bind(w.id, w.pairedActivityId!),
+        );
+      }
+    }
+    await env.DB.batch(stmts);
   }
   await Promise.all(dirty.map((id) => markWorkoutDirty(env, id)));
+  await rePairDates(env, [...workouts.map((w) => w.date), ...[...existing.values()].map((w) => w.date)]);
   return listWorkouts(env.DB, { ids: workouts.map((w) => w.id) });
 }
 
@@ -333,6 +360,13 @@ function rederiveCopy(w: PlannedWorkout, resolve: Resolver): PlannedWorkout {
   return deriveWorkout(w, resolve(w.date, w.sport), { intensity: false, title: false, unstructured: false });
 }
 
+/** Re-read workouts after re-pairing (keeps the given order; falls back to the in-memory copy). */
+async function refreshed(env: Env, list: PlannedWorkout[]): Promise<PlannedWorkout[]> {
+  if (!list.length) return list;
+  const byId = new Map((await listWorkouts(env.DB, { ids: list.map((w) => w.id) })).map((w) => [w.id, w]));
+  return list.map((w) => byId.get(w.id) ?? w);
+}
+
 const copyOpts = (now: string) => ({ now, newId: () => newId('wk') });
 
 export async function duplicateWorkout(env: Env, id: string, date: LocalDate): Promise<PlannedWorkout> {
@@ -341,7 +375,8 @@ export async function duplicateWorkout(env: Env, id: string, date: LocalDate): P
   const resolve = await thresholdResolver(env.DB);
   const copy = rederiveCopy(copyWorkout(w, date, 1, copyOpts(nowIso())), resolve);
   await insertWorkouts(env.DB, [copy]);
-  return copy;
+  await rePairDates(env, [copy.date]);
+  return (await getWorkout(env.DB, copy.id)) ?? copy;
 }
 
 /**
@@ -374,7 +409,8 @@ export async function repeatWorkout(
   const original = { ...w, seriesId, updatedAt: now };
   await updateWorkouts(env.DB, [original]);
   await insertWorkouts(env.DB, copies);
-  return [original, ...copies];
+  await rePairDates(env, copies.map((c) => c.date));
+  return refreshed(env, [original, ...copies]);
 }
 
 /** Copy the 7 days starting `fromMonday` onto the week starting `toMonday`, scaled by progressionPct. */
@@ -396,7 +432,8 @@ export async function copyWeekPlan(
     ),
   );
   await insertWorkouts(env.DB, copies);
-  return copies;
+  await rePairDates(env, copies.map((c) => c.date));
+  return refreshed(env, copies);
 }
 
 /**
@@ -422,6 +459,7 @@ export async function shiftPlan(
   });
   await updateWorkouts(env.DB, moved);
   await Promise.all(previous.filter(isOnGarmin).map((w) => markWorkoutDirty(env, w.id)));
+  await rePairDates(env, [...previous.map((w) => w.date), ...moved.map((w) => w.date)]);
   let eventsMoved = 0;
   if (opts.includeEvents) {
     const res = await env.DB.prepare(`UPDATE events SET date = date(date, ?) WHERE date >= ?`)

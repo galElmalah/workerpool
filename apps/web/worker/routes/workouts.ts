@@ -24,7 +24,7 @@ import {
   shiftPlan,
 } from '../services/planning';
 import { withCompliance } from '../services/compliance';
-import { pairManually, unpair } from '../services/pairing';
+import { pairManually, rePairDates, unpair } from '../services/pairing';
 import { markWorkoutDirty } from '../services/push';
 
 const Range = z.object({ from: LocalDate.optional(), to: LocalDate.optional() });
@@ -60,7 +60,8 @@ export const workoutsRoutes = new Hono<AppEnv>()
   .post('/workouts', validate('json', CreateInput), async (c) => {
     const input = c.req.valid('json');
     const w = await createWorkout(c.env, { ...input, title: input.title ?? '' });
-    return c.json(await decorateOne(c.env, w), 201);
+    await rePairDates(c.env, [w.date]);
+    return c.json(await decorateOne(c.env, (await getWorkout(c.env.DB, w.id)) ?? w), 201);
   })
   .post('/workouts/quick', validate('json', z.object({ date: LocalDate, text: z.string().trim().min(1).max(500), startTime: z.string().regex(/^\d{2}:\d{2}$/).optional() })), async (c) => {
     const { date, text, startTime } = c.req.valid('json');
@@ -81,7 +82,8 @@ export const workoutsRoutes = new Hono<AppEnv>()
       isKey: q.isKey,
       tags: q.tags,
     });
-    return c.json({ workout: await decorateOne(c.env, w), issues: q.issues }, 201);
+    await rePairDates(c.env, [w.date]);
+    return c.json({ workout: await decorateOne(c.env, (await getWorkout(c.env.DB, w.id)) ?? w), issues: q.issues }, 201);
   })
   .post('/workouts/estimate', validate('json', EstimateInput), async (c) => {
     return c.json(await estimatePlanned(c.env, c.req.valid('json'), await getToday(c.env)));
@@ -136,6 +138,7 @@ export const workoutsRoutes = new Hono<AppEnv>()
     const next: PlannedWorkout = { ...w, status: 'skipped', skipReason: c.req.valid('json').reason, updatedAt: nowIso() };
     await updateWorkouts(c.env.DB, [next]);
     if (w.garmin.workoutId || w.garmin.scheduleId) await markWorkoutDirty(c.env, w.id);
+    if (w.status !== 'skipped') await rePairDates(c.env, [w.date]);
     return c.json(await decorateOne(c.env, (await getWorkout(c.env.DB, w.id))!));
   })
   .delete('/workouts/:id/skip', async (c) => {
@@ -144,6 +147,7 @@ export const workoutsRoutes = new Hono<AppEnv>()
     delete next.skipReason;
     await updateWorkouts(c.env.DB, [next]);
     if (w.garmin.workoutId || w.garmin.scheduleId) await markWorkoutDirty(c.env, w.id);
+    if (w.status !== 'planned') await rePairDates(c.env, [w.date]);
     return c.json(await decorateOne(c.env, (await getWorkout(c.env.DB, w.id))!));
   })
   .post('/workouts/:id/pair', validate('json', z.object({ activityId: z.string().min(1) })), async (c) => {
