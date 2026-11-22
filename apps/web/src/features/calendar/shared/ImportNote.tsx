@@ -30,25 +30,25 @@ export function ImportNote() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, transition: tween('fast', 'in') }}
           transition={spring.smooth}
-          className="flex"
+          className="flex max-sm:hidden"
         >
           <Tooltip content={detail} side="bottom">
             <Link
               to="/settings/garmin"
               role="status"
               aria-label={`Importing history${total ? `: ${done} of ${total} activities` : ''}`}
-              className="flex h-8 items-center gap-2.5 rounded-md px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-1 hover:text-fg-1"
+              className="flex h-8 items-center gap-2.5 rounded-md px-1.5 text-body-sm md:px-2 text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-1 hover:text-fg-1"
             >
               <span className="max-md:hidden">Importing history</span>
               {total ? (
-                <span className="num whitespace-nowrap">
+                <span className="num whitespace-nowrap max-md:hidden">
                   <span className="text-fg-1">{formatNumber(done)}</span>
                   <span className="text-fg-3"> / {formatNumber(total)}</span>
                 </span>
-              ) : (
-                <span className="text-fg-3 md:hidden">Importing…</span>
-              )}
-              <span aria-hidden className="relative h-1 w-10 overflow-hidden rounded-full bg-surface-3 md:w-14">
+              ) : null}
+              {/* narrow: the bar alone (the title needs the room); the tooltip / label carry the words.
+                  Phones skip the note: the month title already fills the bar there. */}
+              <span aria-hidden className="relative h-1 w-8 overflow-hidden rounded-full bg-surface-3 md:w-14">
                 <motion.span className="absolute inset-0 origin-left rounded-full bg-fg-2" initial={false} animate={{ scaleX: frac }} transition={spring.gentle} />
               </span>
             </Link>

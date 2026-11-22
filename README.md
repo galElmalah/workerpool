@@ -57,7 +57,7 @@ node scripts/seed-demo.mjs --base http://localhost:5173      # passphrase: caden
 ## Tests
 
 ```bash
-pnpm -r test          # 590 library tests + 203 Worker tests running in workerd (Miniflare)
+pnpm -r test          # 613 library tests + 214 Worker tests running in workerd (Miniflare)
 cd apps/web && pnpm typecheck
 PW_CHROMIUM_PATH=/path/to/chromium pnpm e2e   # Playwright smoke suite against a seeded dev server
 ```
