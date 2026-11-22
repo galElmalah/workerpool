@@ -1,7 +1,9 @@
 /**
- * Table — design.md §7: header `micro` fg-3, sticky (under the page bar), line-1 bottom; rows h-10
- * `body`; numeric columns `mono` right-aligned; row hover surface-2; never zebra. Sortable headers
- * (animated chevron), rows re-order with `layout` (smooth). Selected row = 2px accent left rail.
+ * Table — DESIGN_V2 §4: header `label` fg-3 sentence case, sticky (under the page bar), line-1 rule;
+ * rows 44px `body`, line-1 row rules only, never zebra; numeric columns right-aligned sans with
+ * tabular figures; row hover surface-2. Sortable headers (animated arrow), rows re-order with
+ * `layout` (smooth). Selected row = surface-3 fill (no rail, no accent). Keep it to ≤ 6 columns at
+ * 1440 — move the rest to the detail page (`hideBelow` for narrower screens).
  *
  *   <Table rows={acts} rowKey={(a) => a.id} onRowClick={open} defaultSort={{ key: 'date', dir: 'desc' }}
  *     columns={[
@@ -19,7 +21,7 @@ export interface Column<T> {
   key: string;
   header: ReactNode;
   cell: (row: T) => ReactNode;
-  /** Right-aligned mono numerals. */
+  /** Right-aligned tabular numerals (sans). */
   numeric?: boolean;
   align?: 'left' | 'right' | 'center';
   /** Enables sorting on this column. */
@@ -115,7 +117,7 @@ export function Table<T>({
                   style={{ width: c.width, top: stickyTop }}
                   aria-sort={active ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   className={cn(
-                    'sticky z-(--z-sticky) h-9 border-b border-line-1 px-3 align-middle text-micro font-[600] text-fg-3 first:pl-4 last:pr-4',
+                    'sticky z-(--z-sticky) h-10 border-b border-line-1 px-3 align-middle text-label font-normal text-fg-3 first:pl-4 last:pr-4',
                     al === 'right' ? 'text-right' : al === 'center' ? 'text-center' : 'text-left',
                     surface === 'canvas' ? 'bg-canvas' : surface === 'surface-1' ? 'bg-surface-1' : 'bg-surface-2',
                     c.hideBelow && hide[c.hideBelow],
@@ -167,24 +169,23 @@ export function Table<T>({
                   aria-selected={selectedKey !== undefined ? sel : undefined}
                   className={cn(
                     'group/row transition-colors duration-(--dur-fast) focus-inset',
-                    onRowClick && 'cursor-default hover:bg-surface-2',
-                    sel && 'bg-surface-2',
+                    onRowClick && !sel && 'cursor-default hover:bg-surface-2',
+                    sel && 'bg-surface-3',
                   )}
                 >
-                  {columns.map((c, ci) => {
+                  {columns.map((c) => {
                     const al = alignOf(c);
                     return (
                       <td
                         key={c.key}
                         className={cn(
-                          'relative h-10 border-b border-line-1 px-3 align-middle first:pl-4 last:pr-4',
-                          c.numeric ? 'text-mono text-fg-1' : 'text-fg-1',
+                          'relative h-11 border-b border-line-1 px-3 align-middle first:pl-4 last:pr-4',
+                          c.numeric ? 'num text-fg-1' : 'text-fg-1',
                           al === 'right' ? 'text-right' : al === 'center' ? 'text-center' : 'text-left',
                           c.hideBelow && hide[c.hideBelow],
                           c.className,
                         )}
                       >
-                        {ci === 0 && sel && <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-accent" aria-hidden />}
                         {c.cell(row)}
                       </td>
                     );
@@ -201,8 +202,8 @@ export function Table<T>({
                 <td
                   key={c.key}
                   className={cn(
-                    'h-10 px-3 align-middle first:pl-4 last:pr-4',
-                    c.numeric ? 'text-mono font-[560] text-fg-1' : 'text-micro text-fg-3',
+                    'h-11 px-3 align-middle first:pl-4 last:pr-4',
+                    c.numeric ? 'num font-medium text-fg-1' : 'text-label font-normal text-fg-3',
                     alignOf(c) === 'right' ? 'text-right' : 'text-left',
                     c.hideBelow && hide[c.hideBelow],
                   )}

@@ -1,7 +1,8 @@
 /**
  * WeeklyBars — weekly volume (load / hours / distance) stacked by sport with the monochrome
- * sport ramp, planned ghosts, current-week remainder, 4-week rolling average, WoW deltas and
- * targets. product.md §6.1 row 3; design.md §6.2 "Weekly volume".
+ * sport ramp, faint planned ghosts, current-week remainder and a 4-week rolling average.
+ * WoW deltas and targets are opt-in (they are always in the hover tooltip).
+ * product.md §6.1 row 3; v2 look per DESIGN_V2 §5 "Charts".
  */
 import { useCallback, useId, useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -14,7 +15,7 @@ import { EndLabels } from './core/EndLabels';
 import { ChartTooltip, TooltipBody, type TooltipRow } from './core/Tooltip';
 import { ChartSegmented } from './core/controls';
 import { MorphPath } from './core/animated';
-import { T } from './core/tokens';
+import { T, TXT } from './core/tokens';
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -34,13 +35,17 @@ export interface WeeklyBarsProps {
   defaultMetric?: WeeklyMetric;
   onMetricChange?: (m: WeeklyMetric) => void;
   showMetricToggle?: boolean;
-  /** 'sport' = grayscale ramp stack (default); 'total' = one solid accent bar per week. */
+  /** 'sport' = grayscale ramp stack (default); 'total' = one neutral bar per week, the current week in accent. */
   stack?: 'sport' | 'total';
   showPlanned?: boolean;
   showRollingAvg?: boolean;
+  /** Row of week-over-week deltas above the bars. Default false (v2; the tooltip always has it). */
   showWow?: boolean;
+  /** Per-week target ticks. Default false (v2; the tooltip always has it). */
   showTargets?: boolean;
-  /** WoW above this (fraction) gets the accent caution outline (default 0.15). */
+  /** Sport legend row (stack = 'sport'). Default true. */
+  showLegend?: boolean;
+  /** WoW above this (fraction) gets the caution glyph (default 0.15). */
   cautionAbove?: number;
   height?: number;
   loading?: boolean;
@@ -141,8 +146,9 @@ function WeeklyInner({
   stack = 'sport',
   showPlanned = true,
   showRollingAvg = true,
-  showWow = true,
-  showTargets = true,
+  showWow = false,
+  showTargets = false,
+  showLegend = true,
   cautionAbove = 0.15,
   sync: extSync,
   onWeekClick,
@@ -155,11 +161,11 @@ function WeeklyInner({
   const [focusSport, setFocusSport] = useState<SportKey | null>(null);
   const compact = width < 480;
   const n = weeks.length;
-  const L = { left: 36, right: compact ? 8 : 92, top: showWow ? 40 : 14, bottom: 22 };
+  const L = { left: 36, right: compact ? 8 : showRollingAvg ? 92 : 8, top: showWow ? 40 : 16, bottom: 28 };
   const plotW = Math.max(10, width - L.left - L.right);
   const plotB = L.top + height;
   const band = plotW / n;
-  const barW = Math.max(3, Math.min(30, band * 0.62));
+  const barW = Math.max(3, Math.min(28, band * 0.56));
   const xc = (i: number) => L.left + band * (i + 0.5);
 
   const sportsPresent = useMemo(() => {
@@ -182,7 +188,7 @@ function WeeklyInner({
     return m * 1.08;
   }, [weeks, acc, showPlanned, showTargets]);
   const y = (v: number) => plotB - (v / yMax) * height;
-  const yTicks: Tick[] = linearTicks([0, yMax], [plotB, L.top], 4, (v) => (metric === 'hours' ? `${fmtNum(v)}h` : fmtNum(v)));
+  const yTicks: Tick[] = linearTicks([0, yMax], [plotB, L.top], 3, (v) => (metric === 'hours' ? `${fmtNum(v)}h` : fmtNum(v))).filter((t) => t.key !== 0);
 
   const keys = useMemo(() => weeks.map((w) => w.isoWeek), [weeks]);
   const keyAt = useCallback((x: number) => {
@@ -198,11 +204,10 @@ function WeeklyInner({
   );
   const { handlers, live } = useChartPointer<IsoWeek>({ keys, keyAt, sync, id, onActivate: onWeekClick, describe, bigStep: 4 });
 
-  // x labels: week start dates, thinned
+  // x labels: week start dates, thinned from the most recent week backwards so "This week" always shows
   const xTicks = thinTicks(
-    weeks.map((w, i) => ({ key: w.isoWeek, pos: xc(i), label: w.isProjected && i === n - 1 ? 'NOW' : fmtMonthDay(w.startDate), strong: w.isProjected && i === n - 1 })),
-    8,
-  );
+    weeks.map((w, i) => ({ key: w.isoWeek, pos: xc(i), label: w.isProjected && i === n - 1 ? 'This week' : fmtMonthDay(w.startDate), strong: w.isProjected && i === n - 1 })).reverse().map((t) => ({ ...t, pos: -t.pos })),
+  ).map((t) => ({ ...t, pos: -t.pos }));
   // WoW labels: as many of the most recent weeks as fit
   const wowEvery = Math.max(1, Math.ceil(46 / band));
 
@@ -219,9 +224,9 @@ function WeeklyInner({
 
   return (
     <div className="relative">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        {stack === 'sport' ? (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1" role="list" aria-label="Sports">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        {stack === 'sport' && showLegend ? (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1" role="list" aria-label="Sports">
             {sportsPresent.map((s) => (
               <button
                 key={s}
@@ -231,25 +236,24 @@ function WeeklyInner({
                 onPointerLeave={() => setFocusSport(null)}
                 onFocus={() => setFocusSport(s)}
                 onBlur={() => setFocusSport(null)}
-                className="inline-flex items-center gap-1.5 rounded-xs text-micro text-fg-3 hover:text-fg-1"
+                className="inline-flex items-center gap-1.5 rounded-xs text-label text-fg-3 hover:text-fg-1"
               >
                 <SportSwatch s={s} defs={defs} active={focusSport === s} />
                 {SPORT_RAMP[s].label}
               </button>
             ))}
             {showTargets && weeks.some((w) => acc.target(w)) && (
-              <span className="inline-flex items-center gap-1.5 text-micro text-fg-3">
-                <svg width="14" height="8" aria-hidden>
-                  <line x1="0" x2="9" y1="4" y2="4" style={{ stroke: T.fg2 }} />
-                  <path d="M9 4l4 -3v6z" style={{ fill: T.fg2 }} />
+              <span className="inline-flex items-center gap-1.5 text-label text-fg-3">
+                <svg width="12" height="8" aria-hidden>
+                  <line x1="0" x2="12" y1="4" y2="4" strokeLinecap="round" style={{ stroke: T.fg3, strokeWidth: 1.5 }} />
                 </svg>
                 Target
               </span>
             )}
             {showPlanned && (
-              <span className="inline-flex items-center gap-1.5 text-micro text-fg-3">
-                <svg width="12" height="10" aria-hidden>
-                  <rect x="0.5" y="0.5" width="11" height="9" rx="1.5" style={{ fill: 'none', stroke: T.fg3, strokeDasharray: '2 2' }} />
+              <span className="inline-flex items-center gap-1.5 text-label text-fg-3">
+                <svg width="10" height="10" aria-hidden>
+                  <rect width="10" height="10" rx="2" style={{ fill: T.s3 }} />
                 </svg>
                 Planned
               </span>
@@ -272,12 +276,12 @@ function WeeklyInner({
         style={{ cursor: onWeekClick ? 'pointer' : 'default' }}
       >
         <ChartDefs ids={defs} />
-        <Grid ys={yTicks.map((t) => ({ key: t.key, pos: t.pos }))} x0={L.left} x1={L.left + plotW} zero={plotB} />
+        <Grid ys={yTicks.map((t) => ({ key: t.key, pos: t.pos }))} x0={L.left} x1={L.left + plotW} zero={plotB + 0.5} />
         <AxisY ticks={yTicks.filter((t) => t.pos < plotB - 2)} x={L.left - 8} />
         <HoverColumn sync={sync} keys={keys} xc={xc} band={band} top={showWow ? 2 : L.top - 8} bottom={plotB} />
         {showWow && (
-          <text x={L.left - 8} y={14} textAnchor="end" dominantBaseline="central" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }} aria-hidden>
-            WOW
+          <text x={L.left - 8} y={14} textAnchor="end" dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }} aria-hidden>
+            vs last
           </text>
         )}
         {weeks.map((w, i) => {
@@ -302,20 +306,20 @@ function WeeklyInner({
             <g key={w.isoWeek}>
               {showPlanned && planned > 0 && (
                 <motion.rect
-                  x={x - 2.5}
-                  width={barW + 5}
+                  x={x}
+                  width={barW}
                   rx={3}
                   initial={{ y: plotB, height: 0 }}
-                  animate={{ y: y(planned) - 0.5, height: Math.max(0, plotB - y(planned)) }}
+                  animate={{ y: y(planned), height: Math.max(0, plotB - y(planned)) }}
                   transition={{ ...spring.gentle, delay }}
-                  style={{ fill: 'none', stroke: T.line3, strokeDasharray: '3 2' }}
+                  style={{ fill: T.s3, opacity: 0.8 }}
                 />
               )}
               {stack === 'total' ? (
-                <motion.rect x={x} width={barW} rx={2} initial={{ y: plotB, height: 0 }} animate={{ y: y(done), height: plotB - y(done) }} transition={{ ...spring.gentle, delay }} style={{ fill: T.accent }} />
+                <motion.rect x={x} width={barW} rx={3} initial={{ y: plotB, height: 0 }} animate={{ y: y(done), height: plotB - y(done) }} transition={{ ...spring.gentle, delay }} style={{ fill: w.isProjected && i === n - 1 ? T.accent : T.fg4 }} />
               ) : (
                 segs.map((sg, k) => {
-                  const gap = k === 0 ? 0 : 1.5;
+                  const gap = k === 0 ? 0 : 1;
                   const y0 = y(sg.v0) - gap;
                   const y1 = y(sg.v1);
                   const r = SPORT_RAMP[sg.s];
@@ -326,7 +330,7 @@ function WeeklyInner({
                       <motion.rect
                         x={x}
                         width={barW}
-                        rx={1.5}
+                        rx={k === segs.length - 1 ? 3 : 1}
                         initial={{ y: plotB, height: 0 }}
                         animate={{ y: y1, height: Math.max(0, y0 - y1) }}
                         transition={{ ...spring.gentle, delay }}
@@ -355,13 +359,12 @@ function WeeklyInner({
                   initial={{ y: y(done), height: 0, opacity: 0 }}
                   animate={{ y: y(projected), height: Math.max(0, y(done) - y(projected) - 1.5), opacity: 1 }}
                   transition={{ ...spring.gentle, delay: delay + 0.12 }}
-                  style={{ fill: defs.hatchFg, stroke: T.fg3, strokeDasharray: '3 2' }}
+                  style={{ fill: defs.hatchFg, opacity: 0.7 }}
                 />
               )}
               {showTargets && target != null && target > 0 && (
                 <motion.g initial={false} animate={{ y: y(target) }} transition={spring.smooth} aria-hidden>
-                  <line x1={x - 4} x2={x + barW + 4} y1={0} y2={0} style={{ stroke: T.fg2, strokeWidth: 1 }} />
-                  <path d={`M${x + barW + 4} 0l4 -3v6z`} style={{ fill: T.fg2 }} />
+                  <line x1={x - 3} x2={x + barW + 3} y1={0} y2={0} strokeLinecap="round" style={{ stroke: T.fg3, strokeWidth: 1.5 }} />
                 </motion.g>
               )}
               {showWow && (n - 1 - i) % wowEvery === 0 && i > 0 && <WowLabel x={xc(i)} y={14} value={acc.wow(w)} caution={(acc.wow(w) ?? 0) > cautionAbove && metric !== 'distance'} />}
@@ -370,16 +373,16 @@ function WeeklyInner({
         })}
         {showRollingAvg && avgPath && (
           <>
-            <MorphPath d={avgPath} transition={spring.smooth} fill="none" strokeLinejoin="round" style={{ stroke: T.bg, strokeWidth: 4, opacity: 0.85 }} />
-            <MorphPath d={avgPath} transition={spring.smooth} fill="none" strokeLinejoin="round" style={{ stroke: T.fg1, strokeWidth: 1.5 }} />
+            <MorphPath d={avgPath} transition={spring.smooth} fill="none" strokeLinejoin="round" style={{ stroke: T.bg, strokeWidth: 3.5, opacity: 0.7 }} />
+            <MorphPath d={avgPath} transition={spring.smooth} fill="none" strokeLinejoin="round" style={{ stroke: T.fg1, strokeWidth: 1.25 }} />
           </>
         )}
         {showRollingAvg && lastAvgIdx >= 0 && !compact && (
-          <EndLabels labels={[{ id: 'avg', y: y(rolling[lastAvgIdx]!), value: acc.fmt(rolling[lastAvgIdx]!), name: '4-wk avg', tone: 'fg1' }]} x={L.left + plotW + 6} top={L.top} bottom={plotB} />
+          <EndLabels labels={[{ id: 'avg', y: y(rolling[lastAvgIdx]!), value: acc.fmt(rolling[lastAvgIdx]!), name: '4-wk avg', tone: 'fg1' }]} x={L.left + plotW + 8} top={L.top} bottom={plotB} />
         )}
         <g aria-hidden>
           {xTicks.map((t) => (
-            <text key={t.key} x={t.pos} y={plotB + 8} textAnchor="middle" dominantBaseline="hanging" style={{ fontFamily: t.strong ? T.sans : T.mono, fontSize: t.strong ? 10 : 11, fontWeight: t.strong ? 600 : 400, letterSpacing: t.strong ? '0.06em' : undefined, fill: t.strong ? T.accentInk : T.fg3 }}>
+            <text key={t.key} x={t.pos} y={plotB + 10} textAnchor="middle" dominantBaseline="hanging" style={{ ...TXT, fill: t.strong ? T.fg1 : T.fg3, fontWeight: t.strong ? 500 : 400 }}>
               {t.label}
             </text>
           ))}
@@ -397,8 +400,8 @@ function SportSwatch({ s, defs, active }: { s: SportKey; defs: ChartDefIds; acti
   const r = SPORT_RAMP[s];
   return (
     <svg width="10" height="10" aria-hidden className="shrink-0">
-      <rect width="10" height="10" rx="2" style={{ fill: active ? T.accent : r.fill }} />
-      {r.pattern && !active && <rect width="10" height="10" rx="2" style={{ fill: r.pattern === 'hatch' ? defs.hatchFgDense : defs.dotsFg }} />}
+      <rect width="10" height="10" rx="2.5" style={{ fill: active ? T.accent : r.fill }} />
+      {r.pattern && !active && <rect width="10" height="10" rx="2.5" style={{ fill: r.pattern === 'hatch' ? defs.hatchFgDense : defs.dotsFg }} />}
     </svg>
   );
 }
@@ -407,15 +410,10 @@ function WowLabel({ x, y, value, caution }: { x: number; y: number; value: numbe
   if (value == null) return null;
   const dir = deltaDir(value);
   const text = dir === 'flat' ? '±0%' : fmtPct(value);
-  const w = text.length * 6.2 + 14;
-  const rot = dir === 'up' ? -45 : dir === 'down' ? 45 : 0;
   return (
     <motion.g initial={{ opacity: 0, y: y + 4 }} animate={{ opacity: 1, y }} transition={spring.smooth} aria-hidden>
-      {caution && <rect x={x - w / 2 - 3} y={-8} width={w + 6} height={15} rx={4} style={{ fill: 'none', stroke: T.accent, strokeWidth: 1 }} />}
-      <g transform={`translate(${x - w / 2 + 4} -0.5) rotate(${rot})`} style={{ stroke: dir === 'up' ? T.fg1 : T.fg3 }} strokeWidth={1.3} fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M-3.5 0h7M1.5 -2.5l2.5 2.5-2.5 2.5" />
-      </g>
-      <text x={x - w / 2 + 11} y={0} dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 10.5, fill: dir === 'up' ? T.fg1 : dir === 'down' ? T.fg2 : T.fg3, fontWeight: dir === 'up' ? 600 : 400 }}>
+      <text x={x} y={0} textAnchor="middle" dominantBaseline="central" style={{ ...TXT, fill: caution ? T.fg1 : dir === 'up' ? T.fg2 : T.fg3, fontWeight: caution ? 500 : 400 }}>
+        {caution ? '⚠ ' : ''}
         {text}
       </text>
     </motion.g>
@@ -452,7 +450,7 @@ function WeekTooltip({ weeks, keys, sync, acc, xc, width, top, defs }: { weeks: 
     const p = ss.reduce((a, s) => a + acc.sportPlanned(s), 0);
     if (d <= 0 && p <= 0) return [];
     const r = SPORT_RAMP[sk];
-    return [{ label: r.label.charAt(0) + r.label.slice(1).toLowerCase(), value: `${acc.fmt(d)} / ${acc.fmt(p)}${u}`, swatch: { tone: 'fg1' as const, kind: 'bar' as const, fill: r.fill, pattern: r.pattern === 'hatch' ? defs.hatchFgDense : r.pattern === 'dots' ? defs.dotsFg : undefined } }];
+    return [{ label: r.label, value: `${acc.fmt(d)} / ${acc.fmt(p)}${u}`, swatch: { tone: 'fg1' as const, kind: 'bar' as const, fill: r.fill, pattern: r.pattern === 'hatch' ? defs.hatchFgDense : r.pattern === 'dots' ? defs.dotsFg : undefined } }];
   });
   rows.push({ label: 'Total', value: `${acc.fmt(acc.done(w))} / ${acc.fmt(acc.planned(w))}${u}`, strong: true });
   if (w.isProjected) rows.push({ label: 'Landing at', value: `${acc.fmt(acc.projected(w))}${u}`, muted: true });
@@ -465,11 +463,11 @@ function WeekTooltip({ weeks, keys, sync, acc, xc, width, top, defs }: { weeks: 
         title={
           <span className="flex items-center gap-2">
             {w.isoWeek.slice(5)} · {fmtMonthDay(w.startDate)}
-            {w.isProjected && <span className="text-micro text-accent-ink">so far</span>}
+            {w.isProjected && <span className="text-fg-3">so far</span>}
           </span>
         }
         rows={rows}
-        footer={<span className="text-fg-3">done / planned</span>}
+        footer="Done / planned"
       />
     </ChartTooltip>
   );

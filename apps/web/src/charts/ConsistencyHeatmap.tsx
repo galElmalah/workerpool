@@ -1,13 +1,14 @@
 /**
- * ConsistencyHeatmap — GitHub-style year grid of daily load (design.md §6.2): 7 rows × N weeks,
- * accent at 5 quantile alphas, planned-missed = dashed outline, key sessions = dot, today = ring.
- * Streak callouts per product.md §6.1 row 5.
+ * ConsistencyHeatmap — GitHub-style year grid of daily load: 7 rows × N weeks, small rounded
+ * cells with small gaps, the opaque zone ramp z1…z4 at load quartiles (soft, never the full
+ * accent), rest days a faint surface step, today a thin neutral ring. Key sessions and
+ * planned-but-missed days are in the hover tooltip. Streak callouts per product.md §6.1 row 5.
  */
 import { useCallback, useId, useMemo } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { LocalDate } from '@cadence/core';
 import { ChartFrame } from './core/ChartFrame';
-import { T } from './core/tokens';
+import { T, TXT } from './core/tokens';
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -35,7 +36,8 @@ export interface ConsistencyHeatmapProps {
   className?: string;
 }
 
-const ALPHAS = [T.a3, T.a4, T.a5, T.a6, T.accent];
+/** Load quartiles → the lower half of the opaque zone ramp (soft; the bright steps stay for intensity). */
+const ALPHAS = [T.zone(1), T.zone(2), T.zone(3), T.zone(4)];
 
 /** Streaks: consecutive weeks with ≥ minSessions, and days since last full rest day. */
 export function computeStreaks(days: HeatDay[], today: LocalDate, minSessions = 3) {
@@ -76,8 +78,8 @@ export function ConsistencyHeatmap(props: ConsistencyHeatmapProps) {
       <ChartFrame summary={`Consistency: ${trained} training days in the period; ${st.weeksStreak} weeks in a row with 3 or more sessions; ${st.daysSinceRest} days since the last full rest.`} loading={loading} empty={!days.length} height={150}>
         <div ref={ref} className="w-full">
           {showStreaks && (
-            <div className="mb-3 flex flex-wrap gap-x-8 gap-y-2">
-              <Streak value={st.weeksStreak} unit="weeks" label="in a row with ≥ 3 sessions" accent />
+            <div className="mb-5 flex flex-wrap gap-x-10 gap-y-2">
+              <Streak value={st.weeksStreak} unit="weeks" label="in a row with ≥ 3 sessions" />
               <Streak value={st.daysSinceRest} unit="days" label="since last full rest" />
               <Streak value={trained} unit="days" label="trained this period" />
             </div>
@@ -89,11 +91,11 @@ export function ConsistencyHeatmap(props: ConsistencyHeatmapProps) {
   );
 }
 
-function Streak({ value, unit, label, accent }: { value: number; unit: string; label: string; accent?: boolean }) {
+function Streak({ value, unit, label }: { value: number; unit: string; label: string }) {
   return (
     <div className="flex items-baseline gap-1.5">
-      <span className={`num text-stat-sm ${accent ? 'text-accent-ink' : 'text-fg-1'}`}>{value}</span>
-      <span className="text-label text-fg-2">{unit}</span>
+      <span className="num text-stat-sm text-fg-1">{value}</span>
+      <span className="text-body-sm text-fg-2">{unit}</span>
       <span className="text-body-sm text-fg-3">{label}</span>
     </div>
   );
@@ -103,11 +105,11 @@ function HeatInner({ days, today, weeks: weeksWanted = 52, onDayClick, sync: ext
   const id = useId();
   const reduce = useReducedMotion();
   const sync = useHoverSync<LocalDate>(ext);
-  const labelW = 28;
-  const gap = 3;
-  const fit = Math.floor((width - labelW + gap) / (12 + gap));
+  const labelW = 32;
+  const gap = 2;
+  const fit = Math.floor((width - labelW + gap) / (10 + gap));
   const weeks = Math.max(12, Math.min(weeksWanted, fit));
-  const cell = Math.max(8, Math.min(14, Math.floor((width - labelW) / weeks) - gap));
+  const cell = Math.max(8, Math.min(13, Math.floor((width - labelW) / weeks) - gap));
   const step = cell + gap;
   const tMs = dateMs(today);
   const dow = (new Date(tMs).getUTCDay() + 6) % 7;
@@ -115,10 +117,10 @@ function HeatInner({ days, today, weeks: weeksWanted = 52, onDayClick, sync: ext
   const byDate = useMemo(() => new Map(days.map((d) => [d.date, d])), [days]);
   const thresholds = useMemo(() => {
     const v = days.map((d) => d.load).filter((x) => x > 0).sort((a, b) => a - b);
-    return [0.2, 0.4, 0.6, 0.8].map((q) => v[Math.floor(q * (v.length - 1))] ?? 0);
+    return [0.25, 0.5, 0.75].map((q) => v[Math.floor(q * (v.length - 1))] ?? 0);
   }, [days]);
   const bucket = (load: number) => thresholds.filter((t) => load > t).length;
-  const top = 16;
+  const top = 22;
   const cells: { date: LocalDate; w: number; d: number }[] = [];
   for (let w = 0; w < weeks; w++) for (let d = 0; d < 7; d++) {
     const ms = startMon + (w * 7 + d) * DAY_MS;
@@ -149,14 +151,14 @@ function HeatInner({ days, today, weeks: weeksWanted = 52, onDayClick, sync: ext
   const H = top + 7 * step;
   return (
     <div className="relative">
-      <svg width={labelW + weeks * step} height={H + 18} className="block select-none rounded-xs focus-visible:outline-offset-4" role="group" aria-roledescription="calendar heatmap" aria-label="Daily training load heatmap" tabIndex={0} {...handlers} style={{ cursor: onDayClick ? 'pointer' : 'default' }}>
+      <svg width={labelW + weeks * step} height={H + 24} className="block select-none rounded-xs focus-visible:outline-offset-4" role="group" aria-roledescription="calendar heatmap" aria-label="Daily training load heatmap" tabIndex={0} {...handlers} style={{ cursor: onDayClick ? 'pointer' : 'default' }}>
         {months.map((m) => (
-          <text key={m.x} x={m.x} y={10} style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }} aria-hidden>
+          <text key={m.x} x={m.x} y={12} style={{ ...TXT, fill: T.fg3 }} aria-hidden>
             {m.label}
           </text>
         ))}
         {['Mon', 'Wed', 'Fri'].map((l, i) => (
-          <text key={l} x={0} y={top + (i * 2) * step + cell / 2} dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg3 }} aria-hidden>
+          <text key={l} x={0} y={top + (i * 2) * step + cell / 2} dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }} aria-hidden>
             {l}
           </text>
         ))}
@@ -168,24 +170,22 @@ function HeatInner({ days, today, weeks: weeksWanted = 52, onDayClick, sync: ext
           const isToday = c.date === today;
           return (
             <motion.g key={c.date} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.24, delay: reduce ? 0 : Math.min(c.w * 0.008, 0.24) }}>
-              <rect x={x} y={y} width={cell} height={cell} rx={Math.min(3, cell / 4)} style={{ fill: load > 0 ? ALPHAS[bucket(load)] : T.s2 }} />
-              {day?.missed && load <= 0 && <rect x={x + 0.5} y={y + 0.5} width={cell - 1} height={cell - 1} rx={Math.min(3, cell / 4)} style={{ fill: 'none', stroke: T.line3, strokeDasharray: '2 1.5' }} />}
-              {day?.key && <circle cx={x + cell / 2} cy={y + cell / 2} r={Math.max(1, cell / 9)} style={{ fill: load > 0 && bucket(load) >= 3 ? T.onAccent : T.fg1 }} />}
-              {isToday && <rect x={x - 1.5} y={y - 1.5} width={cell + 3} height={cell + 3} rx={4} style={{ fill: 'none', stroke: T.fg1, strokeWidth: 1 }} />}
+              <rect x={x} y={y} width={cell} height={cell} rx={Math.min(2.5, cell / 4)} style={{ fill: load > 0 ? ALPHAS[bucket(load)] : T.s2 }} />
+              {isToday && <rect x={x - 1.5} y={y - 1.5} width={cell + 3} height={cell + 3} rx={3.5} style={{ fill: 'none', stroke: T.fg3, strokeWidth: 1 }} />}
             </motion.g>
           );
         })}
         <HeatHover sync={sync} startMon={startMon} labelW={labelW} top={top} step={step} cell={cell} />
         {/* legend */}
-        <g transform={`translate(${labelW + weeks * step - 5 * (cell + 2) - 64} ${H + 6})`} aria-hidden>
-          <text x={0} y={cell / 2} dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg3 }}>
-            less
+        <g transform={`translate(${labelW + weeks * step - 5 * (cell * 0.8 + 2) - 72} ${H + 8})`} aria-hidden>
+          <text x={0} y={cell / 2} dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
+            Less
           </text>
           {[T.s2, ...ALPHAS].map((c, i) => (
-            <rect key={i} x={30 + i * (cell * 0.8 + 2)} y={1} width={cell * 0.8} height={cell * 0.8} rx={2} style={{ fill: c }} />
+            <rect key={i} x={34 + i * (cell * 0.8 + 2)} y={1} width={cell * 0.8} height={cell * 0.8} rx={2} style={{ fill: c }} />
           ))}
-          <text x={30 + 6 * (cell * 0.8 + 2) + 2} y={cell / 2} dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg3 }}>
-            more
+          <text x={34 + 5 * (cell * 0.8 + 2) + 4} y={cell / 2} dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
+            More
           </text>
         </g>
       </svg>
@@ -207,7 +207,7 @@ function HeatHover({ sync, startMon, labelW, top, step, cell }: { sync: HoverSyn
   if (!k) return null;
   const p = pos(k, startMon, step);
   if (p.w < 0) return null;
-  return <rect x={labelW + p.x - 2} y={top + p.y - 2} width={cell + 4} height={cell + 4} rx={4} style={{ fill: 'none', stroke: T.fg2, strokeWidth: 1.5 }} pointerEvents="none" />;
+  return <rect x={labelW + p.x - 1.5} y={top + p.y - 1.5} width={cell + 3} height={cell + 3} rx={3.5} style={{ fill: 'none', stroke: T.fg1, strokeWidth: 1.25 }} pointerEvents="none" />;
 }
 
 function HeatTip({ sync, byDate, startMon, labelW, top, step, width }: { sync: HoverSync<LocalDate>; byDate: Map<LocalDate, HeatDay>; startMon: number; labelW: number; top: number; step: number; width: number }) {
@@ -221,7 +221,7 @@ function HeatTip({ sync, byDate, startMon, labelW, top, step, width }: { sync: H
         rows={[
           { label: 'Load', value: fmtNum(d?.load ?? 0), strong: true },
           { label: 'Sessions', value: String(d?.sessions ?? 0), muted: true },
-          ...(d?.key ? [{ label: 'Key session', value: '★', muted: false }] : []),
+          ...(d?.key ? [{ label: 'Key session', value: 'Yes', muted: false }] : []),
           ...(d?.missed && !(d.load > 0) ? [{ label: 'Planned', value: 'missed', muted: true }] : []),
         ]}
       />

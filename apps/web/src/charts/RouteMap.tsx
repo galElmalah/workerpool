@@ -1,6 +1,7 @@
 /**
  * RouteMap — offline, tile-free monochrome route rendering from lat/lng streams.
- * Graticule + scale bar + km markers, start/finish markers, draw-in, optional elevation
+ * v2: no graticule or compass chrome — the accent route on the plain surface, a scale bar,
+ * a few small km markers, sentence-case start/finish labels, draw-in, optional elevation
  * shading, a position dot driven by the shared stream cursor (MotionValue of seconds, no React
  * renders), selection highlight and hover → cursor.
  */
@@ -8,7 +9,7 @@ import { useEffect, useId, useMemo, useRef } from 'react';
 import { motion, useReducedMotion, isMotionValue, type MotionValue } from 'motion/react';
 import type { ActivityStreams } from '@cadence/core';
 import { ChartFrame } from './core/ChartFrame';
-import { T } from './core/tokens';
+import { T, TXT } from './core/tokens';
 import { useChartSize } from './core/useChartSize';
 import { lowerBound } from './core/lttb';
 import { fmtKm } from './format';
@@ -71,7 +72,7 @@ function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = f
     return { lat, lng, n, minLa, maxLa, minLo, maxLo, k };
   }, [streams]);
 
-  const pad = 28;
+  const pad = 32;
   const proj = useMemo(() => {
     const w = (geo.maxLo - geo.minLo) * geo.k || 1e-6;
     const h = geo.maxLa - geo.minLa || 1e-6;
@@ -129,22 +130,6 @@ function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = f
     return ds;
   }, [elevationShading, streams.altitude, poly]);
 
-  // graticule
-  const grat = useMemo(() => {
-    const spanDeg = Math.max(geo.maxLa - geo.minLa, (geo.maxLo - geo.minLo) * geo.k);
-    const step = [0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2].find((s) => spanDeg / s <= 5) ?? 5;
-    const la0 = proj.la(height);
-    const la1 = proj.la(0);
-    const lo0 = proj.lo(0);
-    const lo1 = proj.lo(width);
-    const lats: number[] = [];
-    const lngs: number[] = [];
-    for (let v = Math.ceil(la0 / step) * step; v <= la1; v += step) lats.push(+v.toFixed(4));
-    const lstep = step / geo.k > 0 ? step : step;
-    for (let v = Math.ceil(lo0 / lstep) * lstep; v <= lo1; v += lstep) lngs.push(+v.toFixed(4));
-    return { lats, lngs, step };
-  }, [geo, proj, width, height]);
-
   // scale bar
   const scale = useMemo(() => {
     const mPerPx = M_PER_DEG / proj.s;
@@ -158,7 +143,7 @@ function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = f
     const d = streams.distance;
     if (!kmMarkers || !d) return [];
     const total = d[d.length - 1] ?? 0;
-    const every = [1000, 2000, 5000, 10000, 20000, 50000].find((e) => total / e <= 9) ?? 50000;
+    const every = [1000, 2000, 5000, 10000, 20000, 50000].find((e) => total / e <= 6) ?? 50000;
     const out: { km: number; x: number; y: number }[] = [];
     let next = every;
     for (let i = 0; i < d.length; i++) {
@@ -249,50 +234,30 @@ function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = f
   };
 
   const draw = reduce ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: reducedFade } : { initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { ...spring.gentle, visualDuration: 1.1 } };
-  const micro = { fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em' } as const;
 
   return (
     <svg width={width} height={height} className="block touch-pan-y select-none" onPointerMove={onMove} onPointerLeave={onLeave} role="img" aria-label="Route map">
       <defs>
-        <radialGradient id={`${uid}-vig`} cx="50%" cy="50%" r="70%">
-          <stop offset="0.6" style={{ stopColor: T.bg, stopOpacity: 0 }} />
-          <stop offset="1" style={{ stopColor: T.bg, stopOpacity: 0.9 }} />
-        </radialGradient>
         <mask id={`${uid}-draw`} maskUnits="userSpaceOnUse">
           <motion.path d={poly.d} fill="none" stroke="#fff" strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" {...draw} />
         </mask>
       </defs>
-      {/* graticule */}
-      <g aria-hidden>
-        {grat.lats.map((la) => (
-          <g key={`la${la}`}>
-            <line x1={0} x2={width} y1={proj.y(la)} y2={proj.y(la)} style={{ stroke: T.line1 }} shapeRendering="crispEdges" />
-            <text x={6} y={proj.y(la) - 4} opacity={proj.y(la) > height - 30 || proj.y(la) < 14 ? 0 : 1} style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg4 }}>
-              {la.toFixed(grat.step < 0.01 ? 3 : 2)}°
-            </text>
-          </g>
-        ))}
-        {grat.lngs.map((lo) => (
-          <line key={`lo${lo}`} x1={proj.x(lo)} x2={proj.x(lo)} y1={0} y2={height} style={{ stroke: T.line1 }} shapeRendering="crispEdges" />
-        ))}
-        <rect width={width} height={height} style={{ fill: `url(#${uid}-vig)` }} />
-      </g>
       {/* track */}
       <g mask={`url(#${uid}-draw)`}>
         <path d={poly.d} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: T.bg, strokeWidth: 6 }} />
         {shaded ? (
-          shaded.map((d, b) => <path key={b} d={d} fill="none" strokeLinecap="round" style={{ stroke: T.accent, strokeWidth: 2.25, opacity: 0.3 + (b / (shaded.length - 1)) * 0.7 }} />)
+          shaded.map((d, b) => <path key={b} d={d} fill="none" strokeLinecap="round" style={{ stroke: T.accent, strokeWidth: 2, opacity: 0.35 + (b / (shaded.length - 1)) * 0.65 }} />)
         ) : (
           <path d={poly.d} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: T.accent, strokeWidth: 2 }} />
         )}
       </g>
-      {selD && <path d={selD} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: T.fg1, strokeWidth: 3.5 }} />}
+      {selD && <path d={selD} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: T.fg1, strokeWidth: 3 }} />}
       {/* km markers */}
       <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: reduce ? 0 : 0.9, duration: 0.24 }} aria-hidden>
         {markers.map((m) => (
           <g key={m.km}>
-            <circle cx={m.x} cy={m.y} r={2.5} style={{ fill: T.bg, stroke: T.fg2, strokeWidth: 1.25 }} />
-            <text x={m.x + 6} y={m.y - 5} style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg3 }}>
+            <circle cx={m.x} cy={m.y} r={2} style={{ fill: T.bg, stroke: T.fg3, strokeWidth: 1.25 }} />
+            <text x={m.x + 6} y={m.y - 6} style={{ ...TXT, fill: T.fg3 }}>
               {m.km}
             </text>
           </g>
@@ -301,39 +266,31 @@ function MapInner({ streams, cursor, selection, onHoverSec, elevationShading = f
       {/* start / finish */}
       {first && (
         <g aria-hidden>
-          <circle cx={first[0]} cy={first[1]} r={5} style={{ fill: T.fg1, stroke: T.bg, strokeWidth: 2 }} />
-          <text x={side(first) === 'left' ? first[0] - 10 : first[0] + 10} y={first[1] + (loop ? -9 : 3.5)} textAnchor={side(first) === 'left' ? 'end' : 'start'} style={{ ...micro, fill: T.fg2 }}>
-            {loop ? 'START · FINISH' : 'START'}
+          <circle cx={first[0]} cy={first[1]} r={4} style={{ fill: T.fg1, stroke: T.bg, strokeWidth: 2 }} />
+          <text x={side(first) === 'left' ? first[0] - 10 : first[0] + 10} y={first[1] + (loop ? -10 : 4)} textAnchor={side(first) === 'left' ? 'end' : 'start'} style={{ ...TXT, fill: T.fg2 }}>
+            {loop ? 'Start · finish' : 'Start'}
           </text>
         </g>
       )}
       {last && !loop && (
         <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: reduce ? 0 : 1.0, duration: 0.24 }} aria-hidden>
-          <rect x={last[0] - 5} y={last[1] - 5} width={10} height={10} rx={2} style={{ fill: T.bg, stroke: T.fg1, strokeWidth: 1.5 }} />
-          <rect x={last[0] - 2} y={last[1] - 2} width={4} height={4} style={{ fill: T.fg1 }} />
-          <text x={side(last) === 'left' ? last[0] - 10 : last[0] + 10} y={last[1] + 3.5} textAnchor={side(last) === 'left' ? 'end' : 'start'} style={{ ...micro, fill: T.fg2 }}>
-            FINISH
+          <circle cx={last[0]} cy={last[1]} r={4} style={{ fill: T.bg, stroke: T.fg1, strokeWidth: 1.5 }} />
+          <text x={side(last) === 'left' ? last[0] - 10 : last[0] + 10} y={last[1] + 4} textAnchor={side(last) === 'left' ? 'end' : 'start'} style={{ ...TXT, fill: T.fg2 }}>
+            Finish
           </text>
         </motion.g>
       )}
       {/* scale bar */}
       <g transform={`translate(12 ${height - 14})`} aria-hidden>
-        <path d={`M0 -4V0H${scale.px.toFixed(1)}V-4`} fill="none" style={{ stroke: T.fg3 }} />
-        <text x={scale.px + 6} y={0} style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg3 }}>
+        <path d={`M0 -3V0H${scale.px.toFixed(1)}V-3`} fill="none" style={{ stroke: T.fg4 }} />
+        <text x={scale.px + 8} y={0} dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
           {scale.label}
-        </text>
-      </g>
-      {/* north */}
-      <g transform={`translate(${width - 16} 18)`} aria-hidden>
-        <path d="M0 -7 L3.5 3 L0 1 L-3.5 3 Z" style={{ fill: T.fg3 }} />
-        <text y={14} textAnchor="middle" style={{ ...micro, fill: T.fg3 }}>
-          N
         </text>
       </g>
       {/* cursor */}
       <g ref={dotRef} style={{ opacity: 0 }} pointerEvents="none">
-        <circle r={11} style={{ fill: T.a3 }} />
-        <circle r={5} style={{ fill: T.accent, stroke: T.bg, strokeWidth: 2 }} />
+        <circle r={10} style={{ fill: T.a2 }} />
+        <circle r={4.5} style={{ fill: T.accent, stroke: T.bg, strokeWidth: 2 }} />
       </g>
     </svg>
   );

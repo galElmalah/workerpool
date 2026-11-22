@@ -8,7 +8,10 @@
  *   RouteMap or anything else can follow it at 60 fps.
  * - Drag = select (→ onSelect), ⌘/Ctrl+wheel or pinch = zoom, Shift+wheel / overview drag = pan,
  *   double-click = reset, keyboard: ←/→ cursor, +/− zoom, Z zoom to selection, 0 reset, Esc clear.
- * design.md §6.2 "Activity streams"; product.md §5.1 item 6.
+ * v2 look (DESIGN_V2 §5 "Charts"): power is the one accent track (line + soft fade), every other
+ * track is neutral; one quiet gridline per track, sentence-case labels, faint lap rules, a
+ * neutral selection wash without edge lines.
+ * product.md §5.1 item 6.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { animate, useMotionValue, useReducedMotion, type MotionValue } from 'motion/react';
@@ -76,11 +79,11 @@ interface Track {
 }
 
 const ZONES_DEFAULT = [0.55, 0.75, 0.9, 1.05, 1.2, 1.5];
-const GUTTER = 44;
+const GUTTER = 48;
 const RIGHT = 12;
-const GAP = 10;
-const AXIS_H = 20;
-const OVERVIEW_H = 34;
+const GAP = 14;
+const AXIS_H = 24;
+const OVERVIEW_H = 28;
 
 function quantile(a: Float64Array, q: number) {
   const v = Array.from(a).filter((x) => x === x).sort((x, y) => x - y);
@@ -241,7 +244,7 @@ function StreamInner({
   const tracks: Track[] = useMemo(() => {
     const want = trackKeys ?? (['power', 'hr', 'speed', 'cadence', 'altitude'] as StreamTrack[]);
     const out: Track[] = [];
-    let top = 4;
+    let top = 6;
     for (const k of want) {
       const raw = base[k];
       if (!raw) continue;
@@ -283,15 +286,23 @@ function StreamInner({
         unit = 'm';
       }
       const h = k === 'power' ? Math.round(trackHeight * 1.33) : k === 'altitude' ? Math.round(trackHeight * 0.8) : trackHeight;
-      const tickStep = niceStep((hi - lo) / 2.2);
-      const ticks: number[] = [];
-      for (let v = Math.ceil((lo + (hi - lo) * 0.12) / tickStep) * tickStep; v < hi; v += tickStep) ticks.push(v);
+      // One or two quiet reference values per track (DESIGN_V2: few gridlines).
+      let ticks: number[] = [];
+      for (const div of [1.6, 2.6, 3.6]) {
+        const tickStep = niceStep((hi - lo) / div);
+        ticks = [];
+        for (let v = Math.ceil((lo + (hi - lo) * 0.2) / tickStep) * tickStep; v < hi - (hi - lo) * 0.12; v += tickStep) ticks.push(v);
+        if (ticks.length) break;
+      }
+      if (ticks.length > 2) ticks.splice(0, ticks.length - 2);
       out.push({ key: k, label, unit, y, raw, lo, hi, h, top, fmt, ticks });
       top += h + GAP;
     }
     return out;
   }, [base, trackKeys, smoothing, trackHeight, paceSport, pacePer, sport]);
 
+  /** The one accent track: power when present, else the first track (DESIGN_V2: one accent series). */
+  const primaryKey: StreamTrack | undefined = tracks.find((t) => t.key === 'power')?.key ?? tracks.find((t) => t.key !== 'altitude')?.key ?? tracks[0]?.key;
   const xs = xAxis === 'distance' && base.hasDist ? base.dist : base.t;
   const xMin = xs[0];
   const xMax = xs[base.n - 1];
@@ -375,8 +386,8 @@ function StreamInner({
     const i1 = Math.min(base.n, lowerBound(xs, b) + 2);
     const nPts = Math.max(16, Math.round(plotW * 2));
 
-    // laps (behind tracks)
-    ctx.strokeStyle = tk.line2;
+    // laps (behind tracks): faint hairlines
+    ctx.strokeStyle = tk.line1;
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (const lap of laps) {
@@ -393,7 +404,7 @@ function StreamInner({
       const bot = top + tr.h;
       const Y = (v: number) => bot - ((v - tr.lo) / (tr.hi - tr.lo)) * tr.h;
       // grid + y ticks
-      ctx.font = `11px ${tk.mono}`;
+      ctx.font = `400 12px ${tk.sans}`;
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       for (const v of tr.ticks) {
@@ -406,12 +417,6 @@ function StreamInner({
         ctx.fillStyle = tk.fg3;
         ctx.fillText(tr.key === 'speed' && paceSport ? fmtPace(v, pacePer) : tr.key === 'speed' ? fmtNum(v * 3.6) : fmtNum(v), GUTTER - 8, yy);
       }
-      // baseline
-      ctx.strokeStyle = tk.line2;
-      ctx.beginPath();
-      ctx.moveTo(GUTTER, bot - 0.5);
-      ctx.lineTo(GUTTER + plotW, bot - 0.5);
-      ctx.stroke();
 
       ctx.save();
       ctx.beginPath();
@@ -453,71 +458,77 @@ function StreamInner({
         lastX = px;
       }
       closeFill();
-      if (tr.key === 'power') {
-        if (zoneShading && ftp) {
+      if (tr.key === primaryKey) {
+        if (tr.key === 'power' && zoneShading && ftp) {
           drawZoneDensity(ctx, idx, xs, tr, X, Y, bot, ftp, zoneBounds, tk);
         } else {
-          ctx.fillStyle = tk.a2;
+          // soft vertical fade of the accent (≤ 12 %)
+          const g = ctx.createLinearGradient(0, top, 0, bot);
+          g.addColorStop(0, tk.a3);
+          g.addColorStop(1, tk.a1);
+          ctx.fillStyle = g;
+          ctx.globalAlpha = 0.75;
           ctx.fill(fillPath);
+          ctx.globalAlpha = 1;
         }
         ctx.strokeStyle = tk.accent;
         ctx.lineWidth = 1.25;
       } else if (tr.key === 'altitude') {
-        ctx.fillStyle = tk.s3;
+        ctx.fillStyle = tk.s2;
         ctx.fill(fillPath);
         ctx.strokeStyle = tk.fg4;
         ctx.lineWidth = 1;
       } else {
-        ctx.strokeStyle = tr.key === 'hr' ? tk.fg1 : tr.key === 'speed' ? tk.fg2 : tk.fg3;
-        ctx.lineWidth = tr.key === 'cadence' ? 1 : 1.25;
+        ctx.strokeStyle = tr.key === 'hr' ? tk.fg2 : tk.fg3;
+        ctx.lineWidth = tr.key === 'hr' ? 1.25 : 1;
+        if (tr.key === 'cadence') ctx.globalAlpha = 0.8;
       }
       ctx.lineJoin = 'round';
       ctx.stroke(path);
+      ctx.globalAlpha = 1;
       ctx.restore();
 
-      // label (top-left, inside)
+      // label (top-left, inside): sentence case, 12px sans, fg-3 on a soft halo so the line can pass under it
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = `600 10px ${tk.sans}`;
-      (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = '0.6px';
+      ctx.font = `400 12px ${tk.sans}`;
       ctx.fillStyle = tk.fg3;
-      ctx.fillText(tr.label.toUpperCase(), GUTTER + 6, top + 2);
-      (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = '0px';
+      ctx.fillText(tr.label, GUTTER + 8, top + 2);
     }
 
-    // lap numbers
-    ctx.font = `600 9.5px ${tk.sans}`;
+    // lap numbers: small, fg-4, only where they have room
+    ctx.font = `400 11px ${tk.sans}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     let lastLapX = -Infinity;
     for (const lap of laps) {
       const lx = X(secToX(lap.startSec + lap.durationSec / 2));
-      if (lx < GUTTER + 60 || lx > GUTTER + plotW - 8 || lx - lastLapX < 26) continue;
+      if (lx < GUTTER + 84 || lx > GUTTER + plotW - 12 || lx - lastLapX < 36) continue;
       const w = X(secToX(lap.startSec + lap.durationSec)) - X(secToX(lap.startSec));
-      if (w < 18) continue;
+      if (w < 28) continue;
       ctx.fillStyle = tk.fg4;
-      ctx.fillText(`L${lap.index + 1}`, lx, tracks[0] ? tracks[0].top + 13 : 12);
+      ctx.fillText(`${lap.index + 1}`, lx, tracks[0] ? tracks[0].top + 15 : 14);
       lastLapX = lx;
     }
 
     // x axis
-    ctx.font = `11px ${tk.mono}`;
+    ctx.font = `400 12px ${tk.sans}`;
     ctx.textBaseline = 'top';
     ctx.textAlign = 'center';
     ctx.fillStyle = tk.fg3;
     const span = b - a;
     const isTime = xs === base.t;
     const steps = isTime ? [10, 30, 60, 120, 300, 600, 900, 1200, 1800, 3600, 7200] : [50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-    const step = steps.find((s) => (plotW / (span / s)) >= 72) ?? steps[steps.length - 1];
+    const step = steps.find((s) => (plotW / (span / s)) >= 96) ?? steps[steps.length - 1];
     for (let v = Math.ceil(a / step) * step; v <= b; v += step) {
       const px = X(v);
       if (px < GUTTER + 12 || px > GUTTER + plotW - 12) continue;
       const lbl = isTime ? (span > 3600 || v >= 3600 ? fmtHM2(v) : fmtHMS(v)) : `${fmtKm(v, step < 1000 ? 1 : 0)}`;
-      ctx.fillText(lbl, px, axisTop + 4);
+      ctx.fillText(lbl, px, axisTop + 6);
     }
     ctx.textAlign = 'right';
     ctx.fillStyle = tk.fg4;
-    ctx.fillText(isTime ? 'h:mm' : 'km', GUTTER - 8, axisTop + 4);
+    ctx.fillText(isTime ? 'h:mm' : 'km', GUTTER - 10, axisTop + 6);
 
     // overview
     const ovX = (x: number) => GUTTER + ((x - xMin) / (xMax - xMin)) * plotW;
@@ -530,33 +541,41 @@ function StreamInner({
       for (const i of oIdx) if (i >= 0) ctx.lineTo(ovX(xs[i]), Y(ovTr.y[i]));
       ctx.lineTo(GUTTER + plotW, ovTop + OVERVIEW_H);
       ctx.closePath();
-      ctx.fillStyle = tk.s3;
+      ctx.fillStyle = tk.s2;
       ctx.fill();
-      // window
+      // window: the visible range reads brighter; outside is dimmed. Quiet grips only when zoomed.
       const wa = ovX(a);
       const wb = ovX(b);
-      ctx.fillStyle = tk.canvas;
-      ctx.globalAlpha = 0.55;
-      ctx.fillRect(GUTTER, ovTop, Math.max(0, wa - GUTTER), OVERVIEW_H);
-      ctx.fillRect(wb, ovTop, Math.max(0, GUTTER + plotW - wb), OVERVIEW_H);
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = zoomedRef.current ? tk.fg2 : tk.line3;
-      ctx.lineWidth = 1;
-      roundRect(ctx, wa + 0.5, ovTop + 0.5, Math.max(2, wb - wa - 1), OVERVIEW_H - 1, 4);
-      ctx.stroke();
       if (zoomedRef.current) {
-        ctx.fillStyle = tk.fg2;
-        for (const hx of [wa + 3, wb - 3]) {
-          ctx.fillRect(hx - 0.5, ovTop + OVERVIEW_H / 2 - 5, 1, 10);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(wa, ovTop, Math.max(0, wb - wa), OVERVIEW_H);
+        ctx.clip();
+        ctx.beginPath();
+        ctx.moveTo(GUTTER, ovTop + OVERVIEW_H);
+        for (const i of oIdx) if (i >= 0) ctx.lineTo(ovX(xs[i]), Y(ovTr.y[i]));
+        ctx.lineTo(GUTTER + plotW, ovTop + OVERVIEW_H);
+        ctx.closePath();
+        ctx.fillStyle = tk.fg4;
+        ctx.globalAlpha = 0.45;
+        ctx.fill();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = tk.fg3;
+        for (const hx of [wa + 2, wb - 2]) {
+          roundRect(ctx, hx - 1, ovTop + OVERVIEW_H / 2 - 6, 2, 12, 1);
+          ctx.fill();
         }
       }
     }
     positionChip();
     drawOverlay();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width, H, tracks, xs, base, laps, tk, plotW, zoneShading, ftp, zoneBounds, secToX, tracksH, axisTop, ovTop, xMin, xMax, paceSport, pacePer]);
+  }, [width, H, tracks, xs, base, laps, tk, plotW, zoneShading, ftp, zoneBounds, secToX, tracksH, axisTop, ovTop, xMin, xMax, paceSport, pacePer, primaryKey]);
 
   const zoomedRef = useRef(false);
+  // Background of the card the chart sits on (for the cursor-dot rings).
+  const bgRef = useRef('');
   zoomedRef.current = zoomed;
   const selRef = useRef(selection);
   selRef.current = selection;
@@ -575,24 +594,17 @@ function StreamInner({
       const l = Math.max(GUTTER, Math.min(xa, xb));
       const r = Math.min(GUTTER + plotW, Math.max(xa, xb));
       if (r <= l) return;
-      ctx.fillStyle = tk.a2;
-      ctx.fillRect(l, 0, r - l, tracksH);
-      ctx.strokeStyle = tk.a6;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(Math.round(l) + 0.5, 0);
-      ctx.lineTo(Math.round(l) + 0.5, tracksH);
-      ctx.moveTo(Math.round(r) - 0.5, 0);
-      ctx.lineTo(Math.round(r) - 0.5, tracksH);
-      ctx.stroke();
+      // soft neutral wash, no edge lines (DESIGN_V2 rule 5)
+      ctx.fillStyle = tk.fg1;
+      ctx.globalAlpha = tk.theme === 'light' ? 0.05 : 0.06;
+      roundRect(ctx, l, 0, r - l, tracksH, 4);
+      ctx.fill();
+      ctx.globalAlpha = 1;
       if (handles) {
-        ctx.fillStyle = tk.accent;
+        ctx.fillStyle = tk.fg3;
         for (const hx of [l, r]) {
-          roundRect(ctx, hx - 4, tracksH / 2 - 14, 8, 28, 3);
+          roundRect(ctx, hx - 1.5, tracksH / 2 - 10, 3, 20, 1.5);
           ctx.fill();
-          ctx.fillStyle = tk.canvas;
-          for (let k = -1; k <= 1; k++) ctx.fillRect(hx - 1, tracksH / 2 + k * 5 - 0.75, 2, 1.5);
-          ctx.fillStyle = tk.accent;
         }
       }
     };
@@ -608,7 +620,7 @@ function StreamInner({
       const px = X(xv);
       if (px >= GUTTER - 0.5 && px <= GUTTER + plotW + 0.5) {
         const rx = Math.round(px) + 0.5;
-        ctx.strokeStyle = tk.fg3;
+        ctx.strokeStyle = tk.fg4;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(rx, 0);
@@ -625,9 +637,9 @@ function StreamInner({
           if (v !== v) continue;
           const py = tr.top + tr.h - ((v - tr.lo) / (tr.hi - tr.lo)) * tr.h;
           ctx.beginPath();
-          ctx.arc(px, Math.max(tr.top, Math.min(tr.top + tr.h, py)), 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = tr.key === 'power' ? tk.accent : tr.key === 'altitude' ? tk.fg3 : tr.key === 'hr' ? tk.fg1 : tr.key === 'speed' ? tk.fg2 : tk.fg3;
-          ctx.strokeStyle = tk.canvas;
+          ctx.arc(px, Math.max(tr.top, Math.min(tr.top + tr.h, py)), 3, 0, Math.PI * 2);
+          ctx.fillStyle = tr.key === primaryKey ? tk.accent : tr.key === 'hr' ? tk.fg2 : tk.fg3;
+          ctx.strokeStyle = bgRef.current || tk.canvas;
           ctx.lineWidth = 2;
           ctx.stroke();
           ctx.fill();
@@ -657,10 +669,10 @@ function StreamInner({
         }
         el.textContent = cnt ? tr.fmt(sum / cnt) : '—';
       }
-      if (timeRef.current) timeRef.current.textContent = s ? `avg · ${fmtHMS(s.endSec - s.startSec)}` : 'avg · whole activity';
+      if (timeRef.current) timeRef.current.textContent = s ? `Average · ${fmtHMS(s.endSec - s.startSec)}` : 'Average · whole activity';
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [width, H, tk, tracks, xs, base, plotW, tracksH, secToX, cursor, xMin, xMax, ovTop]);
+  }, [width, H, tk, tracks, xs, base, plotW, tracksH, secToX, cursor, xMin, xMax, ovTop, primaryKey]);
 
   const requestDraw = useRafCallback(drawMain);
   const requestOverlay = useRafCallback(drawOverlay);
@@ -680,8 +692,11 @@ function StreamInner({
   };
 
   useEffect(() => {
+    const el = surfRef.current;
+    const v = el ? getComputedStyle(el).getPropertyValue('--chart-bg').trim() : '';
+    bgRef.current = v && !v.startsWith('var(') ? v : '';
     requestDraw();
-  }, [requestDraw, drawMain]);
+  }, [requestDraw, drawMain, tk]);
   useEffect(() => {
     requestOverlay();
   }, [selection, requestOverlay]);
@@ -915,19 +930,19 @@ function StreamInner({
                 type="button"
                 aria-pressed={zoneShading}
                 onClick={() => setZonesS((z) => !z)}
-                className={`h-6 rounded-md border px-2.5 text-label transition-colors duration-(--dur-fast) ${zoneShading ? 'border-line-3 bg-surface-3 text-fg-1' : 'border-line-2 text-fg-2 hover:text-fg-1'}`}
+                className={`h-6 rounded-md px-2.5 text-label transition-colors duration-(--dur-fast) ${zoneShading ? 'bg-surface-active text-fg-1' : 'bg-surface-2 text-fg-2 hover:text-fg-1'}`}
               >
                 Zones
               </button>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="hidden text-body-sm text-fg-3 md:inline">Drag to select · ⌘ scroll to zoom</span>
+            <span className="hidden text-label text-fg-3 lg:inline">Drag to select · ⌘ scroll to zoom</span>
             <button
               type="button"
               onClick={resetZoom}
               disabled={!zoomed}
-              className="h-6 rounded-md border border-line-2 px-2.5 text-label text-fg-2 transition-colors duration-(--dur-fast) enabled:hover:text-fg-1 disabled:opacity-40"
+              className="h-6 rounded-md px-2.5 text-label text-fg-2 transition-colors duration-(--dur-fast) enabled:hover:bg-surface-2 enabled:hover:text-fg-1 disabled:opacity-40"
             >
               Reset zoom
             </button>
@@ -935,21 +950,21 @@ function StreamInner({
         </div>
       )}
       {/* readout row */}
-      <div className="mb-2 flex flex-wrap items-end gap-x-5 gap-y-1.5" aria-hidden>
-        <div className="flex min-w-28 flex-col">
-          <span className="text-micro text-fg-3">Cursor</span>
-          <span ref={timeRef} className="text-mono text-fg-2">
-            avg · whole activity
+      <div className="mb-3 flex flex-wrap items-end gap-x-7 gap-y-2" aria-hidden>
+        <div className="flex min-w-36 flex-col gap-0.5">
+          <span className="text-label text-fg-3">Cursor</span>
+          <span ref={timeRef} className="num text-body-sm text-fg-2">
+            Average · whole activity
           </span>
         </div>
         {tracks.map((tr) => (
-          <div key={tr.key} className="flex flex-col">
-            <span className="flex items-center gap-1.5 text-micro text-fg-3">
-              <span className="h-0.5 w-2.5 rounded-full" style={{ background: tr.key === 'power' ? tk.accent : tr.key === 'hr' ? tk.fg1 : tr.key === 'speed' ? tk.fg2 : tr.key === 'altitude' ? tk.fg4 : tk.fg3 }} />
+          <div key={tr.key} className="flex flex-col gap-0.5">
+            <span className="flex items-center gap-1.5 text-label text-fg-3">
+              <span className="h-0.5 w-2.5 rounded-full" style={{ background: tr.key === primaryKey ? tk.accent : tr.key === 'hr' ? tk.fg2 : tk.fg4 }} />
               {tr.label}
             </span>
             <span className="flex items-baseline gap-1">
-              <span ref={(el) => void (readoutRefs.current[tr.key] = el)} className={`num min-w-[4ch] text-stat-sm ${tr.key === 'power' ? 'text-accent-ink' : 'text-fg-1'}`}>
+              <span ref={(el) => void (readoutRefs.current[tr.key] = el)} className={`num min-w-[4ch] ${tr.key === primaryKey ? 'text-stat-sm text-fg-1' : 'text-body-lg text-fg-2'}`}>
                 —
               </span>
               <span className="text-label text-fg-3">{tr.unit}</span>
@@ -976,16 +991,16 @@ function StreamInner({
         <canvas ref={mainRef} className="absolute inset-0" aria-hidden />
         <canvas ref={overRef} className="absolute inset-0" aria-hidden />
         {selection && selStats && (
-          <div ref={chipRef} className="glass absolute left-0 top-1.5 z-(--z-popover) flex items-center gap-2 rounded-md border border-line-3 py-1 pl-2.5 pr-1 opacity-0 inset-shadow-hairline" onPointerDown={(e) => e.stopPropagation()}>
-            <span className="whitespace-nowrap text-mono-sm text-fg-1">
+          <div ref={chipRef} className="absolute left-0 top-1.5 z-(--z-popover) flex items-center gap-2 rounded-md bg-surface-3 py-1 pl-3 pr-1 opacity-0" onPointerDown={(e) => e.stopPropagation()}>
+            <span className="num whitespace-nowrap text-label text-fg-1">
               {fmtHMS(selStats.durationSec)}
-              {selStats.avgPower != null && <span className="text-accent-ink"> · {fmtNum(selStats.avgPower)} W</span>}
+              {selStats.avgPower != null && <span> · {fmtNum(selStats.avgPower)} W</span>}
               {selStats.avgHr != null && <span className="text-fg-2"> · {fmtNum(selStats.avgHr)} bpm</span>}
             </span>
-            <button type="button" onClick={zoomToSel} className="h-6 rounded-sm px-2 text-label text-fg-1 hover:bg-surface-3">
+            <button type="button" onClick={zoomToSel} className="h-6 rounded-sm px-2 text-label text-fg-1 hover:bg-surface-active">
               Zoom
             </button>
-            <button type="button" aria-label="Clear selection" onClick={() => commitSel(null)} className="grid size-6 place-items-center rounded-sm text-fg-2 hover:bg-surface-3 hover:text-fg-1">
+            <button type="button" aria-label="Clear selection" onClick={() => commitSel(null)} className="grid size-6 place-items-center rounded-sm text-fg-2 hover:bg-surface-active hover:text-fg-1">
               <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
                 <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>

@@ -1,6 +1,7 @@
 /**
- * Tabs — design.md §7: text tabs (`label`, fg-2 → fg-1), 2px fg-1 underline indicator that slides
- * between tabs (Motion layoutId, snappy). Two flavours:
+ * Tabs — quiet pill tabs (DESIGN_V2 §5 / rule 5): text `body-sm` fg-3 → fg-1; the active tab sits on
+ * a neutral surface-2 pill that slides between tabs (Motion layoutId, snappy). No underline rule, no
+ * accent. Two flavours:
  *  - <Tabs> + <TabList> + <Tab> + <TabPanel>: in-page panels (Base UI Tabs; arrow keys).
  *  - <NavTabs items>: route-linked tabs (Settings sub-nav, Trends sub-pages); active = current route.
  */
@@ -45,7 +46,7 @@ export function TabList({ children, className, 'aria-label': ariaLabel }: { chil
   const { group } = useContext(Ctx);
   return (
     <LayoutGroup id={group}>
-      <BaseTabs.List aria-label={ariaLabel} className={cn('relative flex items-center gap-5 border-b border-line-1', className)}>
+      <BaseTabs.List aria-label={ariaLabel} className={cn('relative -ml-3 flex items-center gap-1', className)}>
         {children}
       </BaseTabs.List>
     </LayoutGroup>
@@ -53,26 +54,21 @@ export function TabList({ children, className, 'aria-label': ariaLabel }: { chil
 }
 
 const tabCls =
-  'relative inline-flex h-9 select-none items-center gap-1.5 text-label text-fg-2 transition-colors duration-(--dur-fast) ' +
-  'hover:text-fg-1 data-[selected]:text-fg-1 aria-[current=page]:text-fg-1 focus-visible:outline-offset-0 [&_svg]:size-3.5';
+  'relative z-0 inline-flex h-8 select-none items-center gap-1.5 rounded-md px-3 text-body-sm text-fg-3 transition-colors duration-(--dur-fast) ' +
+  'hover:text-fg-1 data-[selected]:font-medium data-[selected]:text-fg-1 aria-[current=page]:font-medium aria-[current=page]:text-fg-1 ' +
+  'focus-visible:outline-offset-0 [&_svg]:size-3.5';
 
-function Indicator({ inset }: { inset?: boolean }) {
-  return (
-    <motion.span
-      layoutId="tab-indicator"
-      transition={spring.snappy}
-      className={cn('absolute inset-x-0 h-0.5 rounded-full bg-fg-1', inset ? 'bottom-0' : '-bottom-px')}
-      aria-hidden
-    />
-  );
+/** The active tab's pill (`_inset` kept for call compatibility). */
+function Indicator(_: { inset?: boolean }) {
+  return <motion.span layoutId="tab-indicator" transition={spring.snappy} className="absolute inset-0 -z-10 rounded-md bg-surface-2" aria-hidden />;
 }
 
 export function Tab({ value, children, count, disabled }: { value: string; children: ReactNode; count?: number; disabled?: boolean }) {
   const ctx = useContext(Ctx);
   return (
-    <BaseTabs.Tab value={value} disabled={disabled} className={cn(tabCls, '-mb-px')}>
+    <BaseTabs.Tab value={value} disabled={disabled} className={tabCls}>
       {children}
-      {count != null && <span className="text-mono-sm text-fg-3">{count}</span>}
+      {count != null && <span className="num text-label font-normal text-fg-3">{count}</span>}
       {ctx.value === value && <Indicator />}
     </BaseTabs.Tab>
   );
@@ -103,7 +99,7 @@ export function NavTabs({ items, className, 'aria-label': ariaLabel }: { items: 
   }, undefined);
   return (
     <LayoutGroup id={group}>
-      <nav aria-label={ariaLabel} className={cn('relative flex items-center gap-5 overflow-x-auto border-b border-line-1 scrollbar-none', className)}>
+      <nav aria-label={ariaLabel} className={cn('relative -ml-3 flex items-center gap-1 overflow-x-auto scrollbar-none', className)}>
         {items.map((it) => (
           <Link key={it.to} to={it.to} className={cn(tabCls, 'shrink-0')} aria-current={active === it ? 'page' : undefined}>
             {it.label}

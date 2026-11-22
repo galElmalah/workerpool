@@ -1,7 +1,8 @@
 /**
  * EffortCurve / PowerCurve / PaceCurve — mean-maximal curves on a log-time axis (1 s → 5 h).
- * Primary period = accent 2px, secondary = fg-1 1.5px, comparison = fg-3 1px dashed.
- * design.md §6.2 "Power / pace curve"; product.md §5.1 item 9 and §6.2 /trends/peaks.
+ * Primary period = accent 2px + soft fade (the hero), secondary = fg-3 1.25px, comparison =
+ * fg-4 1px dashed. PB markers are small dots; their values are in the readout and tooltip.
+ * product.md §5.1 item 9 and §6.2 /trends/peaks; v2 look per DESIGN_V2 §5 "Charts".
  */
 import { useCallback, useId, useMemo } from 'react';
 import { motion } from 'motion/react';
@@ -12,7 +13,7 @@ import { ChartDefs, useChartDefs } from './core/ChartDefs';
 import { ChartFrame } from './core/ChartFrame';
 import { AxisY, Grid, linearTicks, type Tick } from './core/Axis';
 import { MorphPath, Reveal } from './core/animated';
-import { T, toneStroke, type Tone } from './core/tokens';
+import { T, TXT, toneStroke, type Tone } from './core/tokens';
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -24,7 +25,7 @@ export interface CurveSeries {
   id: string;
   label: string;
   points: PeakPoint[];
-  /** primary = accent 2px (this period) · secondary = fg-1 1.5px · comparison = fg-3 1px dashed */
+  /** primary = accent 2px (this period) · secondary = fg-3 1.25px · comparison = fg-4 1px dashed */
   variant?: 'primary' | 'secondary' | 'comparison';
 }
 
@@ -36,8 +37,10 @@ export interface EffortCurveProps {
   /** Second readout per value (e.g. W/kg). */
   secondary?: (v: number) => string;
   secondaryUnit?: string;
-  /** Durations (s) to mark on the primary series with PB dots + labels. */
+  /** Durations (s) to mark on the primary series with PB dots. */
   markers?: number[];
+  /** Print the value next to each marker dot. Default false (v2; values are in the readout and tooltip). */
+  showMarkerLabels?: boolean;
   /** Critical-power model overlay (P = CP + W′/t). */
   model?: { cp: number; wPrime: number } | null;
   /** Start the y-axis at 0 (default for power) or fit to data (pace). */
@@ -55,8 +58,8 @@ export interface EffortCurveProps {
 const LOG_TICKS = [1, 5, 15, 60, 300, 1200, 3600, 7200, 18000];
 const VARIANT: Record<NonNullable<CurveSeries['variant']>, { tone: Tone; width: number; dash?: string }> = {
   primary: { tone: 'accent', width: 2 },
-  secondary: { tone: 'fg1', width: 1.5 },
-  comparison: { tone: 'fg3', width: 1, dash: '3 3' },
+  secondary: { tone: 'fg3', width: 1.25 },
+  comparison: { tone: 'fg4', width: 1, dash: '3 3' },
 };
 
 export function EffortCurve(props: EffortCurveProps) {
@@ -86,12 +89,12 @@ export function EffortCurve(props: EffortCurveProps) {
   );
 }
 
-function CurveInner({ series, width, height, format = fmtInt, unit = '', secondary, secondaryUnit = '', markers = [5, 60, 300, 1200, 3600], model, zeroBased = true, sync: ext, focusSec = 1200, yTickValues }: EffortCurveProps & { width: number; height: number }) {
+function CurveInner({ series, width, height, format = fmtInt, unit = '', secondary, secondaryUnit = '', markers = [5, 60, 300, 1200, 3600], showMarkerLabels = false, model, zeroBased = true, sync: ext, focusSec = 1200, yTickValues }: EffortCurveProps & { width: number; height: number }) {
   const defs = useChartDefs();
   const id = useId();
   const sync = useHoverSync<number>(ext);
   const compact = width < 480;
-  const L = { left: 44, right: 16, top: 26, bottom: 22 };
+  const L = { left: 48, right: 16, top: 20, bottom: 28 };
   const plotW = Math.max(10, width - L.left - L.right);
   const plotB = L.top + height;
   const maxDur = Math.max(60, ...series.flatMap((s) => s.points.map((p) => p.durationSec)));
@@ -108,8 +111,9 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
     ? yTickValues(y.domain() as [number, number])
         .map((v) => ({ key: v, pos: y(v), label: format(v) }))
         .sort((p1, p2) => p2.pos - p1.pos)
-        .reduce<Tick[]>((kept, t) => (kept.length && Math.abs(kept[kept.length - 1].pos - t.pos) < 18 ? kept : [...kept, t]), [])
-    : linearTicks(y.domain() as [number, number], [plotB, L.top], 4, (v) => format(v));
+        .reduce<Tick[]>((kept, t) => (kept.length && Math.abs(kept[kept.length - 1].pos - t.pos) < 36 ? kept : [...kept, t]), [])
+        .slice(0, 4)
+    : linearTicks(y.domain() as [number, number], [plotB, L.top], 3, (v) => format(v)).filter((t) => t.key !== 0);
   const keys = useMemo(() => [...new Set(series.flatMap((s) => s.points.map((p) => p.durationSec)))].sort((a, b) => a - b), [series]);
   const keyAt = useCallback(
     (px: number) => {
@@ -154,19 +158,16 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
         <Grid ys={yTicks.map((t) => ({ key: t.key, pos: t.pos }))} x0={L.left} x1={L.left + plotW} />
         <AxisY ticks={yTicks.filter((t) => t.pos < plotB - 2)} x={L.left - 8} />
         {tickVals.map((t) => (
-          <g key={t} aria-hidden>
-            <line x1={x(t)} x2={x(t)} y1={plotB} y2={plotB + 4} style={{ stroke: T.line3 }} />
-            <text x={x(t)} y={plotB + 8} textAnchor="middle" dominantBaseline="hanging" style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }}>
-              {fmtDurShort(t)}
-            </text>
-          </g>
+          <text key={t} x={x(t)} y={plotB + 10} textAnchor="middle" dominantBaseline="hanging" style={{ ...TXT, fill: T.fg3 }} aria-hidden>
+            {fmtDurShort(t)}
+          </text>
         ))}
         {model && (
           <g aria-hidden>
             <path d={modelPath} fill="none" style={{ stroke: T.fg4, strokeWidth: 1, strokeDasharray: '1 3' }} strokeLinecap="round" />
-            <line x1={L.left} x2={L.left + plotW} y1={y(model.cp)} y2={y(model.cp)} style={{ stroke: T.line2, strokeDasharray: '2 4' }} />
-            <text x={L.left + 6} y={y(model.cp) - 5} textAnchor="start" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }}>
-              CP {fmtInt(model.cp)} {unit} · W′ {fmtNum(model.wPrime / 1000, 1)} KJ
+            <line x1={L.left} x2={L.left + plotW} y1={y(model.cp)} y2={y(model.cp)} strokeLinecap="round" style={{ stroke: T.fg4, strokeDasharray: '1 4', opacity: 0.7 }} />
+            <text x={L.left + 8} y={y(model.cp) - 6} textAnchor="start" style={{ ...TXT, fill: T.fg3 }}>
+              CP {fmtInt(model.cp)} {unit} · W′ {fmtNum(model.wPrime / 1000, 1)} kJ
             </text>
           </g>
         )}
@@ -178,7 +179,7 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
               return (
                 <g key={s.id}>
                   {(s.variant ?? 'primary') === 'primary' && (
-                    <MorphPath d={(area0(s.points, x, y, plotB) as string) ?? ''} style={{ fill: defs.fadeAccent, opacity: 0.6 }} />
+                    <MorphPath d={(area0(s.points, x, y, plotB) as string) ?? ''} style={{ fill: defs.fadeAccent }} />
                   )}
                   <MorphPath d={gen(s.points) ?? ''} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: toneStroke[v.tone], strokeWidth: v.width, strokeDasharray: v.dash }} />
                 </g>
@@ -191,12 +192,12 @@ function CurveInner({ series, width, height, format = fmtInt, unit = '', seconda
             if (pv == null || m > maxDur) return null;
             return (
               <motion.g key={m} initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...spring.smooth, delay: 0.4 + k * 0.05 }} aria-hidden>
-                <circle cx={x(m)} cy={y(pv)} r={3.5} style={{ fill: T.accent, stroke: T.bg, strokeWidth: 2 }} />
-                {!compact && (
-                  <text x={k % 2 ? x(m) - 6 : x(m) + 6} y={k % 2 ? y(pv) + 16 : y(pv) - 8} textAnchor={k % 2 ? 'end' : 'start'} style={{ fontFamily: T.mono, fontSize: 10.5, fill: T.fg2 }}>
+                <circle cx={x(m)} cy={y(pv)} r={2.75} style={{ fill: T.accent, stroke: T.bg, strokeWidth: 1.5 }} />
+                {!compact && showMarkerLabels && (
+                  <text x={k % 2 ? x(m) - 6 : x(m) + 6} y={k % 2 ? y(pv) + 16 : y(pv) - 8} textAnchor={k % 2 ? 'end' : 'start'} style={{ ...TXT, fill: T.fg2 }}>
                     {format(pv)}
-                    <tspan dx={3} style={{ fontFamily: T.sans, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }}>
-                      {fmtDurShort(m).toUpperCase()}
+                    <tspan dx={4} style={{ fill: T.fg3 }}>
+                      {fmtDurShort(m)}
                     </tspan>
                   </text>
                 )}
@@ -273,27 +274,27 @@ function Tip({ series, sync, x, width, top, format, unit, secondary, secondaryUn
 function Readout({ series, sync, focusSec, format, unit, secondary, secondaryUnit }: { series: CurveSeries[]; sync: HoverSync<number>; focusSec: number; format: (v: number) => string; unit: string; secondary?: (v: number) => string; secondaryUnit: string }) {
   const k = useHoverValue(sync) ?? focusSec;
   return (
-    <div className="mb-2 flex flex-wrap items-end gap-x-6 gap-y-2" aria-hidden>
-      <div className="flex flex-col">
-        <span className="text-micro text-fg-3">Duration</span>
-        <span className="text-mono text-fg-1">{fmtDurShort(k)}</span>
+    <div className="mb-4 flex flex-wrap items-end gap-x-8 gap-y-2" aria-hidden>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-label text-fg-3">Duration</span>
+        <span className="num text-body text-fg-1">{fmtDurShort(k)}</span>
       </div>
       {series.map((s) => {
         const v = valueAt(s.points, k);
         const vv = VARIANT[s.variant ?? 'primary'];
         return (
-          <div key={s.id} className="flex flex-col">
-            <span className="flex items-center gap-1.5 text-micro text-fg-3">
-              <svg width="14" height="6">
-                <line x1="0" x2="14" y1="3" y2="3" style={{ stroke: toneStroke[vv.tone], strokeWidth: vv.width + 0.5, strokeDasharray: vv.dash }} />
+          <div key={s.id} className="flex flex-col gap-0.5">
+            <span className="flex items-center gap-1.5 text-label text-fg-3">
+              <svg width="12" height="6">
+                <line x1="0" x2="12" y1="3" y2="3" strokeLinecap="round" style={{ stroke: toneStroke[vv.tone], strokeWidth: vv.width + 0.25, strokeDasharray: vv.dash }} />
               </svg>
               {s.label}
             </span>
             <span className="flex items-baseline gap-1.5">
-              <span className={`num text-stat-sm ${vv.tone === 'accent' ? 'text-accent-ink' : vv.tone === 'fg1' ? 'text-fg-1' : 'text-fg-2'}`}>{v == null ? '—' : format(v)}</span>
+              <span className={`num ${vv.tone === 'accent' ? 'text-stat-sm text-fg-1' : 'text-body-lg text-fg-2'}`}>{v == null ? '—' : format(v)}</span>
               <span className="text-label text-fg-3">{unit}</span>
               {secondary && v != null && (
-                <span className="text-mono-sm text-fg-3">
+                <span className="num text-label text-fg-3">
                   {secondary(v)} {secondaryUnit}
                 </span>
               )}

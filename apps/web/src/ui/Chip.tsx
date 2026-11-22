@@ -1,7 +1,13 @@
 /**
- * Chip / Tag / TagInput — design.md §7: h-6, radius sm, px-2, `label`; optional glyph; removable X.
- * Tones: neutral (surface-2 + line-2), selected (fg-1 text, line-3, surface-3), signal
- * (accent-a2 bg, accent-ink text — only for "done/load/live/key" meanings).
+ * Chip / Tag / TagInput — h-6, radius sm, px-2, `label`; optional glyph; removable X. No borders.
+ * Tones:
+ *  - neutral   surface-2 fill, fg-2 text (static tags). As a toggle (`onClick`) an unselected chip
+ *              is transparent fg-2 with a surface-2 hover, so a filter row reads as text, not boxes.
+ *  - selected  surface-active fill (white in light), fg-1 text, medium — a quiet surface step,
+ *              never an accent block.
+ *  - signal    accent-a2 wash + accent-ink text — ONLY for "today/now" or the current selection
+ *              where a surface step is not enough (rare). Never for done / load / key.
+ *  - outline   dashed line-2 hairline, fg-3 (suggestions, "add" affordances).
  * New chips enter with @starting-style (scale .9 → 1).
  */
 import { AnimatePresence, motion } from 'motion/react';
@@ -14,10 +20,10 @@ import { controlStyles } from './Field';
 export type ChipTone = 'neutral' | 'selected' | 'signal' | 'outline';
 
 const tones: Record<ChipTone, string> = {
-  neutral: 'border-line-2 bg-surface-2 text-fg-2',
-  selected: 'border-line-3 bg-surface-3 text-fg-1',
+  neutral: 'border-transparent bg-surface-2 text-fg-2',
+  selected: 'border-transparent bg-surface-active font-medium text-fg-1 light:bg-surface-3',
   signal: 'border-transparent bg-accent-a2 text-accent-ink',
-  outline: 'border-dashed border-line-3 bg-transparent text-fg-2',
+  outline: 'border-dashed border-line-2 bg-transparent text-fg-3',
 };
 
 export interface ChipProps {
@@ -37,10 +43,11 @@ export function Chip({ children, tone, icon, onRemove, onClick, selected, size =
   const t = tone ?? (selected ? 'selected' : 'neutral');
   const cls = cn(
     'enter-pop inline-flex max-w-full shrink-0 select-none items-center gap-1 rounded-sm border text-label whitespace-nowrap',
-    size === 'sm' ? 'h-5 px-1.5 text-micro ' : 'h-6 px-2',
+    size === 'sm' ? 'h-5 px-1.5 text-label' : 'h-6 px-2',
     '[&_svg]:size-3.5 [&_svg]:shrink-0',
-    tones[t],
-    onClick && 'transition-colors duration-(--dur-fast) hover:border-line-3 hover:text-fg-1',
+    onClick && t === 'neutral' ? 'border-transparent bg-transparent text-fg-2' : tones[t],
+    onClick && 'transition-colors duration-(--dur-fast) hover:text-fg-1',
+    onClick && t !== 'selected' && t !== 'signal' && 'hover:bg-surface-2',
     className,
   );
   const content = (

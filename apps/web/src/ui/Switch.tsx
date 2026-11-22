@@ -1,7 +1,8 @@
 /**
  * Switch + Checkbox — design.md §7 / §5.4h.
- * Switch: track 32×20 (surface-3 → accent), 16px thumb that moves with `layout` + snappy.
- * Checkbox: 16px, monochrome (fg-1 fill, canvas check drawn with a snappy pathLength).
+ * Switch: borderless track 32×20 (gray → accent: "on" is a current selection), 16px thumb that moves
+ * with `layout` + snappy. Checkbox: 16px, monochrome — an fg-4 hairline (≥ 3:1, it identifies the
+ * control) → fg-1 fill with a canvas check drawn with a snappy pathLength.
  */
 import { Checkbox as BaseCheckbox } from '@base-ui/react/checkbox';
 import { Switch as BaseSwitch } from '@base-ui/react/switch';
@@ -32,15 +33,15 @@ export function Switch({ checked, onCheckedChange, label, description, disabled,
       disabled={disabled}
       aria-label={aria['aria-label']}
       className={cn(
-        'relative inline-flex h-5 w-8 shrink-0 items-center rounded-full border border-line-2 bg-surface-3 p-px',
-        'transition-[background-color,border-color] duration-(--dur-fast) ease-out',
-        'data-[checked]:justify-end data-[checked]:border-transparent data-[checked]:bg-accent',
+        'relative inline-flex h-5 w-8 shrink-0 items-center rounded-full bg-gray-7 p-0.5 light:bg-gray-7',
+        'transition-[background-color] duration-(--dur-fast) ease-out',
+        'data-[checked]:justify-end data-[checked]:bg-accent',
         'data-[disabled]:opacity-40 focus-visible:outline-offset-2',
       )}
     >
       <BaseSwitch.Thumb
         render={<motion.span layout transition={spring.snappy} />}
-        className="block size-4 rounded-full bg-white light:border light:border-line-2"
+        className="block size-4 rounded-full bg-fg-1 light:bg-white"
       />
     </BaseSwitch.Root>
   );
@@ -77,10 +78,10 @@ export function Checkbox({ checked, onCheckedChange, label, indeterminate, disab
       disabled={disabled}
       aria-label={label ? undefined : aria['aria-label']}
       className={cn(
-        'flex size-4 shrink-0 items-center justify-center rounded-xs border border-line-3 bg-surface-2 text-canvas',
+        'flex size-4 shrink-0 items-center justify-center rounded-xs border border-fg-4 bg-transparent text-canvas',
         'transition-[background-color,border-color] duration-(--dur-fast)',
         'data-[checked]:border-fg-1 data-[checked]:bg-fg-1 data-[indeterminate]:border-fg-1 data-[indeterminate]:bg-fg-1',
-        'hover:border-gray-8 data-[disabled]:opacity-40 focus-visible:outline-offset-2',
+        'hover:border-fg-4 data-[disabled]:opacity-40 focus-visible:outline-offset-2',
       )}
     >
       <BaseCheckbox.Indicator keepMounted className="flex">

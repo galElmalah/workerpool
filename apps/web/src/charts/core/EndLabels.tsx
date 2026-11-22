@@ -1,10 +1,11 @@
 /**
- * End-of-line direct labels (design.md §6.1): `● value NAME` at the last point of each series,
- * nudged vertically to stay ≥ 14px apart, replacing legends.
+ * End-of-line direct labels (DESIGN_V2 §5 "Charts"): `● value name` (or just `● name` when
+ * `value` is empty) at the last point of each series, nudged vertically to stay ≥ 16px
+ * apart, replacing legends. Sentence case, 12px sans; the value is fg-1, the name fg-3.
  */
 import { motion } from 'motion/react';
 import { spring } from '../motion';
-import { T, toneStroke, toneText, type Tone } from './tokens';
+import { T, TXT, toneStroke, type Tone } from './tokens';
 
 export interface EndLabel {
   id: string;
@@ -13,7 +14,7 @@ export interface EndLabel {
   value: string;
   name: string;
   tone: Tone;
-  /** Optional trailing micro text, e.g. "PROJ." */
+  /** Optional trailing text in fg-3, e.g. "projected". */
   suffix?: string;
   dashed?: boolean;
 }
@@ -38,7 +39,7 @@ export function avoidCollisions<L extends { y: number }>(labels: L[], gap = 14, 
   return sorted;
 }
 
-export function EndLabels({ labels, x, top = 0, bottom = Infinity, gap = 14 }: { labels: EndLabel[]; x: number; top?: number; bottom?: number; gap?: number }) {
+export function EndLabels({ labels, x, top = 0, bottom = Infinity, gap = 16 }: { labels: EndLabel[]; x: number; top?: number; bottom?: number; gap?: number }) {
   const placed = avoidCollisions(labels, gap, top + 6, bottom - 6);
   return (
     <g className="select-none" aria-hidden>
@@ -55,14 +56,14 @@ export function EndLabels({ labels, x, top = 0, bottom = Infinity, gap = 14 }: {
               style={{ stroke: T.line3 }}
             />
           )}
-          <circle cx={x + 3} cy={0} r={3} style={{ fill: l.dashed ? 'none' : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
-          <text x={x + 11} y={0} dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 12, fill: toneText[l.tone], fontWeight: 500 }}>
+          <circle cx={x + 3} cy={0} r={2.5} style={{ fill: l.dashed ? T.bg : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
+          <text x={x + 10} y={0} dominantBaseline="central" style={{ ...TXT, fill: T.fg1, fontWeight: 500 }}>
             {l.value}
-            <tspan dx={5} style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }}>
-              {l.name.toUpperCase()}
+            <tspan dx={l.value ? 5 : 0} style={{ fontWeight: 400, fill: l.value ? T.fg3 : l.tone === 'accent' ? T.fg2 : T.fg3 }}>
+              {l.name}
             </tspan>
             {l.suffix && (
-              <tspan dx={4} style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }}>
+              <tspan dx={4} style={{ fontWeight: 400, fill: T.fg3 }}>
                 {l.suffix}
               </tspan>
             )}
@@ -80,12 +81,10 @@ export function EndLabelRow({ labels }: { labels: Omit<EndLabel, 'y'>[] }) {
       {labels.map((l) => (
         <span key={l.id} className="inline-flex items-center gap-1.5">
           <svg width="8" height="8">
-            <circle cx="4" cy="4" r="3" style={{ fill: l.dashed ? 'none' : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
+            <circle cx="4" cy="4" r="2.5" style={{ fill: l.dashed ? 'none' : toneStroke[l.tone], stroke: toneStroke[l.tone], strokeWidth: l.dashed ? 1.25 : 0 }} />
           </svg>
-          <span className="text-mono-sm" style={{ color: toneText[l.tone] }}>
-            {l.value}
-          </span>
-          <span className="text-micro text-fg-3">{l.name}</span>
+          {l.value && <span className="num text-label font-medium text-fg-1">{l.value}</span>}
+          <span className="text-label text-fg-3">{l.name}</span>
         </span>
       ))}
     </div>

@@ -1,8 +1,10 @@
 /**
- * Field / Input / Textarea — design.md §7.
- * Label (`label`, fg-2) above; control h-9, surface-2, 1px line-3, radius md, px-3, `body`;
- * hint/error below (`body-sm`). Hover line → gray-8; focus = 2px focus ring inside the field;
- * invalid = TriangleAlert + message, border fg-1 dashed. Never red.
+ * Field / Input / Textarea — DESIGN_V2 §2/§4.
+ * Label (`label` 12 medium, fg-2) above; control h-9, radius md, px-3, `body`: surface-2 fill + a
+ * line-2 hairline in dark, white + line-3 in light (the hairline is what identifies the control;
+ * it is the one place besides tables where a border is expected). Hover → line-3; focus = 2px focus
+ * ring inside the field; invalid = TriangleAlert + message + dashed fg-2 hairline. Never red, never
+ * a coloured edge.
  *
  *   <Field label="Title" hint="Shown on the calendar" error={err}>
  *     <Input value={v} onChange={…} />
@@ -53,10 +55,10 @@ export function Field({ label, hint, error, hideLabel, aside, className, childre
 /** Shared control surface (inputs, select triggers, combobox input groups). */
 export const controlStyles = (size: 'sm' | 'md' | 'lg' = 'md') =>
   cn(
-    'w-full min-w-0 rounded-md border border-line-3 bg-surface-2 text-body text-fg-1 outline-none',
+    'w-full min-w-0 rounded-md border border-line-2 bg-surface-2 text-body text-fg-1 outline-none light:border-line-3 light:bg-surface-1',
     'transition-[border-color,background-color] duration-(--dur-fast) ease-out placeholder:text-fg-4',
-    'hover:border-gray-8 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus',
-    'data-[invalid]:border-dashed data-[invalid]:border-fg-1 aria-[invalid=true]:border-dashed aria-[invalid=true]:border-fg-1',
+    'hover:border-line-3 light:hover:border-gray-8 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus',
+    'data-[invalid]:border-dashed data-[invalid]:border-fg-2 aria-[invalid=true]:border-dashed aria-[invalid=true]:border-fg-2',
     'disabled:opacity-40 data-[disabled]:opacity-40 pointer-coarse:min-h-11 pointer-coarse:text-body-lg',
     size === 'sm' ? 'h-7 px-2.5 text-body-sm' : size === 'lg' ? 'h-11 px-3.5 text-body-lg' : 'h-9 px-3',
   );

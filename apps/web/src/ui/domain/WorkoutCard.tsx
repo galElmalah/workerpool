@@ -1,10 +1,13 @@
 /**
- * WorkoutCard — the shared card for planned workouts, activities and paired items, in three
- * densities (product.md §3.3–3.4, design.md §2.4 / §4.3):
- *   full    (cell ≥ 170px): glyph, title (2 lines), duration · distance · load, compliance glyph,
- *           key star, intensity pips, note & Garmin icons, step-profile sparkline, compliance bar
- *   compact (120–169px):    glyph, title (1 line), duration, compliance glyph, key star, pips
- *   chip    (< 120px):      28px; glyph 14 + title + duration (mono-sm); compliance by chip shape
+ * WorkoutCard — the shared card for planned workouts, activities and paired items (DESIGN_V2 §5).
+ * Calm by default: no borders, no edge rails, one tint at most (the intensity dot).
+ *   chip    (month view): glyph · [key star] title (one line when it fits, two at most; 28 → 44px)
+ *           · intensity dot (hard sessions only) · duration, top-right on the first line
+ *   compact / full (week view, lists): title (≤ 2 lines, + star, + a compliance mark only when it
+ *           deviates from plan); then intensity dot · duration (· distance-or-load in full) in fg-3.
+ *           `profile` adds the step-profile sparkline (workout page / Today only); `meta` adds the
+ *           note and Garmin icons.
+ * Done = one surface step; planned = no fill; missed = fg-4 struck through; skipped = fg-4.
  *
  * Morph: carries `wk-card` / `wk-glyph` / `wk-title` ONLY while it is the morph target (set just
  * in time on click), so names stay unique on the page. Pass `link` to make it a TanStack Link.
@@ -20,8 +23,8 @@ import { distanceParts, formatDuration, formatLoad, NBSP } from '@/lib/format';
 import { useUnits } from '@/lib/units';
 import { morph, useIsMorphTarget, vt } from '@/motion/morph';
 import { onSpotlightMove } from '@/motion/pointer';
-import { ComplianceBar, ComplianceGlyph, complianceStyles } from './Compliance';
-import { IntensityPips } from './Intensity';
+import { ComplianceGlyph, complianceDeviates, complianceStyles } from './Compliance';
+import { IntensityDot } from './Intensity';
 import { KeyStar } from './KeyStar';
 import { MiniProfile } from './MiniProfile';
 import { SportGlyph } from './SportGlyph';
@@ -62,7 +65,7 @@ export interface WorkoutCardProps {
   link?: LinkProps;
   onClick?: (e: MouseEvent) => void;
   selected?: boolean;
-  /** Renders the hatched ghost placeholder (source of a drag). */
+  /** Renders the quiet placeholder left behind by a drag. */
   ghost?: boolean;
   /** Override the morph id (default model.id). */
   morphId?: string;
@@ -70,6 +73,12 @@ export interface WorkoutCardProps {
   style?: CSSProperties;
   /** Extra trailing node (quick actions). */
   trailing?: ReactNode;
+  /** Show the step-profile sparkline (full density; workout page / Today only). Default false. */
+  profile?: boolean;
+  /** Show the note / Garmin icons on the second line (full density). Default false. */
+  meta?: boolean;
+  /** Hover fill even without link/onClick (when a parent handles the click). */
+  hoverable?: boolean;
 }
 
 /** Props that make any element a morph source: set the target just in time (capture phase). */
@@ -77,8 +86,24 @@ export function morphSourceProps(id: string) {
   return { onClickCapture: () => morph.set(id), 'data-morph-id': id } as const;
 }
 
+type Tone = 'done' | 'planned' | 'missed' | 'skipped';
+const toneOf = (state: ComplianceState): Tone => (state === 'planned' ? 'planned' : state === 'missed' ? 'missed' : state === 'excused' ? 'skipped' : 'done');
+
+/** Card-state classes shared with the calendar's own faces (CardItem). */
+export function cardTone(state: ComplianceState) {
+  const tone = toneOf(state);
+  return {
+    tone,
+    fill: tone === 'done' ? 'bg-surface-2' : 'bg-transparent',
+    hover: tone === 'done' ? 'hover:bg-surface-3' : 'hover:bg-surface-2',
+    title: tone === 'done' ? 'text-fg-1' : tone === 'planned' ? 'text-fg-2' : tone === 'missed' ? 'text-fg-4 line-through decoration-fg-4' : 'text-fg-4',
+    meta: tone === 'done' ? 'text-fg-3' : tone === 'planned' ? 'text-fg-3' : tone === 'missed' ? 'text-fg-4 line-through decoration-fg-4' : 'text-fg-4',
+    glyph: tone === 'done' ? 'text-fg-2' : tone === 'planned' ? 'text-fg-3' : 'text-fg-4',
+  };
+}
+
 export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function WorkoutCard(
-  { model: m, density = 'full', link, onClick, selected, ghost, morphId, className, style, trailing },
+  { model: m, density = 'full', link, onClick, selected, ghost, morphId, className, style, trailing, profile, meta, hoverable },
   ref,
 ) {
   const units = useUnits();
@@ -86,91 +111,87 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
   const on = useIsMorphTarget(mid);
   const state = m.compliance?.state ?? (m.kind === 'activity' ? 'unplanned' : 'planned');
   const s = complianceStyles(state);
-  const missed = state === 'missed';
+  const t = cardTone(state);
   const dist = m.distanceM ? distanceParts(m.distanceM, m.sport, units) : null;
-  const rail = s.rail ?? (m.isKey ? 'bg-accent' : null);
-  const hasSpark = !!m.sparkline && m.sparkline.length > 1;
+  const hasSpark = profile && !!m.sparkline && m.sparkline.length > 1;
   const label = `${m.title}, ${formatDuration(m.durationSec, 'short')}, ${s.label}${m.isKey ? ', key workout' : ''}`;
+  const chip = density === 'chip';
 
-  const body =
-    density === 'chip' ? (
-      <>
-        <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className="text-fg-1" />
-        <span className={cn('min-w-0 flex-1 truncate text-body-sm text-fg-1', s.title)} style={vt(on, 'title')}>
+  const body = chip ? (
+    <>
+      <SportGlyph sport={m.sport} subSport={m.subSport} size={14} style={vt(on, 'glyph')} className={cn('mt-px', t.glyph)} />
+      <span
+        className={cn('line-clamp-2 min-w-0 flex-1 text-body-sm leading-4 break-words', t.title, m.isKey && t.tone !== 'missed' && t.tone !== 'skipped' && 'font-semibold !text-fg-1')}
+        style={vt(on, 'title')}
+      >
+        {m.isKey && <KeyStar pressed readOnly size="xs" className="mr-1 inline align-[-1px]" />}
+        {m.title}
+      </span>
+      <span className="flex h-4 shrink-0 items-center gap-1">
+        <IntensityDot intensity={m.intensity} />
+        <span className={cn('text-label num', t.meta)}>{formatDuration(m.durationSec)}</span>
+      </span>
+    </>
+  ) : (
+    <>
+      <div className="flex min-w-0 items-start gap-2">
+        <SportGlyph sport={m.sport} subSport={m.subSport} size={16} style={vt(on, 'glyph')} className={cn('mt-px', t.glyph)} />
+        <span
+          className={cn('min-w-0 flex-1 text-body-sm [overflow-wrap:anywhere]', m.isKey ? 'font-semibold' : 'font-medium', t.tone === 'planned' ? 'text-fg-1' : t.title, 'line-clamp-2')}
+          style={vt(on, 'title')}
+        >
           {m.title}
         </span>
-        {m.isKey && <KeyStar pressed readOnly size="sm" />}
-        <span className={cn('shrink-0 text-mono-sm text-fg-2', missed && 'line-through')}>{formatDuration(m.durationSec)}</span>
-      </>
-    ) : (
-      <>
-        <div className="flex min-w-0 items-start gap-2">
-          <SportGlyph sport={m.sport} subSport={m.subSport} size={16} style={vt(on, 'glyph')} className="mt-px text-fg-1" />
-          <span
-            className={cn('min-w-0 flex-1 text-body-sm font-[520] text-fg-1', density === 'full' ? 'line-clamp-2' : 'truncate', s.title)}
-            style={vt(on, 'title')}
-          >
-            {m.title}
-          </span>
-          <span className="mt-0.5 flex shrink-0 items-center gap-1">
+        {(m.isKey || complianceDeviates(state)) && (
+          <span className="mt-0.5 flex shrink-0 items-center gap-1.5">
+            {complianceDeviates(state) && <ComplianceGlyph state={state} />}
             {m.isKey && <KeyStar pressed readOnly size="sm" />}
-            {m.compliance && <ComplianceGlyph state={state} />}
-            {density === 'full' && m.hasNote && <Pilcrow className="size-3 text-fg-3" aria-label="Has notes" />}
-            {density === 'full' && m.kind === 'planned' && <GarminStateIcon state={m.garminState} />}
           </span>
-        </div>
-        <div className="flex items-center gap-2 pl-6">
-          <span className={cn('min-w-0 flex-1 truncate text-mono-sm text-fg-2', missed && 'line-through')}>
-            {formatDuration(m.durationSec)}
-            {density === 'full' && dist && (
+        )}
+      </div>
+      <div className="flex min-w-0 items-center gap-1.5 pl-6">
+        <IntensityDot intensity={m.intensity} />
+        <span className={cn('min-w-0 flex-1 truncate text-label num', t.meta)}>
+          {formatDuration(m.durationSec)}
+          {density === 'full' &&
+            (dist ? (
               <>
                 {SEP}
                 {dist.value}
                 {NBSP}
                 {dist.unit}
               </>
-            )}
-            {density === 'full' && m.load != null && (
+            ) : m.load != null ? (
               <>
                 {SEP}
                 {formatLoad(m.load)}
-                <span className="font-sans text-fg-3">{NBSP}load</span>
+                {NBSP}load
               </>
-            )}
-          </span>
-          {m.intensity && !(density === 'full' && hasSpark) && <IntensityPips intensity={m.intensity} />}
+            ) : null)}
+          {state === 'excused' && <>{SEP}Skipped{m.skipReason ? ` · ${m.skipReason}` : ''}</>}
+        </span>
+        {meta && density === 'full' && m.hasNote && <Pilcrow className="size-3 shrink-0 text-fg-3" aria-label="Has notes" />}
+        {meta && density === 'full' && m.kind === 'planned' && <GarminStateIcon state={m.garminState} />}
+      </div>
+      {density === 'full' && hasSpark && (
+        <div className="pt-1 pl-6">
+          <MiniProfile values={m.sparkline!} height={16} className="min-w-0" />
         </div>
-        {s.microLabel && density === 'full' && <span className="pl-6 text-micro text-fg-3">{s.microLabel}</span>}
-        {state === 'excused' && m.skipReason && density === 'full' && (
-          <span className="pl-6 text-micro text-fg-3">Skipped · {m.skipReason}</span>
-        )}
-        {density === 'full' && hasSpark && (
-          <div className="flex items-end gap-2 pl-6">
-            <MiniProfile values={m.sparkline!} height={16} className="min-w-0 flex-1" />
-            {m.intensity && <IntensityPips intensity={m.intensity} />}
-          </div>
-        )}
-        {density === 'full' && m.compliance?.ratio != null && m.kind !== 'planned' && (
-          <ComplianceBar ratio={m.compliance.ratio} state={state} className="pl-6" />
-        )}
-      </>
-    );
-
-  const cls = cn(
-    'group/card relative flex min-w-0 overflow-hidden text-left outline-none transition-[background-color,border-color,opacity] duration-(--dur-fast) ease-out',
-    'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
-    density === 'chip' ? 'h-7 items-center gap-1.5 rounded-sm pr-2 pl-2.5' : 'flex-col gap-1 rounded-md py-2 pr-2.5 pl-3',
-    density === 'full' && 'spotlight',
-    s.card,
-    (link || onClick) && 'hover:border-line-3 hover:bg-surface-3',
-    s.dim && 'opacity-55',
-    selected && 'ring-1 ring-fg-1 ring-inset',
-    ghost && 'border-dashed !border-line-3 !bg-transparent bg-hatch-faint opacity-60 [&>*]:invisible',
-    className,
+      )}
+    </>
   );
 
-  const railEl = rail && !ghost && (
-    <span className={cn('absolute left-0 rounded-r-full', density === 'chip' ? 'inset-y-1 w-0.5' : 'inset-y-1.5 w-[3px]', rail)} aria-hidden />
+  const interactive = !!(link || onClick);
+  const cls = cn(
+    'group/card relative flex min-w-0 overflow-hidden text-left outline-none transition-[background-color,opacity] duration-(--dur-fast) ease-out',
+    'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-focus',
+    chip ? 'min-h-7 items-start gap-1.5 rounded-md px-1.5 py-1.5' : 'flex-col gap-1 rounded-lg px-3 py-2.5',
+    density === 'full' && interactive && 'spotlight',
+    t.fill,
+    (interactive || hoverable) && t.hover,
+    selected && '!bg-surface-3 outline-1 outline-solid -outline-offset-1 outline-line-3',
+    ghost && '!bg-surface-1 opacity-60 [&>*]:invisible',
+    className,
   );
 
   const shared = {
@@ -178,7 +199,7 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
     style: { ...style, ...vt(on, 'card') },
     'data-morph-id': mid,
     'aria-label': label,
-    onPointerMove: density === 'full' ? onSpotlightMove : undefined,
+    onPointerMove: density === 'full' && interactive ? onSpotlightMove : undefined,
   };
 
   if (link)
@@ -190,7 +211,6 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
         onClickCapture={() => morph.set(mid)}
         onClick={onClick}
       >
-        {railEl}
         {body}
         {trailing}
       </Link>
@@ -204,14 +224,12 @@ export const WorkoutCard = forwardRef<HTMLElement, WorkoutCardProps>(function Wo
         onClickCapture={() => morph.set(mid)}
         onClick={onClick}
       >
-        {railEl}
         {body}
         {trailing}
       </button>
     );
   return (
     <div ref={ref as React.Ref<HTMLDivElement>} {...shared}>
-      {railEl}
       {body}
       {trailing}
     </div>

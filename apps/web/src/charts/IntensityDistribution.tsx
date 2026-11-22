@@ -1,14 +1,16 @@
 /**
- * IntensityDistribution — per-week 100 % stacked easy / moderate / hard (fill density) with a
- * target reference and a classification label; ZoneBars — horizontal time-in-zone rows.
- * product.md §6.1 row 4, §5.1 item 8; design.md §6.2 "Time in zone".
+ * IntensityDistribution — per-week 100 % stacked easy / moderate / hard on the zone ramp, with
+ * a quiet target reference, a classification label and direct labels at the right end (no
+ * legend); ZoneBars — horizontal time-in-zone rows. product.md §6.1 row 4, §5.1 item 8.
  */
 import { useCallback, useId, useMemo } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { WeekSummary, ZoneTime } from '@cadence/core';
 import { ChartDefs, useChartDefs } from './core/ChartDefs';
 import { ChartFrame } from './core/ChartFrame';
-import { T } from './core/tokens';
+import { T, TXT } from './core/tokens';
+import { avoidCollisions } from './core/EndLabels';
+import { thinTicks } from './core/Axis';
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -46,7 +48,7 @@ export const weeksToSplits = (weeks: WeekSummary[]): IntensitySplit[] => weeks.m
 const BUCKETS = [
   { k: 'easy' as const, label: 'Easy', zone: 2 },
   { k: 'moderate' as const, label: 'Moderate', zone: 4 },
-  { k: 'hard' as const, label: 'Hard', zone: 7 },
+  { k: 'hard' as const, label: 'Hard', zone: 6 },
 ];
 
 export interface IntensityDistributionProps {
@@ -77,21 +79,16 @@ export function IntensityDistribution(props: IntensityDistributionProps) {
         table={{ caption: 'Intensity split per week', columns: ['Week', 'Easy %', 'Moderate %', 'Hard %', 'Type'], rows: items.map((i) => { const s = i.easy + i.moderate + i.hard || 1; return [i.label, Math.round((i.easy / s) * 100), Math.round((i.moderate / s) * 100), Math.round((i.hard / s) * 100), classifyIntensity(i)]; }) }}
       >
         <div ref={ref} className="w-full">
-          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-title-3 text-fg-1">{cls}</span>
-              <span className="text-mono text-fg-2">
-                {pct(total.easy)} / {pct(total.moderate)} / {pct(total.hard)} %
+          <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-title-3 text-fg-1">{cls}</span>
+            <span className="num text-body-sm text-fg-2">
+              {pct(total.easy)} / {pct(total.moderate)} / {pct(total.hard)} %
+            </span>
+            {props.target !== null && (
+              <span className="num text-body-sm text-fg-3">
+                target {Math.round((props.target ?? DEFAULT_TARGET).easy * 100)} / {Math.round((props.target ?? DEFAULT_TARGET).moderate * 100)} / {Math.round((props.target ?? DEFAULT_TARGET).hard * 100)}
               </span>
-            </div>
-            <div className="flex items-center gap-3">
-              {BUCKETS.map((b) => (
-                <span key={b.k} className="inline-flex items-center gap-1.5 text-micro text-fg-3">
-                  <span className="size-2.5 rounded-xs" style={{ background: T.zone(b.zone) }} />
-                  {b.label}
-                </span>
-              ))}
-            </div>
+            )}
           </div>
           {size.width > 0 && <IDInner {...props} width={size.width} height={height} />}
         </div>
@@ -100,16 +97,19 @@ export function IntensityDistribution(props: IntensityDistributionProps) {
   );
 }
 
-function IDInner({ items, width, height, target = { easy: 0.8, moderate: 0.05, hard: 0.15 }, sync: ext, onItemClick }: IntensityDistributionProps & { width: number; height: number }) {
+const DEFAULT_TARGET = { easy: 0.8, moderate: 0.05, hard: 0.15 };
+
+function IDInner({ items, width, height, target = DEFAULT_TARGET, sync: ext, onItemClick }: IntensityDistributionProps & { width: number; height: number }) {
   const defs = useChartDefs();
   const id = useId();
   const reduce = useReducedMotion();
   const sync = useHoverSync<string>(ext);
   const n = items.length;
-  const L = { left: 36, right: target ? 64 : 8, top: 4, bottom: 22 };
+  const compact = width < 420;
+  const L = { left: 40, right: compact ? 8 : 76, top: 4, bottom: 28 };
   const plotW = Math.max(10, width - L.left - L.right);
   const band = plotW / n;
-  const barW = Math.max(4, Math.min(28, band * 0.66));
+  const barW = Math.max(3, Math.min(24, band * 0.56));
   const y = (f: number) => L.top + (1 - f) * height;
   const xc = (i: number) => L.left + band * (i + 0.5);
   const keys = useMemo(() => items.map((i) => i.key), [items]);
@@ -118,14 +118,28 @@ function IDInner({ items, width, height, target = { easy: 0.8, moderate: 0.05, h
     return i >= 0 && i < n ? keys[i] : null;
   }, [L.left, band, n, keys]);
   const { handlers } = useChartPointer<string>({ keys, keyAt, sync, id, onActivate: onItemClick, bigStep: 4 });
-  const showEvery = Math.max(1, Math.ceil(44 / band));
+  const xTicks = thinTicks(items.map((it, i) => ({ key: it.key, pos: -xc(i), label: it.label })).reverse()).map((t) => ({ ...t, pos: -t.pos }));
+  // Direct labels for the three buckets at the right end of the last bar.
+  const lastIt = [...items].reverse().find((it) => it.easy + it.moderate + it.hard > 0);
+  const direct = (() => {
+    if (!lastIt || compact) return [];
+    const sum = lastIt.easy + lastIt.moderate + lastIt.hard;
+    let acc = 0;
+    const raw = BUCKETS.map((b) => {
+      const f = lastIt[b.k] / sum;
+      const mid = y(acc + f / 2);
+      acc += f;
+      return { id: b.k, y: mid, label: b.label, zone: b.zone };
+    });
+    return avoidCollisions(raw, 16, L.top + 6, L.top + height - 6);
+  })();
   return (
     <div className="relative">
       <svg width={width} height={L.top + height + L.bottom} className="block touch-pan-y select-none overflow-visible rounded-xs focus-visible:outline-offset-4" role="group" aria-roledescription="chart" aria-label="Intensity distribution per week" tabIndex={0} {...handlers}>
         <ChartDefs ids={defs} />
         {[0, 0.5, 1].map((f) => (
           <g key={f} aria-hidden>
-            <text x={L.left - 8} y={y(f)} textAnchor="end" dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }}>
+            <text x={L.left - 10} y={y(f)} textAnchor="end" dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
               {Math.round(f * 100)}%
             </text>
           </g>
@@ -140,36 +154,39 @@ function IDInner({ items, width, height, target = { easy: 0.8, moderate: 0.05, h
               {BUCKETS.map((b, k) => {
                 const f = it[b.k] / s;
                 const y1 = y(base + f);
-                const y0 = y(base) - (k ? 1.5 : 0);
+                const y0 = y(base) - (k ? 1 : 0);
                 base += f;
                 return (
                   <g key={b.k}>
-                    <motion.rect x={xc(i) - barW / 2} width={barW} rx={1.5} initial={{ y: y(0), height: 0 }} animate={{ y: y1, height: Math.max(0, y0 - y1) }} transition={{ ...spring.gentle, delay: delay + k * 0.04 }} style={{ fill: T.zone(b.zone) }} />
-                    {b.k === 'hard' && <motion.rect x={xc(i) - barW / 2} width={barW} rx={1.5} initial={{ y: y(0), height: 0 }} animate={{ y: y1, height: Math.max(0, y0 - y1) }} transition={{ ...spring.gentle, delay: delay + k * 0.04 }} style={{ fill: defs.hatchOnAccent }} />}
+                    <motion.rect x={xc(i) - barW / 2} width={barW} rx={k === 2 ? Math.min(3, barW / 2) : 1} initial={{ y: y(0), height: 0 }} animate={{ y: y1, height: Math.max(0, y0 - y1) }} transition={{ ...spring.gentle, delay: delay + k * 0.04 }} style={{ fill: T.zone(b.zone) }} />
                   </g>
                 );
               })}
-              {i % showEvery === (n - 1) % showEvery && (
-                <text x={xc(i)} y={L.top + height + 8} textAnchor="middle" dominantBaseline="hanging" style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }} aria-hidden>
-                  {it.label}
-                </text>
-              )}
             </g>
           );
         })}
         {target && (
           <g aria-hidden pointerEvents="none">
             {[target.easy, target.easy + target.moderate].map((f, k) => (
-              <line key={k} x1={L.left - 2} x2={L.left + plotW + 4} y1={y(f)} y2={y(f)} style={{ stroke: T.fg1, strokeDasharray: '3 3', opacity: 0.7 }} />
+              <line key={k} x1={L.left} x2={L.left + plotW} y1={y(f)} y2={y(f)} strokeLinecap="round" style={{ stroke: T.fg1, strokeDasharray: '1 3', opacity: 0.55 }} />
             ))}
-            <text x={L.left + plotW + 8} y={y(target.easy) + 1} dominantBaseline="central" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg2 }}>
-              TARGET
-            </text>
-            <text x={L.left + plotW + 8} y={y(target.easy) + 14} dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 10.5, fill: T.fg3 }}>
-              {Math.round(target.easy * 100)}/{Math.round(target.moderate * 100)}/{Math.round(target.hard * 100)}
-            </text>
           </g>
         )}
+        <g aria-hidden>
+          {xTicks.map((t) => (
+            <text key={t.key} x={t.pos} y={L.top + height + 10} textAnchor="middle" dominantBaseline="hanging" style={{ ...TXT, fill: T.fg3 }}>
+              {t.label}
+            </text>
+          ))}
+          {direct.map((d) => (
+            <g key={d.id} transform={`translate(${L.left + plotW + 10} ${d.ly})`}>
+              <rect x={0} y={-4} width={8} height={8} rx={2} style={{ fill: T.zone(d.zone) }} />
+              <text x={14} y={0} dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
+                {d.label}
+              </text>
+            </g>
+          ))}
+        </g>
         <HoverCol sync={sync} keys={keys} xc={xc} band={band} top={L.top} bottom={L.top + height} />
       </svg>
       <Tip items={items} keys={keys} sync={sync} xc={xc} width={width} />
@@ -181,7 +198,7 @@ function HoverCol({ sync, keys, xc, band, top, bottom }: { sync: HoverSync<strin
   const k = useHoverValue(sync);
   const i = k == null ? -1 : keys.indexOf(k);
   if (i < 0) return null;
-  return <rect x={xc(i) - band / 2 + 1} y={top - 2} width={Math.max(0, band - 2)} height={bottom - top + 4} rx={4} style={{ fill: 'none', stroke: T.fg3 }} pointerEvents="none" />;
+  return <rect x={xc(i) - band / 2 + 1} y={top - 2} width={Math.max(0, band - 2)} height={bottom - top + 4} rx={4} style={{ fill: T.fg1, fillOpacity: 0.05 }} pointerEvents="none" />;
 }
 
 function Tip({ items, keys, sync, xc, width }: { items: IntensitySplit[]; keys: string[]; sync: HoverSync<string>; xc: (i: number) => number; width: number }) {
@@ -226,9 +243,8 @@ export function ZoneBars({ zones, targetPct, formatRange, unit = '', loading, co
   const reduce = useReducedMotion();
   const total = zones.reduce((a, z) => a + z.seconds, 0);
   const max = Math.max(1, ...zones.map((z) => z.seconds / (total || 1)), ...(targetPct ?? []).map((v) => v ?? 0));
-  const defs = useChartDefs();
   const range = formatRange ?? ((lo: number | null, hi: number | null) => (hi == null ? `${lo ?? 0}+` : `${lo ?? 0}–${hi}`) + (unit ? ` ${unit}` : ''));
-  const rowH = compact ? 'h-6' : 'h-8';
+  const rowH = compact ? 'h-6' : 'h-9';
   return (
     <div className={`min-w-0 ${className ?? ''}`}>
       <ChartFrame
@@ -238,37 +254,29 @@ export function ZoneBars({ zones, targetPct, formatRange, unit = '', loading, co
         height={zones.length * (compact ? 24 : 32) || 160}
         table={{ caption: 'Time in zone', columns: ['Zone', 'Name', 'Time', 'Share'], rows: zones.map((z) => [`Z${z.zone}`, z.name, fmtHMS(z.seconds), `${Math.round((z.seconds / (total || 1)) * 100)}%`]) }}
       >
-        <svg width="0" height="0" className="absolute" aria-hidden>
-          <ChartDefs ids={defs} />
-        </svg>
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3" role="list">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4" role="list">
           {zones.map((z, i) => {
             const f = z.seconds / (total || 1);
             const fill = zoneFill(z.zone, zones.length);
             const tgt = targetPct?.[i];
             return (
               <div key={z.zone} role="listitem" className={`contents`}>
-                <div className={`flex ${rowH} items-center gap-2`}>
-                  <span className="w-6 text-micro text-fg-2">Z{z.zone}</span>
+                <div className={`flex ${rowH} items-center gap-3`}>
+                  <span className="w-6 text-label text-fg-3">Z{z.zone}</span>
                   {!compact && <span className="hidden w-24 truncate text-body-sm text-fg-2 sm:inline">{z.name}</span>}
-                  {!compact && <span className="hidden w-20 text-mono-sm text-fg-3 md:inline">{range(z.low, z.high)}</span>}
+                  {!compact && <span className="num hidden w-24 text-label text-fg-3 md:inline">{range(z.low, z.high)}</span>}
                 </div>
-                <div className={`relative ${compact ? 'h-2' : 'h-3'} rounded-xs bg-surface-2`} title={range(z.low, z.high)}>
+                <div className={`relative ${compact ? 'h-1.5' : 'h-2'} rounded-full bg-surface-2`} title={range(z.low, z.high)}>
                   <motion.div
-                    className="absolute inset-y-0 left-0 origin-left rounded-xs"
+                    className="absolute inset-y-0 left-0 origin-left rounded-full"
                     style={{ width: `${(f / max) * 100}%`, background: T.zone(fill) }}
                     initial={reduce ? { opacity: 0 } : { scaleX: 0 }}
                     animate={reduce ? { opacity: 1 } : { scaleX: 1 }}
                     transition={reduce ? { duration: 0.12 } : { ...spring.smooth, delay: Math.min(i * 0.02, 0.24) }}
                   />
-                  {fill === 7 && (
-                    <svg className="absolute inset-y-0 left-0 h-full" style={{ width: `${(f / max) * 100}%` }} aria-hidden>
-                      <rect width="100%" height="100%" style={{ fill: defs.hatchOnAccent }} />
-                    </svg>
-                  )}
-                  {tgt != null && <span className="absolute -inset-y-1 w-px bg-fg-1" style={{ left: `${(tgt / max) * 100}%` }} aria-hidden />}
+                  {tgt != null && <span className="absolute -inset-y-1 w-px rounded-full bg-fg-3" style={{ left: `${(tgt / max) * 100}%` }} aria-hidden />}
                 </div>
-                <div className={`flex ${rowH} items-center justify-end gap-2 text-mono`}>
+                <div className={`num flex ${rowH} items-center justify-end gap-3 text-body-sm`}>
                   <span className="text-fg-1">{fmtHMS(z.seconds)}</span>
                   <span className="w-9 text-right text-fg-3">{Math.round(f * 100)}%</span>
                 </div>

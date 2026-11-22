@@ -61,7 +61,7 @@ export function Select<T extends string>({
         items={options.map((o) => ({ value: o.value, label: o.label }))}
         disabled={disabled}
       >
-        <BaseSelect.Trigger className={cn(controlStyles(size), 'flex items-center gap-2 text-left data-[popup-open]:border-gray-8')}>
+        <BaseSelect.Trigger className={cn(controlStyles(size), 'flex items-center gap-2 text-left data-[popup-open]:border-line-3')}>
           {selected?.icon && <span className="flex text-fg-2 [&_svg]:size-4">{selected.icon}</span>}
           <BaseSelect.Value className={cn('min-w-0 flex-1 truncate', !selected && 'text-fg-4')} placeholder={placeholder} />
           <BaseSelect.Icon className="flex text-fg-3">

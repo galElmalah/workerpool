@@ -1,6 +1,8 @@
 /**
  * FitnessChart — Fitness / Fatigue / Form (PMC) with projection, annotations, range morph.
- * design.md §6.2 "PMC"; product.md §6.1 row 2 and §6.2 /trends/fitness.
+ * product.md §6.1 row 2 and §6.2 /trends/fitness; v2 look per DESIGN_V2 §5 "Charts":
+ * Fitness is the hero (accent line + soft fade), Fatigue and Form are neutral, daily load is a
+ * faint texture, phases are near-invisible washes, form zones and the ramp strip are opt-in.
  */
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform, type MotionValue } from 'motion/react';
@@ -15,7 +17,7 @@ import { EventFlags, layoutFlags } from './core/Annotations';
 import { ChartTooltip, CrosshairDot, CrosshairRule, TooltipBody, type TooltipRow } from './core/Tooltip';
 import { ChartSegmented, CautionGlyph } from './core/controls';
 import { Reveal, FadeIn, springTo } from './core/animated';
-import { T } from './core/tokens';
+import { T, TXT } from './core/tokens';
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -81,10 +83,16 @@ export interface FitnessChartProps {
   showRangeControl?: boolean;
   events?: ChartEvent[];
   phases?: ChartPhase[];
-  /** Daily load lollipops at the bottom of the top panel. */
+  /** Daily load lollipops at the bottom of the top panel (very faint). */
   showLoad?: boolean;
   /** Weekly ramp-rate strip under the form panel. */
   showRamp?: boolean;
+  /** Form zone bands (fresh wash, overreaching hatch, zone names) in the form panel. Default false (v2). */
+  showFormZones?: boolean;
+  /** The readout row above the plot (Fitness / Fatigue / Form for today or the hovered day). Default true. */
+  showHeader?: boolean;
+  /** Direct "Fitness / Fatigue / Form" labels at the line ends. Default true (hidden under 480px). */
+  showEndLabels?: boolean;
   /** Days of projection shown after today (default 42). */
   projectionDays?: number;
   height?: number;
@@ -152,17 +160,17 @@ interface Layout {
   compact: boolean;
 }
 
-function computeLayout(width: number, height: number, formHeight: number, showRamp: boolean, flagRows: number): Layout {
+function computeLayout(width: number, height: number, formHeight: number, showRamp: boolean, flagRows: number, endLabels = true): Layout {
   const compact = width < 480;
-  const left = 34;
-  const right = compact ? 8 : 112;
-  const top0 = 18 + flagRows * 13;
+  const left = 36;
+  const right = compact || !endLabels ? 8 : 76;
+  const top0 = 10 + flagRows * 16;
   const top1 = top0 + height;
-  const form0 = top1 + 16;
+  const form0 = top1 + 28;
   const form1 = form0 + formHeight;
-  const ramp0 = form1 + (showRamp ? 22 : 0);
-  const ramp1 = ramp0 + (showRamp ? 26 : 0);
-  const axisY = ramp1 + 8;
+  const ramp0 = form1 + (showRamp ? 30 : 0);
+  const ramp1 = ramp0 + (showRamp ? 22 : 0);
+  const axisY = ramp1 + 12;
   return { width, left, right, plotW: Math.max(10, width - left - right), top0, top1, form0, form1, ramp0, ramp1, axisY, height: axisY + 16, compact };
 }
 
@@ -209,7 +217,7 @@ export function FitnessChart(props: FitnessChartProps) {
     }),
     [days],
   );
-  const totalH = height + formHeight + (showRamp ? 48 : 0) + 66;
+  const totalH = height + formHeight + (showRamp ? 52 : 0) + (props.showHeader === false ? 0 : 56) + 82;
   return (
     <div className={`min-w-0 ${className ?? ''}`}>
       <ChartFrame summary={summary} table={table} loading={loading} empty={empty} height={totalH} emptyHint="Fitness builds from completed workouts. Sync or log activities to see it here.">
@@ -231,6 +239,9 @@ function FitnessInner({
   showRangeControl = true,
   showLoad = true,
   showRamp = false,
+  showFormZones = false,
+  showHeader = true,
+  showEndLabels = true,
   projectionDays = 42,
   events = [],
   phases = [],
@@ -247,12 +258,12 @@ function FitnessInner({
 
   // Flags: pre-layout to know how many label rows we need.
   const flagRows = useMemo(() => {
-    const L0 = computeLayout(width, height, formHeight, showRamp, 1);
+    const L0 = computeLayout(width, height, formHeight, showRamp, 1, showEndLabels);
     const toX = (ms: number) => L0.left + ((ms - target.x0) / (target.x1 - target.x0)) * L0.plotW;
     const laid = layoutFlags(events.filter((e) => dateMs(e.date) >= target.x0 && dateMs(e.date) <= target.x1).map((e) => ({ key: e.date + e.label, x: toX(dateMs(e.date)), label: e.label })));
     return laid.some((f) => f.row === 1) ? 2 : laid.length ? 1 : 0;
-  }, [events, target, width, height, formHeight, showRamp]);
-  const L = computeLayout(width, height, formHeight, showRamp, Math.max(1, flagRows));
+  }, [events, target, width, height, formHeight, showRamp, showEndLabels]);
+  const L = computeLayout(width, height, formHeight, showRamp, flagRows, showEndLabels);
 
   // Animated domain (gentle spring), driving every path through one transform.
   const x0 = useMotionValue(target.x0);
@@ -276,7 +287,7 @@ function FitnessInner({
   }, [p]);
   const yForm = useCallback((v: number) => L.form1 - ((v - formDom[0]) / (formDom[1] - formDom[0])) * (L.form1 - L.form0), [L.form0, L.form1, formDom]);
 
-  const paths = useTransform([x0, x1, yMax, lMax] as MotionValue<number>[], (v: number[]) => buildPaths(p, L, v as Dom, yForm));
+  const paths = useTransform([x0, x1, yMax, lMax] as MotionValue<number>[], (v: number[]) => buildPaths(p, L, v as Dom, yForm, showFormZones));
 
   const toX = useCallback((ms: number) => L.left + ((ms - target.x0) / (target.x1 - target.x0)) * L.plotW, [L.left, L.plotW, target]);
   const yTop = useCallback((v: number) => L.top1 - (v / target.yMax) * (L.top1 - L.top0), [L.top0, L.top1, target.yMax]);
@@ -340,19 +351,18 @@ function FitnessInner({
   });
 
   // Ticks
-  const yTicks = linearTicks([0, target.yMax], [L.top1, L.top0], 4, (v) => fmtNum(v));
-  const formTicks = linearTicks(formDom, [L.form1, L.form0], 3, (v) => fmtNum(v)).filter((t) => t.pos > L.form0 + 4 && t.pos < L.form1 - 4);
+  const yTicks = linearTicks([0, target.yMax], [L.top1, L.top0], 3, (v) => fmtNum(v)).filter((t) => t.key !== 0);
+  const formTicks = [{ key: 0, pos: yForm(0), label: '0' }];
   const xTicksRaw = dateTicks(toX, target.x0, target.x1, L.plotW);
   const xTicks = thinTicks(xTicksRaw);
 
-  // End labels (last visible point)
+  // Direct labels at the line ends: names only (values live in the header and the tooltip).
   const last = vis[1];
-  const lastProjected = last > p.todayIdx;
   const endLabels: EndLabel[] = [
-    { id: 'fit', y: yTop(p.fit[last]), value: fmtNum(p.fit[last]), name: 'Fitness', tone: 'accent', suffix: lastProjected ? 'PROJ.' : undefined },
-    { id: 'fat', y: yTop(p.fat[last]), value: fmtNum(p.fat[last]), name: 'Fatigue', tone: 'fg1', suffix: lastProjected ? 'PROJ.' : undefined },
+    { id: 'fit', y: yTop(p.fit[last]), value: '', name: 'Fitness', tone: 'accent' },
+    { id: 'fat', y: yTop(p.fat[last]), value: '', name: 'Fatigue', tone: 'fg3' },
   ];
-  const formLabel: EndLabel = { id: 'form', y: yForm(p.form[last]), value: fmtNum(p.form[last]), name: 'Form', tone: 'fg2', dashed: true };
+  const formLabel: EndLabel = { id: 'form', y: yForm(p.form[last]), value: '', name: 'Form', tone: 'fg2' };
 
   const flags = events.map((e) => ({ key: e.date + e.label, ms: dateMs(e.date), label: e.label, emphasis: e.priority === 'A', kind: e.kind ?? 'event' }));
   const clipId = defs.id('plot');
@@ -360,8 +370,8 @@ function FitnessInner({
 
   return (
     <div className="relative">
-      <Header p={p} sync={sync} indexOf={indexOf} range={range} setRange={setRange} showRangeControl={showRangeControl} compact={L.compact} last={last} />
-      {L.compact && (
+      {(showHeader || showRangeControl) && <Header p={p} sync={sync} indexOf={indexOf} range={range} setRange={setRange} showRangeControl={showRangeControl} showStats={showHeader} compact={L.compact} last={last} />}
+      {L.compact && showEndLabels && (
         <div className="mb-1">
           <EndLabelRow labels={[...endLabels, formLabel]} />
         </div>
@@ -387,11 +397,10 @@ function FitnessInner({
           <g clipPath={`url(#${clipId})`}>
             {phases.map((ph, i) => (
               <AtX key={ph.startDate} ms={dateMs(ph.startDate)} msEnd={dateMs(ph.endDate) + DAY_MS} x0={x0} x1={x1} L={L}>
-                {(w) => (
+                {(w, x) => (
                   <>
-                    <motion.rect y={L.top0} height={L.form1 - L.top0} width={w} style={{ fill: T.fg1, opacity: i % 2 ? 0.012 : 0.028 }} />
-                    <line x1={0} x2={0} y1={L.top0} y2={L.form1} style={{ stroke: T.line1 }} />
-                    <PhaseLabel w={w} label={ph.label} y={L.top0 + 13} />
+                    <motion.rect y={L.top0} height={L.form1 - L.top0} width={w} style={{ fill: T.fg1, opacity: i % 2 ? 0 : 0.018 }} />
+                    <PhaseLabel w={w} x={x} left={L.left} label={ph.label} y={L.top0 + 16} />
                   </>
                 )}
               </AtX>
@@ -402,29 +411,23 @@ function FitnessInner({
           <Grid ys={yTicks.map((t) => ({ key: t.key, pos: t.pos }))} x0={L.left} x1={L.left + L.plotW} />
           <AxisY ticks={yTicks.filter((t) => t.pos > L.top0 + 2)} x={L.left - 8} />
 
-          {/* form bands */}
-          <FormBands bands={formBands} yForm={yForm} L={L} dom={formDom} defs={defs} />
+          {/* form bands (opt-in) */}
+          {showFormZones && <FormBands bands={formBands} yForm={yForm} L={L} dom={formDom} defs={defs} />}
           <Grid ys={[]} x0={L.left} x1={L.left + L.plotW} zero={yForm(0)} />
           <AxisY ticks={formTicks} x={L.left - 8} />
 
           <g clipPath={`url(#${clipId})`}>
             {showLoad && <LoadMarks paths={paths} />}
             <Reveal id={defs.id('reveal')} x={L.left} y={0} width={L.plotW} height={L.height}>
-              <Series paths={paths} defs={defs} />
+              <Series paths={paths} defs={defs} risk={showFormZones} />
             </Reveal>
             {/* selection */}
             {sel && (
               <AtX ms={dateMs(sel.from) - DAY_MS / 2} msEnd={dateMs(sel.to) + DAY_MS / 2} x0={x0} x1={x1} L={L}>
-                {(w) => (
-                  <>
-                    <motion.rect y={L.top0} height={L.form1 - L.top0} width={w} style={{ fill: T.a2 }} />
-                    <line x1={0} x2={0} y1={L.top0} y2={L.form1} style={{ stroke: T.a6 }} />
-                    <motion.line x1={w} x2={w} y1={L.top0} y2={L.form1} style={{ stroke: T.a6 }} />
-                  </>
-                )}
+                {(w) => <motion.rect y={L.top0} height={L.form1 - L.top0} width={w} rx={4} style={{ fill: T.fg1, opacity: 0.06 }} />}
               </AtX>
             )}
-            <rect ref={brush.rectRef} x={0} width={0} y={L.top0} height={L.form1 - L.top0} style={{ fill: T.a2, stroke: T.a6, opacity: 0 }} pointerEvents="none" />
+            <rect ref={brush.rectRef} x={0} width={0} y={L.top0} height={L.form1 - L.top0} rx={4} style={{ fill: T.fg1, fillOpacity: 0.06, opacity: 0 }} pointerEvents="none" />
           </g>
 
           {/* ramp strip */}
@@ -434,9 +437,10 @@ function FitnessInner({
           <AtX ms={todayMs} x0={x0} x1={x1} L={L}>
             {() => (
               <g pointerEvents="none">
-                <line x1={0} x2={0} y1={L.top0 - 2} y2={L.form1} style={{ stroke: T.fg3 }} />
-                <text y={L.top1 + 12} textAnchor="middle" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg2 }}>
-                  TODAY
+                <line x1={0} x2={0} y1={L.top0} y2={L.top1} style={{ stroke: T.fg4, opacity: 0.6 }} />
+                <line x1={0} x2={0} y1={L.form0} y2={L.form1} style={{ stroke: T.fg4, opacity: 0.6 }} />
+                <text y={L.top1 + 14} textAnchor="middle" dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
+                  Today
                 </text>
               </g>
             )}
@@ -450,7 +454,7 @@ function FitnessInner({
                 <motion.g key={t.key} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: dur.fast, ease: ease.out }}>
                   <AtX ms={t.key as number} x0={x0} x1={x1} L={L}>
                     {() => (
-                      <text y={L.axisY} textAnchor="middle" dominantBaseline="hanging" style={{ fontFamily: T.mono, fontSize: 11, fill: t.strong ? T.fg2 : T.fg3 }}>
+                      <text y={L.axisY} textAnchor="middle" dominantBaseline="hanging" style={{ ...TXT, fill: t.strong ? T.fg2 : T.fg3 }}>
                         {t.label}
                       </text>
                     )}
@@ -460,10 +464,10 @@ function FitnessInner({
             </AnimatePresence>
           </g>
 
-          {!L.compact && (
+          {!L.compact && showEndLabels && (
             <>
-              <EndLabels labels={endLabels} x={L.left + L.plotW + 6} top={L.top0} bottom={L.top1} />
-              <EndLabels labels={[formLabel]} x={L.left + L.plotW + 6} top={L.form0} bottom={L.form1} />
+              <EndLabels labels={endLabels} x={L.left + L.plotW + 8} top={L.top0} bottom={L.top1} />
+              <EndLabels labels={[formLabel]} x={L.left + L.plotW + 8} top={L.form0} bottom={L.form1} />
             </>
           )}
 
@@ -480,7 +484,7 @@ function FitnessInner({
 
 // ───────────── paths ─────────────
 
-function buildPaths(p: Prepared, L: Layout, [a, b, ym, lm]: Dom, yForm: (v: number) => number) {
+function buildPaths(p: Prepared, L: Layout, [a, b, ym, lm]: Dom, yForm: (v: number) => number, withRisk: boolean) {
   const n = p.ms.length;
   const k = L.plotW / (b - a || 1);
   const X = (i: number) => L.left + (p.ms[i] - a) * k;
@@ -505,8 +509,8 @@ function buildPaths(p: Prepared, L: Layout, [a, b, ym, lm]: Dom, yForm: (v: numb
     .y0(yForm(-30))
     .y1((i) => yForm(Math.min(-30, p.form[i])))
     .curve(curveMonotoneX);
-  // load lollipops: bottom 30% of the top panel
-  const lh = (L.top1 - L.top0) * 0.3;
+  // load lollipops: bottom 22% of the top panel
+  const lh = (L.top1 - L.top0) * 0.22;
   const barW = Math.max(1, Math.min(3, k * DAY_MS * 0.5));
   let loadPast = '';
   let loadFut = '';
@@ -526,7 +530,7 @@ function buildPaths(p: Prepared, L: Layout, [a, b, ym, lm]: Dom, yForm: (v: numb
     fatF: ln(p.fat, Y)(fut) ?? '',
     form: ln(p.form, yForm)(past) ?? '',
     formF: ln(p.form, yForm)(fut) ?? '',
-    risk: risk(idx(0, n - 1)) ?? '',
+    risk: withRisk ? (risk(idx(0, n - 1)) ?? '') : '',
     loadPast,
     loadFut,
     barW,
@@ -534,7 +538,7 @@ function buildPaths(p: Prepared, L: Layout, [a, b, ym, lm]: Dom, yForm: (v: numb
 }
 type Paths = ReturnType<typeof buildPaths>;
 
-const Series = memo(function Series({ paths, defs }: { paths: MotionValue<Paths>; defs: ReturnType<typeof useChartDefs> }) {
+const Series = memo(function Series({ paths, defs, risk: showRisk }: { paths: MotionValue<Paths>; defs: ReturnType<typeof useChartDefs>; risk: boolean }) {
   const d = (k: keyof Paths) => useTransform(paths, (v) => v[k] as string); // eslint-disable-line react-hooks/rules-of-hooks
   const fitArea = d('fitArea');
   const fitAreaF = d('fitAreaF');
@@ -550,15 +554,15 @@ const Series = memo(function Series({ paths, defs }: { paths: MotionValue<Paths>
     <g pointerEvents="none">
       <FadeIn>
         <motion.path d={fitArea} style={{ fill: defs.fadeAccent }} />
-        <motion.path d={fitAreaF} style={{ fill: defs.hatchAccent, opacity: 0.32 }} />
+        <motion.path d={fitAreaF} style={{ fill: defs.fadeAccent, opacity: 0.45 }} />
       </FadeIn>
-      <motion.path d={risk} style={{ fill: defs.hatchFg, opacity: 0.9 }} />
-      <motion.path d={fat} {...common} style={{ stroke: T.fg1, strokeWidth: 1.5 }} />
-      <motion.path d={fatF} {...common} style={{ stroke: T.fg1, strokeWidth: 1.5, strokeDasharray: '2 4', opacity: 0.6 }} />
+      {showRisk && <motion.path d={risk} style={{ fill: defs.hatchFg, opacity: 0.6 }} />}
+      <motion.path d={fat} {...common} style={{ stroke: T.fg3, strokeWidth: 1.25, opacity: 0.85 }} />
+      <motion.path d={fatF} {...common} style={{ stroke: T.fg4, strokeWidth: 1.25, strokeDasharray: '2 4' }} />
       <motion.path d={fit} {...common} style={{ stroke: T.accent, strokeWidth: 2 }} />
-      <motion.path d={fitF} {...common} style={{ stroke: T.accent, strokeWidth: 2, strokeDasharray: '2 4', opacity: 0.6 }} />
-      <motion.path d={form} {...common} style={{ stroke: T.fg2, strokeWidth: 1.5, strokeDasharray: '4 3' }} />
-      <motion.path d={formF} {...common} style={{ stroke: T.fg2, strokeWidth: 1.5, strokeDasharray: '2 4', opacity: 0.6 }} />
+      <motion.path d={fitF} {...common} style={{ stroke: T.accent, strokeWidth: 2, strokeDasharray: '2 4', opacity: 0.7 }} />
+      <motion.path d={form} {...common} style={{ stroke: T.fg2, strokeWidth: 1.25 }} />
+      <motion.path d={formF} {...common} style={{ stroke: T.fg3, strokeWidth: 1.25, strokeDasharray: '2 4' }} />
     </g>
   );
 });
@@ -569,24 +573,25 @@ function LoadMarks({ paths }: { paths: MotionValue<Paths> }) {
   const w = useTransform(paths, (v) => v.barW);
   return (
     <g pointerEvents="none" aria-hidden>
-      <motion.path d={past} style={{ stroke: T.fg4, strokeWidth: w, opacity: 0.42 }} />
-      <motion.path d={fut} style={{ stroke: T.fg4, strokeWidth: w, opacity: 0.3, strokeDasharray: '1 1.5' }} />
+      <motion.path d={past} style={{ stroke: T.fg4, strokeWidth: w, opacity: 0.26 }} />
+      <motion.path d={fut} style={{ stroke: T.fg4, strokeWidth: w, opacity: 0.16, strokeDasharray: '1 1.5' }} />
     </g>
   );
 }
 
 /** Positions children at the animated x of `ms` (and passes the animated width to msEnd). */
-function AtX({ ms, msEnd, x0, x1, L, children }: { ms: number; msEnd?: number; x0: MotionValue<number>; x1: MotionValue<number>; L: Layout; children: (w: MotionValue<number>) => React.ReactNode }) {
+function AtX({ ms, msEnd, x0, x1, L, children }: { ms: number; msEnd?: number; x0: MotionValue<number>; x1: MotionValue<number>; L: Layout; children: (w: MotionValue<number>, x: MotionValue<number>) => React.ReactNode }) {
   const x = useTransform([x0, x1] as MotionValue<number>[], ([a, b]: number[]) => L.left + ((ms - a) / (b - a)) * L.plotW);
   const w = useTransform([x0, x1] as MotionValue<number>[], ([a, b]: number[]) => (msEnd == null ? 0 : Math.max(0, ((msEnd - ms) / (b - a)) * L.plotW)));
-  return <motion.g style={{ x }}>{children(w)}</motion.g>;
+  return <motion.g style={{ x }}>{children(w, x)}</motion.g>;
 }
 
-function PhaseLabel({ w, label, y }: { w: MotionValue<number>; label: string; y: number }) {
-  const op = useTransform(w, (v) => (v > label.length * 6.6 + 12 ? 1 : 0));
+function PhaseLabel({ w, x, left, label, y }: { w: MotionValue<number>; x: MotionValue<number>; left: number; label: string; y: number }) {
+  // Only when the band's start is inside the plot (a band clipped on the left would show a truncated label).
+  const op = useTransform([w, x] as MotionValue<number>[], ([wv, xv]: number[]) => (wv > label.length * 6.6 + 16 && xv >= left - 1 ? 1 : 0));
   return (
-    <motion.text x={6} y={y} style={{ opacity: op, fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }}>
-      {label.toUpperCase()}
+    <motion.text x={8} y={y} style={{ opacity: op, ...TXT, fill: T.fg3 }}>
+      {label}
     </motion.text>
   );
 }
@@ -602,7 +607,7 @@ function Flags({ flags, x0, x1, L, toX }: { flags: { key: string; ms: number; la
           return (
             <motion.g key={f.key} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: dur.fast }}>
               <AtX ms={src.ms} x0={x0} x1={x1} L={L}>
-                {() => <EventFlags items={[{ ...f, x: 0, label: f.label }]} y0={L.top0 - f.row * 13} y1={L.form1} flipRight={L.left + L.plotW - toX(src.ms)} />}
+                {() => <EventFlags items={[{ ...f, x: 0, label: f.label }]} y0={L.top0 - f.row * 16} y1={L.form1} flipRight={L.left + L.plotW - toX(src.ms)} />}
               </AtX>
             </motion.g>
           );
@@ -625,10 +630,10 @@ function FormBands({ bands, yForm, L, dom, defs }: { bands: FormBand[]; yForm: (
         return (
           <g key={b.zone}>
             {fill && <rect x={L.left} width={L.plotW} y={y0} height={y1 - y0} style={{ fill }} />}
-            {b.zone === 'overreaching' && <rect x={L.left} width={L.plotW} y={y0} height={y1 - y0} style={{ fill: defs.hatchFg, opacity: 0.14 }} />}
-            {y1 - y0 >= 11 && (
-              <text x={L.left + 6} y={(y0 + y1) / 2} dominantBaseline="central" style={{ fontFamily: T.sans, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3, opacity: 0.75 }}>
-                {b.label.toUpperCase()}
+            {b.zone === 'overreaching' && <rect x={L.left} width={L.plotW} y={y0} height={y1 - y0} style={{ fill: defs.hatchFg, opacity: 0.3 }} />}
+            {y1 - y0 >= 16 && (
+              <text x={L.left + 8} y={(y0 + y1) / 2} dominantBaseline="central" style={{ ...TXT, fill: T.fg3, opacity: 0.8 }}>
+                {b.label}
               </text>
             )}
           </g>
@@ -639,8 +644,9 @@ function FormBands({ bands, yForm, L, dom, defs }: { bands: FormBand[]; yForm: (
 }
 
 function RampStrip({ p, L, x0, x1, defs, clipId }: { p: Prepared; L: Layout; x0: MotionValue<number>; x1: MotionValue<number>; defs: ReturnType<typeof useChartDefs>; clipId: string }) {
-  const mid = (L.ramp0 + L.ramp1) / 2 + 4;
+  const mid = (L.ramp0 + L.ramp1) / 2;
   const scale = (L.ramp1 - L.ramp0) / 2 / 10;
+  void defs;
   const build = (filter: (r: number) => boolean) =>
     useTransform([x0, x1] as MotionValue<number>[], ([a, b]: number[]) => { // eslint-disable-line react-hooks/rules-of-hooks
       const k = L.plotW / (b - a);
@@ -660,17 +666,15 @@ function RampStrip({ p, L, x0, x1, defs, clipId }: { p: Prepared; L: Layout; x0:
   const risky = build((r) => r > 8);
   return (
     <g aria-hidden>
-      <text x={L.left} y={L.ramp0 - 4} style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }}>
-        RAMP / WK
-        <tspan dx={8} style={{ fontWeight: 400, letterSpacing: 0 }}>
-          ≤5 normal · 5–8 aggressive · &gt;8 risky
-        </tspan>
+      <text x={L.left} y={L.ramp0 - 8} style={{ ...TXT, fill: T.fg3 }}>
+        <title>Weekly fitness ramp: up to 5 normal, 5–8 aggressive, above 8 risky</title>
+        Ramp per week
       </text>
-      <line x1={L.left} x2={L.left + L.plotW} y1={mid} y2={mid} style={{ stroke: T.line2 }} />
+      <line x1={L.left} x2={L.left + L.plotW} y1={mid} y2={mid} style={{ stroke: T.line1 }} />
       <g clipPath={`url(#${clipId})`}>
-        <motion.path d={normal} style={{ fill: T.fg4 }} />
-        <motion.path d={aggressive} style={{ fill: T.fg1 }} />
-        <motion.path d={risky} style={{ fill: defs.hatchFgDense, stroke: T.fg1, strokeWidth: 1 }} />
+        <motion.path d={normal} style={{ fill: T.fg4, opacity: 0.5 }} />
+        <motion.path d={aggressive} style={{ fill: T.fg3 }} />
+        <motion.path d={risky} style={{ fill: T.fg1 }} />
       </g>
     </g>
   );
@@ -687,7 +691,7 @@ function Overlay({ p, sync, indexOf, toX, yTop, yForm, L }: { p: Prepared; sync:
   return (
     <g pointerEvents="none">
       <CrosshairRule x={Math.round(x) + 0.5} y0={L.top0} y1={L.form1} />
-      <CrosshairDot x={x} y={yTop(p.fat[i])} tone="fg1" />
+      <CrosshairDot x={x} y={yTop(p.fat[i])} tone="fg3" />
       <CrosshairDot x={x} y={yTop(p.fit[i])} tone="accent" />
       <CrosshairDot x={x} y={yForm(p.form[i])} tone="fg2" />
     </g>
@@ -705,9 +709,9 @@ function FitnessTooltip({ p, sync, indexOf, toX, L }: { p: Prepared; sync: Hover
   const zone = DEFAULT_FORM_BANDS.find((b) => p.form[j] > b.min && p.form[j] <= b.max);
   const ramp = j >= 7 ? p.fit[j] - p.fit[j - 7] : null;
   const rows: TooltipRow[] = [
-    { label: 'Fitness', value: fmtNum(p.fit[j]), strong: true, swatch: { tone: 'accent', kind: 'area' } },
-    { label: 'Fatigue', value: fmtNum(p.fat[j]), swatch: { tone: 'fg1', width: 1.5 } },
-    { label: 'Form', value: fmtNum(p.form[j]), hint: zone?.label, swatch: { tone: 'fg2', width: 1.5, dash: '4 3' } },
+    { label: 'Fitness', value: fmtNum(p.fit[j]), strong: true, swatch: { tone: 'accent', width: 2 } },
+    { label: 'Fatigue', value: fmtNum(p.fat[j]), swatch: { tone: 'fg3', width: 1.5 } },
+    { label: 'Form', value: fmtNum(p.form[j]), hint: zone?.label, swatch: { tone: 'fg2', width: 1.5 } },
     { label: projected ? 'Planned load' : 'Load', value: fmtNum(projected ? p.planned[j] : p.load[j]), muted: !(projected ? p.planned[j] : p.load[j]) },
   ];
   if (ramp != null) rows.push({ label: 'Ramp / 7d', value: fmtSigned(ramp, 1), muted: Math.abs(ramp) <= 5 });
@@ -718,8 +722,8 @@ function FitnessTooltip({ p, sync, indexOf, toX, L }: { p: Prepared; sync: Hover
         title={
           <span className="flex items-center gap-2">
             {fmtDayLong(p.dates[j])}
-            {projected && <span className="text-micro text-fg-3">proj.</span>}
-            {j === p.todayIdx && <span className="text-micro text-accent-ink">today</span>}
+            {projected && <span className="text-fg-3">projected</span>}
+            {j === p.todayIdx && <span className="text-fg-3">today</span>}
           </span>
         }
         rows={rows}
@@ -728,7 +732,7 @@ function FitnessTooltip({ p, sync, indexOf, toX, L }: { p: Prepared; sync: Hover
   );
 }
 
-function Header({ p, sync, indexOf, range, setRange, showRangeControl, compact, last }: { p: Prepared; sync: HoverSync<LocalDate>; indexOf: Map<LocalDate, number>; range: FitnessRange; setRange: (r: FitnessRange) => void; showRangeControl: boolean; compact: boolean; last: number }) {
+function Header({ p, sync, indexOf, range, setRange, showRangeControl, showStats, compact, last }: { p: Prepared; sync: HoverSync<LocalDate>; indexOf: Map<LocalDate, number>; range: FitnessRange; setRange: (r: FitnessRange) => void; showRangeControl: boolean; showStats: boolean; compact: boolean; last: number }) {
   const k = useHoverValue(sync);
   const hi = k == null ? undefined : indexOf.get(k);
   const i = hi ?? p.todayIdx;
@@ -736,16 +740,20 @@ function Header({ p, sync, indexOf, range, setRange, showRangeControl, compact, 
   const zone = DEFAULT_FORM_BANDS.find((b) => p.form[i] > b.min && p.form[i] <= b.max);
   void last;
   return (
-    <div className="mb-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-      <div className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-2">
-        <Stat label="Fitness" tone="accent" value={fmtNum(p.fit[i])} delta={`${fmtSigned(ramp, 1)} /wk`} caution={ramp > 8} big={!compact} />
-        <Stat label="Fatigue" value={fmtNum(p.fat[i])} big={!compact} />
-        <Stat label="Form" value={fmtNum(p.form[i])} delta={zone?.label} big={!compact} />
-        <div className="pb-1 text-label text-fg-3">
-          {hi == null ? 'Today' : fmtDayLong(p.dates[i])}
-          {i > p.todayIdx && <span className="ml-1.5 text-micro ">proj.</span>}
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+      {showStats ? (
+        <div className="flex min-w-0 flex-wrap items-end gap-x-8 gap-y-2">
+          <Stat label="Fitness" tone="accent" value={fmtNum(p.fit[i])} delta={`${fmtSigned(ramp, 1)} / wk`} caution={ramp > 8} big={!compact} />
+          <Stat label="Fatigue" value={fmtNum(p.fat[i])} big={!compact} />
+          <Stat label="Form" value={fmtNum(p.form[i])} delta={zone?.label} big={!compact} />
+          <div className="pb-0.5 text-label text-fg-3">
+            {hi == null ? 'Today' : fmtDayLong(p.dates[i])}
+            {i > p.todayIdx && <span className="ml-1.5">projected</span>}
+          </div>
         </div>
-      </div>
+      ) : (
+        <span />
+      )}
       {showRangeControl && <ChartSegmented ariaLabel="Range" value={range} options={FITNESS_RANGES} onChange={setRange} />}
     </div>
   );
@@ -753,17 +761,17 @@ function Header({ p, sync, indexOf, range, setRange, showRangeControl, compact, 
 
 function Stat({ label, value, delta, tone, caution, big }: { label: string; value: string; delta?: string; tone?: 'accent'; caution?: boolean; big?: boolean }) {
   return (
-    <div className="flex flex-col">
-      <span className="flex items-center gap-1.5 text-micro text-fg-3">
+    <div className="flex flex-col gap-0.5">
+      <span className="flex items-center gap-1.5 text-label text-fg-3">
         <svg width="10" height="6" aria-hidden>
-          <line x1="0" x2="10" y1="3" y2="3" style={{ stroke: tone === 'accent' ? T.accent : label === 'Form' ? T.fg2 : T.fg1, strokeWidth: 2, strokeDasharray: label === 'Form' ? '3 2' : undefined }} />
+          <line x1="0" x2="10" y1="3" y2="3" strokeLinecap="round" style={{ stroke: tone === 'accent' ? T.accent : label === 'Form' ? T.fg2 : T.fg3, strokeWidth: tone === 'accent' ? 2 : 1.5 }} />
         </svg>
         {label}
       </span>
       <span className="flex items-baseline gap-2">
-        <span className={`num ${big ? 'text-stat-md' : 'text-stat-sm'} ${tone === 'accent' ? 'text-accent-ink' : 'text-fg-1'}`}>{value}</span>
+        <span className={`num text-fg-1 ${big && tone === 'accent' ? 'text-stat-md' : 'text-stat-sm'}`}>{value}</span>
         {delta && (
-          <span className="inline-flex items-center gap-1 text-mono-sm text-fg-2">
+          <span className="num inline-flex items-center gap-1 text-label text-fg-3">
             {caution && <CautionGlyph />}
             {delta}
           </span>

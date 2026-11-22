@@ -1,11 +1,13 @@
 /**
- * Radial and comparison readouts: FormDial (form zones + ticker), Gauge (0–100 readiness),
- * ProgressRing (done / planned), CompareBars (this vs last, last 4 vs prior 4).
+ * Readouts: StatBar (number + thin bar — the v2 default), FormDial (form zones + ticker),
+ * Gauge (0–100 readiness), ProgressRing (done / planned), CompareBars (this vs last).
+ * v2 (DESIGN_V2, research rule 12): dials and rings are discouraged — when they are used they
+ * are as plain as possible: a thin neutral track, a small accent arc, no ticks or scale labels.
+ * Prefer `StatBar` for new UI.
  */
-import { useEffect, useId } from 'react';
+import { useEffect, useId, type ReactNode } from 'react';
 import { animate, motion, useMotionValue, useReducedMotion } from 'motion/react';
 import type { FormZone } from '@cadence/core';
-import { ChartDefs, useChartDefs } from './core/ChartDefs';
 import { Ticker } from './core/animated';
 import { DeltaBadge } from './core/controls';
 import { T } from './core/tokens';
@@ -37,13 +39,12 @@ export interface FormDialProps {
   className?: string;
 }
 
-/** Form gauge: zone segments on a 240° arc, a springing marker and a ticker readout. */
+/** Form dial: a thin neutral 240° track split at the zone edges, the current zone as a small arc, a springing dot and a ticker readout. */
 export function FormDial({ value, zone, min = -45, max = 35, bands = DEFAULT_FORM_BANDS, size = 200, label = 'Form', caption, className }: FormDialProps) {
-  const defs = useChartDefs();
   const reduce = useReducedMotion();
   const cx = size / 2;
   const cy = size / 2;
-  const r = size / 2 - 14;
+  const r = size / 2 - 8;
   const ang = (v: number) => START + ((Math.max(min, Math.min(max, v)) - min) / (max - min)) * SWEEP;
   const mv = useMotionValue(reduce ? ang(value) : START);
   useEffect(() => {
@@ -60,37 +61,25 @@ export function FormDial({ value, zone, min = -45, max = 35, bands = DEFAULT_FOR
   return (
     <div className={`relative inline-block ${className ?? ''}`} style={{ width: size, height: size * 0.86 }} role="meter" aria-valuemin={min} aria-valuemax={max} aria-valuenow={Math.round(value)} aria-label={`${label} ${fmtNum(value)}, ${zoneLabel}`}>
       <svg width={size} height={size * 0.86} className="block overflow-visible" aria-hidden>
-        <ChartDefs ids={defs} />
         {bands.map((b) => {
           const lo = Math.max(min, b.min);
           const hi = Math.min(max, b.max);
           if (hi <= lo) return null;
-          const a0 = ang(lo) + 1.2;
-          const a1 = ang(hi) - 1.2;
+          const a0 = ang(lo) + 1.5;
+          const a1 = ang(hi) - 1.5;
           const on = b.zone === active;
-          return (
-            <g key={b.zone}>
-              <path d={arc(cx, cy, r, a0, a1)} fill="none" strokeLinecap="butt" style={{ stroke: on ? (b.zone === 'fresh' || b.zone === 'productive' ? T.accent : T.fg2) : T.s3, strokeWidth: 10, transition: 'stroke var(--dur-base) var(--ease-out)' }} />
-              {b.zone === 'overreaching' && <path d={arc(cx, cy, r, a0, a1)} fill="none" style={{ stroke: defs.hatchFg, strokeWidth: 10, opacity: on ? 0.9 : 0.5 }} />}
-            </g>
-          );
+          return <path key={b.zone} d={arc(cx, cy, r, a0, a1)} fill="none" strokeLinecap="round" style={{ stroke: on ? T.accent : T.s3, strokeWidth: 3, transition: 'stroke var(--dur-base) var(--ease-out)' }} />;
         })}
-        {[min, 0, max].map((v) => (
-          <text key={v} x={cx + (r + (v === 0 ? 14 : 0)) * Math.cos(rad(ang(v)))} y={cy + (r + (v === 0 ? 14 : 0)) * Math.sin(rad(ang(v))) + (v === 0 ? 0 : 18)} textAnchor="middle" dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg3 }}>
-            {fmtNum(v)}
-          </text>
-        ))}
         <motion.g style={{ rotate: mv, originX: '50%', originY: '50%' }}>
           <rect width={size} height={size} fill="none" />
-          <line x1={cx} x2={cx} y1={cy - r - 9} y2={cy - r + 9} style={{ stroke: T.fg1, strokeWidth: 3 }} strokeLinecap="round" />
-          <circle cx={cx} cy={cy - r} r={3} style={{ fill: T.bg }} />
+          <circle cx={cx} cy={cy - r} r={5} style={{ fill: T.fg1, stroke: T.bg, strokeWidth: 2.5 }} />
         </motion.g>
       </svg>
       <div className="absolute inset-x-0 flex flex-col items-center" style={{ top: size * 0.3 }}>
-        <span className="text-micro text-fg-3">{label}</span>
+        <span className="text-label text-fg-3">{label}</span>
         <Ticker value={value} format={(v) => fmtNum(v)} className={size >= 180 ? 'text-stat-lg text-fg-1' : 'text-stat-md text-fg-1'} ariaLive />
-        <span className={`mt-1 text-micro ${active === 'fresh' || active === 'productive' ? 'text-accent-ink' : 'text-fg-2'}`}>{zoneLabel}</span>
-        {caption && <span className="mt-0.5 text-mono-sm text-fg-3">{caption}</span>}
+        <span className="mt-1 text-label text-fg-2">{zoneLabel}</span>
+        {caption && <span className="num mt-0.5 text-label text-fg-3">{caption}</span>}
       </div>
     </div>
   );
@@ -108,30 +97,26 @@ export interface GaugeProps {
   className?: string;
 }
 
-/** Generic arc gauge (e.g. readiness 0–100): accent value arc that springs in. */
+/** Generic arc gauge (e.g. readiness 0–100): thin neutral track, a thin accent value arc that springs in, no ticks. */
 export function Gauge({ value, min = 0, max = 100, label, format = (v) => fmtNum(v), unit, size = 160, caption, className }: GaugeProps) {
   const reduce = useReducedMotion();
   const cx = size / 2;
-  const r = size / 2 - 10;
+  const r = size / 2 - 6;
   const f = Math.max(0, Math.min(1, (value - min) / (max - min)));
   const d = arc(cx, cx, r, START, START + SWEEP);
   return (
     <div className={`relative inline-block ${className ?? ''}`} style={{ width: size, height: size * 0.86 }} role="meter" aria-valuemin={min} aria-valuemax={max} aria-valuenow={value} aria-label={`${label} ${format(value)}`}>
       <svg width={size} height={size * 0.86} className="block" aria-hidden>
-        <path d={d} fill="none" strokeLinecap="round" style={{ stroke: T.s3, strokeWidth: 8 }} />
-        <motion.path d={d} fill="none" strokeLinecap="round" style={{ stroke: T.accent, strokeWidth: 8 }} initial={{ pathLength: reduce ? f : 0 }} animate={{ pathLength: f }} transition={reduce ? { duration: 0 } : spring.gentle} />
-        {Array.from({ length: 11 }, (_, i) => {
-          const a = START + (i / 10) * SWEEP;
-          return <line key={i} x1={cx + (r - 9) * Math.cos(rad(a))} y1={cx + (r - 9) * Math.sin(rad(a))} x2={cx + (r - (i % 5 ? 12 : 15)) * Math.cos(rad(a))} y2={cx + (r - (i % 5 ? 12 : 15)) * Math.sin(rad(a))} style={{ stroke: T.line3 }} />;
-        })}
+        <path d={d} fill="none" strokeLinecap="round" style={{ stroke: T.s3, strokeWidth: 3 }} />
+        <motion.path d={d} fill="none" strokeLinecap="round" style={{ stroke: T.accent, strokeWidth: 3 }} initial={{ pathLength: reduce ? f : 0 }} animate={{ pathLength: f }} transition={reduce ? { duration: 0 } : spring.gentle} />
       </svg>
       <div className="absolute inset-x-0 flex flex-col items-center" style={{ top: size * 0.3 }}>
-        <span className="text-micro text-fg-3">{label}</span>
+        <span className="text-label text-fg-3">{label}</span>
         <span className="flex items-baseline gap-1">
           <Ticker value={value} format={format} className="text-stat-md text-fg-1" ariaLive />
           {unit && <span className="text-label text-fg-3">{unit}</span>}
         </span>
-        {caption && <span className="text-mono-sm text-fg-3">{caption}</span>}
+        {caption && <span className="num text-label text-fg-3">{caption}</span>}
       </div>
     </div>
   );
@@ -148,11 +133,11 @@ export interface ProgressRingProps {
   className?: string;
 }
 
-/** Done / planned ring. Overshoot beyond 100 % continues as a thinner fg-1 inner arc. */
-export function ProgressRing({ done, planned, size = 44, stroke = 4, label, ariaLabel, className }: ProgressRingProps) {
+/** Done / planned ring: thin neutral track, accent arc. Overshoot beyond 100 % continues as a hairline fg-3 inner arc. */
+export function ProgressRing({ done, planned, size = 44, stroke = 3, label, ariaLabel, className }: ProgressRingProps) {
   const reduce = useReducedMotion();
   const f = planned > 0 ? done / planned : done > 0 ? 1 : 0;
-  const r = (size - stroke) / 2;
+  const r = (size - Math.max(stroke, 2)) / 2;
   const c = size / 2;
   const ring = `M${c} ${c - r}A${r} ${r} 0 1 1 ${c - 0.01} ${c - r}`;
   const r2 = r - stroke - 1.5;
@@ -163,9 +148,9 @@ export function ProgressRing({ done, planned, size = 44, stroke = 4, label, aria
       <svg width={size} height={size} className="absolute inset-0" aria-hidden>
         <path d={ring} fill="none" style={{ stroke: T.s3, strokeWidth: stroke }} />
         <motion.path d={ring} fill="none" strokeLinecap="round" style={{ stroke: T.accent, strokeWidth: stroke }} initial={{ pathLength: reduce ? Math.min(1, f) : 0 }} animate={{ pathLength: Math.min(1, f) }} transition={t} />
-        {f > 1 && r2 > 2 && <motion.path d={ring2} fill="none" strokeLinecap="round" style={{ stroke: T.fg1, strokeWidth: 1.5 }} initial={{ pathLength: 0 }} animate={{ pathLength: Math.min(1, f - 1) }} transition={{ ...t, delay: reduce ? 0 : 0.3 }} />}
+        {f > 1 && r2 > 2 && <motion.path d={ring2} fill="none" strokeLinecap="round" style={{ stroke: T.fg3, strokeWidth: 1 }} initial={{ pathLength: 0 }} animate={{ pathLength: Math.min(1, f - 1) }} transition={{ ...t, delay: reduce ? 0 : 0.3 }} />}
       </svg>
-      {label !== null && size >= 36 && <span className={`relative ${size >= 56 ? 'text-mono' : 'text-mono-sm'} text-fg-1`}>{label ?? `${Math.round(f * 100)}`}</span>}
+      {label !== null && size >= 36 && <span className={`num relative ${size >= 56 ? 'text-body-sm' : 'text-label'} text-fg-1`}>{label ?? `${Math.round(f * 100)}`}</span>}
     </span>
   );
 }
@@ -187,45 +172,45 @@ export interface CompareBarsProps {
   className?: string;
 }
 
-/** Paired horizontal bars: current (solid) vs previous (outline), with a delta badge. */
+/** Paired thin horizontal bars: current (fg-2, or accent) vs previous (surface step), with a delta. */
 export function CompareBars({ items, currentLabel = 'This week', previousLabel = 'Last week', className }: CompareBarsProps) {
   const reduce = useReducedMotion();
   const id = useId();
   return (
     <div className={`min-w-0 ${className ?? ''}`} role="table" aria-label={`${currentLabel} versus ${previousLabel}`}>
-      <div className="mb-2 flex items-center gap-4 text-micro text-fg-3" aria-hidden>
+      <div className="mb-3 flex items-center gap-5 text-label text-fg-3" aria-hidden>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-3 rounded-xs bg-fg-1" />
+          <span className="h-1.5 w-3 rounded-full bg-fg-2" />
           {currentLabel}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-3 rounded-xs border border-fg-3" />
+          <span className="h-1.5 w-3 rounded-full bg-surface-active" />
           {previousLabel}
         </span>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {items.map((it, i) => {
           const fmt = it.format ?? ((v: number) => fmtNum(v));
           const m = Math.max(it.current, it.previous) || 1;
           const delta = it.previous ? it.current / it.previous - 1 : null;
           return (
             <div key={it.label} role="row" className="grid grid-cols-[minmax(4.5rem,auto)_minmax(0,1fr)_auto] items-center gap-x-3">
-              <span role="rowheader" className="text-label text-fg-2">
+              <span role="rowheader" className="text-body-sm text-fg-2">
                 {it.label}
               </span>
               <div className="flex flex-col gap-1" aria-hidden>
-                <div className="h-2.5 rounded-xs">
+                <div className="h-1.5 rounded-full">
                   <motion.div
-                    className={`h-full origin-left rounded-xs ${it.accent ? 'bg-accent' : 'bg-fg-1'}`}
+                    className={`h-full origin-left rounded-full ${it.accent ? 'bg-accent' : 'bg-fg-2'}`}
                     style={{ width: `${(it.current / m) * 100}%` }}
                     initial={reduce ? false : { scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ ...spring.smooth, delay: reduce ? 0 : i * 0.04 }}
                   />
                 </div>
-                <div className="h-2.5">
+                <div className="h-1.5">
                   <motion.div
-                    className="h-full origin-left rounded-xs border border-fg-3"
+                    className="h-full origin-left rounded-full bg-surface-active"
                     style={{ width: `${(it.previous / m) * 100}%` }}
                     initial={reduce ? false : { scaleX: 0 }}
                     animate={{ scaleX: 1 }}
@@ -234,7 +219,7 @@ export function CompareBars({ items, currentLabel = 'This week', previousLabel =
                 </div>
               </div>
               <div role="cell" className="flex min-w-28 flex-col items-end">
-                <span className="text-mono text-fg-1">
+                <span className="num text-body-sm text-fg-1">
                   {fmt(it.current)}
                   {it.unit && <span className="text-fg-3"> {it.unit}</span>}
                   <span className="text-fg-3"> / {fmt(it.previous)}</span>
@@ -249,3 +234,54 @@ export function CompareBars({ items, currentLabel = 'This week', previousLabel =
   );
 }
 
+
+export interface StatBarProps {
+  label: string;
+  value: number;
+  /** Bar scale: the value fills (value − min) / (max − min) of the track. */
+  max: number;
+  min?: number;
+  format?: (v: number) => string;
+  unit?: string;
+  /** One line of context under the bar (e.g. "of 9:45" or a zone name). */
+  caption?: ReactNode;
+  /** Optional reference on the bar (e.g. the plan or a target), drawn as a short fg-3 tick. */
+  marker?: number;
+  /** 'fg' (default, neutral) or 'accent' for the page's one hero quantity. */
+  tone?: 'fg' | 'accent';
+  /** Value size: 'md' = stat-md (hero), 'sm' = stat-sm (default). */
+  size?: 'sm' | 'md';
+  ariaLabel?: string;
+  className?: string;
+}
+
+/**
+ * StatBar — the plain v2 alternative to a gauge or ring (research rule 12: position and
+ * length beat angles): label, value, a 4px bar and at most one line of context.
+ */
+export function StatBar({ label, value, max, min = 0, format = (v) => fmtNum(v), unit, caption, marker, tone = 'fg', size = 'sm', ariaLabel, className }: StatBarProps) {
+  const reduce = useReducedMotion();
+  const span = max - min || 1;
+  const f = Math.max(0, Math.min(1, (value - min) / span));
+  const m = marker == null ? null : Math.max(0, Math.min(1, (marker - min) / span));
+  return (
+    <div className={`flex min-w-0 flex-col gap-1 ${className ?? ''}`} role="meter" aria-valuemin={min} aria-valuemax={max} aria-valuenow={value} aria-label={ariaLabel ?? `${label} ${format(value)}${unit ? ` ${unit}` : ''}`}>
+      <span className="text-label text-fg-3">{label}</span>
+      <span className="flex items-baseline gap-1">
+        <Ticker value={value} format={format} className={`${size === 'md' ? 'text-stat-md' : 'text-stat-sm'} text-fg-1`} />
+        {unit && <span className="text-body-sm text-fg-3">{unit}</span>}
+      </span>
+      <span className="relative mt-1 block h-1 w-full rounded-full bg-surface-3" aria-hidden>
+        <motion.span
+          className={`absolute inset-y-0 left-0 block origin-left rounded-full ${tone === 'accent' ? 'bg-accent' : 'bg-fg-2'}`}
+          style={{ width: `${f * 100}%` }}
+          initial={reduce ? false : { scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={reduce ? { duration: 0 } : spring.smooth}
+        />
+        {m != null && <span className="absolute -inset-y-0.5 block w-px rounded-full bg-fg-3" style={{ left: `${m * 100}%` }} />}
+      </span>
+      {caption && <span className="num text-label text-fg-3">{caption}</span>}
+    </div>
+  );
+}

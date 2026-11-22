@@ -2,7 +2,7 @@
  * App chrome: rail (desktop/tablet) or glass bottom bar (mobile), the `main` view-transition
  * surface, global shortcuts, palette wiring and focus management after navigation.
  */
-import { useGarminStatusSync, useSettingsSync } from '@/lib/queries/shared';
+import { useGarminStatusSync, useSettings, useSettingsSync } from '@/lib/queries/shared';
 import { Outlet, useRouter, useRouterState, type ErrorComponentProps } from '@tanstack/react-router';
 import { ArrowLeft, Compass, RotateCcw } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -22,7 +22,7 @@ import { installDefaultCommands } from './commands';
 import { MobileBar } from './MobileBar';
 import { Rail, RAIL_COLLAPSED, RAIL_EXPANDED } from './Rail';
 import { useShortcut } from './shortcuts';
-import { toggleTheme } from './theme';
+import { syncAccentFromServer, toggleTheme } from './theme';
 
 /** Shared rail toggle so the palette, `[` and the button agree. */
 let railToggle: () => void = () => {};
@@ -64,6 +64,9 @@ export function AppShell() {
   const router = useRouter();
   useSettingsSync();
   useGarminStatusSync();
+  // The account's accent (Settings.accent) wins over this device's cached copy once settings load.
+  const serverAccent = useSettings().data?.accent;
+  useEffect(() => syncAccentFromServer(serverAccent), [serverAccent]);
   const mobile = useIsMobile();
   const wide = useIsWide();
   const [pref, setPref] = useLocalStorage<'expanded' | 'collapsed'>('cadence.rail', 'expanded');

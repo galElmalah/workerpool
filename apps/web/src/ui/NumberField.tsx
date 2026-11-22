@@ -99,7 +99,7 @@ export function NumberField({
         className={cn(
           controlStyles(size),
           'group/nf flex items-center gap-0 px-0 focus-within:outline-2 focus-within:outline-offset-[-1px] focus-within:outline-focus',
-          error && 'border-dashed border-fg-1',
+          error && 'border-dashed border-fg-2',
         )}
       >
         <BaseNumberField.Decrement className={stepBtn} aria-label="Decrease">

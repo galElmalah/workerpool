@@ -3,6 +3,9 @@
  * /trends/wellness): HRV (daily dots, 7-day mean, 60-day baseline band ±1 SD), resting HR
  * (same treatment), sleep (bars + 8 h reference), weight (dots + 7-day mean). Optional faint
  * daily-load bars under HRV to read load → HRV response. No dual axes: one panel per measure.
+ * v2: the first panel's 7-day mean (HRV by default) is the one accent line; everything else is
+ * neutral (other means fg-1, daily values small fg-4 dots, the normal band a faint wash),
+ * sentence-case panel labels, ≤ 2 gridlines per panel.
  */
 import { useCallback, useId, useMemo } from 'react';
 import { area, curveMonotoneX, line } from 'd3-shape';
@@ -14,7 +17,7 @@ import { ChartFrame } from './core/ChartFrame';
 import { dateTicks, thinTicks } from './core/Axis';
 import { EndLabels } from './core/EndLabels';
 import { FadeIn, Reveal } from './core/animated';
-import { T } from './core/tokens';
+import { T, TXT } from './core/tokens';
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -106,7 +109,7 @@ function WellInner({ days, metrics = [], loads, baselineDays = 60, rollingDays =
   const id = useId();
   const sync = useHoverSync<LocalDate>(ext);
   const compact = width < 480;
-  const L = { left: 36, right: compact ? 8 : 104, gap: 22, labelH: 14 };
+  const L = { left: 40, right: compact ? 8 : 96, gap: 32, labelH: 20 };
   const plotW = Math.max(10, width - L.left - L.right);
   const ms = useMemo(() => days.map((d) => dateMs(d.date)), [days]);
   const x0 = ms[0];
@@ -133,6 +136,7 @@ function WellInner({ days, metrics = [], loads, baselineDays = 60, rollingDays =
     return out.filter((s) => s.raw.some((v) => v != null));
   }, [days, metrics, rollingDays, baselineDays]);
 
+  const heroKey = series[0]?.key;
   const panels = series.map((s, i) => {
     const top = i * (panelHeight + L.gap) + L.labelH;
     const bot = top + panelHeight;
@@ -176,17 +180,17 @@ function WellInner({ days, metrics = [], loads, baselineDays = 60, rollingDays =
                 .curve(curveMonotoneX)(days.map((_, i) => i)) ?? ''
             : '';
           const lastI = s.roll.reduce<number>((a, v, i) => (v != null ? i : a), -1);
-          const ticks = scaleLinear().domain([lo, hi]).ticks(3).filter((v) => Y(v) > top + 6 && Y(v) < bot - 4);
+          const ticks = scaleLinear().domain([lo, hi]).ticks(2).filter((v) => Y(v) > top + 6 && Y(v) < bot - 4).slice(-2);
           return (
             <g key={s.key}>
-              <text x={L.left} y={top - 5} style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg2 }}>
-                {s.label.toUpperCase()}
-                <tspan dx={6} style={{ fontWeight: 400, letterSpacing: 0, fill: T.fg3 }}>
+              <text x={L.left} y={top - 8} style={{ ...TXT, fill: T.fg2, fontWeight: 500 }}>
+                {s.label}
+                <tspan dx={6} style={{ fontWeight: 400, fill: T.fg3 }}>
                   {s.unit}
-                  {s.band && !compact ? ` · band = ${baselineDays}-day normal` : ''}
+                  {s.band && !compact && pi === 0 ? ` · shaded = ${baselineDays}-day normal` : ''}
                 </tspan>
                 {compact && lastI >= 0 && (
-                  <tspan dx={8} style={{ fontFamily: T.mono, fontWeight: 500, letterSpacing: 0, fill: T.fg1 }}>
+                  <tspan dx={8} style={{ fontWeight: 500, fill: T.fg1 }}>
                     {s.fmt(s.roll[lastI]!)} <tspan style={{ fill: T.fg3 }}>{rollingDays}-d avg</tspan>
                   </tspan>
                 )}
@@ -194,50 +198,49 @@ function WellInner({ days, metrics = [], loads, baselineDays = 60, rollingDays =
               {ticks.map((v) => (
                 <g key={v} aria-hidden>
                   <line x1={L.left} x2={L.left + plotW} y1={Y(v)} y2={Y(v)} style={{ stroke: T.line1 }} shapeRendering="crispEdges" />
-                  <text x={L.left - 8} y={Y(v)} textAnchor="end" dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }}>
+                  <text x={L.left - 10} y={Y(v)} textAnchor="end" dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
                     {v}
                   </text>
                 </g>
               ))}
-              <line x1={L.left} x2={L.left + plotW} y1={bot} y2={bot} style={{ stroke: T.line2 }} shapeRendering="crispEdges" />
               {s.key === 'hrv' && loads && (
                 <g aria-hidden>
                   {days.map((d, i) => {
                     const l = loadMap.get(d.date) ?? 0;
                     if (!l) return null;
                     const h = (l / loadMax) * panelHeight * 0.32;
-                    return <rect key={d.date} x={X(ms[i]) - barW / 2} y={bot - h} width={barW} height={h} style={{ fill: T.a3 }} />;
+                    return <rect key={d.date} x={X(ms[i]) - barW / 2} y={bot - h} width={barW} height={h} rx={Math.min(1, barW / 2)} style={{ fill: T.fg4, opacity: 0.3 }} />;
                   })}
                 </g>
               )}
               {bandArea && (
                 <FadeIn delay={0.05 * pi}>
-                  <path d={bandArea} style={{ fill: T.fg1, opacity: 0.07 }} />
+                  <path d={bandArea} style={{ fill: T.fg1, opacity: 0.05 }} />
                 </FadeIn>
               )}
-              {s.ref != null && <line x1={L.left} x2={L.left + plotW} y1={Y(s.ref)} y2={Y(s.ref)} style={{ stroke: T.fg4, strokeDasharray: '3 3' }} />}
+              {s.ref != null && <line x1={L.left} x2={L.left + plotW} y1={Y(s.ref)} y2={Y(s.ref)} strokeLinecap="round" style={{ stroke: T.fg4, strokeDasharray: '1 3' }} />}
               {s.ref != null && (
-                <text x={L.left + plotW - 2} y={Y(s.ref) - 4} textAnchor="end" style={{ fontFamily: T.mono, fontSize: 10, fill: T.fg3 }}>
+                <text x={L.left + plotW - 2} y={Y(s.ref) - 6} textAnchor="end" style={{ ...TXT, fill: T.fg3 }}>
                   {s.ref} h
                 </text>
               )}
               <Reveal id={defs.id(`rv${pi}`)} x={L.left} y={top - 4} width={plotW} height={panelHeight + 8} delay={0.05 * pi}>
                 {s.kind === 'bars'
-                  ? s.raw.map((v, i) => (v == null ? null : <rect key={i} x={X(ms[i]) - barW / 2} y={Y(v)} width={barW} height={bot - Y(v)} rx={1} style={{ fill: T.gray(7) }} />))
+                  ? s.raw.map((v, i) => (v == null ? null : <rect key={i} x={X(ms[i]) - barW / 2} y={Y(v)} width={barW} height={bot - Y(v)} rx={Math.min(1.5, barW / 2)} style={{ fill: T.s3 }} />))
                   : s.raw.map((v, i) => {
                       if (v == null) return null;
                       const out = s.band && s.band.lo[i] != null && (v < s.band.lo[i]! || v > s.band.hi[i]!);
-                      return <circle key={i} cx={X(ms[i])} cy={Y(v)} r={out ? 2.25 : 1.6} style={out ? { fill: 'none', stroke: T.fg2, strokeWidth: 1 } : { fill: T.fg3 }} />;
+                      return <circle key={i} cx={X(ms[i])} cy={Y(v)} r={out ? 2 : 1.5} style={out ? { fill: 'none', stroke: T.fg3, strokeWidth: 1 } : { fill: T.fg4, opacity: 0.8 }} />;
                     })}
-                <path d={ln(s.roll) ?? ''} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: s.key === 'sleep' ? T.fg2 : T.fg1, strokeWidth: 1.5 }} />
+                <path d={ln(s.roll) ?? ''} fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ stroke: s.key === heroKey ? T.accent : s.key === 'sleep' ? T.fg2 : T.fg1, strokeWidth: s.key === heroKey ? 1.75 : 1.25 }} />
               </Reveal>
-              {!compact && lastI >= 0 && <EndLabels labels={[{ id: s.key, y: Y(s.roll[lastI]!), value: s.fmt(s.roll[lastI]!), name: `${rollingDays}-d avg`, tone: 'fg1' }]} x={L.left + plotW + 6} top={top} bottom={bot} />}
+              {!compact && lastI >= 0 && <EndLabels labels={[{ id: s.key, y: Y(s.roll[lastI]!), value: s.fmt(s.roll[lastI]!), name: `${rollingDays}-d avg`, tone: s.key === heroKey ? 'accent' : 'fg1' }]} x={L.left + plotW + 8} top={top} bottom={bot} />}
             </g>
           );
         })}
         <g aria-hidden>
           {xTicks.map((t) => (
-            <text key={t.key} x={t.pos} y={totalH - 16} textAnchor="middle" dominantBaseline="hanging" style={{ fontFamily: T.mono, fontSize: 11, fill: t.strong ? T.fg2 : T.fg3 }}>
+            <text key={t.key} x={t.pos} y={totalH - 14} textAnchor="middle" dominantBaseline="hanging" style={{ ...TXT, fill: t.strong ? T.fg2 : T.fg3 }}>
               {t.label}
             </text>
           ))}
@@ -262,7 +265,7 @@ function WellOverlay({ sync, keys, ms, X, panels }: { sync: HoverSync<LocalDate>
       <CrosshairRule x={Math.round(x) + 0.5} y0={panels[0].top} y1={panels[panels.length - 1].bot} />
       {panels.map(({ s, Y }) => {
         const v = s.roll[i] ?? s.raw[i];
-        return v == null ? null : <CrosshairDot key={s.key} x={x} y={Y(v)} tone="fg1" />;
+        return v == null ? null : <CrosshairDot key={s.key} x={x} y={Y(v)} tone={s.key === panels[0].s.key ? 'accent' : 'fg2'} />;
       })}
     </g>
   );

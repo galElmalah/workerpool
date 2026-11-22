@@ -23,8 +23,8 @@ export { WellnessChart } from './WellnessChart';
 export type { WellnessChartProps, WellnessMetric } from './WellnessChart';
 export { RouteMap } from './RouteMap';
 export type { RouteMapProps } from './RouteMap';
-export { FormDial, Gauge, ProgressRing, CompareBars } from './Gauge';
-export type { FormDialProps, GaugeProps, ProgressRingProps, CompareBarsProps, CompareItem } from './Gauge';
+export { FormDial, Gauge, ProgressRing, CompareBars, StatBar } from './Gauge';
+export type { FormDialProps, GaugeProps, ProgressRingProps, CompareBarsProps, CompareItem, StatBarProps } from './Gauge';
 
 // Kit core (for bespoke charts in feature folders)
 export { createHoverSync, useHoverSync, useHoverValue, useStreamCursor } from './core/hover';

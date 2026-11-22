@@ -64,10 +64,11 @@ export interface KbdProps {
 }
 
 const cap =
-  'inline-flex h-5 min-w-5 items-center justify-center rounded-xs px-1 font-mono text-mono-sm leading-none text-fg-2';
+  'inline-flex h-5 min-w-5 items-center justify-center rounded-xs px-1 font-mono text-mono-sm leading-none';
 
 export function Kbd({ keys, children, className, tone = 'default' }: KbdProps) {
-  const capCls = cn(cap, tone === 'default' ? 'border border-line-2 bg-surface-3' : 'border border-current/25 bg-transparent !text-current opacity-70');
+  // Key caps: a quiet surface-3 fill, no border (subtle = no fill, inherits the text colour).
+  const capCls = cn(cap, tone === 'default' ? 'bg-surface-3 text-fg-3' : 'bg-current/10 !text-current opacity-70');
   if (!keys)
     return (
       <kbd className={cn(capCls, className)}>
@@ -79,7 +80,7 @@ export function Kbd({ keys, children, className, tone = 'default' }: KbdProps) {
     <span className={cn('inline-flex items-center gap-1', className)} aria-label={shortcutLabel(keys)}>
       {steps.map((combo, i) => (
         <Fragment key={i}>
-          {i > 0 && <span className="text-mono-sm text-fg-4" aria-hidden>then</span>}
+          {i > 0 && <span className="text-label font-normal text-fg-4" aria-hidden>then</span>}
           <span className="inline-flex items-center gap-0.5" aria-hidden>
             {combo.map((k, j) => (
               <kbd key={j} className={capCls}>

@@ -1,8 +1,11 @@
 /**
- * Button / IconButton / ButtonLink — design.md §7 + §5.4h.
- *  - primary: accent fill, on-accent text. MAX ONE per page (the page's single primary action).
- *  - secondary: surface-2 + line-2 + inset hairline.   - ghost: text only, hover surface-2.
- *  - danger: monochrome (fg-1 text + TriangleAlert) — there is no red anywhere.
+ * Button / IconButton / ButtonLink — DESIGN_V2 §5.
+ *  - primary: accent fill, on-accent text (≥ 4.5:1 in every theme × accent). MAX ONE per page —
+ *    the page's single primary action. Never in the rail, never in lists.
+ *  - secondary (default): surface-2 fill, no border, fg-1 text. Use this for almost everything.
+ *  - ghost: fg-2 text only, hover surface-2. Toolbars, inline and tertiary actions.
+ *  - outline: line-2 hairline, transparent — only where a fill would sit on an identical fill.
+ *  - danger: monochrome (secondary look + TriangleAlert) — there is no red anywhere.
  * Every pressable: whileTap scale .97 (snappy); hover changes background only.
  */
 import { createLink, type LinkComponent } from '@tanstack/react-router';
@@ -24,17 +27,17 @@ const base =
   'pointer-coarse:min-h-11 [&_svg]:shrink-0';
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-on-accent hover:bg-accent-hover active:bg-accent-press font-[560]',
-  secondary: 'border border-line-2 bg-surface-2 text-fg-1 inset-shadow-hairline hover:bg-surface-3 active:bg-surface-active',
-  outline: 'border border-line-3 bg-transparent text-fg-1 hover:bg-surface-2 active:bg-surface-3',
+  primary: 'bg-accent text-on-accent hover:bg-accent-hover active:bg-accent-press',
+  secondary: 'bg-surface-2 text-fg-1 hover:bg-surface-3 active:bg-surface-active aria-pressed:bg-surface-active',
+  outline: 'border border-line-2 bg-transparent text-fg-1 hover:border-line-3 hover:bg-surface-2 active:bg-surface-3',
   ghost: 'text-fg-2 hover:bg-surface-2 hover:text-fg-1 active:bg-surface-3 aria-pressed:bg-surface-3 aria-pressed:text-fg-1',
-  danger: 'border border-dashed border-line-3 text-fg-1 hover:bg-surface-2 hover:border-fg-3 active:bg-surface-3',
+  danger: 'bg-surface-2 text-fg-1 hover:bg-surface-3 active:bg-surface-active',
 };
 
 const sizes: Record<ButtonSize, string> = {
-  sm: 'h-7 px-2.5 text-label [&_svg]:size-3.5',
-  md: 'h-9 px-3.5 text-label [&_svg]:size-4',
-  lg: 'h-11 px-5 text-body [&_svg]:size-4',
+  sm: 'h-7 gap-1.5 px-2.5 text-label [&_svg]:size-3.5',
+  md: 'h-9 px-3.5 text-body-sm font-medium [&_svg]:size-4',
+  lg: 'h-11 px-5 text-body font-medium [&_svg]:size-4',
 };
 
 /** Class string for any element styled as a button (e.g. a raw <a> or a Base UI trigger). */

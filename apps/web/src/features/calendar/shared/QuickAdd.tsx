@@ -4,7 +4,7 @@
  * page, Esc cancels.
  */
 import { useNavigate } from '@tanstack/react-router';
-import { CornerDownLeft } from 'lucide-react';
+import { CornerDownLeft, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useMemo, useRef, useState } from 'react';
 import { parseQuickAdd } from '@cadence/core/workout';
@@ -58,7 +58,7 @@ export function QuickAdd({ date, actions, className }: { date: string; actions: 
       initial={{ opacity: 0, y: -4, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={spring.snappy}
-      className={cn('flex flex-col gap-1 rounded-sm border border-line-3 bg-surface-2 p-1 inset-shadow-hairline', className)}
+      className={cn('flex flex-col gap-0.5 rounded-md border border-line-2 bg-surface-1 p-1', className)}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
@@ -82,20 +82,20 @@ export function QuickAdd({ date, actions, className }: { date: string; actions: 
         onBlur={() => !text.trim() && setTimeout(() => calStore.get().composer === date && close(), 120)}
         placeholder="run 45m easy"
         aria-label={`Quick add on ${date}. Enter creates, Command Enter opens, Escape cancels`}
-        className="h-6 w-full min-w-0 bg-transparent px-1 text-mono-sm text-fg-1 outline-none placeholder:text-fg-4"
+        className="h-6 w-full min-w-0 bg-transparent px-1 text-body-sm text-fg-1 outline-none placeholder:text-fg-4"
       />
       <div className="flex h-5 min-w-0 items-center gap-1.5 px-1">
         {parsed ? (
           <>
             <SportGlyph sport={parsed.sport} size={14} className={known ? 'text-fg-1' : 'text-fg-4'} />
-            <span className="min-w-0 flex-1 truncate text-micro text-fg-2" title={parsed.title}>
+            <span className="min-w-0 flex-1 truncate text-label text-fg-2 num" title={parsed.title}>
               {parsed.durationSec ? formatDuration(parsed.durationSec) : parsed.distanceM ? formatDistance(parsed.distanceM, parsed.sport, units) : parsed.title}
             </span>
-            {parsed.isKey && <span className="size-1.5 rounded-full bg-accent" aria-label="key" />}
+            {parsed.isKey && <Star className="size-2.5 shrink-0 fill-fg-2 text-fg-2" strokeWidth={1.5} aria-label="key" />}
             <IntensityPips intensity={parsed.intensity} />
           </>
         ) : (
-          <span className="flex flex-1 items-center gap-1 truncate text-micro text-fg-4">
+          <span className="flex flex-1 items-center gap-1 truncate text-label text-fg-4">
             <CornerDownLeft className="size-3" /> add · ⌘↵ open
           </span>
         )}

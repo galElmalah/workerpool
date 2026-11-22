@@ -8,8 +8,9 @@
  *   toast.undo(<>Moved <b>Threshold 4×8</b> to Thu 19</>, () => revert());   // 10 s, ⌘Z works too
  *   toast.promise(save(), { loading: 'Saving…', success: 'Saved', error: (e) => `Couldn't save: ${e}` });
  *
- * <Toaster/> is mounted once by main.tsx. Max 3 visible; glass, line-3, radius lg; 1px accent
- * countdown hairline (paused on hover); enters translateY(16px) scale(.98) with the smooth spring.
+ * <Toaster/> is mounted once by main.tsx. Max 3 visible; glass, line-2 hairline, radius lg; a quiet
+ * neutral countdown (inset 2px track under the content, paused on hover — never an accent edge);
+ * enters translateY(16px) scale(.98) with the smooth spring. Success/error are told apart by icon.
  */
 import { Toast } from '@base-ui/react/toast';
 import { Check, TriangleAlert } from 'lucide-react';
@@ -107,7 +108,7 @@ export const toast = Object.assign((title: ReactNode, o?: Opts) => add('default'
 });
 
 function KindIcon({ kind }: { kind: Kind }) {
-  if (kind === 'success') return <Check className="size-4 shrink-0 text-accent-ink" strokeWidth={2.25} aria-hidden />;
+  if (kind === 'success') return <Check className="size-4 shrink-0 text-fg-1" strokeWidth={2.25} aria-hidden />;
   if (kind === 'error') return <TriangleAlert className="size-4 shrink-0 text-fg-1" aria-hidden />;
   if (kind === 'loading')
     return (
@@ -130,18 +131,17 @@ function ToastList() {
         toast={t}
         swipeDirection={['down', 'left']}
         className={cn(
-          'ui-toast glass overflow-hidden rounded-lg border border-line-3 inset-shadow-hairline',
-          data.kind === 'error' && 'border-dashed border-fg-3',
+          'ui-toast glass overflow-hidden rounded-lg border border-line-2',
         )}
         style={{ ['--toast-timeout' as string]: `${data.timeout}ms` }}
       >
         <Toast.Content className="ui-toast-content flex min-h-12 items-center gap-3 py-2.5 pr-2 pl-4">
           <KindIcon kind={data.kind} />
           <div className="flex min-w-0 flex-1 flex-col">
-            <Toast.Title className="text-body text-fg-1 [&_b]:font-[600] [&_strong]:font-[600]" />
+            <Toast.Title className="text-body text-fg-1 [&_b]:font-semibold [&_strong]:font-semibold" />
             <Toast.Description className="text-body-sm text-fg-2 empty:hidden" />
           </div>
-          <Toast.Action className="h-8 shrink-0 rounded-md px-3 text-label font-[600] text-accent-ink transition-colors duration-(--dur-fast) hover:bg-accent-a2 empty:hidden" />
+          <Toast.Action className="h-8 shrink-0 rounded-md bg-surface-3 px-3 text-label font-semibold text-fg-1 transition-colors duration-(--dur-fast) hover:bg-surface-active empty:hidden" />
           {data.kind !== 'loading' && (
             <Toast.Close aria-label="Dismiss" className="flex size-7 shrink-0 items-center justify-center rounded-md text-fg-3 transition-colors hover:bg-surface-3 hover:text-fg-1">
               <svg viewBox="0 0 12 12" className="size-3" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" aria-hidden>
@@ -151,7 +151,7 @@ function ToastList() {
           )}
         </Toast.Content>
         {data.timeout > 0 && (
-          <span key={t.updateKey} className="ui-toast-countdown absolute inset-x-0 bottom-0 h-px bg-accent" aria-hidden />
+          <span key={t.updateKey} className="ui-toast-countdown absolute inset-x-4 bottom-1.5 h-0.5 rounded-full bg-line-2" aria-hidden />
         )}
       </Toast.Root>
     );

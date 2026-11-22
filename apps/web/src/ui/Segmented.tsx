@@ -1,6 +1,7 @@
 /**
- * Segmented control — design.md §7 / §5.4f. 2–5 options, a `layoutId` thumb that glides between
- * items (snappy), arrow-key navigation (Base UI ToggleGroup). Single selection; it can't be emptied.
+ * Segmented control — 2–5 options on a borderless surface-2 track; the selected option is a neutral
+ * raised thumb (surface-active / white in light) with fg-1 text — never accent. The `layoutId` thumb
+ * glides between items (snappy); arrow-key navigation (Base UI ToggleGroup). Single selection.
  *
  *   <Segmented aria-label="Range" value={range} onValueChange={setRange}
  *     options={[{ value: '6w', label: '6W' }, { value: '3m', label: '3M' }]} />
@@ -44,7 +45,7 @@ export function Segmented<T extends string>({ value, onValueChange, options, siz
         }}
         aria-label={aria['aria-label']}
         className={cn(
-          'relative inline-flex items-center gap-0.5 rounded-md border border-line-1 bg-surface-2 p-0.5',
+          'relative inline-flex items-center gap-0.5 rounded-md bg-surface-2 p-0.5 light:bg-surface-3',
           block ? 'flex w-full' : 'w-fit',
           className,
         )}
@@ -59,7 +60,7 @@ export function Segmented<T extends string>({ value, onValueChange, options, siz
               aria-label={o['aria-label']}
               className={cn(
                 'relative z-0 inline-flex select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] text-label',
-                'text-fg-2 transition-colors duration-(--dur-fast) hover:text-fg-1 data-[pressed]:text-fg-1',
+                'text-fg-3 transition-colors duration-(--dur-fast) hover:text-fg-1 data-[pressed]:text-fg-1',
                 'focus-visible:outline-offset-0 disabled:opacity-40 [&_svg]:size-3.5',
                 size === 'sm' ? 'h-6 px-2.5' : 'h-7 px-3',
                 block && 'flex-1',
@@ -69,7 +70,7 @@ export function Segmented<T extends string>({ value, onValueChange, options, siz
                 <motion.span
                   layoutId="seg-thumb"
                   transition={spring.snappy}
-                  className="absolute inset-0 -z-10 rounded-[8px] border border-line-1 bg-surface-active inset-shadow-hairline light:border-line-2 light:bg-surface-1"
+                  className="absolute inset-0 -z-10 rounded-[8px] bg-surface-active light:bg-surface-1"
                   aria-hidden
                 />
               )}

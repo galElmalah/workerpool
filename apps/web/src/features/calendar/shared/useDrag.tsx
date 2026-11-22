@@ -84,7 +84,7 @@ export function DragLayer({ active, density, copy, overlayProps }: { active: Cal
       {active && (
         <DragLift className="relative">
           <WorkoutCard model={active.model} density={density === 'mini' || density === 'chip' ? 'chip' : density === 'full' ? 'full' : 'compact'} className="!bg-surface-3" />
-          {copy && <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-fg-1 text-label font-[600] text-canvas">+</span>}
+          {copy && <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-fg-1 text-label font-semibold text-canvas">+</span>}
         </DragLift>
       )}
     </DragOverlay>,

@@ -83,7 +83,7 @@ export function MonthGrid({ value, onSelect, today = localToday(), min, max, cla
   return (
     <div className={cn('w-[17.5rem] select-none', className)}>
       <div className="flex items-center justify-between px-1 pb-2">
-        <span className="text-body font-[560] text-fg-1">{formatMonthYearLong(month)}</span>
+        <span className="text-body font-semibold text-fg-1">{formatMonthYearLong(month)}</span>
         <div className="flex gap-0.5">
           <button type="button" aria-label="Previous month" onClick={() => go(-1)} className="flex size-7 items-center justify-center rounded-md text-fg-2 hover:bg-surface-3 hover:text-fg-1">
             <ChevronLeft className="size-4" />
@@ -142,8 +142,8 @@ export function MonthGrid({ value, onSelect, today = localToday(), min, max, cla
                     'focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus disabled:opacity-30',
                     inMonth ? 'text-fg-1' : 'text-fg-4',
                     !isSel && !isToday && 'hover:bg-surface-3',
-                    isToday && !isSel && 'bg-accent font-[600] text-on-accent',
-                    isSel && 'bg-fg-1 font-[600] text-canvas',
+                    isToday && !isSel && 'bg-accent font-semibold text-on-accent',
+                    isSel && 'bg-fg-1 font-semibold text-canvas',
                     isSel && isToday && 'ring-2 ring-accent ring-offset-2 ring-offset-surface-1',
                   )}
                 >
@@ -178,7 +178,7 @@ export function DatePicker({ value, onValueChange, label, hint, error, hideLabel
       <Popover
         title="Choose date"
         trigger={
-          <button type="button" className={cn(controlStyles(size), 'flex items-center gap-2 text-left data-[popup-open]:border-gray-8')}>
+          <button type="button" className={cn(controlStyles(size), 'flex items-center gap-2 text-left data-[popup-open]:border-line-3')}>
             <CalendarDays className="size-4 shrink-0 text-fg-3" />
             <span className={cn('flex-1 truncate', !value && 'text-fg-4')}>{value ? formatDateMedium(value, true) : placeholder}</span>
           </button>

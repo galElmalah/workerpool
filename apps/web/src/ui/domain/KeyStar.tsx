@@ -1,6 +1,7 @@
 /**
- * KeyStar — key-workout toggle (design.md §5.4k). Base UI Toggle. Turning ON scales the star
- * 1 → 1.25 → 1 (bouncy), fills outline → accent, and bursts 6 accent particles (3px, radiating
+ * KeyStar — key-workout toggle (design.md §5.4k). Neutral, never accent (DESIGN_V2 rule 4).
+ * Base UI Toggle. Turning ON scales the star 1 → 1.25 → 1 (bouncy), fills outline → fg-1, and
+ * bursts 6 neutral particles (3px, radiating
  * 10px at 60° steps, 360ms ease-out). No burst on turn-off, under reduced motion, or for repeat
  * toggles within 1s. `readOnly` renders the static marker used on cards (10–12px).
  */
@@ -21,7 +22,7 @@ function StarBurst({ fire }: { fire: number }) {
         return (
           <motion.span
             key={i}
-            className="absolute top-1/2 left-1/2 -mt-[1.5px] -ml-[1.5px] size-[3px] rounded-full bg-accent"
+            className="absolute top-1/2 left-1/2 -mt-[1.5px] -ml-[1.5px] size-[3px] rounded-full bg-fg-2"
             initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
             animate={{ x: Math.cos(a) * 11, y: Math.sin(a) * 11, opacity: 0, scale: 0.6 }}
             transition={{ duration: 0.36, ease: ease.out as unknown as [number, number, number, number] }}
@@ -49,7 +50,7 @@ export function KeyStar({ pressed, onPressedChange, size = 'md', readOnly, class
   const px = size === 'xs' ? 'size-2.5' : size === 'sm' ? 'size-3' : 'size-4';
 
   if (readOnly) {
-    return pressed ? <Star className={cn(px, 'shrink-0 fill-accent text-accent', className)} strokeWidth={1.5} aria-label="Key workout" /> : null;
+    return pressed ? <Star className={cn(px, 'shrink-0 fill-fg-2 text-fg-2', className)} strokeWidth={1.5} aria-label="Key workout" /> : null;
   }
 
   return (
@@ -67,12 +68,12 @@ export function KeyStar({ pressed, onPressedChange, size = 'md', readOnly, class
       aria-label={pressed ? 'Key workout (on)' : 'Mark as key workout'}
       className={cn(
         'relative inline-flex size-8 items-center justify-center rounded-md text-fg-3 outline-none transition-colors duration-(--dur-fast)',
-        'hover:bg-surface-2 hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus data-[pressed]:text-accent',
+        'hover:bg-surface-2 hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus data-[pressed]:text-fg-1',
         className,
       )}
     >
       <motion.span animate={controls} className="inline-flex">
-        <Star className={cn(px, 'transition-[fill] duration-(--dur-fast)', pressed ? 'fill-accent' : 'fill-transparent')} strokeWidth={1.75} />
+        <Star className={cn(px, 'transition-[fill] duration-(--dur-fast)', pressed ? 'fill-fg-1' : 'fill-transparent')} strokeWidth={1.75} />
       </motion.span>
       <StarBurst fire={fire} />
     </Toggle>

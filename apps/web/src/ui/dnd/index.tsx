@@ -202,7 +202,7 @@ export function DayDrop({ id, children, className, data }: { id: string; childre
       data-over={isOver || undefined}
       className={cn(
         'relative transition-[background-color,box-shadow] duration-(--dur-fast) ease-out',
-        'data-[over]:bg-accent-a2 data-[over]:ring-1 data-[over]:ring-accent-a5 data-[over]:ring-inset',
+        'data-[over]:bg-surface-2 data-[over]:ring-1 data-[over]:ring-line-3 data-[over]:ring-inset', // neutral drop target (no accent wash)
         className,
       )}
     >

@@ -1,8 +1,8 @@
 /**
- * The infinite month view (product.md §3.1–3.7, design.md §4.3 / §5.3): virtualized week rows
- * (±10 years, measured heights), windowed 12-week fetching merged seamlessly, sticky weekday
- * header, phase gutter, weekly summary column, drag & drop with live reflow + undo, inline
- * quick-add, context menu, keyboard grid, multi-select and the bulk week tools.
+ * The infinite month view (product.md §3.1–3.7, DESIGN_V2 §5): virtualized week rows (±10 years,
+ * measured heights), windowed 12-week fetching merged seamlessly, sticky weekday header, one-line
+ * chips with hover cards, a three-line weekly summary column, drag & drop with live reflow + undo,
+ * inline quick-add, context menu, keyboard grid, multi-select and the bulk week tools.
  */
 import { DndContext } from '@dnd-kit/core';
 import { useNavigate, useRouter } from '@tanstack/react-router';
@@ -34,35 +34,46 @@ import { cardMenu, dayMenu } from '../shared/menu';
 import { calStore, useCal } from '../shared/store';
 import { DragLayer, useCalendarDrag } from '../shared/useDrag';
 import { NewButton, PagingControls, RollingTitle, ViewSwitcher } from '../shared/Toolbar';
-import { COLS, GUTTER, WeekRow, type MonthLayout } from './WeekRow';
+import { PeekLayer } from '../shared/Peek';
+import { COL_GAP, COLS, WeekRow, type MonthLayout } from './WeekRow';
 
 const HALF = 520; // weeks each side of the anchor: effectively infinite
 const ROWS = HALF * 2 + 1;
-const EST: Record<MonthLayout, number> = { xl: 164, lg: 156, md: 160, sm: 110 };
+const EST: Record<MonthLayout, number> = { xl: 140, lg: 140, md: 176, sm: 120 };
 const WEEKDAYS = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'];
 
 /** Remembered position for Back navigation (card → page → back lands where you were). */
 let saved: { href: string; row: number; within: number; base: number } | null = null;
 
-function useLayoutMode(): MonthLayout {
-  const xl = useMediaQuery(BP.xl);
-  const lg = useMediaQuery(BP.lg);
+/**
+ * xl = the three-line summary column (only when the grid is wide enough to keep chip titles
+ * legible); md = summaries as a line under each week; sm = phone (compact rows).
+ */
+function useLayoutMode(ref: React.RefObject<HTMLElement | null>): MonthLayout {
   const md = useMediaQuery(BP.md);
-  return xl ? 'xl' : lg ? 'lg' : md ? 'md' : 'sm';
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1360);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setWide(e!.contentRect.width >= 1060));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, md]);
+  return !md ? 'sm' : wide ? 'xl' : 'md';
 }
 
 export function MonthView({ anchor }: { anchor?: LocalDate }) {
   const navigate = useNavigate();
   const router = useRouter();
   const settings = useSettings();
-  const layout = useLayoutMode();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const layout = useLayoutMode(scrollRef);
   const est = EST[layout];
   const guess = useMemo(() => anchor ?? localToday(settings.data?.timezone), [anchor, settings.data?.timezone]);
   const href = typeof location !== 'undefined' ? location.pathname + location.search : '';
   const restore = saved && saved.href === href ? saved : null;
   const [base] = useState(() => (restore ? restore.base : weekIndexOf(guess) - HALF));
   const anchorRow = weekIndexOf(guess) - base;
-  const scrollRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [dayW, setDayW] = useState(140);
   const actions = useCardActions();
@@ -103,7 +114,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [layout]);
-  const density: CalDensity = dayW < 72 ? 'mini' : dayW >= 184 ? 'full' : dayW >= 84 ? 'compact' : 'chip';
+  const density: CalDensity = dayW < 72 ? 'mini' : 'chip';
 
   // ── remember position for Back ──
   useEffect(() => {
@@ -312,22 +323,21 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
             aria-rowcount={ROWS}
             onContextMenuCapture={onContextMenuCapture}
             onKeyDown={onGridTab}
-            className="relative -mx-4 overflow-y-auto overscroll-contain px-4 md:-mx-6 md:px-6 xl:-mx-6 xl:px-6"
+            className="relative -mx-4 overflow-y-auto overscroll-contain px-4 md:-mx-6 md:px-6 xl:-mx-6 xl:px-3"
             style={{ height: 'calc(100dvh - var(--header-h) - 1px - var(--bottom-bar-h))', scrollbarGutter: 'stable' }}
           >
-            <div ref={headerRef} role="row" className="sticky top-0 z-(--z-sticky) flex bg-canvas/90 glass-blur" aria-hidden>
-              <div style={{ width: GUTTER[layout] }} className="shrink-0" />
-              <div className="grid min-w-0 flex-1 gap-px border-b border-line-2" style={{ gridTemplateColumns: COLS[layout] }}>
+            <div ref={headerRef} role="row" className="sticky top-0 z-(--z-sticky) flex bg-canvas" aria-hidden>
+              <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns: COLS[layout], columnGap: COL_GAP[layout] }}>
                 {WEEKDAYS.map((d, i) => (
-                  <div key={d} data-col={i} className={cn('flex h-7 items-center text-micro text-fg-3', layout === 'sm' ? 'justify-center' : 'px-2')}>
+                  <div key={d} data-col={i} className={cn('flex h-8 items-center text-label text-fg-3', layout === 'sm' ? 'justify-center' : 'px-2')}>
                     {layout === 'sm' ? weekdayShort(d).slice(0, 1) : weekdayShort(d)}
                   </div>
                 ))}
-                {(layout === 'xl' || layout === 'lg') && <div className="flex h-7 items-center px-3 text-micro text-fg-3">Week</div>}
+                {(layout === 'xl' || layout === 'lg') && <div className="flex h-8 items-center px-5 text-label text-fg-3">Week</div>}
               </div>
             </div>
             {pages.error && !pages.data.some(Boolean) ? (
-              <div className="mx-auto mt-16 flex max-w-md flex-col items-center gap-3 rounded-lg border border-dashed border-line-3 p-6 text-center">
+              <div className="mx-auto mt-16 flex max-w-md flex-col items-center gap-3 rounded-lg bg-surface-1 p-6 text-center">
                 <TriangleAlert className="size-5 text-fg-1" />
                 <p className="text-body text-fg-1">The calendar couldn&apos;t load.</p>
                 <p className="text-body-sm text-fg-2">{pages.error.message}</p>
@@ -369,6 +379,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
         </ContextMenu>
         <DragLayer active={active} density={density} copy={!!preview?.copy} overlayProps={dnd.overlayProps} />
       </DndContext>
+      <PeekLayer model={model} />
       <SelectionBar model={model} actions={actions} />
       {bulk?.kind === 'copy' && <CopyWeekPopover isoWeek={bulk.isoWeek} anchor={bulk.anchor} model={model} actions={actions} onClose={() => setBulk(null)} />}
       {bulk?.kind === 'shift' && <ShiftPopover from={bulk.from} anchor={bulk.anchor} onClose={() => setBulk(null)} />}

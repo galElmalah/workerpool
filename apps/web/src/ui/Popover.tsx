@@ -1,5 +1,5 @@
 /**
- * Popover — SMALL PICKERS ONLY (date, sport, intensity, time; ≤ 320px wide). Glass, line-3,
+ * Popover — SMALL PICKERS ONLY (date, sport, intensity, time; ≤ 320px wide). Glass, line-2,
  * radius lg, p-2; origin-aware scale .96 → 1 (smooth spring CSS); Esc / outside click closes.
  * Anything bigger is a page.
  *
@@ -36,7 +36,7 @@ export function Popover({ trigger, children, side = 'bottom', align = 'start', o
       <BasePopover.Portal>
         <BasePopover.Positioner side={side} align={align} sideOffset={8} collisionPadding={12} className="z-(--z-popover)">
           <BasePopover.Popup className={cn('ui-popup max-w-80 rounded-lg p-2', className)}>
-            {title && <BasePopover.Title className={showTitle ? 'px-1 pb-2 text-micro text-fg-3' : 'sr-only'}>{title}</BasePopover.Title>}
+            {title && <BasePopover.Title className={showTitle ? 'px-1 pb-2 text-label font-normal text-fg-3' : 'sr-only'}>{title}</BasePopover.Title>}
             {typeof children === 'function' ? children(() => set(false)) : children}
           </BasePopover.Popup>
         </BasePopover.Positioner>

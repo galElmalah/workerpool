@@ -27,7 +27,7 @@ export function PlaceholderPage({ title, eyebrow, icon, children, back, breadcru
   return (
     <Page width={width} header={<PageHeader title={title} eyebrow={eyebrow} back={back} breadcrumb={breadcrumb} variant={variant} />}>
       {top}
-      <div className="rounded-xl border border-dashed border-line-2">
+      <div className="rounded-lg bg-surface-1">
         <EmptyState
           icon={icon}
           title="Coming together"

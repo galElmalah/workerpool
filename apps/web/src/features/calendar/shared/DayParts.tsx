@@ -1,8 +1,12 @@
-/** Small day-cell atoms shared by the month and week views: markers, event banners, readiness. */
+/**
+ * Small day-cell atoms shared by the month and week views: the date mark, one marker/note glyph,
+ * event rows and the readiness dot. All neutral; the accent is reserved for today's date.
+ */
 import { Link } from '@tanstack/react-router';
-import { Bandage, Flag, Moon, MountainSnow, Plane, Thermometer, TreePalm } from 'lucide-react';
-import type { DayMarker, Event, WellnessDay } from '@cadence/core/domain';
+import { Bandage, Flag, Moon, MountainSnow, Pilcrow, Plane, Thermometer, TreePalm } from 'lucide-react';
+import type { DayMarker, DayNote, Event, WellnessDay } from '@cadence/core/domain';
 import { cn } from '@/lib/cn';
+import { monthShort } from '@/lib/format';
 import { links } from '@/shell/links';
 
 export const MARKER_META: Record<DayMarker['type'], { icon: typeof Moon; label: string; range: boolean }> = {
@@ -14,61 +18,66 @@ export const MARKER_META: Record<DayMarker['type'], { icon: typeof Moon; label: 
   altitude: { icon: MountainSnow, label: 'Altitude', range: true },
 };
 
-export function MarkerGlyphs({ markers }: { markers: DayMarker[] }) {
-  const singles = markers.filter((m) => !(MARKER_META[m.type].range && m.endDate));
-  if (!singles.length) return null;
+const ORDER: DayMarker['type'][] = ['sick', 'injured', 'travel', 'vacation', 'altitude', 'rest'];
+
+/**
+ * ONE small glyph for the day's markers (most important first) or, failing that, its note. The
+ * full list is in the accessible name / tooltip and on the day page.
+ */
+export function DayGlyph({ markers, note, className }: { markers: DayMarker[]; note?: DayNote; className?: string }) {
+  const sorted = [...markers].sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type));
+  const names = sorted.map((m) => m.label ?? MARKER_META[m.type].label);
+  if (note) names.push('Day note');
+  if (!names.length) return null;
+  const Icon = sorted[0] ? MARKER_META[sorted[0].type].icon : Pilcrow;
+  const label = names.join(' · ');
   return (
-    <span className="flex items-center gap-0.5 text-fg-2">
-      {singles.map((m) => {
-        const I = MARKER_META[m.type].icon;
-        return <I key={m.id} className="size-3" strokeWidth={2} aria-label={m.label ?? MARKER_META[m.type].label} />;
-      })}
+    <span className={cn('inline-flex shrink-0 text-fg-3', className)} role="img" aria-label={label} title={note && !sorted.length ? note.body.slice(0, 140) : label}>
+      <Icon className="size-3" strokeWidth={2} aria-hidden />
     </span>
   );
 }
 
-/** Thin continuous band along the top of cells covered by a travel/vacation/altitude range. */
-export function RangeBands({ markers, date, weekStart }: { markers: DayMarker[]; date: string; weekStart: string }) {
-  const ranges = markers.filter((m) => MARKER_META[m.type].range && m.endDate);
-  if (!ranges.length) return null;
+/** @deprecated Use DayGlyph (one glyph per day). Kept for callers that still list every marker. */
+export function MarkerGlyphs({ markers }: { markers: DayMarker[] }) {
+  return <DayGlyph markers={markers} />;
+}
+
+/** @deprecated Range markers are shown by DayGlyph on every covered day (no edge bands in v2). */
+export function RangeBands(_: { markers: DayMarker[]; date: string; weekStart: string }) {
+  void _;
+  return null;
+}
+
+/** The date numeral: quiet fg-3; the 1st carries the month; today is the accent numeral + dot. */
+export function DateMark({ date, today, compact, className }: { date: string; today: boolean; compact?: boolean; className?: string }) {
+  const first = date.endsWith('-01');
   return (
-    <>
-      {ranges.slice(0, 2).map((m, i) => {
-        const I = MARKER_META[m.type].icon;
-        const first = m.date === date || date === weekStart;
-        return (
-          <span key={m.id} className="pointer-events-none absolute inset-x-0 z-[1]" style={{ top: i * 4 }} aria-hidden={!first}>
-            <span className={cn('block h-[3px] bg-fg-4', m.date === date && 'ml-1 rounded-l-full', m.endDate === date && 'mr-1 rounded-r-full')} />
-            {first && (
-              <span className="absolute top-1 right-1.5 flex max-w-[70%] items-center gap-1 truncate text-micro text-fg-3">
-                <I className="size-3 shrink-0" strokeWidth={2} />
-                <span className="truncate">{m.label ?? MARKER_META[m.type].label}</span>
-              </span>
-            )}
-          </span>
-        );
-      })}
-    </>
+    <span className={cn('inline-flex items-center gap-1 text-label num', today ? 'font-semibold text-accent-ink' : first ? 'font-medium text-fg-1' : 'text-fg-3', className)}>
+      {Number(date.slice(8))}
+      {first && !compact && <span className={today ? '' : 'text-fg-1'}>{monthShort(date)}</span>}
+      {today && !compact && <span className="size-1 rounded-full bg-accent" aria-hidden />}
+      {today && <span className="sr-only">, today</span>}
+    </span>
   );
 }
 
+/** A race/event row: neutral flag + name. A-races are semibold on one surface step. */
 export function EventBanner({ e, compact }: { e: Event; compact?: boolean }) {
   return (
     <Link
       {...links.event(e.id)}
       onClick={(ev) => ev.stopPropagation()}
       className={cn(
-        'flex min-w-0 items-center gap-1 rounded-sm px-1.5 outline-none transition-colors duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-focus',
-        compact ? 'h-5' : 'h-6',
-        e.priority === 'A' && 'bg-accent text-on-accent hover:bg-accent-hover',
-        e.priority === 'B' && 'border border-accent text-accent-ink hover:bg-accent-a2',
-        e.priority === 'C' && 'h-5 border border-line-3 text-fg-2 hover:bg-surface-3',
+        'flex min-w-0 items-center gap-1.5 rounded-md px-2 outline-none transition-colors duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-focus',
+        compact ? 'h-6 px-1' : 'h-7',
+        e.priority === 'A' ? 'bg-surface-2 text-fg-1 hover:bg-surface-3' : 'text-fg-2 hover:bg-surface-2',
       )}
       title={`${e.priority}-race · ${e.name}`}
     >
-      <Flag className="size-3 shrink-0" strokeWidth={2.25} aria-hidden />
-      {!compact && <span className="shrink-0 text-mono-sm font-[600]">{e.priority}</span>}
-      <span className={cn('min-w-0 truncate', e.priority === 'C' ? 'text-label' : 'text-label font-[600]')}>{e.name}</span>
+      <Flag className={cn('size-3.5 shrink-0', e.priority === 'A' ? 'fill-fg-1' : e.priority === 'C' && 'text-fg-3')} strokeWidth={2} aria-hidden />
+      {!compact && <span className="sr-only">{e.priority}-race </span>}
+      <span className={cn('min-w-0 truncate text-body-sm', e.priority === 'A' ? 'font-semibold' : e.priority === 'B' ? 'font-medium' : '')}>{e.name}</span>
     </Link>
   );
 }
@@ -79,5 +88,5 @@ export function ReadinessDot({ w }: { w?: WellnessDay }) {
   const s = w.hrvStatus?.toLowerCase() ?? '';
   const good = s ? s.startsWith('bal') || s.startsWith('high') || s.startsWith('above') : (w.readiness ?? 0) >= 50;
   const label = `${good ? 'Recovered' : 'Below baseline'}${w.hrvMs ? ` · HRV ${Math.round(w.hrvMs)} ms` : ''}${w.readiness ? ` · readiness ${w.readiness}` : ''}`;
-  return <span className={cn('size-1.5 shrink-0 rounded-full', good ? 'bg-fg-2' : 'border border-fg-3')} title={label} role="img" aria-label={label} />;
+  return <span className={cn('size-1.5 shrink-0 rounded-full', good ? 'bg-fg-3' : 'border border-fg-3')} title={label} role="img" aria-label={label} />;
 }

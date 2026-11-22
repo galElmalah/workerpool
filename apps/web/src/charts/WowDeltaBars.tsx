@@ -1,6 +1,7 @@
 /**
- * WowDeltaBars — diverging week-over-week % change. Increase = solid fg-1, decrease = fg-2
- * outline, beyond `cautionAbove` (+15 %) = accent outline + hatch + ⚠ (never red).
+ * WowDeltaBars — diverging week-over-week % change, all neutral: increase = fg-4, decrease =
+ * fainter fg-4, beyond `cautionAbove` (+15 %) = fg-2 + ⚠ (never red, never an outline). Value labels
+ * thin out with the bar width (latest + caution weeks first); every value is in the tooltip.
  * Also exports `wowItems()` and `compareWeeks()` helpers for WoW tiles.
  */
 import { useCallback, useId, useMemo } from 'react';
@@ -9,7 +10,8 @@ import type { IsoWeek, WeekSummary } from '@cadence/core';
 import { ChartDefs, useChartDefs } from './core/ChartDefs';
 import { ChartFrame } from './core/ChartFrame';
 import { SvgTicker } from './core/animated';
-import { T } from './core/tokens';
+import { T, TXT } from './core/tokens';
+import { thinTicks } from './core/Axis';
 import { useChartSize } from './core/useChartSize';
 import { useHoverSync, useHoverValue, type HoverSync } from './core/hover';
 import { useChartPointer } from './core/useChartPointer';
@@ -121,13 +123,13 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
   const reduce = useReducedMotion();
   const sync = useHoverSync<string>(ext);
   const n = items.length;
-  const L = { left: 40, right: 12, top: 16, bottom: 22 };
+  const L = { left: 44, right: 12, top: 34, bottom: 28 };
   const plotW = Math.max(10, width - L.left - L.right);
   const band = plotW / n;
-  const barW = Math.max(3, Math.min(18, band * 0.5));
+  const barW = Math.max(2, Math.min(16, band * 0.5));
   const dom = useMemo(() => Math.min(maxAbs, Math.max(0.2, ...items.map((i) => Math.abs(i.value ?? 0))) * 1.1), [items, maxAbs]);
   const zeroY = L.top + height / 2;
-  const y = (v: number) => zeroY - (Math.max(-dom, Math.min(dom, v)) / dom) * (height / 2 - 14);
+  const y = (v: number) => zeroY - (Math.max(-dom, Math.min(dom, v)) / dom) * (height / 2 - 16);
   const xc = (i: number) => L.left + band * (i + 0.5);
   const keys = useMemo(() => items.map((i) => i.key), [items]);
   const keyAt = useCallback((x: number) => {
@@ -135,8 +137,34 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
     return i >= 0 && i < n ? keys[i] : null;
   }, [L.left, band, n, keys]);
   const { handlers, live } = useChartPointer<string>({ keys, keyAt, sync, id, onActivate: onItemClick, describe: (k) => `${items[keys.indexOf(k)].label}: ${fmtPct(items[keys.indexOf(k)].value)}`, bigStep: 4 });
-  const showEvery = Math.max(1, Math.ceil(30 / band));
-  const ticks = [-dom, -dom / 2, 0, dom / 2, dom].map((v) => Math.round(v * 20) / 20).filter((v, i, a) => a.indexOf(v) === i);
+  const half = Math.round((dom / 2) * 20) / 20;
+  const ticks = [-half, 0, half];
+  const fmtV = (x: number) => (Math.abs(x) < 0.005 ? '±0%' : fmtPct(x));
+
+  // Value labels: every bar when there is room; otherwise the latest bar and the caution bars,
+  // biggest first, skipping any label that would overlap one already placed on the same side.
+  const valueLabels = useMemo(() => {
+    const cand = items.map((it, i) => ({ i, v: it.value })).filter((c): c is { i: number; v: number } => c.v != null);
+    const textW = (v: number) => fmtV(v).length * 6.8 + (v > cautionAbove ? 14 : 0);
+    const roomy = band >= 46;
+    const lastI = cand.length ? cand[cand.length - 1].i : -1;
+    const order = roomy ? cand : [...cand.filter((c) => c.i === lastI), ...cand.filter((c) => c.i !== lastI && c.v > cautionAbove).sort((p, q) => Math.abs(q.v) - Math.abs(p.v))];
+    const placed: { i: number; x: number; w: number; up: boolean }[] = [];
+    for (const c of order) {
+      const x = xc(c.i);
+      const w = textW(c.v);
+      const up = c.v >= 0;
+      if (x - w / 2 < 0 || x + w / 2 > width) continue;
+      if (placed.some((p) => p.up === up && Math.abs(p.x - x) < (p.w + w) / 2 + 8)) continue;
+      placed.push({ i: c.i, x, w, up });
+    }
+    return new Set(placed.map((p) => p.i));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, band, width, cautionAbove]);
+  const xTicks = thinTicks(
+    items.map((it, i) => ({ key: it.key, pos: -xc(i), label: it.label })).reverse(),
+  ).map((t) => ({ ...t, pos: -t.pos }));
+
   return (
     <div className="relative">
       <svg
@@ -152,17 +180,18 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
         <ChartDefs ids={defs} />
         {ticks.map((t) => (
           <g key={t} aria-hidden>
-            <line x1={L.left} x2={L.left + plotW} y1={y(t)} y2={y(t)} style={{ stroke: t === 0 ? T.line3 : T.line1 }} shapeRendering="crispEdges" />
-            <text x={L.left - 8} y={y(t)} textAnchor="end" dominantBaseline="central" style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }}>
+            <line x1={L.left} x2={L.left + plotW} y1={y(t)} y2={y(t)} style={{ stroke: t === 0 ? T.line2 : T.line1 }} shapeRendering="crispEdges" />
+            <text x={L.left - 10} y={y(t)} textAnchor="end" dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
               {t === 0 ? '0' : fmtPct(t)}
             </text>
           </g>
         ))}
         {cautionAbove < dom && (
           <g aria-hidden>
-            <line x1={L.left} x2={L.left + plotW} y1={y(cautionAbove)} y2={y(cautionAbove)} style={{ stroke: T.a5, strokeDasharray: '2 3' }} />
-            <text x={L.left + 4} y={y(cautionAbove) - 4} textAnchor="start" style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', fill: T.fg3 }}>
-              CAUTION {fmtPct(cautionAbove)}
+            <line x1={L.left} x2={L.left + plotW} y1={y(cautionAbove)} y2={y(cautionAbove)} style={{ stroke: T.fg4, strokeDasharray: '1 3', opacity: 0.8 }} strokeLinecap="round" />
+            <line x1={L.left} x2={L.left + 14} y1={8} y2={8} strokeLinecap="round" style={{ stroke: T.fg4, strokeDasharray: '1 3' }} />
+            <text x={L.left + 20} y={8} dominantBaseline="central" style={{ ...TXT, fill: T.fg3 }}>
+              Caution above {fmtPct(cautionAbove)}
             </text>
           </g>
         )}
@@ -178,25 +207,20 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
           const h = Math.max(dir === 'flat' ? 1 : 1.5, Math.abs(yv - zeroY));
           const x = xc(i) - barW / 2;
           const delay = reduce ? 0 : staggerDelay(i);
-          const style =
-            caution
-              ? { fill: defs.hatchFg, stroke: T.accent, strokeWidth: 1.25 }
-              : v >= 0
-                ? { fill: T.fg1 }
-                : { fill: 'none', stroke: T.fg2, strokeWidth: 1 };
+          const fill = caution ? T.fg2 : T.fg4;
           return (
             <g key={it.key}>
               <motion.rect
-                x={x + (v < 0 || caution ? 0.5 : 0)}
-                width={barW - (v < 0 || caution ? 1 : 0)}
-                rx={1.5}
+                x={x}
+                width={barW}
+                rx={Math.min(2.5, barW / 2)}
                 initial={{ y: zeroY, height: 0 }}
-                animate={{ y: top + (v < 0 ? 0.5 : 0), height: h - (v < 0 ? 1 : 0) }}
+                animate={{ y: top, height: h }}
                 transition={{ ...spring.gentle, delay }}
-                style={style}
+                style={{ fill, opacity: v < 0 ? 0.6 : 1 }}
               />
               {clipped && <path d={`M${xc(i) - 3} ${yv + (v > 0 ? 5 : -5)} l3 ${v > 0 ? -4 : 4} l3 ${v > 0 ? 4 : -4}`} style={{ fill: 'none', stroke: T.bg, strokeWidth: 1.5 }} />}
-              {(i % showEvery === (n - 1) % showEvery || caution) && (
+              {valueLabels.has(i) && (
                 <motion.text
                   x={xc(i)}
                   initial={{ opacity: 0, y: zeroY }}
@@ -204,20 +228,22 @@ function WowInner({ items, width, height, cautionAbove = 0.15, maxAbs = 0.6, syn
                   transition={{ ...spring.smooth, delay }}
                   textAnchor="middle"
                   dominantBaseline={v >= 0 ? 'auto' : 'hanging'}
-                  style={{ fontFamily: T.mono, fontSize: 10.5, fill: caution ? T.fg1 : dir === 'up' ? T.fg1 : dir === 'down' ? T.fg2 : T.fg3, fontWeight: dir === 'up' ? 600 : 400 }}
+                  style={{ ...TXT, fill: caution ? T.fg1 : dir === 'down' ? T.fg3 : T.fg2, fontWeight: caution ? 500 : 400 }}
                 >
                   {caution && '⚠ '}
-                  <SvgTicker value={v} format={(x) => (Math.abs(x) < 0.005 ? '±0%' : fmtPct(x))} />
+                  <SvgTicker value={v} format={fmtV} />
                 </motion.text>
-              )}
-              {i % showEvery === (n - 1) % showEvery && (
-                <text x={xc(i)} y={L.top + height + 8} textAnchor="middle" dominantBaseline="hanging" style={{ fontFamily: T.mono, fontSize: 11, fill: T.fg3 }} aria-hidden>
-                  {it.label}
-                </text>
               )}
             </g>
           );
         })}
+        <g aria-hidden>
+          {xTicks.map((t) => (
+            <text key={t.key} x={t.pos} y={L.top + height + 10} textAnchor="middle" dominantBaseline="hanging" style={{ ...TXT, fill: T.fg3 }}>
+              {t.label}
+            </text>
+          ))}
+        </g>
       </svg>
       <Tip items={items} keys={keys} sync={sync} xc={xc} width={width} top={L.top} />
       <span className="sr-only" aria-live="polite">

@@ -6,8 +6,10 @@
 import { addDays, isoWeekOf, isoWeekStart, isoWeekday } from '@cadence/core/time';
 import { SPORT_META, type Sport } from '@cadence/core';
 import type { AnyRouter } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import {
   BookCopy,
+  CalendarCheck,
   CalendarDays,
   CalendarRange,
   ChartSpline,
@@ -15,6 +17,7 @@ import {
   History,
   Keyboard,
   LayoutGrid,
+  Flag,
   Moon,
   NotebookPen,
   PanelLeft,
@@ -24,6 +27,7 @@ import {
   Sparkle,
   Sunrise,
 } from 'lucide-react';
+import { api, call } from '@/lib/api';
 import { formatDateMedium, formatIsoWeekRange } from '@/lib/format';
 import { localToday } from '@/lib/hooks/useToday';
 import { setMotionPref, isReducedMotion } from '@/motion/prefs';
@@ -78,6 +82,16 @@ export function parseDateQuery(q: string, today: string): { date?: string; week?
   return null;
 }
 
+const SEARCH_ICON: Record<string, ReactNode> = {
+  date: <CalendarDays />,
+  week: <CalendarRange />,
+  month: <CalendarDays />,
+  workout: <CalendarCheck />,
+  activity: <History />,
+  template: <BookCopy />,
+  event: <Flag />,
+};
+
 let installed = false;
 
 export function installDefaultCommands(router: AnyRouter, opts: { toggleRail: () => void }) {
@@ -128,6 +142,33 @@ export function installDefaultCommands(router: AnyRouter, opts: { toggleRail: ()
   ];
 
   registerPaletteSource({ id: 'shell.static', commands: [...nav, ...create, ...actions] });
+
+  // Server search (GET /api/search): workouts, activities, templates, events and jump targets the
+  // client parser does not know ("next race", "december 2026"). Results arrive pre-filtered.
+  registerPaletteSource({
+    id: 'shell.search',
+    minQuery: 2,
+    search: async (q, signal) => {
+      const res = await call(api.search.$get({ query: { q } }, { init: { signal } }));
+      const localDate = parseDateQuery(q, localToday()) != null;
+      const out: PaletteCommand[] = [];
+      for (const g of res.groups) {
+        for (const it of g.items) {
+          // The client date source already offers day/week jumps for this query.
+          if (g.type === 'jump' && localDate && (it.type === 'date' || it.type === 'week')) continue;
+          out.push({
+            id: `search.${it.type}.${it.id}`,
+            group: g.type === 'jump' ? 'Go to' : g.label,
+            title: it.title,
+            subtitle: it.subtitle,
+            icon: SEARCH_ICON[it.type] ?? <CalendarDays />,
+            perform: () => void router.navigate({ to: it.href } as never),
+          });
+        }
+      }
+      return out;
+    },
+  });
 
   registerPaletteSource({
     id: 'shell.dates',

@@ -40,7 +40,7 @@ export function ChartSegmented<V extends string>({ value, options, onChange, ari
             }}
             className={`relative z-0 rounded-[8px] px-2.5 text-label transition-colors duration-(--dur-fast) ${size === 'xs' ? 'h-6' : 'h-7'} ${on ? 'text-fg-1' : 'text-fg-2 hover:text-fg-1'}`}
           >
-            {on && <motion.span layoutId={`seg-${id}`} transition={spring.snappy} className="absolute inset-0 -z-10 rounded-[8px] bg-surface-active inset-shadow-hairline" />}
+            {on && <motion.span layoutId={`seg-${id}`} transition={spring.snappy} className="absolute inset-0 -z-10 rounded-[8px] bg-surface-active" />}
             {o.label}
           </button>
         );
@@ -73,16 +73,16 @@ export function CautionGlyph({ size = 12 }: { size?: number }) {
 }
 
 /**
- * Delta pill: arrow + signed percent. Increase = 600 fg-1, decrease = 400 fg-2, flat = fg-3.
- * `good` adds accent to the arrow only; `caution` swaps in the triangle + hatch underline.
+ * Delta: arrow + signed percent in the sans. Increase = 500 fg-1, decrease = 400 fg-2,
+ * flat = fg-3. `good` adds accent to the arrow only; `caution` swaps in the triangle glyph.
  */
 export function DeltaBadge({ value, flat = 0.01, good = false, caution = false, className = '' }: { value: number | null | undefined; flat?: number; good?: boolean; caution?: boolean; className?: string }) {
   const dir = deltaDir(value, flat);
-  const cls = dir === 'up' ? 'font-semibold text-fg-1' : dir === 'down' ? 'text-fg-2' : 'text-fg-3';
+  const cls = dir === 'up' ? 'font-medium text-fg-1' : dir === 'down' ? 'text-fg-2' : 'text-fg-3';
   return (
-    <span className={`inline-flex items-center gap-1 text-mono-sm ${cls} ${className}`}>
+    <span className={`num inline-flex items-center gap-1 text-label ${cls} ${className}`}>
       {caution ? <CautionGlyph /> : <DeltaArrow dir={dir} accent={good && dir === 'up'} />}
-      <span className={caution ? 'bg-hatch-fg bg-[length:100%_2px] bg-bottom bg-no-repeat pb-px' : ''}>{value == null ? '—' : dir === 'flat' ? '±0%' : fmtPct(value)}</span>
+      <span>{value == null ? '—' : dir === 'flat' ? '±0%' : fmtPct(value)}</span>
     </span>
   );
 }

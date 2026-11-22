@@ -4,6 +4,7 @@
  * Swap to content with <Crossfade> from '@/motion'.
  */
 import { cn } from '@/lib/cn';
+import { containerCls } from './PageHeader';
 
 export function Skeleton({ className, radius = 'sm' }: { className?: string; radius?: 'xs' | 'sm' | 'md' | 'lg' | 'full' }) {
   const r = { xs: 'rounded-xs', sm: 'rounded-sm', md: 'rounded-md', lg: 'rounded-lg', full: 'rounded-full' }[radius];
@@ -21,17 +22,21 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
   );
 }
 
-/** Generic page skeleton used by the router while a lazy page or its loader is pending. */
+/** Generic page skeleton used by the router while a lazy page or its loader is pending
+ *  (same frame as <Page> + <PageHeader>: 52px bar, title block, a stat row, one large block). */
 export function PageSkeleton() {
   return (
-    <div className="mx-auto flex w-full max-w-page flex-col gap-8 px-4 pt-6 md:px-6 xl:px-10" aria-busy aria-label="Loading">
-      <div className="flex flex-col gap-3 pt-10">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-10 w-72" />
+    <div className={cn(containerCls('page'), 'flex flex-col gap-12 md:gap-14 lg:gap-16')} aria-busy aria-label="Loading">
+      <div className="flex flex-col gap-2.5 pt-[calc(var(--header-h)+1.5rem)] md:pt-[calc(var(--header-h)+2.5rem)]">
+        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="h-8 w-64" />
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-8 gap-y-8 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} radius="lg" className="h-28" />
+          <div key={i} className="flex flex-col gap-2">
+            <Skeleton className="h-3.5 w-16" />
+            <Skeleton className="h-8 w-24" />
+          </div>
         ))}
       </div>
       <Skeleton radius="lg" className="h-72" />

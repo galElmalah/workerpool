@@ -1,6 +1,7 @@
 /**
  * IntensityDot + IntensityPips + IntensityPicker — DESIGN_V2 §5, product.md §3.4.
- * Dot: the calendar's one tint — a 6px dot toned from the z-ramp; easy sessions show none.
+ * Dot: the calendar's one tint — a 6px dot from the upper zone ramp for hard sessions only
+ * (threshold, high, race); easy and moderate sessions show nothing.
  * Pips: 5 small vertical bars (heights scaled), the first `level` filled — neutral fg by default,
  * the zone ramp with `tone="zone"`. Race renders a flag glyph instead.
  * Picker: Base UI RadioGroup; arrow keys change it; filled bars pop scaleY .6 → 1 staggered 20ms
@@ -19,15 +20,16 @@ const FILL = ['bg-z1', 'bg-z2', 'bg-z3', 'bg-z5', 'bg-z7'];
 const DOT: Record<IntensityClass, string | null> = {
   recovery: null,
   endurance: null,
-  tempo: 'bg-z3',
+  tempo: null,
   threshold: 'bg-z5',
-  high: 'bg-z7',
+  high: 'bg-z6',
   race: 'bg-z7',
 };
+const EASY: Partial<Record<IntensityClass, string>> = { recovery: 'bg-z1', endurance: 'bg-z2', tempo: 'bg-z3' };
 
 export interface IntensityDotProps {
   intensity: IntensityClass | null | undefined;
-  /** Also draw recovery / endurance (z1 / z2). Default false: easy sessions carry no tint. */
+  /** Also draw recovery / endurance / tempo (z1–z3). Default false: only hard sessions carry a dot. */
   showEasy?: boolean;
   className?: string;
 }
@@ -35,7 +37,7 @@ export interface IntensityDotProps {
 /** 6px intensity dot (DESIGN_V2 §5 chip/card). Labelled for screen readers and on hover. */
 export function IntensityDot({ intensity, showEasy, className }: IntensityDotProps) {
   if (!intensity) return null;
-  const tone = DOT[intensity] ?? (showEasy ? (intensity === 'recovery' ? 'bg-z1' : 'bg-z2') : null);
+  const tone = DOT[intensity] ?? (showEasy ? (EASY[intensity] ?? null) : null);
   if (!tone) return null;
   const label = `${INTENSITY_META[intensity].label} intensity`;
   return <span className={cn('size-1.5 shrink-0 rounded-full', tone, className)} role="img" aria-label={label} title={INTENSITY_META[intensity].label} />;

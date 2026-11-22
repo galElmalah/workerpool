@@ -73,6 +73,14 @@ changes on non-calendar pages return `false` (animate in-page with Motion). CSS 
   Global: ⌘K / `/` palette, `?` shortcuts page, `n` new workout, `[` rail, `g t/c/r/a/l/j/s`, ⌘Z undo,
   ⇧T theme.
 - **Theme** (`@/shell/theme`): `useTheme()`, `setTheme('dark'|'light'|'system')`, `toggleTheme()`.
+- **Accent** (`@/shell/theme`): `useAccent()` → `{ accent, setAccent }`, `setAccent('blue'|'green'|'rose')`,
+  `getAccent()`, `ACCENT_OPTIONS` (`[{ value, label }]`, ready for a `Segmented`/radio group), type
+  `AccentPref` (= `Accent` from `@cadence/core`). `setAccent` applies `<html data-accent>` instantly, persists
+  per device (`localStorage['cadence.accent']`, applied before first paint by `index.html`) and updates
+  `<meta name="theme-color">`. It does **not** save to the server — the Appearance picker does both:
+  `setAccent(a); void saver.save({ accent: a })`. The account value is `Settings.accent` (default `'blue'`);
+  `AppShell` calls `syncAccentFromServer(settings.accent)` whenever it loads/changes, so the server wins
+  across devices.
 - **Motion pref** (`@/motion/prefs`): `useMotionPref()`, `setMotionPref('system'|'full'|'reduced')`.
 - **Units** (`@/lib/units`): `useUnits()`, `setUnits({ system, swim })` (per device until Settings syncs it).
 - **Sync dot** (`@/shell/sync`): `setSyncStatus({ state: 'idle'|'syncing'|'error'|'offline', lastSyncAt })`.

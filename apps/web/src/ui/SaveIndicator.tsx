@@ -24,7 +24,7 @@ export function SaveIndicator({ status, className, errorText = "Couldn't save" }
         )}
         {status === 'saved' && (
           <motion.span key="saved" layout initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: tween('base', 'in') }} transition={spring.snappy} className="inline-flex items-center gap-1 text-fg-2">
-            <svg viewBox="0 0 12 12" className="size-3 text-accent-ink" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg viewBox="0 0 12 12" className="size-3 text-fg-2" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <motion.path d="M2.5 6.2 5 8.5l4.5-5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.snappy, delay: 0.05 }} />
             </svg>
             Saved

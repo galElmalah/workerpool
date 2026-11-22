@@ -1,7 +1,7 @@
 /** Kitchen-sink page for the chart kit (route: /dev/charts; standalone at /charts-gallery.html). */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { LocalDate } from '@cadence/core';
-import { FitnessChart, type FitnessSelection } from './FitnessChart';
+import { DEFAULT_FORM_BANDS, FitnessChart, type FitnessSelection } from './FitnessChart';
 import { WeeklyBars } from './WeeklyBars';
 import { WowDeltaBars, compareWeeks, wowItems, type CompareMode } from './WowDeltaBars';
 import { IntensityDistribution, ZoneBars, weeksToSplits } from './IntensityDistribution';
@@ -12,7 +12,7 @@ import { IntensityProfile, type ProfileBlock, type ProfileRepeat } from './Inten
 import { ConsistencyHeatmap } from './ConsistencyHeatmap';
 import { MiniArea, SparkBars, Sparkline, SplitBar, SportMixBar } from './Spark';
 import { WellnessChart } from './WellnessChart';
-import { CompareBars, FormDial, Gauge, ProgressRing } from './Gauge';
+import { CompareBars, FormDial, Gauge, ProgressRing, StatBar } from './Gauge';
 import { ChartSegmented, DeltaBadge } from './core/controls';
 import { Ticker } from './core/animated';
 import { ChartFrame } from './core/ChartFrame';
@@ -22,8 +22,8 @@ import { fmtHM, fmtHMS, fmtKm, fmtNum, fmtSigned } from './format';
 
 function Card({ id, title, question, children, aside, className = '' }: { id: string; title: string; question?: string; children: ReactNode; aside?: ReactNode; className?: string }) {
   return (
-    <section data-chart={id} className={`min-w-0 rounded-xl border border-line-2 bg-surface-1 p-4 inset-shadow-hairline xl:p-5 ${className}`} style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-2">
+    <section data-chart={id} className={`min-w-0 rounded-lg bg-surface-1 p-5 xl:p-6 ${className}`} style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="text-title-3 text-fg-1">{title}</h2>
           {question && <p className="text-body-sm text-fg-3">{question}</p>}
@@ -34,6 +34,8 @@ function Card({ id, title, question, children, aside, className = '' }: { id: st
     </section>
   );
 }
+
+const DEFAULT_ZONE_LABEL = (form: number) => DEFAULT_FORM_BANDS.find((b) => form > b.min && form <= b.max)?.label ?? '';
 
 const PERIODS = [
   { value: 'season', label: 'Season' },
@@ -51,11 +53,12 @@ export default function ChartGallery() {
     const days = mockDays();
     const fitness = mockFitness(days);
     const weeks = mockWeeks(days, fitness, 26);
+    const year = mockWeeks(days, fitness, 52);
     const ride = mockRide();
     const heat = mockHeatDays(days);
     const wellness = mockWellness(120);
     const loads = fitness.filter((f) => !f.projected).map((f) => ({ date: f.date, load: f.load }));
-    return { days, fitness, weeks, ride, heat, wellness, loads };
+    return { days, fitness, weeks, year, ride, heat, wellness, loads };
   }, []);
 
   // Activity: synced cursor + selection
@@ -118,34 +121,29 @@ export default function ChartGallery() {
       <div className="mx-auto max-w-page px-4 py-8 md:px-6 xl:px-10">
         <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-micro text-fg-3">cadence · dev</p>
+            <p className="text-label text-fg-3">Cadence · dev</p>
             <h1 className="text-title-1 text-fg-1">Chart kit</h1>
-            <p className="max-w-prose text-body text-fg-2">Hand-rolled SVG + d3 math + Motion, Canvas for 1 Hz streams. Black, white and Signal Green. Hover, drag, use the arrow keys.</p>
+            <p className="max-w-prose text-body text-fg-2">Hand-rolled SVG + d3 math + Motion, Canvas for 1 Hz streams. Neutral greys and one accent series per chart. Hover, drag, use the arrow keys.</p>
           </div>
           <ChartSegmented ariaLabel="Theme" value={theme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }]} onChange={setTheme} />
         </header>
 
-        <div className="grid grid-cols-1 gap-4 xl:gap-5">
+        <div className="grid grid-cols-1 gap-6">
           {/* Row 1: WoW tiles */}
           <section data-chart="tiles" className="min-w-0" style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-title-3">Week over week</h2>
               <ChartSegmented ariaLabel="Compare" value={cmpMode} options={[{ value: 'week', label: 'This week vs last' }, { value: '4v4', label: 'Last 4 vs prior 4' }]} onChange={setCmpMode} />
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-6 rounded-lg bg-surface-1 p-6 md:grid-cols-3 xl:grid-cols-6">
               {tiles.map((t) => (
-                <div key={t.id} className="flex min-w-0 flex-col gap-1 rounded-lg border border-line-2 bg-surface-1 p-3 inset-shadow-hairline">
-                  <span className="text-micro text-fg-3">{t.label}</span>
+                <div key={t.id} className="flex min-w-0 flex-col gap-1">
+                  <span className="text-label text-fg-3">{t.label}</span>
                   <span className="flex items-baseline gap-1">
-                    <Ticker value={t.current} format={(v) => (t.id === 'hours' ? fmtHM(v * 3600) : fmtNum(v))} className={`text-stat-md ${t.id === 'load' || t.id === 'fitness' ? 'text-accent-ink' : 'text-fg-1'}`} />
-                    <span className="text-label text-fg-3">{t.unit}</span>
+                    <Ticker value={t.current} format={(v) => (t.id === 'hours' ? fmtHM(v * 3600) : fmtNum(v))} className="text-stat-sm text-fg-1" />
+                    <span className="text-body-sm text-fg-3">{t.unit}</span>
                   </span>
-                  <span className="flex items-center justify-between gap-2">
-                    {t.deltaKind === 'pct' ? <DeltaBadge value={t.delta} good={t.id === 'load'} caution={t.id === 'load' && (t.delta ?? 0) > 0.15} /> : <span className="text-mono-sm text-fg-2">{fmtSigned(t.delta, 1)}</span>}
-                    {t.id === 'fitness' && <Sparkline values={data.weeks.slice(-12).map((w) => w.fitness)} width={56} height={18} />}
-                    {t.id === 'hours' && <Sparkline values={data.weeks.slice(-12).map((w) => w.doneSec / 3600)} tone="fg" width={56} height={18} />}
-                    {t.id === 'compliance' && <ProgressRing done={t.current} planned={100} size={28} stroke={3} label={null} />}
-                  </span>
+                  {t.deltaKind === 'pct' ? <DeltaBadge value={t.delta} caution={t.id === 'load' && (t.delta ?? 0) > 0.15} /> : <span className="num text-label text-fg-2">{fmtSigned(t.delta, 1)}</span>}
                 </div>
               ))}
             </div>
@@ -153,9 +151,9 @@ export default function ChartGallery() {
 
           <Card id="fitness" title="Fitness · Fatigue · Form" question="Is fitness building, and am I fresh or buried right now?">
             <FitnessChart days={data.fitness} today={MOCK_TODAY} events={mockEvents()} phases={mockPhases()} showRamp sync={dateSync} onSelect={setFsel} />
-            <div className="mt-3 min-h-6 text-body-sm text-fg-2" aria-live="polite">
+            <div className="mt-4 min-h-6 text-body-sm text-fg-2" aria-live="polite">
               {fsel ? (
-                <span className="text-mono">
+                <span className="num">
                   {fsel.from} → {fsel.to} · {fsel.days} d · load {fmtNum(fsel.load)} ({fmtNum(fsel.avgLoad)}/d) · fitness {fmtSigned(fsel.fitnessDelta, 1)} · form ends {fmtNum(fsel.formEnd)}
                 </span>
               ) : (
@@ -164,25 +162,31 @@ export default function ChartGallery() {
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto] xl:gap-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto]">
             <Card id="weekly" title="Weekly volume" question="How is my volume distributed and trending?">
               <WeeklyBars weeks={data.weeks.slice(-16)} onWeekClick={(w) => console.info('week', w)} />
             </Card>
             <Card id="dials" title="Right now" className="lg:w-80">
-              <div className="flex flex-col items-center gap-4">
-                <FormDial value={todayFit.form} zone={todayFit.formZone} caption={`${fmtSigned(todayFit.form - (data.fitness[data.fitness.findIndex((f) => f.date === MOCK_TODAY) - 7]?.form ?? 0))} vs 7 d ago`} />
-                <div className="flex items-end gap-4">
-                  <Gauge value={latestWell.readiness ?? 0} label="Readiness" size={132} />
-                  <div className="flex flex-col items-center gap-1 pb-3">
-                    <ProgressRing done={cur.doneSec} planned={cur.plannedSec} size={64} stroke={5} />
-                    <span className="text-micro text-fg-3">week done</span>
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <StatBar label="Form" value={todayFit.form} min={-45} max={35} marker={0} caption={DEFAULT_ZONE_LABEL(todayFit.form)} />
+                  <StatBar label="Week done" value={cur.doneSec / 3600} max={Math.max(cur.plannedSec, cur.doneSec) / 3600} format={(v) => fmtHM(v * 3600)} caption={`of ${fmtHM(cur.plannedSec)}`} tone="accent" />
+                </div>
+                <div className="flex flex-col items-center gap-4">
+                  <FormDial value={todayFit.form} zone={todayFit.formZone} size={176} caption={`${fmtSigned(todayFit.form - (data.fitness[data.fitness.findIndex((f) => f.date === MOCK_TODAY) - 7]?.form ?? 0))} vs 7 d ago`} />
+                  <div className="flex items-end gap-6">
+                    <Gauge value={latestWell.readiness ?? 0} label="Readiness" size={120} />
+                    <div className="flex flex-col items-center gap-1 pb-3">
+                      <ProgressRing done={cur.doneSec} planned={cur.plannedSec} size={56} />
+                      <span className="text-label text-fg-3">Week done</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:gap-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card id="intensity" title="Intensity distribution" question="Polarized, pyramidal, or drifting into the grey zone?">
               <IntensityDistribution items={weeksToSplits(last12)} />
             </Card>
@@ -190,6 +194,10 @@ export default function ChartGallery() {
               <WowDeltaBars items={wowItems(data.weeks.slice(-16), 'load')} />
             </Card>
           </div>
+
+          <Card id="wow-year" title="Load, week over week · 1 year" question="Labels thin out with the bar width; every value is in the tooltip.">
+            <WowDeltaBars items={wowItems(data.year, 'load')} />
+          </Card>
 
           <Card
             id="streams"
@@ -199,12 +207,12 @@ export default function ChartGallery() {
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
               <StreamChart streams={data.ride.streams} laps={data.ride.laps} ftp={data.ride.ftp} cursor={cursor} selection={sel} onSelect={setSel} />
               <div className="flex min-w-0 flex-col gap-4">
-                <div className="overflow-hidden rounded-lg border border-line-2 bg-canvas" style={{ ['--chart-bg' as string]: 'var(--color-canvas)' }}>
+                <div className="overflow-hidden rounded-lg">
                   <RouteMap streams={data.ride.streams} cursor={cursor} selection={sel} height={300} elevationShading />
                 </div>
-                <div className="rounded-lg border border-line-2 p-3" data-chart="selection">
-                  <div className="mb-2 text-micro text-fg-3">{sel ? 'Selection' : 'Drag on the streams to select'}</div>
-                  <dl className="grid grid-cols-3 gap-x-3 gap-y-2">
+                <div data-chart="selection">
+                  <div className="mb-3 text-label text-fg-3">{sel ? 'Selection' : 'Drag on the streams to select'}</div>
+                  <dl className="grid grid-cols-3 gap-x-4 gap-y-3">
                     {[
                       ['Time', stats ? fmtHMS(stats.durationSec) : '—'],
                       ['Dist', stats?.distanceM != null ? `${fmtKm(stats.distanceM)} km` : '—'],
@@ -214,27 +222,27 @@ export default function ChartGallery() {
                       ['Gain', stats?.elevationGain != null ? `${fmtNum(stats.elevationGain)} m` : '—'],
                     ].map(([k, v]) => (
                       <div key={k} className="flex flex-col">
-                        <dt className="text-micro text-fg-3">{k}</dt>
-                        <dd className="text-mono text-fg-1">{v}</dd>
+                        <dt className="text-label text-fg-3">{k}</dt>
+                        <dd className="num text-body-sm text-fg-1">{v}</dd>
                       </div>
                     ))}
                   </dl>
                 </div>
               </div>
             </div>
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-2">
               <div>
-                <h3 className="mb-3 text-micro text-fg-3">Time in power zones</h3>
+                <h3 className="mb-4 text-label text-fg-3">Time in power zones</h3>
                 <ZoneBars zones={zonesFromPower(data.ride.streams.power!, data.ride.ftp)} unit="W" targetPct={[0.18, 0.32, 0.1, 0.22, 0.12, 0.04, 0.02]} />
               </div>
               <div>
-                <h3 className="mb-3 text-micro text-fg-3">Planned structure</h3>
+                <h3 className="mb-4 text-label text-fg-3">Planned structure</h3>
                 <IntensityProfile blocks={baseBlocks} repeats={baseRepeats} height={96} />
               </div>
             </div>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:gap-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card id="power" title="Power curve" question="Where am I strong, and is this season beating the last?" aside={<ChartSegmented size="xs" ariaLabel="Period" value={period} options={PERIODS} onChange={setPeriod} />}>
               <PowerCurve series={curves} weightKg={72.4} model={showCp ? { cp: period === '90d' ? 292 : 285, wPrime: period === '90d' ? 19500 : 21000 } : null} />
               <label className="mt-3 inline-flex items-center gap-2 text-body-sm text-fg-2">
@@ -249,13 +257,13 @@ export default function ChartGallery() {
 
           <Card id="profile" title="Structured workout" question="Builder profile: add, remove and reorder steps; hover a block." aside={
             <div className="flex flex-wrap gap-2">
-              <button type="button" className="h-7 rounded-md border border-line-2 bg-surface-2 px-3 text-label text-fg-1 hover:bg-surface-3" onClick={() => setBlocks((b) => reflow([...b.slice(0, -1), { id: `n${Date.now()}`, durationSec: 240, intensity: 1.25, role: 'active', label: 'VO2' }, { id: `r${Date.now()}`, durationSec: 240, intensity: 0.5, role: 'recovery', label: 'Recovery' }, b[b.length - 1]]))}>
+              <button type="button" className="h-7 rounded-md bg-surface-2 px-3 text-label text-fg-1 hover:bg-surface-3" onClick={() => setBlocks((b) => reflow([...b.slice(0, -1), { id: `n${Date.now()}`, durationSec: 240, intensity: 1.25, role: 'active', label: 'VO2' }, { id: `r${Date.now()}`, durationSec: 240, intensity: 0.5, role: 'recovery', label: 'Recovery' }, b[b.length - 1]]))}>
                 Add interval
               </button>
-              <button type="button" className="h-7 rounded-md border border-line-2 bg-surface-2 px-3 text-label text-fg-1 hover:bg-surface-3" onClick={() => setBlocks((b) => (b.length > 3 ? reflow([...b.slice(0, 1), ...b.slice(3)]) : b))}>
+              <button type="button" className="h-7 rounded-md bg-surface-2 px-3 text-label text-fg-1 hover:bg-surface-3" onClick={() => setBlocks((b) => (b.length > 3 ? reflow([...b.slice(0, 1), ...b.slice(3)]) : b))}>
                 Remove first set
               </button>
-              <button type="button" className="h-7 rounded-md border border-line-2 bg-surface-2 px-3 text-label text-fg-1 hover:bg-surface-3" onClick={() => setBlocks((b) => reflow([b[0], ...b.slice(1, -1).reverse(), b[b.length - 1]]))}>
+              <button type="button" className="h-7 rounded-md bg-surface-2 px-3 text-label text-fg-1 hover:bg-surface-3" onClick={() => setBlocks((b) => reflow([b[0], ...b.slice(1, -1).reverse(), b[b.length - 1]]))}>
                 Reverse middle
               </button>
               <button type="button" className="h-7 rounded-md px-3 text-label text-fg-2 hover:text-fg-1" onClick={() => setBlocks(baseBlocks)}>
@@ -266,10 +274,10 @@ export default function ChartGallery() {
             <IntensityProfile blocks={blocks} repeats={repeats} selectedId={selBlock} onSelect={setSelBlock} height={160} />
             <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
               {[baseBlocks, baseBlocks.slice(0, 8), baseBlocks.slice(7), baseBlocks.filter((b) => b.role !== 'active')].map((bs, i) => (
-                <div key={i} className="rounded-md border border-line-2 bg-surface-2 p-2.5">
+                <div key={i}>
                   <div className="mb-2 flex items-center justify-between text-body-sm">
                     <span className="truncate text-fg-1">{['Threshold + VO2', 'Threshold 3×12', 'VO2 5×3', 'Endurance'][i]}</span>
-                    <span className="text-mono-sm text-fg-3">{fmtHM(bs.reduce((a, b) => a + b.durationSec, 0))}</span>
+                    <span className="num text-label text-fg-3">{fmtHM(bs.reduce((a, b) => a + b.durationSec, 0))}</span>
                   </div>
                   <IntensityProfile variant="compact" blocks={reflow(bs)} height={24} />
                 </div>
@@ -281,11 +289,11 @@ export default function ChartGallery() {
             <ConsistencyHeatmap days={data.heat} today={MOCK_TODAY} onDayClick={(d) => console.info('day', d)} />
           </Card>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:gap-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <Card id="wellness" title="Wellness" question="Is load turning into adaptation, or into fatigue?">
               <WellnessChart days={data.wellness.slice(-90)} loads={data.loads} />
             </Card>
-            <div className="flex min-w-0 flex-col gap-4">
+            <div className="flex min-w-0 flex-col gap-6">
               <Card id="compare" title="This vs last">
                 <CompareBars
                   items={[
@@ -297,11 +305,11 @@ export default function ChartGallery() {
                 />
               </Card>
               <Card id="summary" title="Calendar week summary" question="Sparks used in the calendar's weekly column.">
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-6">
                   {data.weeks.slice(-3).map((w) => (
-                    <div key={w.isoWeek} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 rounded-md border border-line-1 p-3">
-                      <span className="text-micro text-fg-3">{w.isoWeek.slice(5)}</span>
-                      <span className="text-mono text-fg-1">
+                    <div key={w.isoWeek} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2">
+                      <span className="text-label text-fg-3">{w.isoWeek.slice(5)}</span>
+                      <span className="num text-body-sm text-fg-1">
                         {fmtHM(w.doneSec)} <span className="text-fg-3">/ {fmtHM(w.plannedSec)} h</span> · {fmtNum(w.doneLoad)} <span className="text-fg-3">/ {fmtNum(w.plannedLoad)}</span>
                       </span>
                       <SparkBars values={w.dailyLoad} planned={w.isProjected ? w.dailyLoad.map((v, i) => (i === 6 ? 120 : v)) : undefined} todayIndex={w.isProjected ? 5 : undefined} />
@@ -314,7 +322,7 @@ export default function ChartGallery() {
                     </div>
                   ))}
                   <div className="flex items-center gap-4">
-                    <MiniArea values={data.weeks.map((w) => w.fitness)} height={36} />
+                    <MiniArea values={data.weeks.map((w) => w.fitness)} height={36} tone="accent" />
                     <Sparkline values={data.weeks.map((w) => w.form)} tone="fg" showValue width={80} baseline={0} />
                   </div>
                 </div>
@@ -323,7 +331,7 @@ export default function ChartGallery() {
           </div>
 
           <Card id="states" title="States" question="Loading skeleton and empty state share the chart's final size.">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <ChartFrame summary="Loading" loading height={140}>
                 <div />
               </ChartFrame>

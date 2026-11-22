@@ -1,21 +1,27 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-accent="blue">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#0c0f11" />
     <meta name="description" content="Cadence — plan, train and read your progress." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>cadence</title>
     <script>
-      // Theme + motion before first paint (no flash). Mirrors src/shell/theme.ts and src/motion/prefs.ts.
+      // Theme, accent + motion before first paint (no flash). Mirrors src/shell/theme.ts and src/motion/prefs.ts.
       (function () {
         try {
+          var root = document.documentElement;
           var t = localStorage.getItem('cadence.theme') || 'dark';
           if (t === 'system') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-          document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
-          if (t === 'light') document.querySelector('meta[name="theme-color"]').setAttribute('content', '#fafafa');
+          t = t === 'light' ? 'light' : 'dark';
+          var a = localStorage.getItem('cadence.accent');
+          if (a !== 'green' && a !== 'rose') a = 'blue';
+          root.dataset.theme = t;
+          root.dataset.accent = a;
+          var canvas = { dark: { blue: '#0c0f11', green: '#0c0f0d', rose: '#110d0e' }, light: { blue: '#f4f7f9', green: '#f4f7f5', rose: '#f9f5f6' } };
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', canvas[t][a]);
           var m = localStorage.getItem('cadence.motion');
           if (m === 'reduced' || (m !== 'full' && matchMedia('(prefers-reduced-motion: reduce)').matches))
             document.documentElement.dataset.motion = 'reduced';

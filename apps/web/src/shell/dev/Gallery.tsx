@@ -27,9 +27,8 @@ import { distanceParts, formatDayShort, formatDuration, formatLoad, formatPace, 
 import { useUnits } from '@/lib/units';
 import { setMotionPref, useMotionPref } from '@/motion/prefs';
 import { Crossfade } from '@/motion/PageTransition';
-import { onSpotlightMove } from '@/motion/pointer';
 import { Odometer, Ticker } from '@/motion/Ticker';
-import { useTheme } from '@/shell/theme';
+import { ACCENT_OPTIONS, useAccent, useTheme } from '@/shell/theme';
 import {
   Banner,
   Button,
@@ -74,6 +73,7 @@ import {
   SkeletonText,
   Slider,
   SportGlyph,
+  StatRow,
   StatTile,
   Switch,
   SyncDot,
@@ -111,21 +111,21 @@ const SECTIONS = [
 function Demo({ label, children, className }: { label?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-3', className)}>
-      {label && <div className="text-micro text-fg-3">{label}</div>}
+      {label && <div className="text-body-sm text-fg-3">{label}</div>}
       {children}
     </div>
   );
 }
 
 function Panel({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('rounded-lg border border-line-1 bg-surface-1 p-5', className)}>{children}</div>;
+  return <div className={cn('rounded-lg bg-surface-1 p-5 md:p-6', className)}>{children}</div>;
 }
 
 // ───────────────────────── foundations ─────────────────────────
 function Swatch({ name, cls, text }: { name: string; cls: string; text?: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className={cn('h-12 rounded-md border border-line-2', cls)} />
+      <div className={cn('h-12 rounded-md ring-1 ring-line-1 ring-inset', cls)} />
       <span className="text-mono-sm text-fg-2">{name}</span>
       {text && <span className="text-body-sm text-fg-3">{text}</span>}
     </div>
@@ -134,7 +134,7 @@ function Swatch({ name, cls, text }: { name: string; cls: string; text?: string 
 
 function Foundations() {
   return (
-    <Section id="foundations" title="Foundations" description="True-black canvas, three surfaces, hairlines, one hue.">
+    <Section id="foundations" title="Foundations" description="Soft near-black canvas, surfaces that step lighter with depth, one calm accent (blue, green or rose).">
       <div className="flex flex-col gap-8">
         <Demo label="Surfaces & lines">
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 lg:grid-cols-9">
@@ -159,14 +159,14 @@ function Foundations() {
                 ['fg-4', 'text-fg-4'],
               ] as const
             ).map(([t, cls]) => (
-              <div key={t} className="rounded-md border border-line-1 px-3 py-2.5">
+              <div key={t} className="rounded-md bg-surface-1 px-3 py-2.5">
                 <div className={cn('text-body-lg', cls)}>Threshold 4×8′</div>
                 <div className="text-mono-sm text-fg-3">{t}</div>
               </div>
             ))}
           </div>
         </Demo>
-        <Demo label="Signal Green — accent ladder a1–a7 and zones z1–z7">
+        <Demo label="Accent — washes a1–a7, the opaque zone ramp z1–z7 (data only)">
           <div className="flex flex-col gap-2">
             <div className="grid grid-cols-8 gap-1.5">
               {['bg-accent-a1', 'bg-accent-a2', 'bg-accent-a3', 'bg-accent-a4', 'bg-accent-a5', 'bg-accent-a6', 'bg-accent-a7', 'bg-accent'].map((c) => (
@@ -190,8 +190,8 @@ function Foundations() {
             </div>
           </div>
         </Demo>
-        <Demo label="Type scale — Geist + Geist Mono, tabular numerals everywhere">
-          <div className="flex flex-col divide-y divide-line-1 rounded-lg border border-line-1">
+        <Demo label="Type scale — Geist with tabular numerals; Geist Mono only for keys and code">
+          <div className="flex flex-col divide-y divide-line-1 rounded-lg bg-surface-1">
             {(
               [
                 ['stat-xl', 'text-stat-xl', '84'],
@@ -220,7 +220,7 @@ function Foundations() {
         <Demo label="Radii — xs 4 · sm 6 · md 10 · lg 14 · xl 20 · 2xl 28">
           <div className="flex flex-wrap gap-3">
             {['rounded-xs', 'rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl', 'rounded-2xl'].map((r) => (
-              <div key={r} className={cn('flex size-16 items-end border border-line-3 bg-surface-2 p-1.5 text-mono-sm text-fg-3', r)}>
+              <div key={r} className={cn('flex size-16 items-end bg-surface-2 p-1.5 text-mono-sm text-fg-3', r)}>
                 {r.replace('rounded-', '')}
               </div>
             ))}
@@ -464,11 +464,16 @@ function DataDisplay() {
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatRow>
           {stats.map((s) => (
-            <StatTile key={s.label} label={s.label} value={s.value} delta={s.delta} good={s.good} warning={s.warning} signal={s.signal} sparkline={s.spark} deltaSuffix="vs last wk" />
+            <StatTile key={s.label} label={s.label} value={s.value} delta={s.delta} good={s.good} warning={s.warning} signal={s.signal} deltaSuffix="vs last wk" />
           ))}
-        </div>
+        </StatRow>
+        <StatRow card columns={3} className="mt-4">
+          <StatTile label="Time" value={34800} format={(v) => formatDuration(v, 'clock')} unit="h" hint="of 9:45" />
+          <StatTile label="Load" value={464} hint="of 539 planned" />
+          <StatTile label="Fitness" value={66} sparkline={stats[0]!.spark} delta={2.6} deltaKind="number" good deltaSuffix="vs last wk" />
+        </StatRow>
         <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
           <Card title="Activities" eyebrow="Table" padding="none" spotlight={false} actions={<IconButton label="More" icon={<Ellipsis />} size="sm" />}>
             <Table surface="surface-1" rows={ACTIVITIES_TABLE} columns={cols} rowKey={(r) => r.id} selectedKey="a1" onRowClick={() => {}} stickyTop="0px" defaultSort={{ key: 'date', dir: 'desc' }} totals={{ date: 'Total', dur: formatDuration(ACTIVITIES_TABLE.reduce((a, r) => a + r.dur, 0), 'hms'), load: formatLoad(ACTIVITIES_TABLE.reduce((a, r) => a + r.load, 0)) }} />
@@ -772,7 +777,7 @@ function MotionLab() {
             <div className="flex items-end justify-between gap-4">
               <div className="flex flex-col gap-1">
                 <span className="text-micro text-fg-3">Fitness</span>
-                <span className="text-stat-lg text-accent-ink">
+                <span className="text-stat-lg text-fg-1">
                   <Odometer value={fit} />
                 </span>
               </div>
@@ -799,25 +804,29 @@ function MotionLab() {
             </div>
           </Card>
         </div>
-        <Demo label="Spotlight cards — pointer-tracked border glow (accent only for key / today)">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {['Fitness', 'Fatigue', 'Form', 'Today'].map((t, i) => (
-              <div
-                key={t}
-                onPointerMove={onSpotlightMove}
-                className={cn('spotlight flex h-28 flex-col justify-between rounded-lg border border-line-2 bg-surface-1 p-4', i === 3 && 'spotlight-accent')}
-              >
-                <span className="text-micro text-fg-3">{t}</span>
-                <span className="text-stat-sm">{[84, 97, '−13', 'Sat 21'][i]}</span>
-              </div>
-            ))}
+        <Demo label="Cards — static (flat), interactive (hover step + neutral spotlight), selected, nested well">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Card title="Static" eyebrow="Default">
+              <p className="text-body-sm text-fg-2">Flat surface-1, no border, no glow.</p>
+            </Card>
+            <Card title="Interactive" eyebrow="Link card" interactive>
+              <p className="text-body-sm text-fg-2">Hover: one surface step + neutral spotlight.</p>
+            </Card>
+            <Card title="Selected" eyebrow="State" interactive selected>
+              <p className="text-body-sm text-fg-2">A surface step — never a ring or a rail.</p>
+            </Card>
+            <Card title="With a well" eyebrow="level 2">
+              <Card level={2}>
+                <p className="text-body-sm text-fg-2">Nested grouping: a quiet well.</p>
+              </Card>
+            </Card>
           </div>
         </Demo>
         <Demo label="Drag & drop — lift, ghost, live reflow, bouncy settle, undo toast (keyboard: focus a card, Space, arrows, Space)">
           <DndDemo />
         </Demo>
         <Demo label="Empty state">
-          <div className="rounded-xl border border-dashed border-line-2">
+          <div className="rounded-lg bg-surface-1">
             <EmptyState icon={<Inbox />} title="Nothing planned yet" action={<Button icon={<Plus />}>Add workout</Button>}>
               Press <Kbd>C</Kbd> on any day, or type <span className="text-mono text-fg-1">run 45m easy</span>.
             </EmptyState>
@@ -866,24 +875,33 @@ function Formatting() {
 
 export function GalleryPage() {
   const { resolved, setTheme } = useTheme();
+  const { accent, setAccent } = useAccent();
   return (
     <Page
       width="page"
       header={
         <PageHeader
           title="Design system"
-          eyebrow="Cadence · Instrument"
+          eyebrow="Cadence v2 · quiet"
           breadcrumb={[{ label: 'Dev' }]}
           meta={
             <span className="flex flex-wrap gap-1.5">
               {SECTIONS.map(([id, label]) => (
-                <a key={id} href={`#${id}`} className="rounded-sm border border-line-2 px-2 py-0.5 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1">
+                <a key={id} href={`#${id}`} className="rounded-sm px-2 py-0.5 text-body-sm text-fg-3 transition-colors hover:bg-surface-2 hover:text-fg-1 first:-ml-2">
                   {label}
                 </a>
               ))}
             </span>
           }
           actions={
+            <>
+            <Segmented
+              aria-label="Accent"
+              size="sm"
+              value={accent}
+              onValueChange={setAccent}
+              options={ACCENT_OPTIONS}
+            />
             <Segmented
               aria-label="Theme"
               size="sm"
@@ -894,6 +912,7 @@ export function GalleryPage() {
                 { value: 'light', label: 'Light' },
               ]}
             />
+            </>
           }
         />
       }

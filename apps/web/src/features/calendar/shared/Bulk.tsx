@@ -12,7 +12,6 @@ import { useState } from 'react';
 import type { CalendarResponse, PlannedWorkout } from '@cadence/core/domain';
 import { addDays, addWeeks, isoWeekStart } from '@cadence/core/time';
 import { api, call } from '@/lib/api';
-import { cn } from '@/lib/cn';
 import { formatDayShort, formatDuration, formatIsoWeek, formatIsoWeekRange, MINUS } from '@/lib/format';
 import { invalidateTraining, qk } from '@/lib/query';
 import { useRestoreWorkouts, type CalendarCard } from '@/lib/queries/training';
@@ -31,8 +30,8 @@ function Shell({ anchor, onClose, children, title }: { anchor: HTMLElement; onCl
     <BasePopover.Root open onOpenChange={(o) => !o && onClose()}>
       <BasePopover.Portal>
         <BasePopover.Positioner anchor={anchor} side="left" align="start" sideOffset={8} collisionPadding={12} className="z-(--z-popover)">
-          <BasePopover.Popup className="ui-popup w-72 max-w-80 rounded-lg p-3" initialFocus>
-            <BasePopover.Title className="pb-2 text-micro text-fg-3">{title}</BasePopover.Title>
+          <BasePopover.Popup className="ui-popup w-72 max-w-80 rounded-lg p-4" initialFocus>
+            <BasePopover.Title className="pb-3 text-body-sm font-medium text-fg-1">{title}</BasePopover.Title>
             {children}
           </BasePopover.Popup>
         </BasePopover.Positioner>
@@ -43,7 +42,7 @@ function Shell({ anchor, onClose, children, title }: { anchor: HTMLElement; onCl
 
 function Stepper({ label, onPrev, onNext }: { label: React.ReactNode; onPrev: () => void; onNext: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-md border border-line-2 bg-surface-2 p-0.5">
+    <div className="flex items-center justify-between gap-2 rounded-md bg-surface-2 p-0.5">
       <IconButton label="Earlier" icon={<ChevronLeft />} size="sm" tooltip={false} onClick={onPrev} />
       <span className="min-w-0 truncate text-center text-body text-fg-1">{label}</span>
       <IconButton label="Later" icon={<ChevronRight />} size="sm" tooltip={false} onClick={onNext} />
@@ -85,7 +84,7 @@ export function CopyWeekPopover({ isoWeek, anchor, model, actions, onClose }: { 
         <Stepper
           label={
             <>
-              <span className="text-mono">{formatIsoWeek(target)}</span> <span className="text-fg-3">· {formatIsoWeekRange(target)}</span>
+              <span className="font-medium">{formatIsoWeek(target)}</span> <span className="text-fg-3">· {formatIsoWeekRange(target)}</span>
             </>
           }
           onPrev={() => setOffset((o) => (o - 1 === 0 ? -1 : o - 1))}
@@ -93,7 +92,7 @@ export function CopyWeekPopover({ isoWeek, anchor, model, actions, onClose }: { 
         />
         <Slider
           label="Progression"
-          valueLabel={<span className="text-mono-sm">{pct > 0 ? '+' : pct < 0 ? MINUS : '±'}{Math.abs(pct)}%</span>}
+          valueLabel={<span className="text-label num">{pct > 0 ? '+' : pct < 0 ? MINUS : '±'}{Math.abs(pct)}%</span>}
           value={pct}
           onValueChange={setPct}
           min={-40}
@@ -102,7 +101,7 @@ export function CopyWeekPopover({ isoWeek, anchor, model, actions, onClose }: { 
           ticks
           aria-label="Progression percent"
         />
-        <div className="flex items-center gap-1.5 rounded-sm border border-dashed border-line-3 px-2 py-1.5 text-mono-sm text-fg-2">
+        <div className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2.5 py-2 text-body-sm text-fg-2 num">
           <span className="text-fg-1">{planned.length}</span>
           <span className="font-sans text-fg-3">workouts</span>
           <span className="ml-auto text-fg-3">{formatDuration(sec)} →</span>
@@ -155,7 +154,7 @@ export function ShiftPopover({ from, anchor, onClose }: { from: string; anchor: 
         </p>
         <Stepper
           label={
-            <span className="text-mono">
+            <span className="font-medium num">
               {days > 0 ? '+' : MINUS}
               {Math.abs(days)} day{Math.abs(days) === 1 ? '' : 's'}
             </span>
@@ -189,7 +188,7 @@ export function SelectionBar({ model, actions }: { model: CalendarModel; actions
           animate={{ y: 0, opacity: 1, x: '-50%' }}
           exit={{ y: 16, opacity: 0, x: '-50%', transition: tween('fast', 'in') }}
           transition={spring.smooth}
-          className="glass fixed bottom-[calc(var(--bottom-bar-h)+1.5rem)] left-[calc(50%+var(--rail-w)/2)] z-(--z-popover) flex items-center gap-1 rounded-lg border border-line-3 p-1 pl-3 inset-shadow-hairline"
+          className="fixed bottom-[calc(var(--bottom-bar-h)+1.5rem)] left-[calc(50%+var(--rail-w)/2)] z-(--z-popover) flex items-center gap-1 rounded-lg bg-surface-3 p-1 pl-3"
         >
           <span className="pr-2 text-label text-fg-1">
             <span className="">{selection.size}</span> selected
@@ -214,7 +213,7 @@ export function SelectionBar({ model, actions }: { model: CalendarModel; actions
           >
             Delete
           </Button>
-          <span className={cn('mx-1 h-5 w-px bg-line-2')} />
+          <span className="mx-1 h-5 w-px bg-line-2" />
           <IconButton label="Clear selection" icon={<X />} size="sm" kbd="esc" onClick={clear} />
         </motion.div>
       )}

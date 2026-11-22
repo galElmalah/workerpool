@@ -15,6 +15,7 @@ export {
   WorkoutCard,
   densityForWidth,
   morphSourceProps,
+  cardTone,
   type WorkoutCardModel,
   type WorkoutCardProps,
   type CardDensity,

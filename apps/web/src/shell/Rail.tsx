@@ -1,9 +1,12 @@
 /**
- * Desktop / tablet rail — design.md §4.2, §5.4f.
+ * Desktop / tablet rail — DESIGN_V2 §5 "Rail": wordmark, search, New workout (NEUTRAL secondary —
+ * the accent is reserved for each page's own primary action), six nav items, sync status, settings.
+ * No borders: the rail is canvas, grouped by space.
  *  ≥1280: 232 ↔ 64 (persisted), width springs with `smooth`, labels fade at 140ms.
  *  768–1279: 64 with icons + tooltips; expands as a glass OVERLAY (doesn't push content).
- * Active item = a pill carrying view-transition-name `nav-pill`, so it glides between items during
- * the route transition; a Motion `layoutId="nav-hover"` pill previews hover (snappy).
+ * Active item = `surface-2` pill + fg-1 (inactive fg-3). The pill carries view-transition-name
+ * `nav-pill`, so it glides between items during the route transition (see view-transitions.css for
+ * why it is blended); a Motion `layoutId="nav-hover"` pill (surface-1) previews hover (snappy).
  */
 import { Link, useRouterState } from '@tanstack/react-router';
 import { PanelLeft, PanelLeftClose, Plus, Search } from 'lucide-react';
@@ -62,16 +65,16 @@ function RailLink({ item, active, expanded, hovered, onHover, onNavigate }: { it
       className={cn(
         'relative flex h-9 items-center gap-3 rounded-md px-[11px] text-body outline-none transition-colors duration-(--dur-fast)',
         'focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus',
-        active ? 'text-fg-1' : 'text-fg-2 hover:text-fg-1',
+        active ? 'font-medium text-fg-1' : 'text-fg-3 hover:text-fg-1',
       )}
     >
       {hovered && !active && (
-        <motion.span layoutId="nav-hover" transition={spring.snappy} className="absolute inset-0 rounded-md bg-surface-2" aria-hidden />
+        <motion.span layoutId="nav-hover" transition={spring.snappy} className="absolute inset-0 rounded-md bg-surface-1 light:bg-surface-2" aria-hidden />
       )}
       {active && (
-        <span className="absolute inset-0 rounded-md border border-line-1 bg-surface-3 light:border-line-2 light:bg-surface-1" style={{ viewTransitionName: 'nav-pill' }} aria-hidden />
+        <span className="absolute inset-0 rounded-md bg-surface-2 light:bg-surface-3" style={{ viewTransitionName: 'nav-pill' }} aria-hidden />
       )}
-      <Icon className="relative size-4 shrink-0" strokeWidth={active ? 2 : 1.75} />
+      <Icon className="relative size-4 shrink-0" strokeWidth={active ? 2 : 1.75} aria-hidden />
       <span className="relative flex min-w-0 flex-1 items-center">
         <Label show={expanded}>{item.label}</Label>
       </span>
@@ -100,8 +103,8 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
       transition={spring.smooth}
       aria-label="Primary"
       className={cn(
-        'fixed inset-y-0 left-0 z-(--z-rail) flex flex-col overflow-hidden border-r border-line-1 px-3 pt-3 pb-3',
-        overlay ? 'glass border-line-2' : 'bg-canvas',
+        'fixed inset-y-0 left-0 z-(--z-rail) flex flex-col overflow-hidden px-3 pt-4 pb-4',
+        overlay ? 'glass' : 'bg-canvas',
       )}
     >
       {/* Wordmark + collapse */}
@@ -109,7 +112,7 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
         <AnimatePresence initial={false} mode="popLayout">
           {expanded ? (
             <motion.div key="wm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: tween('fast', 'in') }}>
-              <Link to="/" className="rounded-sm text-[0.9375rem] font-[600] tracking-[-0.02em] text-fg-1 outline-none focus-visible:outline-2 focus-visible:outline-focus">
+              <Link to="/" className="rounded-sm text-[0.9375rem] font-semibold tracking-[-0.02em] text-fg-1 outline-none focus-visible:outline-2 focus-visible:outline-focus">
                 cadence
               </Link>
             </motion.div>
@@ -127,7 +130,7 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
       </div>
 
       {/* Search + New workout */}
-      <div className="mt-4 flex flex-col gap-2">
+      <div className="mt-6 flex flex-col gap-1.5">
         <Tooltip content="Search" kbd="mod+k" side="right" disabled={expanded}>
           <motion.button
             type="button"
@@ -138,7 +141,7 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
             whileTap={{ scale: 0.97 }}
             transition={spring.snappy}
             aria-label="Search (⌘K)"
-            className="flex h-9 items-center gap-3 rounded-md border border-line-2 bg-surface-1 px-[11px] text-body text-fg-3 transition-colors duration-(--dur-fast) hover:border-line-3 hover:text-fg-2"
+            className="flex h-9 items-center gap-3 rounded-md bg-surface-1 px-[11px] text-body text-fg-3 transition-colors duration-(--dur-fast) hover:bg-surface-2 hover:text-fg-2 light:bg-surface-3 light:hover:bg-surface-active"
           >
             <Search className="size-4 shrink-0" />
             <Label show={expanded}>
@@ -155,13 +158,15 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
               to="/workouts/new"
               onClick={onNavigate}
               aria-label="New workout"
-              className="flex h-9 items-center gap-3 rounded-md bg-accent px-[11px] text-label font-[560] text-on-accent outline-none transition-colors duration-(--dur-fast) hover:bg-accent-hover active:bg-accent-press focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="group/new flex h-9 items-center gap-3 rounded-md px-[9px] text-body text-fg-2 outline-none transition-colors duration-(--dur-fast) hover:bg-surface-1 hover:text-fg-1 active:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-focus light:hover:bg-surface-2"
             >
-              <Plus className="size-4 shrink-0" strokeWidth={2.25} />
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-surface-3 text-fg-1 transition-colors duration-(--dur-fast) group-hover/new:bg-surface-active light:bg-surface-active" aria-hidden>
+                <Plus className="size-3.5" strokeWidth={2.25} />
+              </span>
               <Label show={expanded}>
                 <span className="flex items-center justify-between">
                   New workout
-                  <Kbd keys="n" tone="subtle" />
+                  <Kbd keys="n" />
                 </span>
               </Label>
             </Link>
@@ -171,7 +176,7 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
 
       {/* Primary nav */}
       <LayoutGroup id="rail-nav">
-        <nav className="mt-5 flex flex-col gap-0.5" onPointerLeave={() => setHover(null)}>
+        <nav className="mt-8 flex flex-col gap-1" onPointerLeave={() => setHover(null)}>
           {NAV.map((it) => (
             <RailLink key={it.to} item={it} active={active === it} expanded={expanded} hovered={hover === it.to} onHover={setHover} onNavigate={onNavigate} />
           ))}
@@ -180,7 +185,7 @@ export function Rail({ expanded, overlay, onToggle, onNavigate }: RailProps) {
         <div className="flex-1" />
 
         {/* Bottom: sync + settings */}
-        <div className="flex flex-col gap-0.5" onPointerLeave={() => setHover(null)}>
+        <div className="flex flex-col gap-1" onPointerLeave={() => setHover(null)}>
           <Tooltip content={syncLabel(sync)} side="right" disabled={expanded}>
             <Link
               to="/settings/sync"

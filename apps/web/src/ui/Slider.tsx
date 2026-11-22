@@ -69,7 +69,7 @@ export function Slider({
       {(label || valueLabel) && (
         <div className="flex items-baseline justify-between">
           {label && <BaseSlider.Label className="text-label text-fg-2">{label}</BaseSlider.Label>}
-          {valueLabel && <span className="text-mono text-fg-1">{valueLabel}</span>}
+          {valueLabel && <span className="num text-body-sm text-fg-1">{valueLabel}</span>}
         </div>
       )}
       <BaseSlider.Control className="relative flex h-6 w-full touch-none items-center select-none" onPointerDown={() => setDragging(true)}>
@@ -98,7 +98,7 @@ export function Slider({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, transition: tween('fast', 'in') }}
                     transition={spring.snappy}
-                    className="glass pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-sm border border-line-3 px-2 py-0.5 text-stat-sm text-fg-1"
+                    className="glass pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 rounded-sm border border-line-2 px-2 py-0.5 text-stat-sm text-fg-1"
                   >
                     {bubble(value)}
                   </motion.span>
@@ -155,7 +155,7 @@ export function RpeSlider({ value, onValueChange, onValueCommitted, label = 'RPE
             <span className="text-fg-3">—</span>
           ) : (
             <span>
-              {value} <span className="font-sans text-body-sm text-fg-3">{RPE_WORDS[value]}</span>
+              {value} <span className="text-body-sm text-fg-3">{RPE_WORDS[value]}</span>
             </span>
           )
         }
@@ -164,7 +164,7 @@ export function RpeSlider({ value, onValueChange, onValueCommitted, label = 'RPE
         aria-label="Rate of perceived exertion"
         bubble={(x) => x}
       />
-      <div className="grid grid-cols-4 text-micro text-fg-3" aria-hidden>
+      <div className="grid grid-cols-4 text-label font-normal text-fg-3" aria-hidden>
         <span>Easy</span>
         <span className="text-center">Moderate</span>
         <span className="text-center">Hard</span>

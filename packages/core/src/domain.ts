@@ -590,6 +590,11 @@ export const Threshold = z.object({
 });
 export type Threshold = z.infer<typeof Threshold>;
 
+/** UI accent options (DESIGN_V2 §2). */
+export const ACCENTS = ['blue', 'green', 'rose'] as const;
+export const Accent = z.enum(ACCENTS);
+export type Accent = z.infer<typeof Accent>;
+
 export const Settings = z.object({
   name: z.string(),
   sex: z.enum(['male', 'female', 'unspecified']),
@@ -598,6 +603,10 @@ export const Settings = z.object({
   weekStart: z.enum(['monday', 'sunday']),
   timezone: z.string(), // IANA
   theme: z.enum(['dark', 'light', 'system']),
+  /** UI accent hue (<html data-accent>). Required in the type; stored settings without it are merged
+   *  over DEFAULT_SETTINGS by the Worker. Deliberately no `.default()`: zod 4 applies defaults inside
+   *  `.partial()`, so a PATCH without `accent` would silently reset it. */
+  accent: Accent,
   density: z.enum(['comfortable', 'compact']),
   reducedMotion: z.boolean(),
   homeRoute: z.enum(['today', 'calendar']),
@@ -613,6 +622,7 @@ export const DEFAULT_SETTINGS: Settings = {
   weekStart: 'monday',
   timezone: 'UTC',
   theme: 'dark',
+  accent: 'blue',
   density: 'comfortable',
   reducedMotion: false,
   homeRoute: 'calendar',

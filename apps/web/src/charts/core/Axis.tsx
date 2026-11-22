@@ -1,12 +1,13 @@
 /**
- * Minimal axes & grid (design.md §6.1): no axis lines, mono-sm tick labels in fg-3 outside
- * the plot, horizontal hairline grid only. Ticks crossfade when the domain changes.
+ * Minimal axes & grid (DESIGN_V2 §5 "Charts"): no axis lines or tick marks, 12px sans tick
+ * labels in fg-3 outside the plot, at most 3 horizontal line-1 hairlines, no vertical grid.
+ * Ticks crossfade when the domain changes.
  */
 import { AnimatePresence, motion } from 'motion/react';
 import { scaleLinear } from 'd3-scale';
 import { DAY_MS, fmtMonth, fmtMonthDay } from '../format';
 import { dur, ease } from '../motion';
-import { T } from './tokens';
+import { T, TXT } from './tokens';
 
 export interface Tick {
   key: string | number;
@@ -18,8 +19,8 @@ export interface Tick {
 
 const tickFade = { duration: dur.fast, ease: ease.out };
 
-/** Drop ticks whose labels would collide (estimates mono-sm glyph width ≈ 6.6px). */
-export function thinTicks(ticks: Tick[], minGap = 10, charW = 6.6): Tick[] {
+/** Drop ticks whose labels would collide (12px sans tabular glyph ≈ 6.8px), with generous air. */
+export function thinTicks(ticks: Tick[], minGap = 20, charW = 6.8): Tick[] {
   const out: Tick[] = [];
   let lastRight = -Infinity;
   for (const t of ticks) {
@@ -47,7 +48,7 @@ export function AxisX({ ticks, y, animate = true }: { ticks: Tick[]; y: number; 
             y={y}
             textAnchor="middle"
             dominantBaseline="hanging"
-            style={{ fill: t.strong ? T.fg2 : T.fg3, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.01em' }}
+            style={{ ...TXT, fill: t.strong ? T.fg2 : T.fg3 }}
           >
             {t.label}
           </motion.text>
@@ -71,7 +72,7 @@ export function AxisY({ ticks, x, align = 'end' }: { ticks: Tick[]; x: number; a
             x={x}
             textAnchor={align}
             dominantBaseline="central"
-            style={{ fill: T.fg3, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.01em' }}
+            style={{ ...TXT, fill: T.fg3 }}
           >
             {t.label}
           </motion.text>
@@ -81,7 +82,7 @@ export function AxisY({ ticks, x, align = 'end' }: { ticks: Tick[]; x: number; a
   );
 }
 
-/** Horizontal hairlines at the given y positions. `zero` draws the baseline at line-2. */
+/** Horizontal hairlines (line-1) at the given y positions. `zero` draws the baseline at line-2. */
 export function Grid({ ys, x0, x1, zero }: { ys: { key: string | number; pos: number }[]; x0: number; x1: number; zero?: number }) {
   return (
     <g aria-hidden>
@@ -102,15 +103,21 @@ export function Grid({ ys, x0, x1, zero }: { ys: { key: string | number; pos: nu
           />
         ))}
       </AnimatePresence>
-      {zero != null && <line x1={x0} x2={x1} y1={zero} y2={zero} style={{ stroke: T.line3 }} shapeRendering="crispEdges" />}
+      {zero != null && <line x1={x0} x2={x1} y1={zero} y2={zero} style={{ stroke: T.line2 }} shapeRendering="crispEdges" />}
     </g>
   );
 }
 
-/** Linear y ticks (3–5) for a [min,max] domain mapped to [bottom, top]. */
-export function linearTicks(domain: [number, number], range: [number, number], count = 4, format: (v: number) => string = (v) => String(v)): Tick[] {
+/**
+ * Linear y ticks for a [min,max] domain mapped to [bottom, top]: round values with at most
+ * `count` (default 3) above the domain minimum, so a chart draws ≤ 3 gridlines plus its baseline.
+ */
+export function linearTicks(domain: [number, number], range: [number, number], count = 3, format: (v: number) => string = (v) => String(v)): Tick[] {
   const s = scaleLinear().domain(domain).range(range);
-  return s.ticks(count).map((v) => ({ key: v, pos: s(v), label: format(v) }));
+  // `count` lines above the baseline at most (the baseline itself is usually not labelled).
+  let vs = s.ticks(count);
+  if (vs.length > count + 1) vs = vs.filter((_, i) => i % 2 === (vs.length - 1) % 2);
+  return vs.map((v) => ({ key: v, pos: s(v), label: format(v) }));
 }
 
 /**
@@ -119,7 +126,7 @@ export function linearTicks(domain: [number, number], range: [number, number], c
  */
 export function dateTicks(x: (ms: number) => number, start: number, end: number, width: number): Tick[] {
   const spanDays = (end - start) / DAY_MS;
-  const maxTicks = Math.max(2, Math.floor(width / 64));
+  const maxTicks = Math.max(2, Math.floor(width / 96));
   const out: Tick[] = [];
   if (spanDays / 7 <= maxTicks * 1.1) {
     // weekly ticks on Mondays, every k weeks

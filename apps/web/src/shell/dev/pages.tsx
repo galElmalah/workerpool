@@ -13,7 +13,7 @@ import { SportGlyph } from '@/ui/domain/SportGlyph';
 import { WorkoutCard } from '@/ui/domain/WorkoutCard';
 import { Page, PageHeader } from '@/ui/PageHeader';
 import { Section } from '@/ui/Section';
-import { StatTile } from '@/ui/StatTile';
+import { StatRow, StatTile } from '@/ui/StatTile';
 import { byId, MOCK_WORKOUTS } from './mock';
 
 export { GalleryPage } from './Gallery';
@@ -62,18 +62,18 @@ export function MorphDetailPage() {
             <>
               <Chip icon={<ComplianceGlyph state={state} />}>{complianceLabel(state, w.skipReason ?? undefined)}</Chip>
               {w.intensity && <Chip icon={<IntensityPips intensity={w.intensity} />}>{w.intensity}</Chip>}
-              {w.isKey && <Chip tone="signal">Key</Chip>}
+              {w.isKey && <Chip>Key</Chip>}
             </>
           }
         />
       }
     >
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatRow card>
         <StatTile label="Duration" value={w.durationSec ?? 0} format={(v) => formatDuration(v)} />
         <StatTile label="Distance" value={w.distanceM ? Number(dist!.value.replace(/,/g, '')) : null} format={(v) => v.toFixed(1)} unit={dist?.unit} />
-        <StatTile label="Load" value={w.load ?? null} format={(v) => formatLoad(v)} signal />
+        <StatTile label="Load" value={w.load ?? null} format={(v) => formatLoad(v)} />
         <StatTile label="Compliance" value={w.compliance?.ratio != null ? w.compliance.ratio * 100 : null} format={(v) => `${Math.round(v)}`} unit="%" />
-      </div>
+      </StatRow>
       <Card title="Profile" eyebrow="Planned structure">
         {w.sparkline ? <MiniProfile values={w.sparkline} height={96} /> : <p className="text-body text-fg-3">No structure.</p>}
         {w.compliance?.ratio != null && <ComplianceBar ratio={w.compliance.ratio} state={state} showLabel className="mt-5" />}

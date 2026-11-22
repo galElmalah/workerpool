@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { env } from 'cloudflare:workers';
 import { api, json } from './helpers';
 
 describe('settings', () => {
@@ -18,6 +19,15 @@ describe('settings', () => {
     expect(tz.status).toBe(400);
     const range = await api('/settings', { method: 'PATCH', body: { garminAutoPushDays: 99 } });
     expect(range.status).toBe(400);
+  });
+
+  it('stores the accent, defaults it to blue and keeps it across unrelated patches', async () => {
+    // A row written before `accent` existed still reads (merged over the defaults).
+    await env.DB.prepare('UPDATE settings SET data = ? WHERE id = 1').bind(JSON.stringify({ name: 'Ada', units: 'metric', theme: 'light' })).run();
+    expect(await json('/settings')).toMatchObject({ name: 'Ada', theme: 'light', accent: 'blue' });
+    expect(await json('/settings', { method: 'PATCH', body: { accent: 'rose' } })).toMatchObject({ accent: 'rose' });
+    expect(await json('/settings', { method: 'PATCH', body: { theme: 'dark' } })).toMatchObject({ accent: 'rose', theme: 'dark' });
+    expect((await api('/settings', { method: 'PATCH', body: { accent: 'purple' } })).status).toBe(400);
   });
 });
 

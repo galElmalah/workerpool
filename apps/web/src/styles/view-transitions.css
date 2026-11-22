@@ -25,9 +25,13 @@
   ::view-transition-new(nav-pill) { animation: none; }
   /* The pill's group paints ABOVE the root snapshot, which holds the rail item's icon + label, so
      an opaque pill blanked the active item for the whole transition (very visible during the 900ms
-     calendar zoom). Blend it so the light label (dark theme) / dark label (light theme) shows through. */
-  html:not([data-theme=light])::view-transition-new(nav-pill) { mix-blend-mode: lighten; }
-  html[data-theme=light]::view-transition-new(nav-pill) { mix-blend-mode: darken; }
+     calendar zoom). Blend the GROUP with the root below it so the light label (dark theme) / dark
+     label (light theme) shows through. The blend must sit on the group: ::view-transition-image-pair
+     is `isolation: isolate`, so a blend on ::view-transition-new only mixed with the (hidden) old
+     image — that was why the earlier fix did nothing. Works because the pill is lighter than the
+     canvas in dark (surface-2) and darker than it in light (surface-3). */
+  html:not([data-theme=light])::view-transition-group(nav-pill) { mix-blend-mode: lighten; }
+  html[data-theme=light]::view-transition-group(nav-pill) { mix-blend-mode: darken; }
 
   html:active-view-transition-type(lateral) {
     &::view-transition-old(main) { animation: vt-fade-out 140ms var(--ease-in) both; }

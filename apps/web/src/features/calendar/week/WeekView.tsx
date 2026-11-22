@@ -1,11 +1,12 @@
 /**
- * Week view (product.md §3.8): the horizontal summary header, seven equal columns of full cards
- * with large step profiles, sticky day headers, a wellness metrics row, drag & drop between days,
- * per-column quick-add, ‹ › paging (page-next / page-prev) and the month ⇄ week ⇄ day zoom.
+ * Week view (product.md §3.8, DESIGN_V2 §5): one quiet totals strip, seven columns separated by
+ * space (no grid lines) holding roomy two-line cards, drag & drop between days, per-column
+ * quick-add, ‹ › paging (page-next / page-prev) and the month ⇄ week ⇄ day zoom. Wellness and the
+ * per-day detail live on the day page; per-sport totals on the weekly review.
  */
 import { DndContext, useDroppable } from '@dnd-kit/core';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { Moon, Pilcrow, Plus, RotateCcw, TriangleAlert } from 'lucide-react';
+import { Pilcrow, Plus, RotateCcw, TriangleAlert } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { flushSync } from 'react-dom';
 import type { LocalDate } from '@cadence/core/domain';
@@ -18,7 +19,6 @@ import { vtName } from '@/motion/morph';
 import { links } from '@/shell/links';
 import { Button } from '@/ui/Button';
 import { calendarCollision } from '@/ui/dnd';
-import { MiniProfile } from '@/ui/domain/MiniProfile';
 import { WorkoutCard } from '@/ui/domain/WorkoutCard';
 import { ContextMenu, type MenuEntry } from '@/ui/Menu';
 import { Page, PageHeader } from '@/ui/PageHeader';
@@ -28,41 +28,19 @@ import { CopyWeekPopover, SelectionBar, ShiftPopover, type BulkState } from '../
 import { CardItem } from '../shared/CardItem';
 import { useCalendarModel, useCalendarPages, weekIndexOf, type DayData } from '../shared/data';
 import { useFlip } from '../shared/flip';
-import { EventBanner, MarkerGlyphs, RangeBands, ReadinessDot } from '../shared/DayParts';
+import { DateMark, DayGlyph, EventBanner } from '../shared/DayParts';
 import { focusDay, onGridTab, useCalendarKeys } from '../shared/keys';
 import { cardMenu, dayMenu } from '../shared/menu';
+import { PeekLayer } from '../shared/Peek';
 import { QuickAdd } from '../shared/QuickAdd';
 import { calStore, useCal, type DragPreview } from '../shared/store';
 import { WeekSummaryBlock } from '../shared/Summary';
 import { NewButton, PagingControls, ViewSwitcher } from '../shared/Toolbar';
 import { DragLayer, useCalendarDrag } from '../shared/useDrag';
 
-function Metrics({ day }: { day: DayData }) {
-  const w = day.wellness;
-  const cell = (label: string, value: string | null) => (
-    <div className="flex items-baseline justify-between gap-1">
-      <span className="text-micro text-fg-3">{label}</span>
-      <span className={cn('text-mono-sm', value ? 'text-fg-1' : 'text-fg-4')}>{value ?? '—'}</span>
-    </div>
-  );
-  return (
-    <div className="flex flex-col gap-1 px-2.5 py-2">
-      {cell('HRV', w?.hrvMs ? `${Math.round(w.hrvMs)}` : null)}
-      {cell('RHR', w?.restingHr ? `${Math.round(w.restingHr)}` : null)}
-      {cell('Sleep', w?.sleepSec ? formatDuration(w.sleepSec) : null)}
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-micro text-fg-3">Feel</span>
-        <span className="flex gap-0.5" role="img" aria-label={w?.feel ? `Feel ${w.feel} of 5` : 'No check-in'}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <span key={i} className={cn('size-1.5 rounded-full', w?.feel && i <= w.feel ? 'bg-fg-1' : 'border border-line-3')} />
-          ))}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 interface ColumnProps {
+  /** Card density: 'compact' (duration only) when columns are too narrow for distance/load. */
+  density: 'full' | 'compact';
   day: DayData;
   cards: CalendarCard[];
   copyGhost?: CalendarCard;
@@ -73,14 +51,13 @@ interface ColumnProps {
   dayFocus: boolean;
 }
 
-const WeekColumn = memo(function WeekColumn({ day, cards, copyGhost, today, weekStart: ws, actions, affected, dayFocus }: ColumnProps) {
+const WeekColumn = memo(function WeekColumn({ density, day, cards, copyGhost, today, actions, affected, dayFocus }: ColumnProps) {
   const { date } = day;
   const { setNodeRef, isOver } = useDroppable({ id: date });
   const isCursor = useCal((s) => s.cursor === date || (s.cursor == null && date === today));
   const composing = useCal((s) => s.composer === date);
   const listRef = useRef<HTMLDivElement>(null);
   useFlip(listRef, affected);
-  const future = today != null && date > today;
   const onClick = (e: MouseEvent) => {
     if ((e.target as Element).closest('[data-card],a,button,input')) return;
     calStore.set({ cursor: date, cardKey: null, composer: date, selection: new Set() });
@@ -97,50 +74,28 @@ const WeekColumn = memo(function WeekColumn({ day, cards, copyGhost, today, week
       onFocus={(e) => e.target === e.currentTarget && calStore.get().cursor !== date && calStore.set({ cursor: date, cardKey: null })}
       style={dayFocus ? vtName('cal-focus') : undefined}
       className={cn(
-        'group/day relative flex min-h-[420px] min-w-0 flex-col gap-2 p-2 outline-none transition-[background-color,box-shadow] duration-(--dur-fast)',
-        future ? 'bg-canvas' : 'bg-surface-1',
-        day.markers.some((m) => m.type === 'sick' || m.type === 'injured') && 'bg-hatch-faint',
-        'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus',
-        'data-[over]:bg-accent-a2 data-[over]:ring-1 data-[over]:ring-accent-a5 data-[over]:ring-inset',
+        'group/day relative flex min-h-[440px] min-w-0 flex-col gap-2 rounded-lg p-1 outline-none transition-[background-color,outline-color] duration-(--dur-fast)',
+        'focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-2 focus-visible:outline-focus',
+        'data-[over]:bg-surface-1 data-[over]:outline-1 data-[over]:outline-solid data-[over]:-outline-offset-1 data-[over]:outline-line-3',
       )}
     >
-      <RangeBands markers={day.markers} date={date} weekStart={ws} />
       {!day.loaded ? (
         <>
-          <Skeleton radius="md" className="h-28" />
-          <Skeleton radius="md" className="h-20" />
+          <Skeleton radius="md" className="h-16" />
+          <Skeleton radius="md" className="h-16" />
         </>
       ) : (
         <>
           {day.events.map((e) => (
             <EventBanner key={e.id} e={e} />
           ))}
-          {day.markers.some((m) => m.type === 'rest') && cards.length === 0 && (
-            <span className="flex items-center gap-1 text-micro text-fg-3">
-              <Moon className="size-3" /> Rest
-            </span>
-          )}
           <div ref={listRef} className="flex flex-col gap-2">
-              {cards.map((c) => (
-                <div key={c.key} data-flip={c.key}>
-                  <CardItem
-                    card={c}
-                    date={date}
-                    density="full"
-                    actions={actions}
-                    zoomName
-                    hideSpark
-                    trailing={
-                      c.model.sparkline && c.model.sparkline.length > 1 ? (
-                        <div className="pt-1 pl-6">
-                          <MiniProfile values={c.model.sparkline} height={36} />
-                        </div>
-                      ) : undefined
-                    }
-                  />
-                </div>
-              ))}
-              {copyGhost && <WorkoutCard model={copyGhost.model} density="full" ghost />}
+            {cards.map((c) => (
+              <div key={c.key} data-flip={c.key}>
+                <CardItem card={c} date={date} density={density} actions={actions} zoomName />
+              </div>
+            ))}
+            {copyGhost && <WorkoutCard model={copyGhost.model} density={density} ghost />}
           </div>
           {composing ? (
             <QuickAdd date={date} actions={actions} />
@@ -149,15 +104,15 @@ const WeekColumn = memo(function WeekColumn({ day, cards, copyGhost, today, week
               type="button"
               tabIndex={-1}
               onClick={() => calStore.set({ composer: date, cursor: date })}
-              className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-dashed border-line-2 text-label text-fg-3 opacity-0 transition-[opacity,background-color,color] duration-(--dur-fast) group-hover/day:opacity-100 hover:bg-surface-2 hover:text-fg-1 focus-visible:opacity-100"
+              className="flex h-8 items-center gap-1.5 rounded-md px-3 text-body-sm text-fg-3 opacity-0 transition-[opacity,background-color,color] duration-(--dur-fast) group-hover/day:opacity-100 hover:bg-surface-1 hover:text-fg-1 focus-visible:opacity-100"
             >
               <Plus className="size-3.5" /> Add
             </button>
           )}
           {day.note && (
-            <Link {...links.calendarDay(date)} className="mt-auto flex items-start gap-1.5 rounded-sm p-1 text-label font-[420] text-fg-2 hover:bg-surface-2">
-              <Pilcrow className="mt-0.5 size-3 shrink-0 text-fg-3" />
-              <span className="line-clamp-3">{day.note.body.replace(/[#*_>`]/g, '')}</span>
+            <Link {...links.calendarDay(date)} className="mt-auto flex items-start gap-1.5 rounded-md px-3 py-2 text-label text-fg-3 hover:bg-surface-1 hover:text-fg-2">
+              <Pilcrow className="mt-0.5 size-3 shrink-0" aria-hidden />
+              <span className="line-clamp-2">{day.note.body.replace(/[#*_>`]/g, '')}</span>
             </Link>
           )}
         </>
@@ -200,6 +155,15 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
   const [bulk, setBulk] = useState<BulkState>(null);
   const [menu, setMenu] = useState<MenuEntry[]>([]);
   const mobile = !useMediaQuery(BP.md);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [colW, setColW] = useState(200);
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setColW(e!.contentRect.width / 7));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [week.loaded]);
   const { sensors, dnd, preview, previewCard, active } = useCalendarDrag(model, actions);
 
   const gridFocus = focus?.kind === 'week' && focus.start === start;
@@ -279,8 +243,10 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
           title={
             <span className="flex items-baseline gap-2">
               {formatIsoWeek(isoWeek)}
-              <span className="text-body font-[420] text-fg-3">{formatIsoWeekRange(isoWeek, true)}</span>
-              {week.phase && <span className="text-micro text-fg-3 max-md:hidden">{week.phase.phase.label} · {week.phase.index}/{week.phase.count}</span>}
+              <span className="text-body font-normal text-fg-3 max-sm:hidden">
+                {formatIsoWeekRange(isoWeek, true)}
+                {week.phase && <span className="max-md:hidden"> · {week.phase.phase.label}</span>}
+              </span>
             </span>
           }
           breadcrumb={[{ label: 'Calendar', link: links.calendar(start) }]}
@@ -294,7 +260,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
         />
       }
     >
-      <section className="rounded-lg border border-line-2 bg-surface-1 p-4 md:p-5">
+      <section className="pt-6 pb-6">
         <WeekSummaryBlock
           week={week}
           variant="header"
@@ -304,7 +270,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
         />
       </section>
       {pages.error && !week.loaded ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-line-3 p-8 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-lg bg-surface-1 p-8 text-center">
           <TriangleAlert className="size-5 text-fg-1" />
           <p className="text-body text-fg-1">This week couldn&apos;t load.</p>
           <Button size="sm" icon={<RotateCcw />} onClick={pages.refetch}>
@@ -316,36 +282,33 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
           <ContextMenu items={menu} className="block">
             <div className={cn(mobile && '-mx-4 overflow-x-auto px-4 [scroll-snap-type:x_mandatory]')} onContextMenuCapture={onContextMenuCapture}>
               <div
+                ref={gridRef}
                 data-cal-grid
                 role="grid"
                 aria-label={`Week ${formatIsoWeek(isoWeek)}`}
                 onKeyDown={onGridTab}
-                className={cn('grid grid-cols-7 gap-px overflow-clip rounded-lg border border-line-2 bg-line-2', mobile && 'w-[1540px]')}
+                className={cn('grid grid-cols-7 gap-x-2 xl:gap-x-3', mobile && 'w-[1400px]')}
                 style={gridFocus ? vtName('cal-focus') : undefined}
               >
                 {week.days.map((d) => {
                   const isToday = d.date === today;
+                  const sec = d.cards.reduce((a, c) => a + (c.model.durationSec ?? 0), 0);
                   return (
-                    <div key={`h-${d.date}`} role="columnheader" className={cn('top-(--header-h) z-(--z-sticky) flex h-10 items-center gap-2 px-2.5 glass md:sticky', isToday && 'shadow-[inset_0_1px_0_var(--color-accent)]', mobile && '[scroll-snap-align:start]')}>
-                      <span className="text-micro text-fg-3">{weekdayShort(d.date)}</span>
+                    <div
+                      key={`h-${d.date}`}
+                      role="columnheader"
+                      className={cn('top-(--header-h) z-(--z-sticky) flex h-11 items-center gap-2 bg-canvas px-4 md:sticky', mobile && '[scroll-snap-align:start]')}
+                    >
                       <Link
                         {...links.calendarDay(d.date)}
                         onClickCapture={() => flushSync(() => calStore.set({ focus: { kind: 'day', date: d.date } }))}
-                        className={cn(
-                          'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-mono-sm transition-colors',
-                          isToday ? 'bg-accent font-[600] text-on-accent' : 'text-fg-1 hover:text-accent-ink',
-                        )}
+                        className="flex items-baseline gap-1.5 rounded-sm outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-focus [&:hover>span:first-child]:text-fg-1"
                       >
-                        {Number(d.date.slice(8))}
+                        <span className="text-body-sm text-fg-3">{weekdayShort(d.date)}</span>
+                        <DateMark date={d.date} today={isToday} className="!text-body-sm" />
                       </Link>
-                      <MarkerGlyphs markers={d.markers} />
-                      {!(today && d.date > today) && <ReadinessDot w={d.wellness} />}
-                      <span className="ml-auto text-mono-sm text-fg-3">
-                        {(() => {
-                          const sec = d.cards.reduce((a, c) => a + (c.model.durationSec ?? 0), 0);
-                          return sec ? formatDuration(sec) : '';
-                        })()}
-                      </span>
+                      <DayGlyph markers={d.markers} note={d.note} />
+                      <span className="ml-auto text-label text-fg-3 num">{sec ? formatDuration(sec) : ''}</span>
                     </div>
                   );
                 })}
@@ -354,6 +317,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
                   return (
                     <WeekColumn
                       key={d.date}
+                      density={colW < 156 ? 'compact' : 'full'}
                       day={d}
                       cards={cards}
                       copyGhost={copyGhost}
@@ -365,11 +329,6 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
                     />
                   );
                 })}
-                {week.days.map((d) => (
-                  <div key={`m-${d.date}`} className={cn(today && d.date > today ? 'bg-canvas' : 'bg-surface-1')}>
-                    <Metrics day={d} />
-                  </div>
-                ))}
               </div>
             </div>
           </ContextMenu>
@@ -377,6 +336,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
         </DndContext>
       )}
       <SelectionBar model={model} actions={actions} />
+      <PeekLayer model={model} />
       {bulk?.kind === 'copy' && <CopyWeekPopover isoWeek={bulk.isoWeek} anchor={bulk.anchor} model={model} actions={actions} onClose={() => setBulk(null)} />}
       {bulk?.kind === 'shift' && <ShiftPopover from={bulk.from} anchor={bulk.anchor} onClose={() => setBulk(null)} />}
     </Page>

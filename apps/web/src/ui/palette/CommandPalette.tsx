@@ -37,6 +37,9 @@ function useAsyncResults(query: string, open: boolean, version: number) {
       setPending([]);
       return;
     }
+    // Drop results of sources that no longer run for this query (e.g. it got shorter than minQuery).
+    const live = new Set(srcs.map((s) => s.id));
+    setResults((prev) => Object.fromEntries(Object.entries(prev).filter(([id]) => live.has(id))));
     setPending(srcs.map((s) => s.id));
     const t = setTimeout(() => {
       srcs.forEach(async (s) => {
@@ -163,7 +166,7 @@ export function CommandPalette() {
           <Dialog.Popup
             initialFocus={inputRef}
             aria-label="Command palette"
-            className="ui-palette glass flex max-h-[min(36rem,calc(100dvh-6rem))] w-full max-w-palette flex-col overflow-hidden rounded-2xl border border-line-3 inset-shadow-hairline outline-none"
+            className="ui-palette glass flex max-h-[min(36rem,calc(100dvh-6rem))] w-full max-w-palette flex-col overflow-hidden rounded-2xl border border-line-2 outline-none"
           >
             <div className="flex items-center gap-3 border-b border-line-1 px-5">
               <Search className="size-[18px] shrink-0 text-fg-3" aria-hidden />
@@ -208,7 +211,7 @@ export function CommandPalette() {
                 <LayoutGroup id="cmdk">
                   {groups.map(([group, cmds]) => (
                     <Fragment key={group}>
-                      <div role="presentation" className="px-3 pt-3 pb-1.5 text-micro text-fg-3 first:pt-1">
+                      <div role="presentation" className="px-3 pt-3 pb-1.5 text-label font-normal text-fg-3 first:pt-1">
                         {group}
                       </div>
                       {cmds.map((c) => {

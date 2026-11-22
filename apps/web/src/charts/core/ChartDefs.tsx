@@ -50,26 +50,26 @@ export function ChartDefs({ ids }: { ids: ChartDefIds }) {
         <rect width="1.5" height="5" style={{ fill: T.accent }} />
       </pattern>
       <pattern id={id('hatch-fg')} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="1" height="5" style={{ fill: T.fg3 }} />
+        <rect width="1" height="5" style={{ fill: T.fg4 }} />
       </pattern>
       <pattern id={id('hatch-fg-dense')} width="3.5" height="3.5" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
-        <rect width="1" height="3.5" style={{ fill: T.fg2 }} />
+        <rect width="1" height="3.5" style={{ fill: T.fg4 }} />
       </pattern>
       <pattern id={id('hatch-on-accent')} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="1" height="4" style={{ fill: T.onAccent, opacity: 0.2 }} />
       </pattern>
       <pattern id={id('dots-fg')} width="4" height="4" patternUnits="userSpaceOnUse">
-        <circle cx="2" cy="2" r="0.9" style={{ fill: T.fg2 }} />
+        <circle cx="2" cy="2" r="0.75" style={{ fill: T.fg4 }} />
       </pattern>
       <pattern id={id('dashes-fg')} width="6" height="4" patternUnits="userSpaceOnUse">
         <rect x="0" y="1.5" width="3" height="1" style={{ fill: T.fg2 }} />
       </pattern>
       <linearGradient id={id('fade-accent')} x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0" style={{ stopColor: T.accent, stopOpacity: 0.28 }} />
+        <stop offset="0" style={{ stopColor: T.accent, stopOpacity: 0.12 }} />
         <stop offset="1" style={{ stopColor: T.accent, stopOpacity: 0 }} />
       </linearGradient>
       <linearGradient id={id('fade-fg')} x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0" style={{ stopColor: T.fg1, stopOpacity: 0.14 }} />
+        <stop offset="0" style={{ stopColor: T.fg1, stopOpacity: 0.06 }} />
         <stop offset="1" style={{ stopColor: T.fg1, stopOpacity: 0 }} />
       </linearGradient>
     </defs>
@@ -77,17 +77,18 @@ export function ChartDefs({ ids }: { ids: ChartDefIds }) {
 }
 
 /**
- * Monochrome sport ramp (product.md §3.6.4 adapted to tokens): fill + optional pattern.
- * In light theme the gray ramp inverts, so bike becomes the darkest — still ordered.
+ * Monochrome sport ramp (product.md §3.6.4 adapted to DESIGN_V2): mid-to-low contrast greys
+ * (never fg-1 white) + an optional pattern for the two smallest categories. In light theme
+ * the gray ramp inverts, so bike becomes the darkest — still ordered. Labels are sentence case.
  */
 export type SportKey = 'bike' | 'run' | 'swim' | 'row' | 'strength' | 'other';
 export const SPORT_RAMP: Record<SportKey, { fill: string; pattern?: 'hatch' | 'dots'; label: string }> = {
-  bike: { fill: T.gray(12), label: 'RIDE' },
-  run: { fill: T.gray(11), label: 'RUN' },
-  swim: { fill: T.gray(9), label: 'SWIM' },
-  row: { fill: T.gray(8), label: 'ROW' },
-  strength: { fill: T.gray(7), pattern: 'hatch', label: 'STR' },
-  other: { fill: T.gray(6), pattern: 'dots', label: 'OTHER' },
+  bike: { fill: T.gray(10), label: 'Ride' },
+  run: { fill: T.gray(9), label: 'Run' },
+  swim: { fill: T.gray(8), label: 'Swim' },
+  row: { fill: T.gray(7), label: 'Row' },
+  strength: { fill: T.gray(6), pattern: 'hatch', label: 'Strength' },
+  other: { fill: T.gray(6), pattern: 'dots', label: 'Other' },
 };
 export const SPORT_ORDER: SportKey[] = ['bike', 'run', 'swim', 'row', 'strength', 'other'];
 /** Map any domain Sport to a ramp slot (hike/walk/yoga/ski/other share "other"). */

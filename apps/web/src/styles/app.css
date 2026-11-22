@@ -177,8 +177,11 @@
 /* Light theme */
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-gray-1: oklch(1 0 0);                       --color-gray-2: oklch(0.990 0.003 var(--hue));  --color-gray-3: oklch(0.968 0.006 var(--hue));
-  --color-gray-4: oklch(0.940 0.006 var(--hue));      --color-gray-5: oklch(0.918 0.006 var(--hue));  --color-gray-6: oklch(0.895 0.006 var(--hue));
+  /* gray-2..5 deepened (ui engineer, v2): with borders gone, white cards on a 0.990 canvas were
+     indistinguishable (≈1.03:1). Canvas 0.974 lets a white surface-1 card read as a surface step;
+     surface-2/3/active move down so wells and secondary buttons still separate from the canvas. */
+  --color-gray-1: oklch(1 0 0);                       --color-gray-2: oklch(0.974 0.004 var(--hue));  --color-gray-3: oklch(0.952 0.006 var(--hue));
+  --color-gray-4: oklch(0.930 0.006 var(--hue));      --color-gray-5: oklch(0.906 0.006 var(--hue));  --color-gray-6: oklch(0.885 0.006 var(--hue));
   --color-gray-7: oklch(0.860 0.006 var(--hue));      --color-gray-8: oklch(0.790 0.006 var(--hue));  --color-gray-9: oklch(0.660 0.006 var(--hue));
   --color-gray-10: oklch(0.520 0.009 var(--hue));     --color-gray-11: oklch(0.430 0.009 var(--hue)); --color-gray-12: oklch(0.220 0.009 var(--hue));
   --color-surface-1: var(--color-gray-1);  /* light: cards are white on a gray-2 canvas */
@@ -277,7 +280,7 @@
     background: radial-gradient(320px circle at var(--mx, 50%) var(--my, -100%), rgb(255 255 255 / 0.035), transparent 60%);
     opacity: 0; transition: opacity var(--dur-base) var(--ease-out); }
   .spotlight:focus-visible { --mx: 50%; --my: 0%; }
-  .spotlight-accent { --spot: var(--color-accent-a5); }
+  .spotlight-accent { --spot: var(--color-line-3); } /* v2: no accent glows — kept as an alias */
   :root[data-theme=light] .spotlight::after {
     background: radial-gradient(320px circle at var(--mx, 50%) var(--my, -100%), rgb(0 0 0 / 0.03), transparent 60%); }
   @media (hover: hover) {
@@ -295,7 +298,7 @@
   /* Floating popups (popover, select, menu, combobox, date picker): origin-aware scale .96 → 1. */
   .ui-popup {
     background: var(--color-glass); backdrop-filter: blur(var(--blur-glass)) saturate(1.4); -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
-    border: 1px solid var(--color-line-3); box-shadow: var(--inset-shadow-hairline); color: var(--color-fg-1);
+    border: 1px solid var(--color-line-2); color: var(--color-fg-1);
     transform-origin: var(--transform-origin);
     transition: transform var(--dur-spring-smooth) var(--ease-spring-smooth), opacity var(--dur-base) var(--ease-out);
     outline: none; }
@@ -305,7 +308,7 @@
 
   .ui-tooltip {
     background: var(--color-glass); backdrop-filter: blur(var(--blur-glass)) saturate(1.4); -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
-    border: 1px solid var(--color-line-3); color: var(--color-fg-1); transform-origin: var(--transform-origin);
+    border: 1px solid var(--color-line-2); color: var(--color-fg-1); transform-origin: var(--transform-origin);
     transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out); }
   .ui-tooltip[data-starting-style], .ui-tooltip[data-ending-style] { opacity: 0; transform: scale(0.96); }
   .ui-tooltip[data-instant] { transition: none; }

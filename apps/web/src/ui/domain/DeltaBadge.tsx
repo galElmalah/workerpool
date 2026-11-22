@@ -3,7 +3,7 @@
  *  up (≥ +1%):  ↗ +12%  weight 500, fg-1
  *  down:        ↘ −8%   weight 400, fg-2
  *  flat:        → ±0%   weight 400, fg-3
- *  good:        the ARROW ONLY turns accent (goal reached / good direction for load)
+ *  good:        the arrow turns fg-1 (good direction) — never accent (DESIGN_V2 rule 4)
  *  warning:     ⚠ +18%  500, fg-1, value dotted-underlined
  * The arrow is one glyph rotated between directions, so a changing delta morphs (smooth spring).
  */
@@ -20,7 +20,7 @@ export interface DeltaBadgeProps {
   decimals?: number;
   /** |value| below this is flat (default 0.01 for percent, 0.5 for number). */
   flatBelow?: number;
-  /** Arrow in accent (good direction, e.g. fitness up). */
+  /** Good direction (e.g. fitness up): arrow in fg-1. */
   good?: boolean;
   warning?: boolean;
   /** Trailing context ("vs last wk"). */
@@ -42,19 +42,19 @@ export function DeltaBadge({ value, kind = 'percent', decimals = 0, flatBelow, g
       : dir === 'flat'
         ? '±0'
         : formatSigned(value, decimals);
-  const tone = warning || dir === 'up' ? 'text-fg-1 font-[500]' : dir === 'down' ? 'text-fg-2 font-[420]' : 'text-fg-3 font-[420]';
+  const tone = warning || dir === 'up' ? 'text-fg-1 font-medium' : dir === 'down' ? 'text-fg-2 font-normal' : 'text-fg-3 font-normal';
   const icon = size === 'sm' ? 'size-3' : 'size-3.5';
   return (
     <span className={cn('inline-flex items-center gap-0.5 whitespace-nowrap', size === 'sm' ? 'text-label' : 'text-body-sm', tone, className)}>
       {warning ? (
         <TriangleAlert className={cn(icon, 'shrink-0')} aria-hidden />
       ) : (
-        <motion.span initial={false} animate={{ rotate: ROT[dir] }} transition={spring.smooth} className={cn('inline-flex shrink-0', good && 'text-accent-ink')} aria-hidden>
+        <motion.span initial={false} animate={{ rotate: ROT[dir] }} transition={spring.smooth} className={cn('inline-flex shrink-0', good && 'text-fg-1')} aria-hidden>
           <ArrowRight className={icon} strokeWidth={2} />
         </motion.span>
       )}
       <span className={cn('num', warning && 'underline decoration-fg-3 decoration-dotted underline-offset-3')}>{text}</span>
-      {suffix && <span className="ml-1 font-[420] text-fg-3">{suffix}</span>}
+      {suffix && <span className="ml-1 font-normal text-fg-3">{suffix}</span>}
       <span className="sr-only">{dir === 'up' ? 'increase' : dir === 'down' ? 'decrease' : 'no change'}</span>
     </span>
   );

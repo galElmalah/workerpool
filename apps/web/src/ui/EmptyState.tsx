@@ -1,6 +1,6 @@
 /**
- * EmptyState — design.md §7: 24px icon (fg-3) in a 48px surface-2 rounded-lg tile · title-3 ·
- * body fg-2 (≤ 2 lines) · one secondary action. No illustrations. Enters with the page stagger.
+ * EmptyState — a 20px fg-3 icon on a 40px surface-2 disc (no border) · title-3 · body fg-2
+ * (≤ 2 lines) · one secondary action. No illustrations, no box around it. Enters with the page stagger.
  */
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
@@ -23,10 +23,10 @@ export function EmptyState({ icon, title, children, action, className, size = 'm
       variants={pageItem}
       initial="hidden"
       animate="show"
-      className={cn('flex flex-col items-center text-center', size === 'md' ? 'gap-4 px-6 py-16' : 'gap-3 px-4 py-8', className)}
+      className={cn('flex flex-col items-center text-center', size === 'md' ? 'gap-4 px-6 py-16' : 'gap-3 px-4 py-10', className)}
     >
       {icon && (
-        <div className="flex size-12 items-center justify-center rounded-lg border border-line-2 bg-surface-2 text-fg-3 inset-shadow-hairline [&_svg]:size-6">
+        <div className="flex size-10 items-center justify-center rounded-full bg-surface-2 text-fg-3 [&_svg]:size-5">
           {icon}
         </div>
       )}

@@ -10,7 +10,7 @@ export { Switch, Checkbox, type SwitchProps, type CheckboxProps } from './Switch
 export { Slider, RpeSlider, type SliderProps, type RpeSliderProps } from './Slider';
 export { Chip, Tag, TagInput, type ChipProps, type ChipTone, type TagInputProps } from './Chip';
 export { Card, type CardProps } from './Card';
-export { StatTile, type StatTileProps } from './StatTile';
+export { StatTile, StatRow, type StatTileProps, type StatRowProps } from './StatTile';
 export { Table, type Column, type SortState, type TableProps } from './Table';
 export { Tooltip, TooltipProvider, type TooltipProps } from './Tooltip';
 export { Popover, type PopoverProps } from './Popover';
