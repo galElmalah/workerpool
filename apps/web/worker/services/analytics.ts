@@ -22,7 +22,7 @@ import type {
 import { autoSeed, buildFitnessSeries, buildWeekSummaries, type FitnessSeed } from '@cadence/core/metrics';
 import { weeklyCompliance } from '@cadence/core/workout';
 import { addDays, diffDays, isoWeekOf, weekEnd, weekStart } from '@cadence/core/time';
-import { dailyLoads, listActivities } from '../db/activities';
+import { dailyLoads, listActivities, listThreeZoneSeconds } from '../db/activities';
 import { listDayNotes, listEvents, listMarkers, listPhases, listWeekNotes, listWellness } from '../db/furniture';
 import { listWorkouts } from '../db/workouts';
 import { getToday } from './context';
@@ -218,6 +218,8 @@ export interface WindowData {
   prior: LocalDate;
   workouts: PlannedWorkout[]; // decorated, prior..end
   activities: Activity[]; // decorated, prior..end
+  /** Stored three-bucket zone seconds per activity id (prior..end). */
+  zoneSeconds?: Map<string, { easy: number; moderate: number; hard: number }>;
   events: Event[];
   phases: Phase[];
   markers: DayMarker[];
@@ -238,7 +240,7 @@ export async function loadWindow(env: Env, from: LocalDate, to: LocalDate, opts:
   const start = weekStart(from);
   const end = weekEnd(to);
   const prior = addDays(start, -7);
-  const [today, workouts, activities, events, phases, markers, dayNotes, wellness, weekNotes, daily] = await Promise.all([
+  const [today, workouts, activities, events, phases, markers, dayNotes, wellness, weekNotes, daily, zoneSeconds] = await Promise.all([
     getToday(benv),
     listWorkouts(benv.DB, { from: prior, to: end }),
     listActivities(benv.DB, { from: prior, to: end }),
@@ -249,6 +251,7 @@ export async function loadWindow(env: Env, from: LocalDate, to: LocalDate, opts:
     opts.lite ? none<WellnessDay>() : listWellness(benv.DB, { from: opts.wellnessFrom ?? start, to: end }),
     listWeekNotes(benv.DB, { from: isoWeekOf(prior), to: isoWeekOf(end) }),
     dailyLoads(benv.DB),
+    listThreeZoneSeconds(benv.DB, { from: prior, to: end }),
   ]);
   // Pairs that cross the window edge (manual pairs can span dates).
   const actIds = new Set(activities.map((a) => a.id));
@@ -268,6 +271,7 @@ export async function loadWindow(env: Env, from: LocalDate, to: LocalDate, opts:
     prior,
     workouts: dw.filter((w) => w.date >= prior && w.date <= end),
     activities: da,
+    zoneSeconds,
     events,
     phases,
     markers,
@@ -292,6 +296,7 @@ export function computeWeeks(data: WindowData): { weeks: WeekSummary[]; fitness:
     from: start,
     to: end,
     today,
+    zoneSeconds: data.zoneSeconds,
   }).map((w) => {
     // Week compliance excludes excused workouts (sick/injured/travel markers, skips) — §3.6.3.
     const items = data.workouts.filter((x) => x.date >= w.startDate && x.date <= w.endDate);

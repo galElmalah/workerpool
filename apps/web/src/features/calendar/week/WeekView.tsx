@@ -288,7 +288,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
           actions={
             <>
               <PagingControls onPrev={() => page(-1)} onNext={() => page(1)} onToday={goToday} prevLabel="Previous week" nextLabel="Next week" />
-              <NewButton date={calStore.get().cursor ?? start} />
+              <NewButton />
             </>
           }
         />
@@ -326,7 +326,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
                 {week.days.map((d) => {
                   const isToday = d.date === today;
                   return (
-                    <div key={`h-${d.date}`} role="columnheader" className={cn('sticky top-(--header-h) z-(--z-sticky) flex h-10 items-center gap-2 px-2.5 glass', isToday && 'shadow-[inset_0_1px_0_var(--color-accent)]', mobile && '[scroll-snap-align:start]')}>
+                    <div key={`h-${d.date}`} role="columnheader" className={cn('top-(--header-h) z-(--z-sticky) flex h-10 items-center gap-2 px-2.5 glass md:sticky', isToday && 'shadow-[inset_0_1px_0_var(--color-accent)]', mobile && '[scroll-snap-align:start]')}>
                       <span className="text-micro uppercase text-fg-3">{weekdayShort(d.date)}</span>
                       <Link
                         {...links.calendarDay(d.date)}

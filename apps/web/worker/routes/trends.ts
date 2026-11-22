@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  INTENSITY_META,
   LocalDate,
   SPORTS,
   Sport,
@@ -15,6 +14,7 @@ import {
   type ZoneTime,
 } from '@cadence/core/domain';
 import {
+  activityIntensitySplit,
   classifyDistribution,
   dayStreak,
   estimateFtp,
@@ -214,15 +214,9 @@ export const trendsRoutes = new Hono<AppEnv>()
       const zones = JSON.parse(row.zones || '{}') as ActivityExtras['zones'];
       const w = weeks.get(isoWeekOf(row.local_date));
       const sec = secOf(row);
-      let split: { easy: number; moderate: number; hard: number };
-      if (zones.three && zones.three.easy + zones.three.moderate + zones.three.hard > 0) {
-        split = zones.three;
-        if (w) w.keyBySource.zones++;
-      } else {
-        const b = INTENSITY_META[row.intensity_override ?? row.intensity_auto]?.bucket ?? 'easy';
-        split = { easy: 0, moderate: 0, hard: 0, [b]: sec };
-        if (w) w.keyBySource.class++;
-      }
+      // ONE definition shared with WeekSummary.intensitySec (core activityIntensitySplit)
+      const split = activityIntensitySplit(sec, row.intensity_override ?? row.intensity_auto, zones.three);
+      if (w) w.keyBySource[zones.three && zones.three.easy + zones.three.moderate + zones.three.hard > 0 ? 'zones' : 'class']++;
       for (const k of ['easy', 'moderate', 'hard'] as const) {
         if (w) w[k] += split[k];
         total[k] += split[k];

@@ -6,6 +6,7 @@ import { spring, tween } from '@/motion/tokens';
 import { links } from '@/shell/links';
 import { Button, ButtonLink, IconButton } from '@/ui/Button';
 import { Segmented } from '@/ui/Segmented';
+import { useCal } from './store';
 
 export type CalView = 'month' | 'week' | 'agenda';
 
@@ -37,7 +38,9 @@ export function PagingControls({ onPrev, onNext, onToday, prevLabel, nextLabel }
   );
 }
 
-export function NewButton({ date }: { date?: string }) {
+export function NewButton({ date: fixed }: { date?: string }) {
+  const cursor = useCal((s) => s.cursor);
+  const date = fixed ?? cursor ?? undefined;
   return (
     <ButtonLink {...links.newWorkout(date ? { date } : {})} variant="primary" size="sm" icon={<Plus />} className="max-sm:!px-2">
       <span className="max-sm:sr-only">New</span>

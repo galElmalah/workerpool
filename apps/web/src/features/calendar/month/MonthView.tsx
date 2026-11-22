@@ -234,11 +234,30 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
   const prevMonth = useRef(month);
   const dir = month >= prevMonth.current ? 1 : -1;
   useEffect(() => void (prevMonth.current = month), [month]);
-  const stepMonth = (n: number) => {
-    const [y, m] = month.split('-').map(Number) as [number, number];
-    const d = new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 10);
-    scrollToDate(addDays(d, 7));
-  };
+  // The header only re-renders when the month changes: re-rendering the segmented control's
+  // layoutId thumb on every row change would make Motion re-measure the page while scrolling.
+  const header = useMemo(() => {
+    const stepMonth = (n: number) => {
+      const [y, m] = month.split('-').map(Number) as [number, number];
+      const d = new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 10);
+      scrollToDate(addDays(d, 7));
+    };
+    return (
+      <PageHeader
+        variant="compact"
+        titleText="Calendar"
+        title={<RollingTitle text={formatMonthYearLong(month)} dir={dir} />}
+        toolbar={<ViewSwitcher value="month" onChange={(v) => goView(v, calStore.get().cursor ?? today ?? guess)} />}
+        actions={
+          <>
+            <PagingControls onPrev={() => stepMonth(-1)} onNext={() => stepMonth(1)} onToday={goToday} prevLabel="Previous month" nextLabel="Next month" />
+            <NewButton />
+          </>
+        }
+      />
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, today, goView, goToday, scrollToDate]);
 
   const onCopyWeek = useCallback((isoWeek: string, a: HTMLElement) => setBulk({ kind: 'copy', isoWeek, anchor: a }), []);
   const onShiftWeek = useCallback(
@@ -254,20 +273,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
       width="full"
       stagger={false}
       className="!gap-0 !pt-0 !pb-0"
-      header={
-        <PageHeader
-          variant="compact"
-          titleText="Calendar"
-          title={<RollingTitle text={formatMonthYearLong(month)} dir={dir} />}
-          toolbar={<ViewSwitcher value="month" onChange={(v) => goView(v, calStore.get().cursor ?? today ?? guess)} />}
-          actions={
-            <>
-              <PagingControls onPrev={() => stepMonth(-1)} onNext={() => stepMonth(1)} onToday={goToday} prevLabel="Previous month" nextLabel="Next month" />
-              <NewButton date={calStore.get().cursor ?? undefined} />
-            </>
-          }
-        />
-      }
+      header={header}
     >
       <DndContext {...dnd.contextProps} sensors={sensors} collisionDetection={calendarCollision} autoScroll={{ threshold: { x: 0, y: 0.12 }, acceleration: 12 }}>
         <ContextMenu items={menu} className="block">

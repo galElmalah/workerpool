@@ -54,7 +54,7 @@ const logFromRow = (r: SyncLogRow): SyncLogEntry =>
 /** Newest first. `cursor` is the opaque `nextCursor` of the previous page (`<at>|<id>`). */
 export async function listSyncLog(
   db: D1Database,
-  q: { limit?: number; cursor?: string; kind?: SyncLogEntry['kind'] } = {},
+  q: { limit?: number; cursor?: string; kind?: SyncLogEntry['kind']; status?: SyncLogEntry['status'] } = {},
 ): Promise<{ entries: SyncLogEntry[]; nextCursor?: string }> {
   const limit = Math.min(200, Math.max(1, q.limit ?? 50));
   const where: string[] = [];
@@ -65,6 +65,10 @@ export async function listSyncLog(
     const id = sep > 0 ? q.cursor.slice(sep + 1) : '';
     where.push('(at < ? OR (at = ? AND id < ?))');
     params.push(at, at, id);
+  }
+  if (q.status) {
+    where.push('status = ?');
+    params.push(q.status);
   }
   if (q.kind) {
     where.push('kind = ?');

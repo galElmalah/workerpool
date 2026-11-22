@@ -21,6 +21,8 @@ import type {
   WeekSummary,
 } from '../domain';
 import { INTENSITY_META, SPORTS } from '../domain';
+import type { IntensityClass } from '../domain';
+import type { ThreeZoneSeconds } from './zones';
 import { addDays, diffDays, eachWeek, isoWeekStart, weekStart } from '../time';
 
 export interface BuildWeeksInput {
@@ -32,6 +34,19 @@ export interface BuildWeeksInput {
   from: LocalDate;
   to: LocalDate;
   today: LocalDate;
+  /** Stored three-bucket zone seconds per activity id (activities without them use their class). */
+  zoneSeconds?: ReadonlyMap<string, ThreeZoneSeconds>;
+}
+
+/**
+ * Time by intensity bucket for ONE activity — the single definition shared by week summaries and
+ * the intensity trend: the activity's stored three-bucket zone seconds when present (and non-zero),
+ * otherwise all of its time in the bucket of its intensity class.
+ */
+export function activityIntensitySplit(sec: number, cls: IntensityClass | null | undefined, three?: ThreeZoneSeconds | null): ThreeZoneSeconds {
+  if (three && three.easy + three.moderate + three.hard > 0) return { easy: three.easy, moderate: three.moderate, hard: three.hard };
+  const bucket = cls && INTENSITY_META[cls] ? INTENSITY_META[cls].bucket : 'easy';
+  return { easy: 0, moderate: 0, hard: 0, [bucket]: sec };
 }
 
 const activitySec = (a: Activity) => (a.movingSec > 0 ? a.movingSec : a.durationSec) || 0;
@@ -182,9 +197,10 @@ export function buildWeekSummaries(input: BuildWeeksInput): WeekSummary[] {
       t.doneDistanceM += a.distanceM ?? 0;
       t.doneCount++;
       t.elevationGainM += a.elevationGainM ?? 0;
-      const cls = a.intensity ?? a.intensityOverride ?? a.intensityAuto;
-      const bucketName = cls && INTENSITY_META[cls] ? INTENSITY_META[cls].bucket : 'easy';
-      intensitySec[bucketName] += sec;
+      const split = activityIntensitySplit(sec, a.intensityOverride ?? a.intensityAuto ?? a.intensity, input.zoneSeconds?.get(a.id));
+      intensitySec.easy += split.easy;
+      intensitySec.moderate += split.moderate;
+      intensitySec.hard += split.hard;
       const di = diffDays(start, a.localDate);
       if (di >= 0 && di < 7) dailyLoad[di] += a.load || 0;
     }

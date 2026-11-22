@@ -77,7 +77,8 @@ const WellnessInput = z.object({
 });
 
 const WeekNoteInput = z.object({
-  body: z.string().max(50_000).default(''),
+  /** Omitted → keep the stored reflection (merge semantics); '' clears it. */
+  body: z.string().max(50_000).optional(),
   targetHours: z.number().nonnegative().nullable().optional(),
   targetLoad: z.number().nonnegative().nullable().optional(),
 });
@@ -208,7 +209,7 @@ export const furnitureRoutes = new Hono<AppEnv>()
     const pick = (v: number | null | undefined, prev: number | undefined) => (v === null ? undefined : (v ?? prev));
     await putWeekNote(c.env.DB, {
       isoWeek,
-      body: body.body,
+      body: body.body ?? cur?.body ?? '',
       targetHours: pick(body.targetHours, cur?.targetHours),
       targetLoad: pick(body.targetLoad, cur?.targetLoad),
     });

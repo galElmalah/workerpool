@@ -142,6 +142,14 @@ export const weeksRoutes = new Hono<AppEnv>().get('/weeks/:isoWeek', async (c) =
       newBests: newBests(inWeek, before),
     },
     wellness: wellnessSummary(wellnessWeek, data.wellness, end),
+    /** Previous week's wellness averages (same shape as `wellness`), for week-over-week comparison. */
+    previousWellness: wellnessSummary(
+      data.wellness.filter((w) => w.date >= prevStart && w.date < start),
+      data.wellness,
+      addDays(start, -1),
+    ),
+    /** Events (races, goals) dated in this week. */
+    events: data.events.filter((e) => e.date >= start && e.date <= end),
     note: data.weekNotes.find((n) => n.isoWeek === parsed.data) ?? null,
     next: {
       summary: nextSummary,

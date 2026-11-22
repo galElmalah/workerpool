@@ -103,11 +103,13 @@ export function CopyWeekPopover({ isoWeek, anchor, model, actions, onClose }: { 
           aria-label="Progression percent"
         />
         <div className="flex items-center gap-1.5 rounded-sm border border-dashed border-line-3 px-2 py-1.5 font-mono text-mono-sm text-fg-2">
-          <span className="text-fg-1">{planned.length}</span> workouts ·{' '}
-          <span className="text-fg-1">{formatDuration(sec * (1 + pct / 100))}</span> h
+          <span className="text-fg-1">{planned.length}</span>
+          <span className="font-sans text-fg-3">workouts</span>
           <span className="ml-auto text-fg-3">{formatDuration(sec)} →</span>
+          <span className="text-fg-1">{formatDuration(sec * (1 + pct / 100))}</span>
+          <span className="font-sans text-fg-3">h</span>
         </div>
-        <Button variant="primary" size="sm" onClick={apply} loading={busy} disabled={!planned.length} kbd="enter">
+        <Button variant="primary" size="sm" onClick={apply} loading={busy} disabled={!planned.length}>
           Copy to {formatIsoWeek(target)}
         </Button>
       </div>

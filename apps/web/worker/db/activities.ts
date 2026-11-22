@@ -234,6 +234,26 @@ export async function dailyLoads(db: D1Database, q: { to?: LocalDate; sport?: Sp
   return new Map(results.map((r) => [r.date, r.load ?? 0]));
 }
 
+/** Stored three-bucket zone seconds (`zones.three`) per activity id in [from, to]. */
+export async function listThreeZoneSeconds(
+  db: D1Database,
+  q: { from: LocalDate; to: LocalDate },
+): Promise<Map<string, { easy: number; moderate: number; hard: number }>> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, json_extract(zones, '$.three') AS three FROM activities
+       WHERE deleted_at IS NULL AND local_date >= ? AND local_date <= ? AND json_extract(zones, '$.three') IS NOT NULL`,
+    )
+    .bind(q.from, q.to)
+    .all<{ id: string; three: string }>();
+  const out = new Map<string, { easy: number; moderate: number; hard: number }>();
+  for (const r of results) {
+    const t = parseJson<{ easy?: number; moderate?: number; hard?: number } | null>(r.three, null);
+    if (t) out.set(r.id, { easy: t.easy ?? 0, moderate: t.moderate ?? 0, hard: t.hard ?? 0 });
+  }
+  return out;
+}
+
 /** Peaks JSON for analytics (trends/peaks), without loading streams. */
 export async function listPeaks(
   db: D1Database,

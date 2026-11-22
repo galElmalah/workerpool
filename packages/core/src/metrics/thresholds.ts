@@ -172,7 +172,7 @@ export function estimateThresholds(history: ThresholdHistory): ThresholdSuggesti
 
   for (const [sport, curve] of Object.entries(history.hrCurves ?? {}) as Array<[Sport, readonly PeakPoint[]]>) {
     const hr20 = curve ? curveAt(curve, 1200) : null;
-    if (hr20 && hr20 > 0) out.push({ kind: 'lthr', sport, value: 0.95 * hr20, basis: '0.95 × best 20 min HR (UNVERIFIED factor)' });
+    if (hr20 && hr20 > 0) out.push({ kind: 'lthr', sport, value: 0.95 * hr20, basis: '0.95 × best 20 min HR' });
   }
   return out;
 }

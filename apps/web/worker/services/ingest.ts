@@ -485,7 +485,10 @@ export const ingestActivity: IngestActivity = async (env, input) => {
     delete upstream.source;
     // Identity fields this ingest does not know about are kept (e.g. a FIT re-upload of a synced activity).
     for (const k of ['garmin_activity_id', 'garmin_type_key', 'summary_hash']) if (upstream[k] === undefined) delete upstream[k];
-    if (existing.upstream_title === null || existing.title === existing.upstream_title) upstream.title = upstreamTitle;
+    if (s.title === undefined) {
+      // no explicit title (e.g. a FIT re-upload): keep the stored title and its upstream origin
+      delete upstream.upstream_title;
+    } else if (existing.upstream_title === null || existing.title === existing.upstream_title) upstream.title = upstreamTitle;
   } else {
     const u = input.user ?? {};
     Object.assign(upstream, {

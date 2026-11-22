@@ -49,8 +49,10 @@ export const todayRoutes = new Hono<AppEnv>().get('/today', async (c) => {
   const next = upcoming[0];
   const nextA = upcoming.find((e) => e.priority === 'A');
   const pendingLogs = data.activities
-    .filter((a) => a.localDate >= addDays(today, -2) && a.localDate <= today && (a.rpe === undefined || a.feel === undefined))
-    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+    // last 7 days (today included; the window always reaches back ≥ 7 days), newest first, max 5
+    .filter((a) => a.localDate > addDays(today, -7) && a.localDate <= today && (a.rpe === undefined || a.feel === undefined))
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+    .slice(0, 5);
 
   return c.json({
     date: today,

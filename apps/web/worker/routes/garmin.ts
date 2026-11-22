@@ -31,6 +31,7 @@ const LogQuery = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional(),
   cursor: z.string().optional(),
   kind: SyncLogEntry.shape.kind.optional(),
+  status: SyncLogEntry.shape.status.optional(),
 });
 
 function reportOrThrow(r: SyncReport): SyncReport {

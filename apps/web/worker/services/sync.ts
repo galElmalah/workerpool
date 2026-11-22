@@ -53,7 +53,8 @@ import {
 } from '../db/sync';
 import { insertThreshold, listThresholds } from '../db/thresholds';
 import { ApiError } from '../lib/http';
-import { ingestActivity } from './ingest';
+import { ingestActivity, recomputeActivities } from './ingest';
+import { rederiveWorkouts } from './planning';
 import type { IngestInput } from './ingest.types';
 import { decryptCredentials, errorMessage, getGarminClient, mfaPending, syncNow, syncToday, toApiError } from './garmin';
 import { isDemo } from '../env';
@@ -285,15 +286,58 @@ const THRESHOLD_MAP: { field: keyof ReturnType<typeof toThresholdSnapshot>; kind
   { field: 'weightKg', kind: 'weight', sport: 'all', tol: 0.2 },
 ];
 
+/** Start of the imported history: the oldest stored activity or the backfill window, whichever is earlier. */
+async function historyStart(env: Env, today: LocalDate): Promise<LocalDate> {
+  const r = await env.DB.prepare('SELECT MIN(local_date) AS d FROM activities WHERE deleted_at IS NULL').first<{ d: string | null }>();
+  const bf = await getBackfill(env);
+  let start = today;
+  if (r?.d && r.d < start) start = r.d;
+  if (bf && bf.phase !== 'cancelled' && bf.sinceDate < start) start = bf.sinceDate;
+  return start;
+}
+
+/** Recompute stored activity metrics and planned totals from `from` on (after thresholds were back-dated). */
+export async function recomputeHistory(env: Env, from: LocalDate): Promise<void> {
+  let cursor: string | undefined;
+  for (let i = 0; i < 100; i++) {
+    const r = await recomputeActivities(env, { from, cursor, limit: 100 });
+    if (!r.nextCursor) break;
+    cursor = r.nextCursor;
+  }
+  await rederiveWorkouts(env, { from });
+}
+
+/**
+ * When the first value of a kind came from Garmin, it is the best estimate for the whole imported
+ * history: move it back to `since` (the start of the imported history) so older activities are
+ * scored with it. Returns the earliest date that changed (recompute from there), if any.
+ */
+export async function backdateGarminThresholds(env: Env, since: LocalDate): Promise<LocalDate | undefined> {
+  const all = await listThresholds(env.DB); // newest first → the last match is the earliest
+  const earliest = new Map<string, Threshold>();
+  for (const t of all) earliest.set(`${t.kind}|${t.sport}`, t);
+  const stmts: D1PreparedStatement[] = [];
+  for (const t of earliest.values()) {
+    if (t.source !== 'garmin' || t.effectiveFrom <= since) continue;
+    stmts.push(env.DB.prepare('UPDATE thresholds SET effective_from = ? WHERE id = ?').bind(since, t.id));
+  }
+  if (!stmts.length) return undefined;
+  await env.DB.batch(stmts);
+  return since;
+}
+
 /**
  * Suggested thresholds from Garmin's user settings: inserted as `source: 'garmin'` (effective today)
  * only when the value changed since Garmin last reported it, differs from the current value, and
- * the athlete has not set a manual value dated today or later.
+ * the athlete has not set a manual value dated today or later. When no value of that kind exists
+ * yet, it is dated at the start of the imported history instead (and history is recomputed), so
+ * imported activities are scored with it.
  */
 export async function applyGarminThresholds(env: Env, settings: GarminUserSettings, today: LocalDate): Promise<Threshold[]> {
   const snap = toThresholdSnapshot(settings);
   const all = await listThresholds(env.DB); // newest effective date first
   const inserted: Threshold[] = [];
+  let start: LocalDate | undefined;
   for (const m of THRESHOLD_MAP) {
     const v = snap[m.field];
     if (v === undefined || !(v > 0)) continue;
@@ -304,10 +348,14 @@ export async function applyGarminThresholds(env: Env, settings: GarminUserSettin
     if (latest && Math.abs(latest.value - v) < m.tol) continue;
     if (lastGarmin && Math.abs(lastGarmin.value - v) < m.tol) continue;
     if (future) continue;
+    const first = !all.some((t) => t.kind === m.kind && t.sport === m.sport);
+    if (first) start ??= await historyStart(env, today);
+    const effectiveFrom = first ? start! : today;
     inserted.push(
-      await insertThreshold(env.DB, { kind: m.kind, sport: m.sport, value: v, effectiveFrom: today, source: 'garmin', note: 'From Garmin Connect' }),
+      await insertThreshold(env.DB, { kind: m.kind, sport: m.sport, value: v, effectiveFrom, source: 'garmin', note: 'From Garmin Connect' }),
     );
   }
+  if (start && start < today) await recomputeHistory(env, start);
   return inserted;
 }
 
@@ -523,6 +571,10 @@ export async function backfillStep(env: Env, client: GarminClient, budget: Budge
   }
   if (s.phase === 'done' && !s.finishedAt) {
     s.finishedAt = new Date().toISOString();
+    // the imported history may start before the first Garmin-provided thresholds: back-date them
+    const since = s.oldestDate && s.oldestDate < s.sinceDate ? s.oldestDate : s.sinceDate;
+    const changed = await backdateGarminThresholds(env, since);
+    if (changed) await recomputeHistory(env, changed);
     await finishBackfillLog(env, s, {
       status: s.failed ? 'error' : 'ok',
       summary: `Backfill complete: ${s.done} activities${s.wellness ? `, ${s.wellnessDays} days of wellness` : ''}${s.failed ? `, ${s.failed} failed` : ''}`,
