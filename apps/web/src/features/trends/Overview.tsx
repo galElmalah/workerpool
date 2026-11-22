@@ -1,17 +1,20 @@
 /**
- * /trends — the overview. Top-down story: this week vs the comparison (tiles), Fitness · Fatigue ·
- * Form, weekly volume, week-over-week progression, intensity distribution, consistency.
+ * /trends — the overview answers "am I progressing?" in two seconds: four headline figures for this
+ * week (hours, load, fitness, form — each with its change), then one chart per section on the canvas:
+ * Fitness · Fatigue · Form (hero), weekly volume, week-over-week progression, intensity, consistency.
+ * One control row (range + Filter). Everything the v1 tiles carried (distance, sessions, key sessions,
+ * fatigue, plan progress, ramp) is on the week review page, in the chart tooltips or on the sub-pages.
  */
 import type { Activity, CalendarResponse, FitnessDay, LocalDate, Sport, WeekSummary } from '@cadence/core';
-import { addDays, isoWeekday, isoWeekOf, weekStart } from '@cadence/core/time';
-import { useNavigate } from '@tanstack/react-router';
-import { motion } from 'motion/react';
+import { addDays, isoWeekday, weekStart } from '@cadence/core/time';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { ArrowRight } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   ConsistencyHeatmap,
   FitnessChart,
   IntensityDistribution,
-  SparkBars,
   WeeklyBars,
   WowDeltaBars,
   createHoverSync,
@@ -20,25 +23,19 @@ import {
   type FitnessSelection,
   type WowItem,
 } from '@/charts';
-import { cn } from '@/lib/cn';
 import { formatDateMedium, formatDayMonth, formatIsoWeek, formatNumber, formatPercent, formatSigned, weekdayShort } from '@/lib/format';
 import { useCalendar } from '@/lib/queries/training';
-import { distanceUnit, useUnits } from '@/lib/units';
-import { Ticker } from '@/motion/Ticker';
-import { spring } from '@/motion/tokens';
-import { DeltaBadge, FormZoneLabel, Meter, Skeleton, Tooltip } from '@/ui';
+import { spring, tween } from '@/motion/tokens';
+import { Section, Segmented, Skeleton, StatRow, StatTile } from '@/ui';
 import {
-  COMPARE_LABEL,
   METRIC_NAME,
   METRIC_VALUE,
   baselineOf,
   chartRange,
   filterWeeks,
-  rampBand,
   rangeLabel,
   rangeWeeks,
   sessionsDone,
-  sessionsPlanned,
   todayIndex,
   trimLeading,
   useApiToday,
@@ -50,7 +47,7 @@ import {
   type CompareKey,
   type Metric,
 } from './data';
-import { ChartCard, CompareControl, InlineError, RangeControl, SportChips, TrendsFrame, useTrendsSearch } from './shared';
+import { FilterPopover, InlineError, RangeControl, TitleLink, TrendsFrame, activeOf, compareFilter, compareGroup, sportFilter, sportGroup, useTrendsSearch } from './shared';
 
 // ───────────────────────── formatting ─────────────────────────
 
@@ -86,6 +83,8 @@ function totalsThrough(cal: Pick<CalendarResponse, 'activities' | 'workouts'> | 
 
 const weekTotals = (w: WeekSummary): Totals => ({ hours: w.doneSec / 3600, load: w.doneLoad, distanceM: w.doneDistanceM, sessions: sessionsDone(w), key: w.keyDone });
 
+const METRIC_OPTIONS = (['hours', 'load', 'distance'] as Metric[]).map((m) => ({ value: m, label: METRIC_NAME[m] }));
+
 // ───────────────────────── page ─────────────────────────
 
 export function OverviewPage() {
@@ -104,82 +103,91 @@ export function OverviewPage() {
   const nWeeks = rangeWeeks(range);
   const weeks = useMemo(() => all.slice(-nWeeks), [all, nWeeks]);
   const sports = useMemo(() => {
-    const set = new Set<Sport>();
-    (weekly.data ?? []).slice(-nWeeks).forEach((w) => w.bySport.forEach((s) => s.doneSec > 0 && set.add(s.sport)));
-    return [...set];
-  }, [weekly.data, nWeeks]);
+    const s = new Set<Sport>();
+    (weekly.data ?? []).slice(-nWeeks).forEach((w) => w.bySport.forEach((x) => x.doneSec > 0 && s.add(x.sport)));
+    if (sport) s.add(sport);
+    return [...s];
+  }, [weekly.data, nWeeks, sport]);
   const weekSync = useMemo(() => createHoverSync<string>(), []);
   const intensity = useIntensity(Math.min(104, nWeeks));
   const intensityItems = useMemo(
     () => (intensity.data?.weeks ?? []).filter((w) => w.easy + w.moderate + w.hard > 0).map((w) => ({ key: w.isoWeek, label: formatDayMonth(w.startDate), easy: w.easy, moderate: w.moderate, hard: w.hard })),
     [intensity.data],
   );
+  const openWeek = (w: string) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } });
 
   const first = weeks[0];
   const last = weeks[weeks.length - 1];
-  const eyebrow = first && last ? `${rangeLabel(range)} · ${formatIsoWeek(first.isoWeek)}–${formatIsoWeek(last.isoWeek)} · ${formatDayMonth(first.startDate)} – ${formatDayMonth(last.endDate)}` : rangeLabel(range);
+  const eyebrow = first && last ? `${rangeLabel(range)} · ${formatDayMonth(first.startDate)} – ${formatDayMonth(last.endDate)}` : rangeLabel(range);
+  const filters = activeOf(sportFilter(sport, () => set({ sport: undefined })), compareFilter(compare, () => set({ compare: undefined })));
 
   return (
     <TrendsFrame
       title="Trends"
       eyebrow={eyebrow}
-      controls={
+      filters={filters}
+      toolbar={
         <>
           <RangeControl value={range} onChange={(r) => set({ range: r })} />
-          <CompareControl value={compare} onChange={(c) => set({ compare: c })} />
-          <SportChips sports={sports} value={sport} onChange={(s) => set({ sport: s })} />
+          <FilterPopover active={filters.length} groups={[compareGroup(compare, (c) => set({ compare: c === 'prev' ? undefined : c })), sportGroup(sports, sport, (s) => set({ sport: s }))]} />
         </>
       }
     >
-      <section aria-label="This week">
-        {weekly.isError ? (
-          <InlineError onRetry={() => weekly.refetch()}>Couldn't load your weekly totals.</InlineError>
-        ) : (
-          <WowTiles all={all} today={today} compare={compare} sport={sport} fitness={fitness.data?.days} loading={!weekly.data} />
-        )}
-      </section>
+      {weekly.isError ? (
+        <InlineError onRetry={() => weekly.refetch()}>Couldn't load your weekly totals.</InlineError>
+      ) : (
+        <Headline all={all} today={today} compare={compare} sport={sport} fitness={fitness.data?.days} loading={!weekly.data} />
+      )}
 
       <FitnessSection data={fitness.data} loading={!fitness.data} error={fitness.isError} retry={() => fitness.refetch()} range={range} onRange={(r) => set({ range: r })} today={today} sport={sport} />
 
-      <section>
-        <ChartCard title="Weekly volume" to="/trends/volume" question="How much am I training, in which sports, and is it trending up?">
-          <WeeklyBars
-            weeks={weeks}
-            loading={!weekly.data}
-            metric={metric}
-            onMetricChange={(m) => set({ metric: m })}
-            sync={weekSync}
-            height={240}
-            onWeekClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })}
+      <Section
+        title={<TitleLink to="/trends/volume">Weekly volume</TitleLink>}
+        description={sport ? 'Completed time per week for this sport. Click a week to review it.' : 'Completed time per week, all sports. Click a week to review it.'}
+        actions={<Segmented aria-label="Metric" size="sm" value={metric} onValueChange={(m) => set({ metric: m })} options={METRIC_OPTIONS} />}
+      >
+        {weekly.isError ? (
+          <InlineError onRetry={() => weekly.refetch()} />
+        ) : (
+          <WeeklyBars weeks={weeks} loading={!weekly.data} metric={metric} onMetricChange={(m) => set({ metric: m })} showMetricToggle={false} stack="total" sync={weekSync} height={240} onWeekClick={openWeek} />
+        )}
+      </Section>
+
+      <WowSection all={all} weeks={weeks} metric={metric} compare={compare} sync={weekSync} loading={!weekly.data} onMetric={(m) => set({ metric: m })} onOpen={openWeek} />
+
+      <Section title={<TitleLink to="/trends/intensity">Intensity distribution</TitleLink>} description={`Easy, moderate and hard time per week${sport ? ', all sports' : ''}.`}>
+        {intensity.isError ? (
+          <InlineError onRetry={() => intensity.refetch()} />
+        ) : (
+          <IntensityDistribution items={intensityItems} loading={!intensity.data} sync={weekSync} height={180} onItemClick={openWeek} />
+        )}
+      </Section>
+
+      <Section title="Consistency" description={<ConsistencyLine data={consistency.data} />}>
+        {consistency.isError ? (
+          <InlineError onRetry={() => consistency.refetch()} />
+        ) : !consistency.data ? (
+          <Skeleton className="h-[150px] w-full" />
+        ) : (
+          <ConsistencyHeatmap
+            days={consistency.data.days.map((d) => ({ date: d.date, load: d.load, sessions: d.count, key: d.key }))}
+            today={consistency.data.to}
+            onDayClick={(d) => navigate({ to: '/calendar/day/$date', params: { date: d } })}
+            showStreaks={false}
           />
-        </ChartCard>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-12">
-        <WowSection all={all} weeks={weeks} metric={metric} compare={compare} sync={weekSync} loading={!weekly.data} onMetric={(m) => set({ metric: m })} onOpen={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
-        <ChartCard className="lg:col-span-5" title="Intensity distribution" to="/trends/intensity" question={`Easy, moderate and hard time per week${sport ? ' (all sports)' : ''}. Polarized, pyramidal or drifting into the grey zone?`}>
-          <IntensityDistribution items={intensityItems} loading={!intensity.data} sync={weekSync} height={168} onItemClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
-        </ChartCard>
-      </section>
-
-      <section>
-        <ChartCard title="Consistency" question="Did I show up? Every day of the last year, tone = Load, dot = key session.">
-          {consistency.isError ? (
-            <InlineError onRetry={() => consistency.refetch()} />
-          ) : (
-            <ConsistencySection data={consistency.data} onDay={(d) => navigate({ to: '/calendar/day/$date', params: { date: d } })} />
-          )}
-        </ChartCard>
-      </section>
+        )}
+      </Section>
     </TrendsFrame>
   );
 }
 
-// ───────────────────────── WoW tiles ─────────────────────────
+// ───────────────────────── headline figures ─────────────────────────
 
-function WowTiles({ all, today, compare, sport, fitness, loading }: { all: WeekSummary[]; today?: LocalDate; compare: CompareKey; sport?: Sport; fitness?: FitnessDay[]; loading: boolean }) {
-  const units = useUnits();
-  const du = distanceUnit('run', units);
+/**
+ * Hours, Load, Fitness, Form for this week, each with one line of context (its change against the
+ * chosen comparison). Distance, sessions and key sessions live on the week review (linked).
+ */
+function Headline({ all, today, compare, sport, fitness, loading }: { all: WeekSummary[]; today?: LocalDate; compare: CompareKey; sport?: Sport; fitness?: FitnessDay[]; loading: boolean }) {
   const idx = all.length - 1;
   const cur = all[idx];
   const dow = today && cur && today <= cur.endDate ? isoWeekday(today) : 7;
@@ -207,222 +215,56 @@ function WowTiles({ all, today, compare, sport, fitness, loading }: { all: WeekS
   }, [cal.data, calLy.data, compare, ws, dow, sport, lyStart]);
   const baseLoading = compare === 'year' ? calLy.isPending : cal.isPending;
 
-  const spark = (f: (w: WeekSummary) => number, proj?: (w: WeekSummary) => number) => {
-    const ws12 = all.slice(-12);
-    return { values: ws12.map(f), planned: proj ? ws12.map((w) => (w.isProjected ? proj(w) : 0)) : undefined };
-  };
   const pct = (a?: number, b?: number | null) => (a == null || b == null ? null : b > 0 ? a / b - 1 : a > 0 ? null : 0);
-  const byDay = inProgress ? ` by ${today ? weekdayShort(today) : ''}` : '';
-  const refText = (v: string) =>
-    compare === 'prev' ? `vs ${v}${byDay} last wk` : compare === 'avg' ? `vs ${v} 4-wk avg${byDay}` : `vs ${v}${byDay} last year`;
-  const noBase = compare === 'year' ? 'No data for this week last year' : 'No earlier weeks yet';
+  const byDay = inProgress && today && compare !== 'year' ? ` by ${weekdayShort(today)}` : '';
+  const refText = (v: string) => (compare === 'prev' ? `vs ${v}${byDay} last week` : compare === 'avg' ? `vs ${v} 4-week avg` : `vs ${v} last year`);
+  const noBase = baseLoading ? '' : compare === 'year' ? 'no data last year' : 'no earlier weeks yet';
 
   const fIdx = fitness ? todayIndex(fitness, today) : -1;
   const fd = fIdx >= 0 ? fitness![fIdx] : null;
   const lag = compare === 'prev' ? 7 : compare === 'avg' ? 28 : 364;
   const fPrev = fIdx >= 0 && fIdx - lag >= 0 ? fitness![fIdx - lag] : null;
-  const fSpark = fitness && fIdx >= 0 ? fitness.slice(Math.max(0, fIdx - 83), fIdx + 1).filter((_, i) => i % 7 === 6 || i === Math.min(83, fIdx)) : [];
-  const lagLabel = compare === 'prev' ? 'vs 7 days ago' : compare === 'avg' ? 'vs 4 weeks ago' : 'vs a year ago';
-  const band = rampBand(fd?.ramp);
+  const lagLabel = compare === 'prev' ? 'in 7 days' : compare === 'avg' ? 'in 4 weeks' : 'in a year';
+  const zone = fd?.formZone ? fd.formZone[0].toUpperCase() + fd.formZone.slice(1) : null;
+  const hoursDelta = pct(curT?.hours, base?.hours);
+  const loadDelta = pct(curT?.load, base?.load);
 
-  const tiles: ReactNode[] = cur && curT
-    ? [
-        <WowTile key="h" label="Hours" value={curT.hours} format={fmtHours} unit="h" delta={pct(curT.hours, base?.hours)} refText={base ? refText(fmtHours(base.hours)) : baseLoading ? '' : noBase} spark={spark((w) => w.doneSec / 3600, (w) => w.projectedSec / 3600)} plan={cur.isProjected ? { done: curT.hours, total: cur.projectedSec / 3600, fmt: fmtHours, target: cur.targetHours } : undefined} />,
-        <WowTile key="l" label="Load" value={curT.load} format={fmtInt} delta={pct(curT.load, base?.load)} refText={base ? refText(fmtInt(base.load)) : baseLoading ? '' : noBase} spark={spark((w) => w.doneLoad, (w) => w.projectedLoad)} plan={cur.isProjected ? { done: curT.load, total: cur.projectedLoad, fmt: fmtInt, target: cur.targetLoad } : undefined} signal good={(pct(curT.load, base?.load) ?? 0) > 0 && (pct(curT.load, base?.load) ?? 0) <= 0.15} warning={(pct(curT.load, base?.load) ?? 0) > 0.15 && !inProgress} />,
-        <WowTile key="d" label="Distance" value={curT.distanceM / du.mPer} format={fmtInt} unit={du.unit} delta={pct(curT.distanceM, base?.distanceM)} refText={base ? refText(`${fmtInt(base.distanceM / du.mPer)} ${du.unit}`) : baseLoading ? '' : noBase} spark={spark((w) => w.doneDistanceM, (w) => Math.max(w.doneDistanceM, w.plannedDistanceM))} plan={cur.isProjected ? { done: curT.distanceM / du.mPer, total: Math.max(cur.doneDistanceM, cur.plannedDistanceM) / du.mPer, fmt: fmtInt } : undefined} />,
-        <WowTile key="s" label="Sessions" value={curT.sessions} format={fmtInt} delta={base ? curT.sessions - base.sessions : null} deltaKind="number" refText={base ? refText(formatNumber(base.sessions, compare === 'avg' ? 1 : 0, { trim: true })) : baseLoading ? '' : noBase} spark={spark(sessionsDone, (w) => Math.max(sessionsDone(w), sessionsPlanned(w)))} plan={cur.isProjected ? { done: curT.sessions, total: Math.max(curT.sessions, sessionsPlanned(cur)), fmt: fmtInt } : undefined} />,
-        <WowTile
-          key="k"
-          label="Key sessions"
-          value={cur.keyDone}
-          format={fmtInt}
-          unit={`/ ${cur.keyPlanned}`}
-          delta={base ? cur.keyDone - base.key : null}
-          deltaKind="number"
-          refText={base ? refText(formatNumber(base.key, compare === 'avg' ? 1 : 0, { trim: true })) : baseLoading ? '' : noBase}
-          spark={spark((w) => w.keyDone, (w) => w.keyPlanned)}
-          plan={cur.keyPlanned ? { done: cur.keyDone, total: cur.keyPlanned, fmt: fmtInt, label: cur.keyDone >= cur.keyPlanned ? 'All key sessions hit' : `${cur.keyPlanned - cur.keyDone} still to do` } : undefined}
-          good={cur.keyPlanned > 0 && cur.keyDone >= cur.keyPlanned}
-        />,
-        <WowTile
-          key="f"
-          label="Fitness"
-          value={fd?.fitness ?? null}
-          format={(v) => formatNumber(v, 0)}
-          delta={fd && fPrev ? fd.fitness - fPrev.fitness : null}
-          deltaKind="number"
-          refText={fPrev ? `${lagLabel} (${formatNumber(fPrev.fitness, 0)})` : ''}
-          sparkLine={fSpark.map((d) => d.fitness)}
-          signal
-          good={!!fd && !!fPrev && fd.fitness > fPrev.fitness}
-          footer={fd?.ramp != null ? <RampBand ramp={fd.ramp} band={band} /> : null}
-        />,
-        <WowTile key="fa" label="Fatigue" value={fd?.fatigue ?? null} format={(v) => formatNumber(v, 0)} delta={fd && fPrev ? fd.fatigue - fPrev.fatigue : null} deltaKind="number" refText={fPrev ? `${lagLabel} (${formatNumber(fPrev.fatigue, 0)})` : ''} sparkLine={fSpark.map((d) => d.fatigue)} footer={<span className="text-body-sm text-fg-3">7-day load average</span>} />,
-        <WowTile
-          key="fo"
-          label="Form"
-          value={fd?.form ?? null}
-          format={(v) => formatSigned(Math.round(v))}
-          delta={fd && fPrev ? fd.form - fPrev.form : null}
-          deltaKind="number"
-          refText={fPrev ? `${lagLabel} (${formatSigned(Math.round(fPrev.form))})` : ''}
-          sparkLine={fSpark.map((d) => d.form)}
-          footer={
-            <span className="inline-flex items-center gap-2">
-              <FormZoneLabel zone={fd?.formZone} />
-              {fd?.formPct != null && <span className="text-mono-sm text-fg-3">{formatSigned(Math.round(fd.formPct))}%</span>}
-            </span>
-          }
-        />,
-      ]
-    : [];
+  const description = cur
+    ? `${formatIsoWeek(cur.isoWeek)}${inProgress ? `, ${7 - dow} day${7 - dow === 1 ? '' : 's'} to go` : ''}${sport ? ', this sport only' : ''}. Changes are against ${compare === 'prev' ? (inProgress ? 'last week at the same weekday' : 'last week') : compare === 'avg' ? 'the 4-week average' : 'the same week last year'}.`
+    : undefined;
 
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-title-3 text-fg-1">
-          {cur ? (
-            <>
-              This week <span className="text-fg-3">· {formatIsoWeek(cur.isoWeek)}{inProgress ? ` · so far, ${7 - dow} day${7 - dow === 1 ? '' : 's'} to go` : ''}</span>
-            </>
-          ) : (
-            'This week'
-          )}
-        </h2>
-        <span className="text-micro text-fg-3">{COMPARE_LABEL[compare]}{inProgress && compare !== 'year' ? ' · same weekday' : ''}</span>
-      </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {loading || !tiles.length
-          ? Array.from({ length: 8 }, (_, i) => <TileSkeleton key={i} />)
-          : tiles.map((t, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: Math.min(i * 0.035, 0.24) }} className="min-w-0">
-                {t}
-              </motion.div>
-            ))}
-      </div>
-    </div>
-  );
-}
-
-function TileSkeleton() {
-  return (
-    <div className="flex h-[158px] flex-col gap-2 rounded-lg border border-line-1 bg-surface-1 p-4" aria-hidden>
-      <Skeleton className="h-3.5 w-16" />
-      <Skeleton className="h-9 w-24" />
-      <Skeleton className="h-4 w-32" />
-      <Skeleton className="mt-auto h-1 w-full" />
-    </div>
-  );
-}
-
-function WowTile({
-  label,
-  value,
-  format,
-  unit,
-  delta,
-  deltaKind = 'percent',
-  refText,
-  spark,
-  sparkLine,
-  plan,
-  signal,
-  good,
-  warning,
-  footer,
-}: {
-  label: string;
-  value: number | null;
-  format: (v: number) => string;
-  unit?: string;
-  delta: number | null;
-  deltaKind?: 'percent' | 'number';
-  refText: string;
-  spark?: { values: number[]; planned?: number[] };
-  sparkLine?: number[];
-  plan?: { done: number; total: number; fmt: (v: number) => string; target?: number; label?: string };
-  signal?: boolean;
-  good?: boolean;
-  warning?: boolean;
-  footer?: ReactNode;
-}) {
-  return (
-    <div className="spotlight flex h-full min-h-[158px] min-w-0 flex-col gap-2 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <span className="truncate text-micro text-fg-3">{label}</span>
-        {spark && spark.values.length > 1 && <SparkBars values={spark.values} planned={spark.planned} todayIndex={spark.values.length - 1} barWidth={4} gap={2} height={18} ariaLabel={`${label}, last ${spark.values.length} weeks`} className="max-sm:hidden" />}
-        {sparkLine && sparkLine.length > 1 && <MiniLine values={sparkLine} accent={signal} />}
-      </div>
-      <div className={cn('flex min-w-0 items-baseline gap-1 text-stat-md', signal ? 'text-accent-ink' : 'text-fg-1')}>
-        {value == null ? <span className="text-fg-4">—</span> : <Ticker value={value} format={format} />}
-        {unit && <span className="text-[1.05rem] font-[450] tracking-normal text-fg-3">{unit}</span>}
-      </div>
-      <div className="flex min-h-5 flex-wrap items-center gap-x-1.5 gap-y-0.5">
-        <DeltaBadge value={delta} kind={deltaKind} good={good} warning={warning} decimals={deltaKind === 'number' && delta != null && Math.abs(delta) < 10 && !Number.isInteger(delta) ? 1 : 0} />
-        <span className="truncate text-body-sm text-fg-3">{refText}</span>
-      </div>
-      <div className="mt-auto pt-1">
-        {plan ? (
-          <div className="flex flex-col gap-1.5">
-            <Meter value={plan.done} max={plan.total} ghost={plan.total} target={plan.target} size="xs" aria-label={`${label}: ${plan.fmt(plan.done)} of ${plan.fmt(plan.total)}`} />
-            <span className="truncate text-mono-sm text-fg-3">
-              {plan.label ?? (
-                <>
-                  <span className="text-fg-4">on track for</span> {plan.fmt(plan.total)}{plan.target ? ` · target ${plan.fmt(plan.target)}` : ''}
-                </>
-              )}
-            </span>
-          </div>
+    <Section
+      title="This week"
+      description={description}
+      actions={
+        cur ? (
+          <Link to="/week/$isoWeek" params={{ isoWeek: cur.isoWeek }} className="group inline-flex h-7 items-center gap-1 rounded-md px-2 text-label text-fg-2 transition-colors hover:bg-surface-2 hover:text-fg-1">
+            Week review <ArrowRight className="size-3.5 transition-transform duration-(--dur-fast) group-hover:translate-x-0.5" aria-hidden />
+          </Link>
+        ) : null
+      }
+    >
+      <StatRow columns={4}>
+        {loading || !cur || !curT ? (
+          Array.from({ length: 4 }, (_, i) => <StatTile.Skeleton key={i} />)
         ) : (
-          footer
+          <>
+            <StatTile label="Hours" value={curT.hours} format={fmtHours} unit="h" delta={hoursDelta} hint={base ? refText(fmtHours(base.hours)) : noBase} />
+            <StatTile
+              label="Load"
+              value={curT.load}
+              format={fmtInt}
+              delta={loadDelta}
+              warning={(loadDelta ?? 0) > 0.15 && !inProgress}
+              hint={base ? refText(fmtInt(base.load)) : noBase}
+            />
+            <StatTile label="Fitness" value={fd?.fitness ?? null} format={fmtInt} delta={fd && fPrev ? fd.fitness - fPrev.fitness : null} deltaKind="number" good={!!fd && !!fPrev && fd.fitness > fPrev.fitness} hint={fPrev ? lagLabel : ''} />
+            <StatTile label="Form" value={fd?.form ?? null} format={(v) => formatSigned(Math.round(v))} delta={fd && fPrev ? fd.form - fPrev.form : null} deltaKind="number" hint={zone ?? ''} />
+          </>
         )}
-      </div>
-    </div>
-  );
-}
-
-/** 64×18 line sparkline (weekly samples), accent for load-like series. */
-function MiniLine({ values, accent }: { values: number[]; accent?: boolean }) {
-  const w = 64;
-  const h = 18;
-  const lo = Math.min(...values);
-  const hi = Math.max(...values);
-  const pts = values.map((v, i) => [(i / (values.length - 1)) * (w - 3) + 1.5, 2 + (1 - (v - lo) / (hi - lo || 1)) * (h - 4)] as const);
-  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('');
-  const lp = pts[pts.length - 1];
-  return (
-    <svg width={w} height={h} className="block shrink-0 overflow-visible max-sm:hidden" aria-hidden>
-      <motion.path d={d} fill="none" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={accent ? 'stroke-accent' : 'stroke-fg-2'} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={spring.gentle} />
-      <circle cx={lp[0]} cy={lp[1]} r={2.2} className={accent ? 'fill-accent' : 'fill-fg-1'} />
-    </svg>
-  );
-}
-
-/** Ramp/wk with the guidance band (≤5 normal · 5–8 aggressive · >8 risky). */
-function RampBand({ ramp, band }: { ramp: number; band: string | null }) {
-  const min = -6;
-  const max = 12;
-  const pos = (v: number) => ((Math.max(min, Math.min(max, v)) - min) / (max - min)) * 100;
-  const segs = [
-    { a: min, b: 0, cls: 'bg-surface-3' },
-    { a: 0, b: 5, cls: 'bg-accent-a3' },
-    { a: 5, b: 8, cls: 'bg-hatch-fg bg-surface-3' },
-    { a: 8, b: max, cls: 'bg-fg-3' },
-  ];
-  return (
-    <Tooltip content="Ramp = Fitness change over 7 days. Up to +5/wk is a sustainable build, 5–8 is aggressive, above 8 is risky.">
-      <div className="flex flex-col gap-1.5" tabIndex={0}>
-        <div className="relative flex h-1.5 gap-px overflow-visible">
-          {segs.map((s) => (
-            <span key={s.a} className={cn('h-full rounded-[1px]', s.cls)} style={{ width: `${((s.b - s.a) / (max - min)) * 100}%` }} />
-          ))}
-          <motion.span className="absolute -top-1 h-3.5 w-0.5 rounded-full bg-fg-1" initial={false} animate={{ left: `calc(${pos(ramp)}% - 1px)` }} transition={spring.smooth} />
-        </div>
-        <span className="text-mono-sm text-fg-3">
-          Ramp <span className="text-fg-1">{formatSigned(ramp, 1)}</span>/wk · {band}
-        </span>
-      </div>
-    </Tooltip>
+      </StatRow>
+    </Section>
   );
 }
 
@@ -439,65 +281,85 @@ export function chartEvents(data: FitnessData): ChartEvent[] {
 }
 export const chartPhases = (data: FitnessData): ChartPhase[] => (data ? data.phases.map((p) => ({ startDate: p.startDate, endDate: p.endDate, label: p.label })) : []);
 
+/** One plain sentence: is fitness building over the range, and where does the plan take it? */
+function fitnessSentence(data: FitnessData, today: LocalDate | undefined, rangeDays: number): string | null {
+  if (!data?.days.length) return null;
+  const days = data.days;
+  const ti = todayIndex(days, today);
+  const now = days[ti];
+  const then = days[Math.max(0, ti - rangeDays)];
+  if (!now || !then) return null;
+  const d = now.fitness - then.fitness;
+  const span = rangeDays >= 300 ? 'over the last year' : rangeDays >= 150 ? 'over the last 6 months' : `over the last ${Math.round(rangeDays / 7)} weeks`;
+  const trend = Math.abs(d) < 1 ? `Fitness held steady ${span}` : `Fitness ${d > 0 ? 'built' : 'eased'} ${formatSigned(d, 0)} ${span}`;
+  const next = data.events.find((e) => today && e.date > today && (e.priority === 'A' || e.priority === 'B'));
+  return next ? `${trend}; the dashed line follows your plan to ${next.name} on ${formatDateMedium(next.date)}.` : `${trend}.`;
+}
+
+const RANGE_DAYS: Record<string, number> = { '6w': 42, '12w': 84, '3m': 91, '6m': 182, '1y': 365, all: 730 };
+
 function FitnessSection({ data, loading, error, retry, range, onRange, today, sport }: { data: FitnessData; loading: boolean; error: boolean; retry: () => void; range: ReturnType<typeof useTrendsSearch>['search']['range'] & string; onRange: (r: '6w' | '12w' | '6m' | '1y' | 'all') => void; today?: LocalDate; sport?: Sport }) {
   const [sel, setSel] = useState<FitnessSelection | null>(null);
   const events = useMemo(() => chartEvents(data), [data]);
   const phases = useMemo(() => chartPhases(data), [data]);
-  const next = data?.events.find((e) => today && e.date > today && (e.priority === 'A' || e.priority === 'B'));
+  const sentence = fitnessSentence(data, today, RANGE_DAYS[range] ?? 84);
   return (
-    <section>
-      <ChartCard
-        title={sport ? 'Fitness · Fatigue · Form (filtered)' : 'Fitness · Fatigue · Form'}
-        to="/trends/fitness"
-        question={next ? `Is fitness building? Dashed lines project your plan to ${next.name} (${formatDateMedium(next.date)}). Drag across the chart to measure a block.` : 'Is fitness building, and am I fresh or buried? Drag across the chart to measure a block.'}
-      >
-        {error ? (
-          <InlineError onRetry={retry} />
-        ) : (
-          <FitnessChart days={data?.days ?? []} loading={loading} today={today} range={chartRange(range)} onRangeChange={onRange} showRangeControl={false} events={events} phases={phases} showRamp height={240} onSelect={setSel} />
-        )}
-        <SelectionReadout sel={sel} />
-      </ChartCard>
-    </section>
+    <Section title={<TitleLink to="/trends/fitness">Fitness · Fatigue · Form</TitleLink>} description={sentence ?? (sport ? 'From this sport only.' : 'Is fitness building, and am I fresh?')}>
+      {error ? (
+        <InlineError onRetry={retry} />
+      ) : (
+        // Today's Fitness and Form are the headline figures above; the chart's own readout would repeat them.
+        <FitnessChart days={data?.days ?? []} loading={loading} today={today} range={chartRange(range)} onRangeChange={onRange} showRangeControl={false} showHeader={false} events={events} phases={phases} height={260} onSelect={setSel} />
+      )}
+      <SelectionReadout sel={sel} />
+    </Section>
   );
 }
 
+/** Measured block under a Fitness chart: appears only while a range is selected (drag on the plot). */
 export function SelectionReadout({ sel }: { sel: FitnessSelection | null }) {
   return (
-    <motion.div initial={false} animate={{ opacity: sel ? 1 : 0.6 }} className="mt-3 flex min-h-11 flex-wrap items-center gap-x-6 gap-y-2 border-t border-line-1 pt-3">
-      {sel ? (
-        <>
-          <span className="text-label text-fg-1">
-            {formatDayMonth(sel.from)} – {formatDayMonth(sel.to)} <span className="text-fg-3">· {sel.days} days</span>
-          </span>
-          <Stat label="Load">{fmtInt(sel.load)}</Stat>
-          <Stat label="Per day">{fmtInt(sel.avgLoad)}</Stat>
-          <Stat label="Fitness">{formatSigned(sel.fitnessDelta, 1)}</Stat>
-          <Stat label="Fatigue">{formatSigned(sel.fatigueDelta, 1)}</Stat>
-          <Stat label="Form at end">{formatSigned(Math.round(sel.formEnd))}</Stat>
-          <span className="text-body-sm text-fg-4 max-md:hidden">Esc or double-click clears</span>
-        </>
-      ) : (
-        <span className="text-body-sm text-fg-3">Drag across the chart to measure a block: Load, Fitness gained and Form at the end.</span>
+    <AnimatePresence initial={false}>
+      {sel && (
+        <motion.div
+          key="sel"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto', transition: spring.smooth }}
+          exit={{ opacity: 0, height: 0, transition: tween('fast', 'in') }}
+          className="overflow-hidden"
+        >
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 pt-4 text-body-sm">
+            <span className="font-medium text-fg-1">
+              {formatDayMonth(sel.from)} – {formatDayMonth(sel.to)} <span className="font-normal text-fg-3">· {sel.days} days</span>
+            </span>
+            <Stat label="Load">{fmtInt(sel.load)}</Stat>
+            <Stat label="per day">{fmtInt(sel.avgLoad)}</Stat>
+            <Stat label="Fitness">{formatSigned(sel.fitnessDelta, 1)}</Stat>
+            <Stat label="Fatigue">{formatSigned(sel.fatigueDelta, 1)}</Stat>
+            <Stat label="Form at end">{formatSigned(Math.round(sel.formEnd))}</Stat>
+            <span className="text-fg-3 max-md:hidden">Esc clears</span>
+          </div>
+        </motion.div>
       )}
-    </motion.div>
+    </AnimatePresence>
   );
 }
 
 function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <span className="inline-flex items-baseline gap-1.5">
-      <span className="text-micro text-fg-3">{label}</span>
-      <span className="text-mono text-fg-1">{children}</span>
+      <span className="text-fg-3">{label}</span>
+      <span className="text-fg-1">{children}</span>
     </span>
   );
 }
 
 // ───────────────────────── week over week ─────────────────────────
 
+const fmtM = (m: Metric, v: number) => (m === 'hours' ? `${fmtHours(v)} h` : m === 'load' ? fmtInt(v) : `${fmtInt(v)} km`);
+
 function WowSection({ all, weeks, metric, compare, sync, loading, onMetric, onOpen }: { all: WeekSummary[]; weeks: WeekSummary[]; metric: Metric; compare: CompareKey; sync: ReturnType<typeof createHoverSync<string>>; loading: boolean; onMetric: (m: Metric) => void; onOpen: (w: string) => void }) {
   const f = METRIC_VALUE[metric];
-  const offset = all.length - weeks.length;
   const complete = weeks.filter((w) => !w.isProjected);
   const items: WowItem[] = complete.map((w) => {
     const i = all.indexOf(w);
@@ -505,7 +367,6 @@ function WowSection({ all, weeks, metric, compare, sync, loading, onMetric, onOp
     const v = f(w);
     return { key: w.isoWeek, label: formatDayMonth(w.startDate), value: b && b > 0 ? v / b - 1 : null, detail: b != null ? `${fmtM(metric, v)} vs ${fmtM(metric, b)}` : undefined };
   });
-  void offset;
   const vals = items.map((i) => i.value).filter((v): v is number => v != null);
   const lastV = vals.at(-1);
   const above = vals.filter((v) => v > 0.02).length;
@@ -513,62 +374,37 @@ function WowSection({ all, weeks, metric, compare, sync, loading, onMetric, onOp
     compare === 'prev' || lastV == null
       ? wowSentence(METRIC_NAME[metric], items.map((i) => i.value), fmtPct)
       : `Last week's ${METRIC_NAME[metric].toLowerCase()} was ${fmtPct(lastV)} ${compare === 'avg' ? 'against the 4 weeks before it' : 'against the same week last year'}; ${above} of ${vals.length} weeks came in above.`;
-  const name = { prev: 'the week before', avg: 'the previous 4-week average', year: 'the same week last year' }[compare];
+  const lastItem = [...items].reverse().find((i) => i.value != null);
+  const name = { prev: 'the week before', avg: 'the 4 weeks before it', year: 'the same week a year earlier' }[compare];
   return (
-    <ChartCard
-      className="lg:col-span-7"
-      title="Week-over-week progression"
-      question={`Each complete week's ${METRIC_NAME[metric].toLowerCase()} against ${name}. Hatched bars are above the +15 % ramp caution line.`}
-      actions={
-        <div className="flex gap-1" role="group" aria-label="Metric">
-          {(['hours', 'load', 'distance'] as Metric[]).map((m) => (
-            <button key={m} type="button" aria-pressed={m === metric} onClick={() => onMetric(m)} className={cn('h-6 rounded-xs px-2 text-micro transition-colors', m === metric ? 'bg-surface-3 text-fg-1' : 'text-fg-3 hover:text-fg-1')}>
-              {METRIC_NAME[m]}
-            </button>
-          ))}
-        </div>
-      }
-    >
-      <motion.p key={sentence} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="mb-4 text-body-lg text-fg-1">
-        {sentence}
-      </motion.p>
-      <WowDeltaBars items={items} loading={loading} sync={sync} height={150} onItemClick={onOpen} />
-    </ChartCard>
+    <Section title="Week-over-week progression" actions={<Segmented aria-label="Progression metric" size="sm" value={metric} onValueChange={onMetric} options={METRIC_OPTIONS} />}>
+      <div className="flex flex-col gap-2">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p key={sentence} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0, transition: spring.smooth }} exit={{ opacity: 0, transition: tween('fast', 'in') }} className="max-w-[60ch] text-title-2 font-medium text-fg-1">
+            {sentence}
+          </motion.p>
+        </AnimatePresence>
+        <p className="text-body text-fg-2">
+          {lastItem?.detail ? `Last complete week: ${lastItem.detail}. ` : ''}Each bar is a complete week against {name}; weeks above +15 % carry a caution mark.
+        </p>
+      </div>
+      <div className="mt-8">
+        <WowDeltaBars items={items} loading={loading} sync={sync} height={180} onItemClick={onOpen} />
+      </div>
+    </Section>
   );
 }
-
-const fmtM = (m: Metric, v: number) => (m === 'hours' ? `${fmtHours(v)} h` : m === 'load' ? fmtInt(v) : `${fmtInt(v)} km`);
 
 // ───────────────────────── consistency ─────────────────────────
 
-function ConsistencySection({ data, onDay }: { data: ReturnType<typeof useConsistency>['data']; onDay: (d: LocalDate) => void }) {
-  if (!data) return <Skeleton className="h-[150px] w-full" />;
+function ConsistencyLine({ data }: { data: ReturnType<typeof useConsistency>['data'] }) {
+  if (!data) return <>Did I show up?</>;
   const s = data.streaks;
-  const heat = data.days.map((d) => ({ date: d.date, load: d.load, sessions: d.count, key: d.key }));
-  const year = data.days.filter((d) => d.count > 0).length;
+  const trained = data.days.filter((d) => d.count > 0).length;
+  const best = s.currentWeeks3 >= s.longestWeeks3 && s.currentWeeks3 > 1;
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
-        <Streak value={s.currentWeeks3} unit="wk" label="Weeks with ≥ 3 sessions, in a row" best={s.longestWeeks3} />
-        <Streak value={s.currentDays} unit="d" label="Training days in a row" best={s.longestDays} />
-        <Streak value={s.daysSinceRest} unit="d" label="Since the last full rest day" />
-        <Streak value={year} unit="d" label={`Days trained in the last ${data.days.length} days`} />
-      </div>
-      <ConsistencyHeatmap days={heat} today={data.to} onDayClick={onDay} showStreaks={false} />
-    </div>
-  );
-}
-
-function Streak({ value, unit, label, best }: { value: number; unit: string; label: string; best?: number }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span className="flex items-baseline gap-1 text-stat-sm text-fg-1">
-        <Ticker value={value} from={0} />
-        <span className="text-body text-fg-3">{unit}</span>
-        {best != null && best > value && <span className="ml-1 text-mono-sm text-fg-3">best {best}</span>}
-        {best != null && best <= value && value > 1 && <span className="ml-1 text-micro text-accent-ink">best</span>}
-      </span>
-      <span className="text-body-sm text-fg-3">{label}</span>
-    </div>
+    <span title={`Training days in a row: ${s.currentDays} (best ${s.longestDays}). Longest run of weeks with 3+ sessions: ${s.longestWeeks3}.`}>
+      {s.currentWeeks3} week{s.currentWeeks3 === 1 ? '' : 's'} in a row with 3+ sessions{best ? ' (your best)' : ` (best ${s.longestWeeks3})`} · {trained} of {data.days.length} days trained · {s.daysSinceRest} day{s.daysSinceRest === 1 ? '' : 's'} since a rest day
+    </span>
   );
 }

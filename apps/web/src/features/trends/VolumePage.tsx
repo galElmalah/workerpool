@@ -1,6 +1,6 @@
 /** /trends/volume — weekly ↔ monthly volume by sport, per-sport table (WoW / YoY), year-over-year lines. */
 import { SPORT_META, type Sport, type WeekSummary } from '@cadence/core';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { line, curveMonotoneX } from 'd3-shape';
 import { motion } from 'motion/react';
 import { useMemo, useState } from 'react';
@@ -9,10 +9,10 @@ import { cn } from '@/lib/cn';
 import { formatNumber, formatPercent } from '@/lib/format';
 import { distanceUnit, useUnits } from '@/lib/units';
 import { spring } from '@/motion/tokens';
-import { DeltaBadge, Segmented, SportGlyph } from '@/ui';
+import { DeltaBadge, Section, Segmented, SportGlyph } from '@/ui';
 import { filterWeeks, METRIC_NAME, rangeWeeks, trimLeading, useWeekly, type Metric } from './data';
 import { fmtHours } from './Overview';
-import { ChartCard, InlineError, RangeControl, SportChips, TrendsFrame, useTrendsSearch } from './shared';
+import { FilterPopover, InlineError, QuietTable, RangeControl, TrendsFrame, activeOf, qtCell, qtRow, sportFilter, sportGroup, useTrendsSearch } from './shared';
 
 type Period = 'week' | 'month';
 
@@ -79,46 +79,51 @@ export function TrendsVolumePage() {
     raw.forEach((w) => w.bySport.forEach((x) => x.doneSec > 0 && s.add(x.sport)));
     return [...s];
   }, [raw]);
+  const filters = activeOf(sportFilter(sport, () => set({ sport: undefined })));
 
   return (
     <TrendsFrame
       title="Volume"
       back
-      eyebrow="Hours · Load · Distance by sport"
-      controls={
+      eyebrow="Hours, load and distance by sport"
+      filters={filters}
+      toolbar={
         <>
           <RangeControl value={range} onChange={(r) => set({ range: r })} />
-          <Segmented aria-label="Period" size="sm" value={period} onValueChange={setPeriod} options={[{ value: 'week', label: 'Weekly' }, { value: 'month', label: 'Monthly' }]} />
-          <SportChips sports={sports} value={sport} onChange={(s) => set({ sport: s })} />
+          <FilterPopover active={filters.length} groups={[sportGroup(sports, sport, (s) => set({ sport: s }))]} />
         </>
       }
     >
-      <section>
-        <ChartCard title={period === 'week' ? 'Weekly volume' : 'Monthly volume'} question={period === 'week' ? 'Stacked by sport. Dashed = planned, line = 4-week average. Click a week to review it.' : 'Calendar months (a week counts in the month of its Thursday).'}>
-          {weekly.isError ? (
-            <InlineError onRetry={() => weekly.refetch()} />
-          ) : (
-            <WeeklyBars
-              key={period}
-              weeks={bars}
-              loading={!weekly.data}
-              metric={metric}
-              onMetricChange={(m) => set({ metric: m })}
-              height={300}
-              showRollingAvg={period === 'week'}
-              onWeekClick={period === 'week' ? (w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } }) : undefined}
-            />
-          )}
-        </ChartCard>
-      </section>
-      <section>
-        <ChartCard title="By sport" question={`Totals over the range, with this week vs last and this range vs the same range a year earlier.`}>
-          <SportTable raw={raw} n={rangeWeeks(range)} metric={metric} />
-        </ChartCard>
-      </section>
-      <section>
-        <YearOverYear raw={all} metric={metric} />
-      </section>
+      <Section
+        title={period === 'week' ? 'Weekly volume' : 'Monthly volume'}
+        description={period === 'week' ? 'Stacked by sport; the line is the 4-week average. Click a week to review it.' : 'Calendar months (a week counts in the month of its Thursday).'}
+        actions={
+          <>
+            <Segmented aria-label="Metric" size="sm" value={metric} onValueChange={(m) => set({ metric: m })} options={(['hours', 'load', 'distance'] as Metric[]).map((m) => ({ value: m, label: METRIC_NAME[m] }))} />
+            <Segmented aria-label="Period" size="sm" value={period} onValueChange={setPeriod} options={[{ value: 'week', label: 'Weekly' }, { value: 'month', label: 'Monthly' }]} />
+          </>
+        }
+      >
+        {weekly.isError ? (
+          <InlineError onRetry={() => weekly.refetch()} />
+        ) : (
+          <WeeklyBars
+            key={period}
+            weeks={bars}
+            loading={!weekly.data}
+            metric={metric}
+            onMetricChange={(m) => set({ metric: m })}
+            showMetricToggle={false}
+            height={300}
+            showRollingAvg={period === 'week'}
+            onWeekClick={period === 'week' ? (w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } }) : undefined}
+          />
+        )}
+      </Section>
+      <Section title="By sport" description="Totals over the range, and this range against the same weeks a year earlier.">
+        <SportTable raw={raw} n={rangeWeeks(range)} metric={metric} />
+      </Section>
+      <YearOverYear raw={all} metric={metric} />
     </TrendsFrame>
   );
 }
@@ -156,41 +161,29 @@ function SportTable({ raw, n, metric }: { raw: WeekSummary[]; n: number; metric:
   const totalSec = rows.reduce((a, r) => a + r.sec, 0) || 1;
   if (!rows.length) return <p className="text-body text-fg-3">No completed sessions in this range.</p>;
   return (
-    <div className="relative -mx-4 overflow-x-auto md:mx-0">
-      <table className="w-full min-w-[680px] text-left">
-        <thead>
-          <tr className="border-b border-line-1 text-micro text-fg-3">
-            {['Sport', 'Sessions', 'Time', 'Distance', 'Load', 'Share', `${METRIC_NAME[metric]} WoW`, `${METRIC_NAME[metric]} YoY`].map((h, i) => (
-              <th key={h} className={cn('px-4 py-2 font-[600]', i > 0 && 'text-right')}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="text-mono">
-          {rows.map((r) => (
-            <tr key={r.sp} className="border-b border-line-1 last:border-0">
-              <td className="px-4 py-2.5">
-                <span className="inline-flex items-center gap-2 font-sans text-body text-fg-1">
-                  <SportGlyph sport={r.sp} size={16} /> {SPORT_META[r.sp].label}
-                </span>
-              </td>
-              <td className="px-4 py-2.5 text-right text-fg-1">{r.count}</td>
-              <td className="px-4 py-2.5 text-right text-fg-1">{fmtHours(r.sec / 3600)}</td>
-              <td className="px-4 py-2.5 text-right text-fg-1">{SPORT_META[r.sp].hasDistance ? `${formatNumber(r.dist / du.mPer, 0)} ${du.unit}` : '—'}</td>
-              <td className="px-4 py-2.5 text-right text-accent-ink">{formatNumber(r.load, 0)}</td>
-              <td className="px-4 py-2.5 text-right text-fg-2">{formatPercent(r.sec / totalSec)}</td>
-              <td className="px-4 py-2.5 text-right">
-                <DeltaBadge value={r.wow} size="sm" />
-              </td>
-              <td className="px-4 py-2.5 text-right">
-                <DeltaBadge value={r.yoy} size="sm" />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <QuietTable
+      minWidth={560}
+      head={[{ label: 'Sport' }, { label: 'Sessions', numeric: true }, { label: 'Time', numeric: true }, { label: 'Distance', numeric: true }, { label: 'Load', numeric: true }, { label: `${METRIC_NAME[metric]} vs last year`, numeric: true }]}
+    >
+      {rows.map((r) => (
+        <tr key={r.sp} className={qtRow} title={`${formatPercent(r.sec / totalSec)} of the time · this week vs last: ${r.wow == null ? '—' : formatPercent(r.wow, { signed: true })}`}>
+          <td className={qtCell()}>
+            <Link to="/trends/sport/$sport" params={{ sport: r.sp }} className="inline-flex items-center gap-2 text-fg-1 hover:underline">
+              <SportGlyph sport={r.sp} size={16} /> {SPORT_META[r.sp].label}
+            </Link>
+          </td>
+          <td className={cn(qtCell(true), 'text-fg-2')}>{r.count}</td>
+          <td className={cn(qtCell(true), 'text-fg-1')}>
+            {fmtHours(r.sec / 3600)} <span className="text-fg-3">{formatPercent(r.sec / totalSec)}</span>
+          </td>
+          <td className={cn(qtCell(true), 'text-fg-1')}>{SPORT_META[r.sp].hasDistance ? `${formatNumber(r.dist / du.mPer, 0)} ${du.unit}` : '—'}</td>
+          <td className={cn(qtCell(true), 'text-fg-1')}>{formatNumber(r.load, 0)}</td>
+          <td className={qtCell(true)}>
+            <DeltaBadge value={r.yoy} size="sm" />
+          </td>
+        </tr>
+      ))}
+    </QuietTable>
   );
 }
 
@@ -218,9 +211,9 @@ function YearOverYear({ raw, metric }: { raw: WeekSummary[]; metric: Metric }) {
   const unit = metric === 'hours' ? 'h' : metric === 'load' ? '' : 'km';
   const fmt = (v: number) => (metric === 'hours' ? fmtHours(v) : formatNumber(v, 0));
   return (
-    <ChartCard
+    <Section
       title={mode === 'cumulative' ? `${METRIC_NAME[metric]} this year vs last` : `Weekly ${METRIC_NAME[metric].toLowerCase()}, ${year} vs ${prevYear}`}
-      question={
+      description={
         mode === 'cumulative'
           ? `${year} to date: ${fmt(lastA)}${unit ? ' ' + unit : ''}${bAt != null ? ` vs ${fmt(bAt)} by the same week of ${prevYear}` : ` (no ${prevYear} data at this point)`}.`
           : 'Same ISO week, two years overlaid.'
@@ -228,7 +221,7 @@ function YearOverYear({ raw, metric }: { raw: WeekSummary[]; metric: Metric }) {
       actions={<Segmented aria-label="Year view" size="sm" value={mode} onValueChange={setMode} options={[{ value: 'cumulative', label: 'Cumulative' }, { value: 'weekly', label: 'Weekly' }]} />}
     >
       <YearLines a={a} b={b} labelA={year} labelB={prevYear} fmt={fmt} />
-    </ChartCard>
+    </Section>
   );
 }
 
@@ -256,27 +249,27 @@ function YearLines({ a, b, labelA, labelB, fmt }: { a: (number | null)[]; b: (nu
           {ticks.map((t) => (
             <g key={t}>
               <line x1={L.l} x2={W - L.r} y1={y(t)} y2={y(t)} className="stroke-line-1" />
-              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 text-[11px]">
+              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 text-label font-normal">
                 {fmt(t)}
               </text>
             </g>
           ))}
           {months.map((m, i) => (
-            <text key={m} x={x(i * 13)} y={H - 4} className="fill-fg-3 text-[11px]">
+            <text key={m} x={x(i * 13)} y={H - 4} className="fill-fg-3 text-label font-normal">
               {m}
             </text>
           ))}
           <MorphPath d={path(b)} fill="none" transition={spring.gentle} className="stroke-fg-3" style={{ strokeWidth: 1.25, strokeDasharray: '2 3' }} />
           <MorphPath d={path(a)} fill="none" transition={spring.gentle} className="stroke-accent" style={{ strokeWidth: 2 }} />
           {lb && (
-            <text x={lb.x + 6} y={lb.y} dominantBaseline="central" className="fill-fg-3 text-[11px]">
+            <text x={lb.x + 6} y={lb.y} dominantBaseline="central" className="fill-fg-3 text-label font-normal">
               ’{labelB.slice(2)} {fmt(lb.v)}
             </text>
           )}
           {la && (
             <g>
               <motion.circle cx={la.x} cy={la.y} r={3.5} className="fill-accent" initial={false} animate={{ cx: la.x, cy: la.y }} transition={spring.gentle} />
-              <text x={la.x + 7} y={la.y - (lb && Math.abs(lb.y - la.y) < 14 ? 8 : 0)} dominantBaseline="central" className="fill-accent-ink text-[11px]">
+              <text x={la.x + 7} y={la.y - (lb && Math.abs(lb.y - la.y) < 14 ? 8 : 0)} dominantBaseline="central" className="fill-fg-1 text-label">
                 ’{labelA.slice(2)} {fmt(la.v)}
               </text>
             </g>

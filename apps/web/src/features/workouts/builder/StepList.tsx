@@ -4,7 +4,7 @@
  */
 import { SWIM_EQUIPMENT, SWIM_STROKES, STEP_ROLES, type Step, type StepRole, type WorkoutStructure, type StructureNode } from '@cadence/core';
 import { duplicateNode, setRepeatCount, unwrapRepeat, updateNode, updateStep, type AnyNode, type NodePath, type RepeatNode } from '@cadence/core/workout';
-import { AnimatePresence, motion, Reorder, useDragControls } from 'motion/react';
+import { AnimatePresence, Reorder, useDragControls } from 'motion/react';
 import { ChevronDown, Copy, GripVertical, Minus, Plus, Ungroup, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { IconButton, Menu, Popover } from '@/ui';
@@ -21,8 +21,6 @@ export interface StepMeta {
   durationSec: number;
 }
 
-const ZONE_BG = ['bg-z1', 'bg-z2', 'bg-z3', 'bg-z4', 'bg-z5', 'bg-z6', 'bg-z7'];
-
 function setChildren(s: WorkoutStructure, parent: NodePath, ids: string[]): WorkoutStructure {
   const reorder = (kids: readonly AnyNode[]) => ids.map((id) => kids.find((k) => k.id === id)!).filter(Boolean);
   if (!parent.length) return { ...s, steps: reorder(s.steps as AnyNode[]) as StructureNode[] };
@@ -32,7 +30,7 @@ function setChildren(s: WorkoutStructure, parent: NodePath, ids: string[]): Work
 export function StepList({ nodes, parent, meta }: { nodes: readonly AnyNode[]; parent: NodePath; meta: Map<string, StepMeta> }) {
   const b = useB();
   return (
-    <Reorder.Group as="div" axis="y" values={nodes.map((n) => n.id)} onReorder={(ids) => b.apply((s) => setChildren(s, parent, ids as string[]), { label: 'Reorder' })} className="flex flex-col gap-1" role="list">
+    <Reorder.Group as="div" axis="y" values={nodes.map((n) => n.id)} onReorder={(ids) => b.apply((s) => setChildren(s, parent, ids as string[]), { label: 'Reorder' })} className="flex flex-col gap-0.5" role="list">
       <AnimatePresence initial={false}>
         {nodes.map((n, i) => (
           <Item key={n.id} node={n} path={[...parent, i]} meta={meta} />
@@ -54,7 +52,7 @@ function Item({ node, path, meta }: { node: AnyNode; path: NodePath; meta: Map<s
         e.preventDefault();
         controls.start(e);
       }}
-      className="flex h-7 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded-xs text-fg-4 transition-colors hover:text-fg-2 active:cursor-grabbing"
+      className="flex h-8 w-5 shrink-0 cursor-grab touch-none items-center justify-center rounded-xs text-fg-4 opacity-0 transition-opacity duration-(--dur-fast) group-hover/row:opacity-100 group-focus-within/row:opacity-100 hover:text-fg-2 focus-visible:opacity-100 active:cursor-grabbing pointer-coarse:opacity-100"
     >
       <GripVertical className="size-3.5" />
     </button>
@@ -78,12 +76,18 @@ function Item({ node, path, meta }: { node: AnyNode; path: NodePath; meta: Map<s
   );
 }
 
-function RowShell({ id, selected, children, className }: { id: string; selected: boolean; children: ReactNode; className?: string }) {
+/**
+ * A row's surface: transparent at rest, one surface step on hover / when its blocks are hovered in
+ * the profile, two when selected. Inside a repeat (already on surface-1) everything sits one step up.
+ * No borders, no edge marks.
+ */
+function RowShell({ id, selected, hovered, nested, children, className }: { id: string; selected: boolean; hovered?: boolean; nested?: boolean; children: ReactNode; className?: string }) {
   const b = useB();
   return (
     <div
       data-node-id={id}
       tabIndex={-1}
+      aria-selected={selected || undefined}
       onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest('input,button,textarea,select,[role=menu]')) return;
         b.select(id, e.shiftKey);
@@ -92,12 +96,11 @@ function RowShell({ id, selected, children, className }: { id: string; selected:
         if (!b.selected.includes(id) && e.target === e.currentTarget) b.select(id);
       }}
       className={cn(
-        'group/row relative rounded-md border transition-colors duration-(--dur-fast) outline-none',
-        selected ? 'border-line-3 bg-surface-2' : 'border-line-1 bg-surface-1 hover:border-line-2',
+        'group/row relative rounded-md outline-none transition-colors duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
+        selected ? (nested ? 'bg-surface-3' : 'bg-surface-2') : hovered ? (nested ? 'bg-surface-2' : 'bg-surface-1') : nested ? 'hover:bg-surface-2' : 'hover:bg-surface-1',
         className,
       )}
     >
-      {selected && <motion.span layoutId={`sel-${id}`} className="absolute top-1.5 bottom-1.5 -left-px w-0.5 rounded-full bg-accent" transition={spring.snappy} />}
       {children}
     </div>
   );
@@ -107,37 +110,39 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
   const b = useB();
   const patch = (p: Partial<Step>) => b.apply((s) => updateStep(s, path, (st) => ({ ...st, ...p })));
   const hovered = b.hovered === step.id;
-  const lvl = Math.min(7, Math.max(1, meta?.level ?? 1));
+  const nested = path.length > 1;
+  void meta;
   return (
-    <RowShell id={step.id} selected={selected} className={cn(hovered && !selected && 'border-line-3')}>
-      <div className="flex min-h-11 flex-wrap items-center gap-1 py-1 pr-1 pl-0.5 sm:flex-nowrap" onPointerEnter={() => b.setHovered(step.id)} onPointerLeave={() => b.setHovered(null)}>
+    <RowShell id={step.id} selected={selected} hovered={hovered} nested={nested}>
+      <div className="flex min-h-12 flex-wrap items-center gap-1 py-1.5 pr-1.5 pl-1 sm:flex-nowrap" onPointerEnter={() => b.setHovered(step.id)} onPointerLeave={() => b.setHovered(null)}>
         {grip}
-        <span aria-hidden className={cn('h-5 w-1 shrink-0 rounded-full', ZONE_BG[lvl - 1])} />
         <Menu
           side="bottom"
           align="start"
           items={STEP_ROLES.map((r) => ({ label: roleLabel(r), checked: step.role === r, onSelect: () => patch({ role: r as StepRole }) }))}
           trigger={
-            <button type="button" className="ml-1 inline-flex h-7 w-[6.75rem] shrink-0 items-center justify-between gap-1 rounded-sm px-1.5 text-micro text-fg-2 transition-colors hover:bg-surface-3 hover:text-fg-1">
+            <button type="button" aria-label={`Step type: ${roleLabel(step.role)}`} className="inline-flex h-8 w-28 shrink-0 items-center justify-between gap-1 rounded-sm px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-3 hover:text-fg-1 data-[popup-open]:bg-surface-3">
               <span className="truncate">{roleLabel(step.role)}</span>
-              <ChevronDown className="size-3 shrink-0 opacity-60" />
+              <ChevronDown className="size-3 shrink-0 text-fg-4 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100" />
             </button>
           }
         />
         <MeasureToggle step={step} onChange={(measure) => patch({ measure })} />
         <MeasureField step={step} sport={b.sport} units={b.units} onChange={(measure) => patch({ measure })} />
-        <div className="min-w-0 flex-1 max-sm:order-last max-sm:basis-full max-sm:pl-7">
+        <div className="min-w-0 flex-1 max-sm:order-last max-sm:basis-full max-sm:pl-6">
           <TargetChip step={step} sport={b.sport} th={b.th} units={b.units} onChange={patch} />
         </div>
         {b.sport === 'swim' && <SwimChip step={step} onChange={patch} />}
-        <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 pointer-coarse:opacity-100">
+        <div className="flex shrink-0 items-center opacity-0 transition-opacity duration-(--dur-fast) group-hover/row:opacity-100 group-focus-within/row:opacity-100 pointer-coarse:opacity-100">
           <IconButton size="sm" label="Duplicate" icon={<Copy />} onClick={() => b.apply((s) => duplicateNode(s, path), { label: 'Duplicate' })} />
           <IconButton size="sm" label="Delete" icon={<X />} onClick={() => b.remove(step.id)} />
         </div>
       </div>
       {(selected || step.cue) && (
-        <div className="-mt-1 flex items-center pb-1.5 pl-[3.25rem]">
-          <span className="mr-1 text-mono-sm text-fg-4">//</span>
+        <div className="-mt-1.5 flex items-center pb-2 pl-[2.375rem]">
+          <span className="mr-1.5 text-body-sm text-fg-4" aria-hidden>
+            Cue
+          </span>
           <input
             aria-label="Cue"
             defaultValue={step.cue ?? ''}
@@ -148,7 +153,7 @@ function StepRow({ step, path, meta, grip, selected }: { step: Step; path: NodeP
               if (v !== (step.cue ?? '')) patch({ cue: v || undefined });
             }}
             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-            className="h-6 min-w-0 flex-1 bg-transparent text-body-sm text-fg-2 outline-none placeholder:text-fg-4 focus:text-fg-1"
+            className="h-7 min-w-0 flex-1 rounded-sm bg-transparent px-1 text-body-sm text-fg-2 outline-none placeholder:text-fg-4 focus:text-fg-1 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus"
           />
         </div>
       )}
@@ -169,7 +174,7 @@ function MeasureToggle({ step, onChange }: { step: Step; onChange: (m: Step['mea
         { label: 'Until lap button', checked: m.type === 'lap_button', onSelect: () => onChange({ type: 'lap_button' }) },
       ]}
       trigger={
-        <button type="button" aria-label="Measure type" className="flex h-7 w-4 shrink-0 items-center justify-center rounded-xs text-mono-sm text-fg-4 transition-colors hover:bg-surface-3 hover:text-fg-1">
+        <button type="button" aria-label="Measure type" className="flex h-8 w-5 shrink-0 items-center justify-center rounded-xs text-body-sm text-fg-4 transition-colors duration-(--dur-fast) hover:bg-surface-3 hover:text-fg-1">
           {m.type === 'time' ? '◷' : m.type === 'distance' ? '↦' : m.type === 'reps' ? '#' : '⏎'}
         </button>
       }
@@ -190,14 +195,14 @@ function SwimChip({ step, onChange }: { step: Step; onChange: (p: Partial<Step>)
     <Popover
       title="Swim options"
       trigger={
-        <button type="button" className="inline-flex h-7 max-w-44 shrink items-center rounded-sm px-1.5 text-body-sm text-fg-2 transition-colors hover:bg-surface-3 hover:text-fg-1 data-[popup-open]:bg-surface-3">
+        <button type="button" className="inline-flex h-8 max-w-44 shrink items-center rounded-sm px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-3 hover:text-fg-1 data-[popup-open]:bg-surface-3">
           <span className="truncate">{parts.length ? parts.join(' · ') : '+ stroke'}</span>
         </button>
       }
     >
       <div className="flex w-72 flex-col gap-3 p-1">
         <div>
-          <div className="mb-1.5 text-micro text-fg-3">Stroke</div>
+          <div className="mb-2 text-label text-fg-3">Stroke</div>
           <div className="flex flex-wrap gap-1">
             {SWIM_STROKES.map((s) => (
               <Pill key={s} on={sw.stroke === s} onClick={() => set({ stroke: sw.stroke === s ? undefined : s })}>
@@ -207,7 +212,7 @@ function SwimChip({ step, onChange }: { step: Step; onChange: (p: Partial<Step>)
           </div>
         </div>
         <div>
-          <div className="mb-1.5 text-micro text-fg-3">Equipment</div>
+          <div className="mb-2 text-label text-fg-3">Equipment</div>
           <div className="flex flex-wrap gap-1">
             {SWIM_EQUIPMENT.map((e) => {
               const on = sw.equipment?.includes(e) ?? false;
@@ -219,12 +224,12 @@ function SwimChip({ step, onChange }: { step: Step; onChange: (p: Partial<Step>)
             })}
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 border-t border-line-1 pt-2">
-          <span className="text-label text-fg-2">Send-off</span>
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <span className="text-body-sm text-fg-2">Send-off</span>
           <MiniField label="Send-off" value={sw.sendOffSec ?? 0} format={(v) => (v ? fmtClock(v) : '')} placeholder="1:50" parse={(s) => (s.trim() ? parseClock(s) : 0)} onCommit={(v) => set({ sendOffSec: v || undefined, ...(v ? { restSec: undefined } : {}) })} />
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-label text-fg-2">Rest after</span>
+          <span className="text-body-sm text-fg-2">Rest after</span>
           <MiniField label="Rest" value={sw.restSec ?? 0} format={(v) => (v ? fmtClock(v) : '')} placeholder="0:20" parse={(s) => (s.trim() ? parseClock(s) : 0)} onCommit={(v) => set({ restSec: v || undefined, ...(v ? { sendOffSec: undefined } : {}) })} />
         </div>
       </div>
@@ -245,7 +250,7 @@ function Pill({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={cn('h-6 rounded-sm border px-2 text-label transition-colors duration-(--dur-fast)', on ? 'border-line-3 bg-surface-active text-fg-1' : 'border-line-1 text-fg-2 hover:border-line-3 hover:text-fg-1')}
+      className={cn('h-7 rounded-md px-2.5 text-body-sm transition-colors duration-(--dur-fast)', on ? 'bg-surface-active text-fg-1' : 'text-fg-3 hover:bg-surface-3 hover:text-fg-1')}
     >
       {children}
     </button>
@@ -257,40 +262,56 @@ function RepeatBlock({ node, path, meta, grip, selected }: { node: RepeatNode; p
   const setCount = (c: number) => b.apply((s) => setRepeatCount(s, path, c), { label: 'Repeat count' });
   const once = node.steps.reduce((a, c) => a + (c.kind === 'step' ? (meta.get(c.id)?.durationSec ?? 0) : 0), 0);
   return (
-    <RowShell id={node.id} selected={selected} className="bg-transparent!">
-      <div className="flex h-10 items-center gap-1 pr-1 pl-0.5">
+    <div
+      data-node-id={node.id}
+      tabIndex={-1}
+      aria-selected={selected || undefined}
+      onPointerDown={(e) => {
+        const t = e.target as HTMLElement;
+        if (t.closest('input,button,textarea,select,[role=menu]') || t.closest('[data-node-id]') !== e.currentTarget) return;
+        b.select(node.id, e.shiftKey);
+      }}
+      onFocus={(e) => {
+        if (!b.selected.includes(node.id) && e.target === e.currentTarget) b.select(node.id);
+      }}
+      className={cn(
+        'group/rep my-1.5 rounded-lg p-1.5 outline-none transition-colors duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
+        selected ? 'bg-surface-2' : 'bg-surface-1',
+      )}
+    >
+      <div className="group/row flex h-11 items-center gap-1 pr-0 pl-0">
         {grip}
-        <span className="ml-1 text-micro text-fg-3">Repeat</span>
-        <div className="ml-1 flex items-center rounded-sm border border-line-2 bg-surface-2">
-          <button type="button" aria-label="Fewer repeats" className="flex size-6 items-center justify-center text-fg-3 hover:text-fg-1 disabled:opacity-30" disabled={node.count <= 1} onClick={() => setCount(node.count - 1)}>
-            <Minus className="size-3" />
+        <span className="w-[4.25rem] text-body-sm text-fg-2">Repeat</span>
+        <div className="flex h-8 items-center rounded-md bg-surface-3">
+          <button type="button" aria-label="Fewer repeats" className="flex size-8 items-center justify-center rounded-md text-fg-3 transition-colors duration-(--dur-fast) hover:text-fg-1 disabled:opacity-30" disabled={node.count <= 1} onClick={() => setCount(node.count - 1)}>
+            <Minus className="size-3.5" />
           </button>
-          <MiniField label="Repeat count" value={node.count} width="w-8" align="left" format={(v) => `${v}×`} parse={(s) => (parseInt(s, 10) >= 1 ? Math.min(99, parseInt(s, 10)) : null)} nudge={(v, d) => Math.max(1, v + d)} onCommit={setCount} className="[&_input]:h-6 [&_input]:text-center" />
-          <button type="button" aria-label="More repeats" className="flex size-6 items-center justify-center text-fg-3 hover:text-fg-1" onClick={() => setCount(node.count + 1)}>
-            <Plus className="size-3" />
+          <MiniField label="Repeat count" value={node.count} width="w-11" align="left" format={(v) => `${v}×`} parse={(s) => (parseInt(s, 10) >= 1 ? Math.min(99, parseInt(s, 10)) : null)} nudge={(v, d) => Math.max(1, v + d)} onCommit={setCount} className="[&_input]:h-8 [&_input]:px-0 [&_input]:text-center [&_input]:font-medium" />
+          <button type="button" aria-label="More repeats" className="flex size-8 items-center justify-center rounded-md text-fg-3 transition-colors duration-(--dur-fast) hover:text-fg-1" onClick={() => setCount(node.count + 1)}>
+            <Plus className="size-3.5" />
           </button>
         </div>
-        {once > 0 && <span className="ml-2 text-mono-sm text-fg-3">{fmtClock(once * node.count)}</span>}
+        {once > 0 && <span className="ml-3 text-body-sm text-fg-3">{fmtClock(once * node.count)}</span>}
         <input
           aria-label="Repeat label"
           defaultValue={node.label ?? ''}
           key={node.label ?? ''}
-          placeholder="Label"
+          placeholder="Add a label"
           onBlur={(e) => {
             const v = e.currentTarget.value.trim();
             if (v !== (node.label ?? '')) b.apply((s) => updateNode(s, path, (r) => ({ ...(r as RepeatNode), label: v || undefined }) as AnyNode));
           }}
-          className="ml-2 h-7 min-w-0 flex-1 bg-transparent text-body-sm text-fg-2 outline-none placeholder:text-fg-4"
+          className="ml-3 h-8 min-w-0 flex-1 rounded-sm bg-transparent px-1 text-body-sm text-fg-2 outline-none placeholder:text-fg-4 placeholder:opacity-0 group-hover/rep:placeholder:opacity-100 focus:placeholder:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus"
         />
-        <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 pointer-coarse:opacity-100">
+        <div className="flex shrink-0 items-center opacity-0 transition-opacity duration-(--dur-fast) group-hover/row:opacity-100 group-focus-within/row:opacity-100 pointer-coarse:opacity-100">
           <IconButton size="sm" label="Unwrap repeat" icon={<Ungroup />} onClick={() => b.apply((s) => unwrapRepeat(s, path), { label: 'Unwrap' })} />
           <IconButton size="sm" label="Duplicate" icon={<Copy />} onClick={() => b.apply((s) => duplicateNode(s, path), { label: 'Duplicate' })} />
           <IconButton size="sm" label="Delete repeat" icon={<X />} onClick={() => b.remove(node.id)} />
         </div>
       </div>
-      <div className="relative ml-3 border-l border-line-2 pb-1.5 pl-2.5 pr-1.5">
+      <div className="pl-5">
         <StepList nodes={node.steps as AnyNode[]} parent={path} meta={meta} />
       </div>
-    </RowShell>
+    </div>
   );
 }
