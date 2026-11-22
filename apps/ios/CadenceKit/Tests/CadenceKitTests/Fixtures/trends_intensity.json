@@ -1,0 +1,107 @@
+{
+ "weeks": [
+  {
+   "isoWeek": "2026-W44",
+   "startDate": "2026-10-26",
+   "easy": 35082,
+   "moderate": 0,
+   "hard": 0,
+   "pct": {
+    "easy": 100,
+    "moderate": 0,
+    "hard": 0
+   },
+   "distribution": "mixed",
+   "source": {
+    "zones": 6,
+    "class": 0
+   }
+  },
+  {
+   "isoWeek": "2026-W45",
+   "startDate": "2026-11-02",
+   "easy": 20872,
+   "moderate": 11,
+   "hard": 35,
+   "pct": {
+    "easy": 99.8,
+    "moderate": 0.1,
+    "hard": 0.2
+   },
+   "distribution": "polarized",
+   "source": {
+    "zones": 6,
+    "class": 0
+   }
+  }
+ ],
+ "total": {
+  "easy": 106522,
+  "moderate": 15325,
+  "hard": 2743,
+  "pct": {
+   "easy": 85.5,
+   "moderate": 12.3,
+   "hard": 2.2
+  },
+  "distribution": "pyramidal"
+ },
+ "bySport": [
+  {
+   "sport": "bike",
+   "seconds": 30395,
+   "hr": [
+    {
+     "zone": 1,
+     "name": "Recovery",
+     "seconds": 19014
+    },
+    {
+     "zone": 2,
+     "name": "Aerobic",
+     "seconds": 7347
+    }
+   ],
+   "power": [
+    {
+     "zone": 1,
+     "name": "Active Recovery",
+     "seconds": 11975
+    },
+    {
+     "zone": 2,
+     "name": "Endurance",
+     "seconds": 9519
+    }
+   ]
+  },
+  {
+   "sport": "run",
+   "seconds": 23935,
+   "hr": [
+    {
+     "zone": 1,
+     "name": "Recovery",
+     "seconds": 6642
+    },
+    {
+     "zone": 2,
+     "name": "Aerobic",
+     "seconds": 8492
+    }
+   ],
+   "pace": [
+    {
+     "zone": 1,
+     "name": "Recovery",
+     "seconds": 11017
+    },
+    {
+     "zone": 2,
+     "name": "Aerobic",
+     "seconds": 7653
+    }
+   ]
+  }
+ ]
+}

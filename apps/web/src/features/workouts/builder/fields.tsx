@@ -23,7 +23,7 @@ export interface MiniFieldProps<V> {
   align?: 'left' | 'right';
 }
 
-/** Inline mono input; shows formatted value, parses on blur / Enter. */
+/** Inline numeric input; shows formatted value, parses on blur / Enter. */
 export function MiniField<V>({ value, format, parse, onCommit, nudge, className, width = 'w-16', label, suffix, placeholder, align = 'right' }: MiniFieldProps<V>) {
   const [text, setText] = useState(() => format(value));
   const [bad, setBad] = useState(false);
@@ -79,8 +79,8 @@ export function MiniField<V>({ value, format, parse, onCommit, nudge, className,
         onKeyDown={onKey}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'h-7 rounded-sm border border-transparent bg-transparent px-1.5 text-mono text-fg-1 outline-none transition-colors duration-(--dur-fast)',
-          'hover:border-line-2 hover:bg-surface-2 focus:border-line-3 focus:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus',
+          'num h-8 rounded-sm border border-transparent bg-transparent px-2 text-body text-fg-1 outline-none transition-colors duration-(--dur-fast)',
+          'hover:bg-surface-3 focus:border-line-3 focus:bg-surface-3 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus',
           'aria-[invalid=true]:border-dashed aria-[invalid=true]:border-fg-1',
           align === 'right' ? 'text-right' : 'text-left',
           width,
@@ -143,7 +143,7 @@ export function MeasureField({ step, sport, units, onChange }: { step: Step; spo
   if (m.type === 'distance')
     return <MiniField label="Distance" value={m.m} width="w-20" format={(v) => formatMeters(v, sport, units)} parse={(s) => parseMeters(s, sport)} nudge={nudgeM(sport)} onCommit={(v) => onChange({ type: 'distance', m: v })} />;
   if (m.type === 'reps') return <MiniField label="Reps" value={m.n} width="w-12" format={(v) => String(v)} parse={(s) => (+s > 0 ? Math.round(+s) : null)} nudge={(v, d) => Math.max(1, v + d)} onCommit={(n) => onChange({ type: 'reps', n })} suffix="reps" />;
-  return <span className="inline-flex h-7 w-16 items-center justify-end px-1.5 text-mono text-fg-2">lap</span>;
+  return <span className="inline-flex h-8 w-16 items-center justify-end px-2 text-body text-fg-2">lap</span>;
 }
 
 // ───────────────────────── targets ─────────────────────────

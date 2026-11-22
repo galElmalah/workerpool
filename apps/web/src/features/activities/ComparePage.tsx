@@ -21,7 +21,7 @@ const route = getRouteApi('/_app/activities/$id/compare');
 const PACE = new Set<Sport>(['run', 'swim', 'row', 'walk', 'hike']);
 type Metric = 'power' | 'hr' | 'speed';
 const STROKES = [
-  { cls: '', c: 'var(--color-accent)', w: 2, dash: undefined, label: 'text-accent-ink' },
+  { cls: '', c: 'var(--color-accent)', w: 2, dash: undefined, label: 'text-fg-1' },
   { cls: '', c: 'var(--color-fg-1)', w: 1.5, dash: undefined, label: 'text-fg-1' },
   { cls: '', c: 'var(--color-fg-3)', w: 1.25, dash: '4 3', label: 'text-fg-2' },
 ];
@@ -65,11 +65,11 @@ export function ActivityComparePage() {
             <div className="flex flex-wrap items-center gap-2">
               {details.map((d, i) =>
                 d.data ? (
-                  <span key={d.data.id} className="flex h-9 items-center gap-2 rounded-md border border-line-2 bg-surface-1 pr-1 pl-3">
+                  <span key={d.data.id} className="flex h-9 items-center gap-2 rounded-md bg-surface-1 pr-1 pl-3">
                     <svg width="18" height="6" aria-hidden><line x1="0" y1="3" x2="18" y2="3" style={{ stroke: STROKES[i].c }} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
                     <SportGlyph sport={d.data.sport} size={14} />
-                    <Link {...links.activity(d.data.id)} className="max-w-56 truncate text-label text-fg-1 hover:underline">{d.data.title}</Link>
-                    <span className="text-mono-sm text-fg-3">{formatDayShort(d.data.localDate)} {monthShort(d.data.localDate)}</span>
+                    <Link {...links.activity(d.data.id)} className="max-w-56 truncate text-body-sm text-fg-1 hover:underline">{d.data.title}</Link>
+                    <span className="text-body-sm text-fg-3">{formatDayShort(d.data.localDate)} {monthShort(d.data.localDate)}</span>
                     {i > 0 ? <IconButton size="sm" label="Remove" icon={<X />} onClick={() => setWith(others.filter((o) => o !== d.data!.id))} /> : <span className="w-2" />}
                   </span>
                 ) : (
@@ -116,7 +116,7 @@ function AddPicker({ base, exclude, onPick }: { base: ActivityDetail; exclude: s
               <SportGlyph sport={a.sport} subSport={a.subSport} size={16} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-body text-fg-1">{a.title}</span>
-                <span className="text-mono-sm text-fg-3">{formatDayShort(a.localDate)} {monthShort(a.localDate)} · {formatDuration(a.movingSec || a.durationSec)} · {Math.round(a.load)} load</span>
+                <span className="text-body-sm text-fg-3">{formatDayShort(a.localDate)} {monthShort(a.localDate)} · {formatDuration(a.movingSec || a.durationSec)} · {Math.round(a.load)} load</span>
               </span>
             </button>
           ))}
@@ -227,16 +227,16 @@ function Overlay({ acts, streams }: { acts: (ActivityDetail | undefined)[]; stre
         </div>
       }
     >
-      <div className="rounded-lg border border-line-2 bg-surface-1 p-4">
-        <div className="mb-3 flex flex-wrap items-end gap-x-6 gap-y-2">
+      <div>
+        <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-2">
           <div className="flex flex-col">
-            <span className="text-micro text-fg-3">Cursor</span>
-            <span ref={atRef} className="text-mono text-fg-2">move over the chart</span>
+            <span className="text-body-sm text-fg-3">Cursor</span>
+            <span ref={atRef} className="text-body text-fg-2">move over the chart</span>
           </div>
           {acts.map((a, i) =>
             a ? (
               <div key={a.id} className="flex flex-col">
-                <span className="flex items-center gap-1.5 text-micro text-fg-3">
+                <span className="flex items-center gap-1.5 text-body-sm text-fg-3">
                   <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" style={{ stroke: STROKES[i].c }} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
                   {formatDayShort(a.localDate)} {monthShort(a.localDate)}
                 </span>
@@ -258,11 +258,11 @@ function Overlay({ acts, streams }: { acts: (ActivityDetail | undefined)[]; stre
               {sy.ticks(4).map((t) => (
                 <g key={t}>
                   <line x1={PADL} x2={w - 8} y1={sy(t)} y2={sy(t)} style={{ stroke: 'var(--color-line-1)' }} />
-                  <text x={PADL - 8} y={sy(t)} dy="0.32em" textAnchor="end" className="fill-fg-3 text-[11px]">{fmtY(t)}</text>
+                  <text x={PADL - 8} y={sy(t)} dy="0.32em" textAnchor="end" className="fill-fg-3 text-label font-normal">{fmtY(t)}</text>
                 </g>
               ))}
               {sx.ticks(Math.max(2, Math.floor(w / 110))).map((t) => (
-                <text key={t} x={sx(t)} y={H - 4} textAnchor="middle" className="fill-fg-3 text-[11px]">{axis === 'time' ? formatDuration(t, 'clock') : `${formatNumber(t / 1000, 0)}`}</text>
+                <text key={t} x={sx(t)} y={H - 4} textAnchor="middle" className="fill-fg-3 text-label font-normal">{axis === 'time' ? formatDuration(t, 'clock') : `${formatNumber(t / 1000, 0)}`}</text>
               ))}
               {[...series].reverse().map((s, ri) => {
                 const i = series.length - 1 - ri;
@@ -313,18 +313,18 @@ function DeltaTable({ acts }: { acts: ActivityDetail[] }) {
   const bars = other
     ? rows
         .filter((r) => ['Duration', 'Load', 'Avg power', 'Pace', 'Split', 'Avg HR'].includes(r.label) && r.get(base) != null && r.get(other) != null)
-        .map((r) => ({ label: r.label, current: r.get(base)!, previous: r.get(other)!, format: r.fmt, unit: r.unit, accent: r.label === 'Load' }))
+        .map((r) => ({ label: r.label, current: r.get(base)!, previous: r.get(other)!, format: r.fmt, unit: r.unit, accent: false }))
     : [];
   return (
     <Section title="Side by side" description="Deltas are against the first activity.">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="overflow-x-auto rounded-lg border border-line-2 bg-surface-1">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
           <table className="w-full min-w-[520px] border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className="h-9 border-b border-line-1 px-4 text-left text-micro text-fg-3">Metric</th>
+                <th className="h-9 border-b border-line-1 pr-4 text-left text-label font-medium text-fg-3">Metric</th>
                 {acts.map((a, i) => (
-                  <th key={a.id} className="h-9 border-b border-line-1 px-4 text-right text-micro text-fg-3">
+                  <th key={a.id} className="h-9 border-b border-line-1 px-4 text-right text-label font-medium text-fg-3 last:pr-0">
                     <span className="inline-flex items-center gap-1.5">
                       <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" style={{ stroke: STROKES[i].c }} strokeWidth={STROKES[i].w} strokeDasharray={STROKES[i].dash} /></svg>
                       {formatDayShort(a.localDate)} {monthShort(a.localDate)}
@@ -336,17 +336,17 @@ function DeltaTable({ acts }: { acts: ActivityDetail[] }) {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.label} className="transition-colors duration-(--dur-fast) hover:bg-surface-2">
-                  <td className="h-10 border-b border-line-1 px-4 text-label text-fg-2">{r.label}</td>
+                  <td className="h-11 border-b border-line-1 pr-4 text-body text-fg-2">{r.label}</td>
                   {acts.map((a, i) => {
                     const v = r.get(a);
                     const b = r.get(base);
                     const d = i > 0 && v != null && b != null && b !== 0 ? v / b - 1 : null;
                     return (
-                      <td key={a.id} className="h-10 border-b border-line-1 px-4 text-right text-mono text-fg-1">
+                      <td key={a.id} className="h-11 border-b border-line-1 px-4 text-right text-body text-fg-1 last:pr-0">
                         {v == null ? <span className="text-fg-4">—</span> : r.fmt(v)}
                         {v != null && r.unit && <span className="text-fg-3"> {r.unit}</span>}
                         {d != null && (
-                          <span className={cn('ml-2 inline-flex items-center text-mono-sm', Math.abs(d) < 0.01 ? 'text-fg-3' : d > 0 ? 'font-[600] text-fg-1' : 'text-fg-2')}>
+                          <span className={cn('ml-2 inline-flex items-center text-body-sm', Math.abs(d) < 0.01 ? 'text-fg-3' : d > 0 ? 'font-medium text-fg-1' : 'text-fg-2')}>
                             {Math.abs(d) < 0.01 ? <ArrowRight className="size-3" /> : d > 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
                             {Math.abs(d) < 0.01 ? '±0%' : `${d > 0 ? '+' : '−'}${Math.round(Math.abs(d) * 100)}%`}
                           </span>
@@ -360,7 +360,7 @@ function DeltaTable({ acts }: { acts: ActivityDetail[] }) {
           </table>
         </div>
         {other && bars.length > 0 && (
-          <div className="rounded-lg border border-line-2 bg-surface-1 p-4">
+          <div>
             <CompareBars items={bars} currentLabel={formatDayShort(base.localDate)} previousLabel={formatDayShort(other.localDate)} />
           </div>
         )}

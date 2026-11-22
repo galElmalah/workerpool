@@ -1,0 +1,26 @@
+{
+ "id": "wk_fwls2tiq5w",
+ "date": "2026-12-22",
+ "sport": "run",
+ "title": "Endurance 45′",
+ "preNote": "Fixture note",
+ "plannedDurationSec": 2700,
+ "plannedLoad": 34.7,
+ "plannedIntensityFactor": 0.68,
+ "isKey": true,
+ "intensity": "endurance",
+ "tags": [],
+ "environment": "any",
+ "status": "skipped",
+ "skipReason": "travel",
+ "garmin": {
+  "syncState": "none"
+ },
+ "createdAt": "2026-11-22T05:55:50.409Z",
+ "updatedAt": "2026-11-22T05:55:50.464Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 0,
+  "state": "excused"
+ }
+}

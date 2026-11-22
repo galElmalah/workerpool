@@ -48,12 +48,12 @@ export function useConnectGarmin(onConnected?: (r: ConnectResponse) => void) {
 export function Disclosure({ title, icon, children, defaultOpen = false, className }: { title: ReactNode; icon?: ReactNode; children: ReactNode; defaultOpen?: boolean; className?: string }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className={cn('rounded-md border border-line-2', className)}>
+    <div className={cn('rounded-lg bg-surface-1', className)}>
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2.5 rounded-md px-3.5 py-2.5 text-left text-body text-fg-1 transition-colors duration-(--dur-fast) hover:bg-surface-2"
+        className="flex w-full items-center gap-2.5 rounded-lg px-4 py-3 text-left text-body text-fg-1 transition-colors duration-(--dur-fast) hover:bg-surface-2"
       >
         {icon && <span className="flex text-fg-3 [&_svg]:size-4">{icon}</span>}
         <span className="flex-1">{title}</span>
@@ -70,7 +70,7 @@ export function Disclosure({ title, icon, children, defaultOpen = false, classNa
             exit={{ opacity: 0, height: 0, transition: tween('fast', 'in') }}
             className="overflow-hidden"
           >
-            <div className="border-t border-line-1 px-3.5 pb-3.5 pt-3">{children}</div>
+            <div className="px-4 pt-1 pb-4">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -89,9 +89,9 @@ function CopyButton({ text }: { text: string }) {
           setTimeout(() => setDone(false), 1600);
         });
       }}
-      className="absolute right-2 top-2 inline-flex h-7 items-center gap-1.5 rounded-sm border border-line-2 bg-surface-2 px-2 text-label text-fg-2 hover:text-fg-1"
+      className="absolute right-2 top-2 inline-flex h-7 items-center gap-1.5 rounded-sm bg-surface-3 px-2 text-label text-fg-2 hover:text-fg-1"
     >
-      {done ? <Check className="size-3.5 text-accent-ink" /> : <Copy className="size-3.5" />}
+      {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
       {done ? 'Copied' : 'Copy'}
     </button>
   );
@@ -111,7 +111,7 @@ export function KeyGuide() {
         <>Paste it here. Cadence reads your activities, sleep, HRV and weight with it — nothing else.</>,
       ].map((step, i) => (
         <li key={i} className="flex gap-3">
-          <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-line-3 text-mono-sm text-fg-2">{i + 1}</span>
+          <span className="num w-4 shrink-0 text-fg-3">{i + 1}</span>
           <span>{step}</span>
         </li>
       ))}
@@ -127,7 +127,7 @@ export function TokensGuide() {
         Sign in once on your own computer and paste the token file it prints:
       </p>
       <div className="relative">
-        <pre className="overflow-x-auto rounded-md border border-line-2 bg-surface-1 p-3 pr-20 text-mono-sm leading-5 text-fg-2">{TOKENS_SNIPPET}</pre>
+        <pre className="overflow-x-auto rounded-md bg-surface-2 p-3 pr-20 font-mono text-label leading-5 font-normal text-fg-2">{TOKENS_SNIPPET}</pre>
         <CopyButton text={TOKENS_SNIPPET} />
       </div>
       <p>The tokens are encrypted at rest and refreshed automatically. Disconnecting deletes them.</p>
@@ -174,9 +174,9 @@ export function GarminConnectForm({
   return (
     <div className="flex flex-col gap-4">
       {demo && (
-        <div className="flex flex-col gap-3 rounded-lg border border-line-2 bg-surface-1 p-4">
+        <div className="flex flex-col gap-4 rounded-lg bg-surface-1 p-5">
           <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent-a2 text-accent-ink">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-3 text-fg-2">
               <Watch className="size-4.5" />
             </span>
             <div className="flex flex-col gap-0.5">
@@ -190,7 +190,7 @@ export function GarminConnectForm({
         </div>
       )}
       {demo && (
-        <div role="separator" className="flex items-center gap-3 text-micro text-fg-4">
+        <div role="separator" className="flex items-center gap-3 text-body-sm text-fg-3">
           <span className="h-px flex-1 bg-line-1" />
           or connect your own
           <span className="h-px flex-1 bg-line-1" />
@@ -211,11 +211,11 @@ export function GarminConnectForm({
             autoComplete="off"
             spellCheck={false}
             leading={<KeyRound />}
-            className="text-mono"
+            className="font-mono"
           />
         </Field>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-label text-fg-2">Key lifetime you chose</span>
+          <span className="text-body-sm text-fg-2">Key lifetime you chose</span>
           <Segmented aria-label="Key lifetime" size="sm" value={lifetime} onValueChange={setLifetime} options={LIFETIMES} />
         </div>
         {showGuide && (
@@ -234,7 +234,7 @@ export function GarminConnectForm({
                 minRows={3}
                 maxRows={8}
                 spellCheck={false}
-                className="text-mono-sm"
+                className="font-mono text-label font-normal"
               />
             </Field>
           </div>
@@ -246,7 +246,7 @@ export function GarminConnectForm({
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-start gap-2 rounded-md border border-dashed border-line-3 px-3 py-2 text-body-sm text-fg-1"
+              className="flex items-start gap-2 rounded-md bg-surface-1 px-3 py-2.5 text-body-sm text-fg-1"
               role="alert"
             >
               <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />

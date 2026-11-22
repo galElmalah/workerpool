@@ -1,0 +1,120 @@
+{
+ "id": "wk_d20261109_1",
+ "date": "2026-11-09",
+ "startTime": "07:00",
+ "sport": "swim",
+ "subSport": "pool",
+ "title": "Aerobic 10×200",
+ "plannedDurationSec": 3416,
+ "plannedDistanceM": 2800,
+ "plannedLoad": 62.6,
+ "plannedIntensityFactor": 0.891,
+ "structure": {
+  "steps": [
+   {
+    "kind": "step",
+    "id": "s1",
+    "role": "warmup",
+    "measure": {
+     "type": "distance",
+     "m": 400
+    },
+    "target": {
+     "type": "pace_pct",
+     "low": 80,
+     "high": 88
+    },
+    "label": "400 choice",
+    "swim": {
+     "stroke": "choice",
+     "restSec": 20
+    }
+   },
+   {
+    "kind": "repeat",
+    "id": "s3",
+    "count": 4,
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s2",
+      "role": "active",
+      "measure": {
+       "type": "distance",
+       "m": 50
+      },
+      "target": {
+       "type": "pace_pct",
+       "low": 75,
+       "high": 85
+      },
+      "label": "Drill: catch-up / fingertip",
+      "swim": {
+       "stroke": "drill",
+       "restSec": 15
+      }
+     }
+    ]
+   },
+   {
+    "kind": "repeat",
+    "id": "s5",
+    "count": 10,
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s4",
+      "role": "active",
+      "measure": {
+       "type": "distance",
+       "m": 200
+      },
+      "target": {
+       "type": "pace_pct",
+       "low": 90,
+       "high": 94
+      },
+      "label": "200 aerobic",
+      "swim": {
+       "stroke": "free",
+       "sendOffSec": 235
+      }
+     }
+    ]
+   }
+  ],
+  "poolLengthM": 25
+ },
+ "isKey": false,
+ "intensity": "endurance",
+ "tags": [
+  "endurance"
+ ],
+ "environment": "indoor",
+ "pairedActivityId": "act_ahgt68fc27",
+ "status": "planned",
+ "sparkline": [
+  0.7,
+  0.7,
+  0.7,
+  0.7,
+  0.7,
+  0.7,
+  0.7,
+  0.668,
+  0.667,
+  0.667,
+  0.667,
+  0.724
+ ],
+ "garmin": {
+  "syncState": "none"
+ },
+ "createdAt": "2026-11-21T18:00:20.888Z",
+ "updatedAt": "2026-11-21T18:00:25.702Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 0.94,
+  "state": "on_target"
+ }
+}

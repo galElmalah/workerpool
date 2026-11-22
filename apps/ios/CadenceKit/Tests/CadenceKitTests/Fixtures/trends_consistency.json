@@ -1,0 +1,29 @@
+{
+ "from": "2026-11-08",
+ "to": "2026-11-21",
+ "days": [
+  {
+   "date": "2026-11-08",
+   "load": 48.6,
+   "durationSec": 3006,
+   "count": 1,
+   "key": false
+  },
+  {
+   "date": "2026-11-09",
+   "load": 119.5,
+   "durationSec": 6407,
+   "count": 2,
+   "key": false
+  }
+ ],
+ "streaks": {
+  "currentDays": 1,
+  "longestDays": 12,
+  "currentWeeks": 3,
+  "longestWeeks": 3,
+  "currentWeeks3": 2,
+  "longestWeeks3": 2,
+  "daysSinceRest": 1
+ }
+}

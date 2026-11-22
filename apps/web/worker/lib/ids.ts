@@ -1,4 +1,4 @@
-export type IdPrefix = 'wk' | 'act' | 'tpl' | 'evt' | 'ph' | 'mk' | 'thr' | 'log' | 'ser';
+export type IdPrefix = 'wk' | 'act' | 'tpl' | 'evt' | 'ph' | 'mk' | 'thr' | 'log' | 'ser' | 'dev';
 
 /** Prefixed, URL-safe, sortable-enough random id, e.g. `wk_m3k2a9x0q1`. */
 export function newId(prefix: IdPrefix): string {

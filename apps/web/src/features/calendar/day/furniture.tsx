@@ -25,7 +25,7 @@ export const MARKER_META: Record<DayMarker['type'], { label: string; icon: React
   altitude: { label: 'Altitude', icon: <Mountain /> },
 };
 
-/** Full-width event banner (product.md §3.7): A = solid accent, B = accent outline, C = neutral outline. */
+/** Event row (product.md §3.7): one neutral surface; priority is told by the flag (A filled) and the words. */
 export function EventBanner({ event, result, className }: { event: Event; result?: ReactNode; className?: string }) {
   const units = useUnits();
   const dist = event.distanceM ? distanceParts(event.distanceM, event.sport ?? 'run', units) : null;
@@ -34,26 +34,25 @@ export function EventBanner({ event, result, className }: { event: Event; result
     <Link
       {...links.event(event.id)}
       className={cn(
-        'flex items-center gap-3 rounded-md px-4 outline-none transition-colors duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-        a ? 'bg-accent py-3 text-on-accent hover:bg-accent-hover' : event.priority === 'B' ? 'border border-accent-a6 py-3 text-fg-1 hover:bg-accent-a1' : 'border border-line-3 py-2 text-fg-1 hover:bg-surface-2',
+        'flex items-center gap-3 rounded-lg bg-surface-1 px-4 py-3 text-fg-1 outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         className,
       )}
     >
-      <Flag className={cn('size-4 shrink-0', a ? 'fill-current' : event.priority === 'B' ? 'text-accent-ink' : 'text-fg-2')} />
+      <Flag className={cn('size-4 shrink-0', a ? 'fill-fg-1 text-fg-1' : 'text-fg-3')} />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className={cn('text-micro ', a ? 'text-on-accent opacity-75' : 'text-fg-3')}>
-          {event.priority}-race{event.location ? ` · ${event.location}` : ''}
+        <span className="truncate text-body font-semibold">{event.name}</span>
+        <span className="text-body-sm text-fg-3">
+          {event.priority} race{event.location ? ` · ${event.location}` : ''}
           {dist ? ` · ${dist.value} ${dist.unit}` : ''}
         </span>
-        <span className="truncate text-body font-[600]">{event.name}</span>
       </span>
-      {result ?? (event.goal && <span className={cn('max-sm:hidden text-body-sm', a ? 'opacity-80' : 'text-fg-2')}>Goal · {event.goal}</span>)}
+      {result ?? (event.goal && <span className="text-body-sm text-fg-2 max-sm:hidden">Goal: {event.goal}</span>)}
     </Link>
   );
 }
 
 /** Markers covering `date` as removable chips + an inline, range-capable add form (no modal). */
-export function MarkerEditor({ date, markers }: { date: LocalDate; markers: DayMarker[] }) {
+export function MarkerEditor({ date, markers, extra }: { date: LocalDate; markers: DayMarker[]; /** Rendered after the add button, in the same quiet row. */ extra?: ReactNode }) {
   const { create, remove } = useMarkerMutations();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<DayMarker['type']>('sick');
@@ -96,14 +95,14 @@ export function MarkerEditor({ date, markers }: { date: LocalDate; markers: DayM
               exit={{ opacity: 0, scale: 0.9, transition: tween('fast', 'in') }}
               transition={spring.smooth}
               className={cn(
-                'inline-flex h-8 items-center gap-2 rounded-md border pr-1 pl-2.5 text-label text-fg-1 [&_svg]:size-3.5',
-                m.type === 'sick' || m.type === 'injured' ? 'border-fg-3 bg-hatch-faint' : 'border-line-3 bg-surface-2',
+                'inline-flex h-8 items-center gap-2 rounded-md pr-1 pl-2.5 text-label text-fg-1 [&_svg]:size-3.5',
+                m.type === 'sick' || m.type === 'injured' ? 'bg-surface-3' : 'bg-surface-2',
               )}
             >
               {MARKER_META[m.type].icon}
               {MARKER_META[m.type].label}
               {m.label && <span className="text-fg-2">· {m.label}</span>}
-              {m.endDate && <span className="text-mono-sm text-fg-3">{formatDayMonth(m.date)}–{formatDayMonth(m.endDate)}</span>}
+              {m.endDate && <span className="font-normal text-fg-3 num">{formatDayMonth(m.date)}–{formatDayMonth(m.endDate)}</span>}
               <button type="button" aria-label={`Remove ${MARKER_META[m.type].label} marker`} onClick={() => drop(m)} className="grid size-6 place-items-center rounded-sm text-fg-3 outline-none hover:bg-surface-3 hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus">
                 <X />
               </button>
@@ -115,6 +114,7 @@ export function MarkerEditor({ date, markers }: { date: LocalDate; markers: DayM
             {covering.length ? 'Marker' : 'Mark sick, travel, rest…'}
           </Button>
         )}
+        {extra}
       </div>
       <AnimatePresence initial={false}>
         {open && (
@@ -127,7 +127,7 @@ export function MarkerEditor({ date, markers }: { date: LocalDate; markers: DayM
             className="overflow-hidden"
           >
             <form
-              className="flex flex-col gap-3 rounded-lg border border-line-2 bg-surface-1 p-3"
+              className="flex flex-col gap-3 rounded-lg bg-surface-1 p-4"
               onSubmit={(e) => {
                 e.preventDefault();
                 add();
@@ -144,8 +144,8 @@ export function MarkerEditor({ date, markers }: { date: LocalDate; markers: DayM
                     transition={spring.snappy}
                     onClick={() => setType(t)}
                     className={cn(
-                      'inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-label outline-none transition-colors duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-focus pointer-coarse:h-10 [&_svg]:size-3.5',
-                      type === t ? 'border-fg-2 bg-surface-3 text-fg-1' : 'border-line-2 text-fg-2 hover:text-fg-1',
+                      'inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-label outline-none transition-colors duration-(--dur-fast) focus-visible:outline-2 focus-visible:outline-focus pointer-coarse:h-10 [&_svg]:size-3.5',
+                      type === t ? 'bg-surface-active text-fg-1' : 'bg-surface-2 text-fg-2 hover:text-fg-1',
                     )}
                   >
                     {MARKER_META[t].icon}
@@ -188,7 +188,7 @@ export function NewEventForm({ date, onDone, className }: { date: LocalDate; onD
   const [d, setD] = useState<LocalDate>(date);
   return (
     <form
-      className={cn('flex flex-col gap-3 rounded-lg border border-line-2 bg-surface-1 p-3', className)}
+      className={cn('flex flex-col gap-3 rounded-lg bg-surface-1 p-4', className)}
       onSubmit={(e) => {
         e.preventDefault();
         if (!name.trim()) return;

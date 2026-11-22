@@ -8,7 +8,6 @@ import { qk } from '@/lib/query';
 import { useAuthStatus } from '@/lib/queries/shared';
 import { spring } from '@/motion/tokens';
 import { Button } from '@/ui/Button';
-import { Card } from '@/ui/Card';
 import { Section } from '@/ui/Section';
 import { toast } from '@/ui/toast';
 import { InlineError, Row, Rows, TwoStepButton } from './common';
@@ -67,7 +66,7 @@ export function SettingsDataPage() {
   return (
     <>
       <Section title="Export" description="Your data, whole, in open formats.">
-        <Card spotlight={false}>
+        <div>
           <Rows>
             <Row title="Full backup" description="Every plan, activity summary, note, threshold and setting as JSON. Restores into an empty Cadence.">
               <Button icon={<FileJson />} loading={busy === 'json'} onClick={() => void run('json', () => download('/export/json', 'cadence-backup.json'))}>
@@ -80,11 +79,11 @@ export function SettingsDataPage() {
               </Button>
             </Row>
           </Rows>
-        </Card>
+        </div>
       </Section>
 
       <Section title="Import">
-        <Card spotlight={false}>
+        <div>
           <Rows>
             <Row title="Restore a backup" description="Cadence JSON backups only. The instance must be empty of training data: import never merges or overwrites.">
               <input ref={file} type="file" accept="application/json,.json" className="sr-only" onChange={(e) => e.currentTarget.files?.[0] && void importBackup(e.currentTarget.files[0])} aria-label="Backup file" />
@@ -98,7 +97,7 @@ export function SettingsDataPage() {
               <InlineError>{importError}</InlineError>
             </div>
           )}
-        </Card>
+        </div>
       </Section>
 
       {auth.data?.demo && <DemoCard />}
@@ -146,40 +145,32 @@ function DemoCard() {
   const frac = job ? (job.finished ? 1 : job.total ? job.done / job.total : 0.03) : 0;
   return (
     <Section title="Demo data" description="Demo mode is on: Garmin is simulated in-process and nothing leaves this machine.">
-      <Card spotlight={false}>
+      <div>
         <div className="flex flex-col gap-5">
-          <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-dashed border-line-3 text-fg-2">
-              <FlaskConical className="size-4" />
-            </span>
-            <div className="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4">
-              {[
-                ['Activities', d?.counts.activities],
-                ['Planned', d?.counts.workouts],
-                ['Wellness days', d?.counts.wellness],
-                ['Demo today', d?.today ? formatDateMedium(d.today) : undefined],
-              ].map(([l, v]) => (
-                <div key={l as string} className="flex flex-col gap-0.5">
-                  <span className="text-micro text-fg-3">{l}</span>
-                  <span className="text-stat-sm text-fg-1">{v == null ? '—' : typeof v === 'number' ? formatNumber(v) : v}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <p className="num flex flex-wrap items-center gap-x-2 gap-y-1 text-body text-fg-2">
+            <FlaskConical className="mr-1 size-4 text-fg-3" />
+            <span className="text-fg-1">{d?.today ? formatDateMedium(d.today) : '—'}</span>
+            <span className="text-fg-4">·</span>
+            {d ? formatNumber(d.counts.activities) : '—'} activities
+            <span className="text-fg-4">·</span>
+            {d ? formatNumber(d.counts.workouts) : '—'} planned
+            <span className="text-fg-4">·</span>
+            {d ? formatNumber(d.counts.wellness) : '—'} wellness days
+          </p>
           {(seeding || (job && !job.finished)) && job && (
             <div className="flex flex-col gap-2" aria-live="polite">
-              <div className="flex justify-between text-label text-fg-2">
+              <div className="flex justify-between text-body-sm text-fg-3">
                 <span>Seeding · {job.phase}</span>
-                <span className="text-mono">
+                <span className="num font-medium text-fg-1">
                   {formatNumber(job.done)} / {formatNumber(job.total)}
                 </span>
               </div>
-              <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-3">
-                <motion.div className="absolute inset-0 origin-left rounded-full bg-accent" initial={false} animate={{ scaleX: frac }} transition={spring.gentle} />
+              <div className="relative h-1 overflow-hidden rounded-full bg-surface-3">
+                <motion.div className="absolute inset-0 origin-left rounded-full bg-fg-2" initial={false} animate={{ scaleX: frac }} transition={spring.gentle} />
               </div>
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-2 border-t border-line-1 pt-4">
+          <div className="flex flex-wrap items-center gap-2">
             <Button icon={<FastForward />} loading={advance.isPending} disabled={seeding} onClick={() => advance.mutate()}>
               Advance one day
             </Button>
@@ -189,8 +180,8 @@ function DemoCard() {
             <TwoStepButton label="Reset" confirmLabel="Erase all data" icon={<RotateCcw />} loading={reset.isPending} disabled={seeding} onConfirm={() => reset.mutate()} />
           </div>
         </div>
-      </Card>
-      <p className="mt-3 flex items-center gap-1.5 text-body-sm text-fg-3">
+      </div>
+      <p className="mt-6 flex items-center gap-1.5 text-body-sm text-fg-3">
         <Download className="size-3.5" /> Export a backup first if you want to keep what you changed.
       </p>
     </Section>

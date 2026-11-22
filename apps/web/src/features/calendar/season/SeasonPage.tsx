@@ -1,7 +1,7 @@
 /**
  * Season — /season (product.md §2.2 SHOULD, §3.7 phases). One long strip of the year's weeks:
- * each bar sized by load (done = solid accent, planned = dashed outline, phase-target projection =
- * hatched), phase bands across the top (create / edit inline), A/B/C event flags, the projected
+ * each bar sized by load (done = solid neutral, planned = dashed outline, phase-target projection =
+ * hatched), phases as faint full-height bands with sentence-case labels (edit inline), A/B/C event flags, the projected
  * Fitness line over the season and a weekly target editor. Click a week → the calendar week.
  */
 import { PHASE_TYPES, type Event, type IsoWeek, type LocalDate, type Phase, type WeekSummary } from '@cadence/core/domain';
@@ -13,23 +13,24 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api, call } from '@/lib/api';
 import { cn } from '@/lib/cn';
-import { formatIsoWeekRange, formatLoad, monthShort } from '@/lib/format';
+import { formatDayMonth, formatIsoWeekRange, formatLoad, monthShort } from '@/lib/format';
 import { qk } from '@/lib/query';
 import { PageItem } from '@/motion/PageTransition';
 import { spring, tween } from '@/motion/tokens';
 import { links } from '@/shell/links';
-import { Banner, Button, Card, IconButton, Input, NumberField, Page, PageHeader, Section, Select, Skeleton, toast } from '@/ui';
+import { Banner, Button, IconButton, Input, NumberField, Page, PageHeader, Section, Select, Skeleton, toast, Tooltip } from '@/ui';
 import { NewEventForm } from '../day/furniture';
 import { hm, useEvents, useFitnessTrend, usePhaseMutations, usePhases, useTodayData, useWeeklyTrend } from '../day/kit';
 
-const PHASE_STYLE: Record<Phase['type'], string> = {
-  transition: 'border border-dashed border-line-3 text-fg-2',
-  base: 'bg-surface-3 text-fg-1',
-  build: 'bg-gray-6 text-fg-1',
-  peak: 'bg-gray-8 text-fg-1',
-  taper: 'bg-dots-fg border border-line-3 text-fg-1',
-  race: 'bg-fg-1 text-canvas',
-  recovery: 'bg-hatch-faint border border-line-3 text-fg-2',
+/** Phase bands: a faint surface step by load (base → peak), recovery/transition stay bare. Text, never colour, names them. */
+const PHASE_BAND: Record<Phase['type'], string> = {
+  transition: 'bg-transparent',
+  recovery: 'bg-transparent',
+  base: 'bg-surface-1',
+  build: 'bg-surface-2',
+  peak: 'bg-surface-3',
+  taper: 'bg-surface-2',
+  race: 'bg-surface-3',
 };
 const PHASE_LABEL: Record<Phase['type'], string> = { base: 'Base', build: 'Build', peak: 'Peak', taper: 'Taper', race: 'Race', recovery: 'Recovery', transition: 'Transition' };
 
@@ -44,7 +45,7 @@ export function SeasonPage() {
       header={
         <PageHeader
           title={year ? `Season ${year}` : 'Season'}
-          eyebrow="Phases · events · weekly load"
+          eyebrow="Phases, races and weekly load"
           actions={
             year && (
               <div className="flex items-center gap-1">
@@ -86,22 +87,28 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
 
   return (
     <>
-      <PageItem>
-        <Card padding="none" className="overflow-hidden" style={{ '--chart-bg': 'var(--color-surface-1)' } as React.CSSProperties}>
-          <div className="flex flex-wrap items-baseline justify-between gap-3 px-4 pt-4 xl:px-5">
-            <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
-              <span className="text-micro text-fg-3">Year so far</span>
-              <span className="text-stat-sm text-accent-ink">{formatLoad(yearDone)} <span className="text-label text-fg-3">load</span></span>
-              <span className="text-stat-sm text-fg-1">{Math.round(yearSec / 3600)} <span className="text-label text-fg-3">h</span></span>
-            </div>
-            <Legend />
+      <PageItem className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-label text-fg-3">Year so far</span>
+            <span className="flex items-baseline gap-4 text-stat-md text-fg-1 num">
+              <span>
+                {Math.round(yearSec / 3600)}
+                <span className="ml-1 text-body-sm font-normal text-fg-3">h</span>
+              </span>
+              <span>
+                {formatLoad(yearDone)}
+                <span className="ml-1 text-body-sm font-normal text-fg-3">load</span>
+              </span>
+            </span>
           </div>
-          {weeksQ.isPending ? (
-            <Skeleton className="m-4 h-72" />
-          ) : (
-            <SeasonStrip weeks={weeks} phases={phases} events={events} today={today} fitness={fitQ.data?.days ?? []} onPhase={(id) => setEditing(id)} />
-          )}
-        </Card>
+          <Legend />
+        </div>
+        {weeksQ.isPending ? (
+          <Skeleton className="h-72" />
+        ) : (
+          <SeasonStrip weeks={weeks} phases={phases} events={events} today={today} fitness={fitQ.data?.days ?? []} onPhase={(id) => setEditing(id)} />
+        )}
       </PageItem>
 
       <Section
@@ -120,23 +127,25 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="mt-3 flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-1">
-          {phases.length === 0 && <p className="p-4 text-body text-fg-3">No phases this year. Add a base block to start.</p>}
+        <div className="mt-2 flex flex-col">
+          {phases.length === 0 && <p className="py-3 text-body text-fg-3">No phases this year. Add a base block to start.</p>}
           {phases.map((p, i) => (
             <button
               key={p.id}
               type="button"
               onClick={() => setEditing(p.id)}
-              className={cn('grid grid-cols-[96px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 text-left outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus', i > 0 && 'border-t border-line-1', editing === p.id && 'bg-surface-2')}
+              className={cn(
+                '-mx-3 grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-md px-3 py-2 text-left outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus sm:grid-cols-[minmax(0,1fr)_96px_minmax(0,220px)_auto]',
+                i > 0 && 'border-t border-line-1',
+                editing === p.id && 'bg-surface-2',
+              )}
             >
-              <span className={cn('rounded-xs px-1.5 py-0.5 text-center text-micro ', PHASE_STYLE[p.type])}>{PHASE_LABEL[p.type]}</span>
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate text-body text-fg-1">{p.label}</span>
-                <span className="text-mono-sm text-fg-3">
-                  W{Number(isoWeekOf(p.startDate).slice(6))}–W{Number(isoWeekOf(p.endDate).slice(6))} · {formatIsoWeekRange(isoWeekOf(p.startDate))} → {formatIsoWeekRange(isoWeekOf(p.endDate))}
-                </span>
+              <span className="truncate text-body font-medium text-fg-1">{p.label}</span>
+              <span className="text-body-sm text-fg-3 max-sm:hidden">{PHASE_LABEL[p.type]}</span>
+              <span className="truncate text-body-sm text-fg-3 num max-sm:hidden">
+                W{Number(isoWeekOf(p.startDate).slice(6))}–W{Number(isoWeekOf(p.endDate).slice(6))} · {formatDayMonth(p.startDate)} – {formatDayMonth(p.endDate)}
               </span>
-              <span className="text-mono-sm text-fg-2">{p.weeklyLoadTarget != null ? `${formatLoad(p.weeklyLoadTarget)} /wk` : '—'}</span>
+              <span className="text-right text-body-sm text-fg-2 num">{p.weeklyLoadTarget != null ? `${formatLoad(p.weeklyLoadTarget)} a week` : '—'}</span>
             </button>
           ))}
         </div>
@@ -151,14 +160,19 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
         }
       >
         {addingEvent && <NewEventForm date={today} onDone={() => setAddingEvent(false)} className="mb-3" />}
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="flex flex-col">
           {events.length === 0 && <p className="text-body text-fg-3">No races this year yet.</p>}
-          {events.map((e) => (
-            <Link key={e.id} {...links.event(e.id)} className={cn('flex items-center gap-3 rounded-md border p-3 outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus', e.priority === 'A' ? 'border-accent-a6' : 'border-line-2', e.date < today && 'opacity-70')}>
-              <span className={cn('grid size-8 place-items-center rounded-sm text-label font-[600]', e.priority === 'A' ? 'bg-accent text-on-accent' : e.priority === 'B' ? 'border border-accent-a6 text-accent-ink' : 'border border-line-3 text-fg-2')}>{e.priority}</span>
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate text-body font-[560] text-fg-1">{e.name}</span>
-                <span className="text-mono-sm text-fg-3">{e.date}{e.goal ? ` · ${e.goal}` : ''}</span>
+          {events.map((e, i) => (
+            <Link
+              key={e.id}
+              {...links.event(e.id)}
+              className={cn('-mx-3 flex min-h-11 items-center gap-3 rounded-md px-3 py-2 outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus', i > 0 && 'border-t border-line-1')}
+            >
+              <Flag className={cn('size-4 shrink-0', e.priority === 'A' ? 'fill-fg-1 text-fg-1' : 'text-fg-3')} aria-hidden />
+              <span className={cn('min-w-0 flex-1 truncate text-body font-medium', e.date < today ? 'text-fg-2' : 'text-fg-1')}>{e.name}</span>
+              <span className="truncate text-body-sm text-fg-3 max-sm:hidden">{e.goal ?? ''}</span>
+              <span className="w-28 shrink-0 text-right text-body-sm text-fg-3 num">
+                {e.priority} race · {formatDayMonth(e.date)}
               </span>
             </Link>
           ))}
@@ -174,11 +188,11 @@ function SeasonBody({ year, today }: { year: number; today: LocalDate }) {
 
 function Legend() {
   return (
-    <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-micro text-fg-3" aria-hidden>
-      <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] bg-accent" />Done</span>
-      <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] border border-dashed border-fg-3" />Planned</span>
-      <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] bg-hatch-fg" />Target</span>
-      <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-accent" />Fitness</span>
+    <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-label font-normal text-fg-3" aria-hidden>
+      <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] bg-fg-4" />Load done</span>
+      <span className="flex items-center gap-1.5"><span className="h-2.5 w-2 rounded-[2px] border border-dashed border-fg-4" />Planned</span>
+      <span className="flex items-center gap-1.5"><span className="h-px w-3 bg-fg-2" />Target</span>
+      <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 rounded-full bg-accent" />Fitness</span>
     </span>
   );
 }
@@ -212,28 +226,37 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
         // Phones: start with the current week in view.
         if (el && curIdx >= 0 && el.scrollWidth > el.clientWidth && el.scrollLeft === 0) el.scrollLeft = Math.max(0, ((curIdx + 4) / n) * el.scrollWidth - el.clientWidth);
       }}
-      className="overflow-x-auto px-4 pt-3 pb-4 xl:px-5 [scrollbar-width:thin]"
+      className="-mx-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0 [scrollbar-width:thin]"
     >
       <div className="relative min-w-[720px]">
-        {/* phase bands */}
-        <div className="relative mb-1 h-6">
+        {/* phase bands: faint full-height columns behind the bars, a horizontal sentence-case label on top */}
+        <div className="pointer-events-none absolute inset-x-0 top-0" style={{ bottom: 22 }} aria-hidden>
+          {phases.map((p) => {
+            const a = Math.max(0, idxOf(p.startDate) === -1 ? 0 : idxOf(p.startDate));
+            const bRaw = idxOf(p.endDate);
+            const b = bRaw === -1 ? n - 1 : bRaw;
+            if (b < a) return null;
+            return <span key={p.id} className={cn('absolute inset-y-0 rounded-sm', PHASE_BAND[p.type])} style={{ left: `calc(${(a / n) * 100}% + 1px)`, width: `calc(${((b - a + 1) / n) * 100}% - 2px)` }} />;
+          })}
+        </div>
+        <div className="relative mb-1 h-7">
           {phases.map((p) => {
             const a = Math.max(0, idxOf(p.startDate) === -1 ? 0 : idxOf(p.startDate));
             const bRaw = idxOf(p.endDate);
             const b = bRaw === -1 ? n - 1 : bRaw;
             if (b < a) return null;
             return (
-              <button
-                key={p.id}
-                type="button"
-                title={`${p.label}${p.weeklyLoadTarget ? ` · ${p.weeklyLoadTarget}/wk` : ''}`}
-                onClick={() => onPhase(p.id)}
-                aria-label={p.label}
-                className={cn('absolute inset-y-0 overflow-hidden rounded-xs px-1.5 text-left text-micro whitespace-nowrap outline-none focus-visible:outline-2 focus-visible:outline-focus', PHASE_STYLE[p.type])}
-                style={{ left: `calc(${(a / n) * 100}% + 1px)`, width: `calc(${((b - a + 1) / n) * 100}% - 2px)` }}
-              >
-                <FitLabel full={p.label} short={shortPhaseLabel(p)} />
-              </button>
+              <Tooltip key={p.id} content={`${p.label} · ${PHASE_LABEL[p.type]}${p.weeklyLoadTarget ? ` · ${formatLoad(p.weeklyLoadTarget)} load a week` : ''}`}>
+                <button
+                  type="button"
+                  onClick={() => onPhase(p.id)}
+                  aria-label={p.label}
+                  className="absolute inset-y-0 overflow-hidden rounded-sm px-1.5 text-left text-label font-normal whitespace-nowrap text-fg-3 outline-none transition-colors duration-(--dur-fast) hover:bg-surface-3 hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus"
+                  style={{ left: `calc(${(a / n) * 100}% + 1px)`, width: `calc(${((b - a + 1) / n) * 100}% - 2px)` }}
+                >
+                  <FitLabel full={p.label} short={shortPhaseLabel(p)} />
+                </button>
+              </Tooltip>
             );
           })}
         </div>
@@ -243,15 +266,17 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
             const i = idxOf(e.date);
             if (i < 0) return null;
             return (
-              <Link key={e.id} {...links.event(e.id)} title={e.name} className="absolute top-0 flex -translate-x-1/2 items-center gap-0.5 rounded-xs px-1 text-micro outline-none hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus" style={{ left: `${((i + 0.5) / n) * 100}%` }}>
-                <Flag className={cn('size-3', e.priority === 'A' ? 'fill-accent text-accent' : e.priority === 'B' ? 'text-accent-ink' : 'text-fg-3')} />
-                <span className={e.priority === 'A' ? 'text-accent-ink' : 'text-fg-2'}>{e.priority}</span>
-              </Link>
+              <Tooltip key={e.id} content={`${e.name} · ${e.priority} race · ${formatDayMonth(e.date)}`}>
+                <Link {...links.event(e.id)} aria-label={e.name} className="absolute top-0 flex -translate-x-1/2 items-center gap-0.5 rounded-sm px-1 text-label outline-none hover:bg-surface-3 focus-visible:outline-2 focus-visible:outline-focus" style={{ left: `${((i + 0.5) / n) * 100}%` }}>
+                  <Flag className={cn('size-3', e.priority === 'A' ? 'fill-fg-1 text-fg-1' : 'text-fg-3')} />
+                  <span className={e.priority === 'A' ? 'text-fg-1' : 'text-fg-3'}>{e.priority}</span>
+                </Link>
+              </Tooltip>
             );
           })}
         </div>
         {/* bars */}
-        <div className="relative flex items-end gap-px border-b border-line-2" style={{ height: H }}>
+        <div className="relative flex items-end gap-px border-b border-line-1" style={{ height: H }}>
           {weeks.map((w, i) => {
             const t = targetOf(w);
             const future = w.startDate > today;
@@ -267,13 +292,13 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
                 aria-label={`W${Number(w.isoWeek.slice(6))}: ${formatLoad(w.doneLoad)} done of ${formatLoad(w.plannedLoad)} planned load${t ? `, target ${t}` : ''}`}
                 title={`W${Number(w.isoWeek.slice(6))} · ${formatIsoWeekRange(w.isoWeek)}\n${formatLoad(w.doneLoad)} done / ${formatLoad(w.plannedLoad)} planned${t ? ` · target ${t}` : ''}\n${hm(w.doneSec)} h`}
               >
-                <span className="absolute inset-0 rounded-t-[3px] transition-colors duration-(--dur-fast) group-hover/bar:bg-surface-2" />
+                <span className="absolute inset-0 rounded-t-[3px] transition-colors duration-(--dur-fast) group-hover/bar:bg-surface-3/60" />
                 {projected ? (
                   <span className="absolute inset-x-0.5 bottom-0 rounded-t-[2px] bg-hatch-fg opacity-60" style={{ height: `${targetH}%` }} />
                 ) : (
-                  w.plannedLoad > w.doneLoad && <span className="absolute inset-x-0.5 bottom-0 rounded-t-[2px] border border-b-0 border-dashed border-fg-3" style={{ height: `${plannedH}%` }} />
+                  w.plannedLoad > w.doneLoad && <span className="absolute inset-x-0.5 bottom-0 rounded-t-[2px] border border-b-0 border-dashed border-fg-4" style={{ height: `${plannedH}%` }} />
                 )}
-                <motion.span className="absolute inset-x-0.5 bottom-0 origin-bottom rounded-t-[2px] bg-accent" style={{ height: `${doneH}%` }} initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ ...spring.gentle, delay: Math.min(i * 0.008, 0.24) }} />
+                <motion.span className="absolute inset-x-0.5 bottom-0 origin-bottom rounded-t-[2px] bg-fg-4 group-hover/bar:bg-fg-3" style={{ height: `${doneH}%` }} initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ ...spring.gentle, delay: Math.min(i * 0.008, 0.24) }} />
                 {t && !projected ? <span className="absolute inset-x-0 h-px bg-fg-2" style={{ bottom: `${targetH}%` }} /> : null}
               </Link>
             );
@@ -281,14 +306,14 @@ function SeasonStrip({ weeks, phases, events, today, fitness, onPhase }: { weeks
           {curIdx >= 0 && <span className="pointer-events-none absolute -top-1 bottom-0 w-px bg-fg-3" style={{ left: `${((curIdx + 0.5) / n) * 100}%` }} aria-hidden />}
           {/* fitness line */}
           <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            {done.length > 1 && <motion.polyline points={toPts(done)} fill="none" stroke="var(--color-accent)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.gentle, delay: 0.2 }} />}
+            {done.length > 1 && <motion.polyline points={toPts(done)} fill="none" stroke="var(--color-accent)" strokeWidth={1.75} vectorEffect="non-scaling-stroke" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.gentle, delay: 0.2 }} />}
             {proj.length > 1 && <polyline points={toPts(proj)} fill="none" stroke="var(--color-accent)" strokeOpacity={0.6} strokeWidth={2} strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />}
           </svg>
         </div>
         {/* months */}
         <div className="relative mt-1.5 h-4">
           {months.map(({ i }) => (
-            <span key={i} className="absolute text-mono-sm text-fg-3" style={{ left: `${(i / n) * 100}%` }}>
+            <span key={i} className="absolute text-label font-normal text-fg-3" style={{ left: `${(i / n) * 100}%` }}>
               {monthShort(weeks[i]!.endDate)}
             </span>
           ))}
@@ -322,7 +347,7 @@ function PhaseEditor({ phase, weeks, today, onDone }: { phase?: Phase; weeks: We
         e.preventDefault();
         save();
       }}
-      className="flex flex-col gap-4 rounded-lg border border-line-3 bg-surface-1 p-4"
+      className="mb-4 flex flex-col gap-4 rounded-lg bg-surface-1 p-5"
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Select label="Type" value={type} onValueChange={setType} options={PHASE_TYPES.map((t) => ({ value: t, label: PHASE_LABEL[t] }))} />
@@ -394,7 +419,7 @@ function WeekTargetEditor({ weeks, phases, today }: { weeks: WeekSummary[]; phas
   });
   const opts = weeks.map((x) => ({ value: x.isoWeek, label: `W${Number(x.isoWeek.slice(6))} · ${formatIsoWeekRange(x.isoWeek)}` }));
   return (
-    <Card>
+    <div>
       <form
         className="flex flex-wrap items-end gap-4"
         onSubmit={(e) => {
@@ -412,7 +437,7 @@ function WeekTargetEditor({ weeks, phases, today }: { weeks: WeekSummary[]; phas
           {phaseT != null ? ` · phase target ${formatLoad(phaseT)}` : ''}
         </span>
       </form>
-    </Card>
+    </div>
   );
 }
 
@@ -420,37 +445,40 @@ function addWeekIso(w: IsoWeek, n: number): IsoWeek {
   return isoWeekOf(addDays(isoWeekStart(w), n * 7));
 }
 
-/** Short form for a phase band too narrow for its label: word initials ("General Prep" → "GP"), else the type initial. */
+/** Shorter form for a narrow phase band: "General prep 1" → "prep 1", "HM build" → "HM" (shown capitalised). */
 function shortPhaseLabel(p: Phase): string {
   const words = p.label.trim().split(/\s+/).filter(Boolean);
-  if (words.length > 1) return words.slice(0, 3).map((w) => w[0]!.toUpperCase()).join('');
-  return (words[0]?.[0] ?? PHASE_LABEL[p.type][0]!).toUpperCase();
+  const w = words.length > 2 ? words.slice(1).join(' ') : (words[0] ?? '');
+  return w.charAt(0).toLocaleUpperCase() + w.slice(1); // sentence case, not shouting
 }
 
-/** Shows `full` only when it fits its (padded) parent; otherwise `short` (the parent carries the full label as tooltip). */
+/** Shows `full` when it fits its (padded) parent, else `short`, else nothing (the tooltip and the phase list name it). */
 function FitLabel({ full, short }: { full: string; short: string }) {
-  const measure = useRef<HTMLSpanElement>(null);
-  const [fits, setFits] = useState(true);
+  const mFull = useRef<HTMLSpanElement>(null);
+  const mShort = useRef<HTMLSpanElement>(null);
+  const [shown, setShown] = useState<'full' | 'short' | 'none'>('full');
   useLayoutEffect(() => {
-    const m = measure.current;
-    const host = m?.parentElement;
-    if (!m || !host) return;
+    const host = mFull.current?.parentElement;
+    if (!host) return;
     const check = () => {
       const cs = getComputedStyle(host);
-      const room = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      setFits(m.offsetWidth <= room + 0.5);
+      const room = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) + 0.5;
+      setShown((mFull.current?.offsetWidth ?? 0) <= room ? 'full' : (mShort.current?.offsetWidth ?? 0) <= room ? 'short' : 'none');
     };
     check();
     const ro = new ResizeObserver(check);
     ro.observe(host);
     return () => ro.disconnect();
-  }, [full]);
+  }, [full, short]);
   return (
     <>
-      <span ref={measure} className="invisible absolute leading-6" aria-hidden>
+      <span ref={mFull} className="invisible absolute leading-7" aria-hidden>
         {full}
       </span>
-      <span className="leading-6">{fits ? full : short}</span>
+      <span ref={mShort} className="invisible absolute leading-7" aria-hidden>
+        {short}
+      </span>
+      <span className="leading-7">{shown === 'full' ? full : shown === 'short' ? short : ''}</span>
     </>
   );
 }

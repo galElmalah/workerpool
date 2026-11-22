@@ -6,21 +6,18 @@ import { INTENSITY_CLASSES, INTENSITY_META, SPORT_META, type Activity, type Inte
 import { addDays } from '@cadence/core/time';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
-import { ArrowUp, FileUp, History, Pilcrow, Plus, RotateCcw, Search, Star, TriangleAlert, X } from 'lucide-react';
+import { ArrowUp, FileUp, History, Plus, RotateCcw, Search, Star, TriangleAlert, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button,
-  ComplianceGlyph,
+  complianceLabel,
   EmptyState,
   IntensityPips,
   KeyStar,
-  MiniProfile,
   Page,
   PageHeader,
   Section,
-  Segmented,
-  Select,
   Skeleton,
   SportGlyph,
   toast,
@@ -29,7 +26,6 @@ import { Input } from '@/ui/Field';
 import { PageItem } from '@/motion';
 import { Ticker } from '@/motion/Ticker';
 import { useIsMorphTarget, vt } from '@/motion/morph';
-import { onSpotlightMove } from '@/motion/pointer';
 import { spring, tween } from '@/motion/tokens';
 import { api, call } from '@/lib/api';
 import { cn } from '@/lib/cn';
@@ -39,6 +35,7 @@ import { useUnits } from '@/lib/units';
 import { morphSourceProps } from '@/ui/domain/WorkoutCard';
 import { links } from '@/shell/links';
 import { uploadFit, useActivityList, type ListFilters } from './data';
+import { FilterPopover, FilterSummary, activeOf } from '@/features/trends/shared';
 import { ManualEntry } from './ManualEntry';
 
 const route = getRouteApi('/_app/activities');
@@ -56,6 +53,13 @@ const SPORT_TABS: { value: Sport | 'all'; label: string }[] = [
 ];
 
 type Preset = 'all' | '4w' | '3m' | '12m' | 'ytd';
+const PRESETS: { value: Preset; label: string }[] = [
+  { value: 'all', label: 'All time' },
+  { value: '4w', label: 'Last 4 weeks' },
+  { value: '3m', label: 'Last 3 months' },
+  { value: '12m', label: 'Last 12 months' },
+  { value: 'ytd', label: 'This year' },
+];
 
 export function useApiToday(): LocalDate | undefined {
   return useQuery({
@@ -85,6 +89,12 @@ export function ActivitiesPage() {
   const filtered = !!(search.sport || search.q || search.from || search.key || search.intensity);
   const fileRef = useRef<HTMLInputElement>(null);
   const dragging = useFileDrop();
+  const active = activeOf(
+    search.q ? { key: 'q', label: `“${search.q}”`, icon: <Search />, onClear: () => setSearch({ q: undefined }) } : null,
+    search.from || search.to ? { key: 'when', label: preset !== 'custom' && preset !== 'all' ? PRESETS.find((p) => p.value === preset)!.label : `${search.from ? formatDayShort(search.from) : '…'} – ${search.to ? formatDayShort(search.to) : '…'}`, onClear: () => setSearch({ from: undefined, to: undefined }) } : null,
+    search.intensity ? { key: 'intensity', label: INTENSITY_META[search.intensity].label, icon: <IntensityPips intensity={search.intensity} />, onClear: () => setSearch({ intensity: undefined }) } : null,
+    search.key ? { key: 'key', label: 'Key sessions only', icon: <Star />, onClear: () => setSearch({ key: undefined }) } : null,
+  );
 
   return (
     <Page
@@ -113,55 +123,50 @@ export function ActivitiesPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <PageItem className="flex flex-col gap-3">
-        <SportTabs value={search.sport ?? 'all'} onChange={(v) => setSearch({ sport: v === 'all' ? undefined : v })} />
-        <div className="flex flex-wrap items-center gap-2">
-          <SearchBox value={search.q ?? ''} onChange={(v) => setSearch({ q: v || undefined })} />
-          <button
-            type="button"
-            aria-pressed={!!search.key}
-            onClick={() => setSearch({ key: search.key ? undefined : true })}
-            className={cn('flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-label transition-colors duration-(--dur-fast)', search.key ? 'border-accent-a5 bg-accent-a1 text-accent-ink' : 'border-line-2 text-fg-2 hover:bg-surface-2 hover:text-fg-1')}
-          >
-            <Star className={cn('size-3.5', search.key && 'fill-current')} /> Key only
-          </button>
-          <Select
-            size="sm"
-            hideLabel
-            label="Intensity"
-            value={search.intensity ?? 'any'}
-            onValueChange={(v) => setSearch({ intensity: v === 'any' ? undefined : (v as IntensityClass) })}
-            options={[{ value: 'any', label: 'Any intensity' }, ...INTENSITY_CLASSES.map((c) => ({ value: c, label: INTENSITY_META[c].label, icon: <IntensityPips intensity={c} /> }))]}
-            className="w-44"
-          />
-          <Segmented
-            size="sm"
-            aria-label="Date range"
-            value={preset === 'custom' ? 'all' : preset}
-            onValueChange={(p: Preset) => today && setSearch(p === 'all' ? { from: undefined, to: undefined } : presetRange(p, today))}
-            options={[
-              { value: 'all', label: 'All time' },
-              { value: '4w', label: '4W' },
-              { value: '3m', label: '3M' },
-              { value: '12m', label: '12M' },
-              { value: 'ytd', label: 'YTD' },
-            ]}
-          />
-          {filtered && (
-            <Button size="sm" variant="ghost" icon={<X />} onClick={() => navigate({ search: {}, replace: true })}>
-              Clear
-            </Button>
-          )}
+      <PageItem className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+          <SportTabs value={search.sport ?? 'all'} onChange={(v) => setSearch({ sport: v === 'all' ? undefined : v })} />
+          <div className="flex min-w-0 flex-1 items-center gap-2 md:justify-end">
+            <SearchBox value={search.q ?? ''} onChange={(v) => setSearch({ q: v || undefined })} />
+            <FilterPopover
+              active={active.length}
+              groups={[
+                {
+                  id: 'when',
+                  label: 'When',
+                  value: preset === 'custom' ? 'all' : preset,
+                  onChange: (p) => today && setSearch(p === 'all' ? { from: undefined, to: undefined } : presetRange(p as Preset, today)),
+                  options: PRESETS.map((p) => ({ value: p.value, label: p.label })),
+                },
+                {
+                  id: 'intensity',
+                  label: 'Intensity',
+                  value: search.intensity ?? 'any',
+                  onChange: (v) => setSearch({ intensity: v === 'any' ? undefined : (v as IntensityClass) }),
+                  options: [{ value: 'any', label: 'Any intensity' }, ...INTENSITY_CLASSES.map((c) => ({ value: c, label: INTENSITY_META[c].label, icon: <IntensityPips intensity={c} /> }))],
+                },
+                {
+                  id: 'key',
+                  label: 'Sessions',
+                  value: search.key ? 'key' : 'all',
+                  onChange: (v) => setSearch({ key: v === 'key' ? true : undefined }),
+                  options: [
+                    { value: 'all', label: 'All sessions' },
+                    { value: 'key', label: 'Key sessions only', icon: <Star /> },
+                  ],
+                },
+              ]}
+            />
+          </div>
         </div>
-      </PageItem>
-      <PageItem>
-        <TotalsStrip totals={totals} loading={q.isPending} />
+        {active.length > 0 && <FilterSummary items={active} />}
+        <TotalsLine totals={totals} loading={q.isPending} />
       </PageItem>
       <Section stagger>
         {q.isPending ? (
           <ListSkeleton />
         ) : q.isError ? (
-          <div className="flex items-center gap-3 rounded-lg border border-dashed border-line-3 p-4 text-body text-fg-1">
+          <div className="flex items-center gap-3 rounded-lg bg-surface-1 p-4 text-body text-fg-1">
             <TriangleAlert className="size-4" /> Couldn’t load activities.
             <Button size="sm" icon={<RotateCcw />} onClick={() => q.refetch()}>Retry</Button>
           </div>
@@ -186,10 +191,10 @@ export function ActivitiesPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={tween('fast')}
-            className="pointer-events-none fixed inset-3 z-(--z-toast) grid place-items-center rounded-2xl border-2 border-dashed border-accent-a6 bg-accent-a1 glass"
+            className="pointer-events-none fixed inset-3 z-(--z-toast) grid place-items-center rounded-2xl border-2 border-dashed border-line-3 glass"
           >
             <div className="flex flex-col items-center gap-2">
-              <FileUp className="size-6 text-accent-ink" />
+              <FileUp className="size-6 text-fg-1" />
               <span className="text-title-3 text-fg-1">Drop a FIT file to upload</span>
               <span className="text-body-sm text-fg-2">.fit or a Garmin .zip export</span>
             </div>
@@ -260,7 +265,7 @@ function useFileDrop() {
 
 function SportTabs({ value, onChange }: { value: Sport | 'all'; onChange: (v: Sport | 'all') => void }) {
   return (
-    <div role="tablist" aria-label="Sport" className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none]">
+    <div role="tablist" aria-label="Sport" className="-mx-4 flex shrink-0 items-center gap-1 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:-ml-3 md:px-0">
       {SPORT_TABS.map((t) => {
         const on = value === t.value;
         return (
@@ -270,11 +275,10 @@ function SportTabs({ value, onChange }: { value: Sport | 'all'; onChange: (v: Sp
             type="button"
             aria-selected={on}
             onClick={() => onChange(t.value)}
-            className={cn('relative flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 text-label transition-colors duration-(--dur-fast)', on ? 'text-fg-1' : 'text-fg-3 hover:text-fg-1')}
+            className={cn('relative flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 text-body-sm transition-colors duration-(--dur-fast)', on ? 'font-medium text-fg-1' : 'text-fg-3 hover:text-fg-1')}
           >
-            {on && <motion.span layoutId="act-sport-pill" transition={spring.snappy} className="absolute inset-0 rounded-md border border-line-3 bg-surface-2" />}
+            {on && <motion.span layoutId="act-sport-pill" transition={spring.snappy} className="absolute inset-0 rounded-md bg-surface-2" />}
             <span className="relative flex items-center gap-1.5">
-              {t.value !== 'all' && <SportGlyph sport={t.value} size={14} />}
               {t.label}
             </span>
           </button>
@@ -289,7 +293,7 @@ function SearchBox({ value, onChange }: { value: string; onChange: (v: string) =
   useEffect(() => setV(value), [value]);
   const push = useDebouncedCallback(onChange, 250);
   return (
-    <div className="w-full sm:w-64">
+    <div className="min-w-0 flex-1 md:w-56 md:flex-none">
     <Input
       size="sm"
       value={v}
@@ -307,43 +311,37 @@ function SearchBox({ value, onChange }: { value: string; onChange: (v: string) =
 
 // ───────────────────────────── totals ─────────────────────────────
 
-function TotalsStrip({ totals, loading }: { totals?: { count: number; movingSec: number; durationSec: number; distanceM: number; load: number }; loading: boolean }) {
+/** One quiet line: "443 activities · 429 h · 6,131 km · 24,799 load". */
+function TotalsLine({ totals, loading }: { totals?: { count: number; movingSec: number; durationSec: number; distanceM: number; load: number }; loading: boolean }) {
   const units = useUnits();
   const km = units.system === 'imperial' ? 1609.344 : 1000;
-  const cells: { label: string; value: number; format: (n: number) => string; unit?: string; accent?: boolean }[] = [
-    { label: 'Activities', value: totals?.count ?? 0, format: (n) => formatNumber(n, 0) },
-    { label: 'Time', value: (totals?.movingSec || totals?.durationSec || 0) / 3600, format: (n) => formatNumber(n, n < 100 ? 1 : 0), unit: 'h' },
-    { label: 'Distance', value: (totals?.distanceM ?? 0) / km, format: (n) => formatNumber(n, 0), unit: units.system === 'imperial' ? 'mi' : 'km' },
-    { label: 'Load', value: totals?.load ?? 0, format: (n) => formatNumber(n, 0), accent: true },
+  if (loading) return <Skeleton className="h-5 w-72" />;
+  const h = (totals?.movingSec || totals?.durationSec || 0) / 3600;
+  const parts: { value: number; format: (n: number) => string; unit: string }[] = [
+    { value: totals?.count ?? 0, format: (n) => formatNumber(n, 0), unit: (totals?.count ?? 0) === 1 ? 'activity' : 'activities' },
+    { value: h, format: (n) => formatNumber(n, n < 100 ? 1 : 0), unit: 'h' },
+    { value: (totals?.distanceM ?? 0) / km, format: (n) => formatNumber(n, 0), unit: units.system === 'imperial' ? 'mi' : 'km' },
+    { value: totals?.load ?? 0, format: (n) => formatNumber(n, 0), unit: 'load' },
   ];
   return (
-    <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-line-2 bg-surface-1 md:grid-cols-4">
-      {cells.map((c) => (
-        <div key={c.label} className="-mr-px -mb-px flex flex-col gap-1 border-r border-b border-line-1 px-4 py-3">
-          <span className="text-micro text-fg-3">{c.label}</span>
-          {loading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <span className={cn('flex items-baseline gap-1 text-stat-md', c.accent ? 'text-accent-ink' : 'text-fg-1')}>
-              <Ticker value={c.value} format={c.format} />
-              {c.unit && <span className="text-[1.1rem] font-[450] tracking-normal text-fg-3">{c.unit}</span>}
-            </span>
-          )}
-        </div>
+    <p className="flex flex-wrap items-baseline gap-x-2 text-body text-fg-2" aria-label="Totals">
+      {parts.map((p, i) => (
+        <span key={p.unit} className="inline-flex items-baseline gap-1">
+          {i > 0 && <span className="mr-1 text-fg-4" aria-hidden>·</span>}
+          <span className="text-fg-1"><Ticker value={p.value} format={p.format} /></span>
+          <span className="text-fg-3">{p.unit}</span>
+        </span>
       ))}
-    </div>
+    </p>
   );
 }
 
 // ───────────────────────────── table ─────────────────────────────
 
-type SortKey = 'date' | 'title' | 'dur' | 'dist' | 'load' | 'int' | 'hr' | 'out';
-const COLS = 'grid-cols-[5.5rem_1.5rem_minmax(12rem,1fr)_4.5rem_5rem_3.5rem_3.5rem_3.5rem_6.75rem_1.25rem_4.5rem]';
-
-function outputOf(a: Activity) {
-  if (a.sport === 'bike' || (a.sport === 'row' && a.avgPower)) return a.weightedPower ?? a.avgPower ?? null;
-  return a.avgSpeedMps ? -1 / a.avgSpeedMps : null; // pace: faster sorts higher
-}
+type SortKey = 'date' | 'title' | 'dur' | 'dist' | 'load' | 'int';
+/** Six columns: date · sport + title · time · distance · load · effort (intensity). HR, power/pace,
+ *  compliance and the effort profile are on the activity page (and in each row's tooltip). */
+const COLS = 'grid-cols-[6.5rem_minmax(12rem,1fr)_5rem_6rem_4.5rem_5.5rem]';
 
 function ActivityTable({ items, fetching }: { items: Activity[]; fetching: boolean }) {
   const wide = useMediaQuery('(min-width: 1024px)');
@@ -358,8 +356,6 @@ function ActivityTable({ items, fetching }: { items: Activity[]; fetching: boole
         case 'dist': return a.distanceM ?? null;
         case 'load': return a.load;
         case 'int': return INTENSITY_META[a.intensity].level;
-        case 'hr': return a.avgHr ?? null;
-        case 'out': return outputOf(a);
       }
     };
     return [...items].sort((x, y) => {
@@ -382,26 +378,21 @@ function ActivityTable({ items, fetching }: { items: Activity[]; fetching: boole
         className={cn('flex items-center gap-1 whitespace-nowrap transition-colors hover:text-fg-1', right && 'flex-row-reverse justify-self-end', on && 'text-fg-1')}
       >
         {label}
-        <motion.span initial={false} animate={{ rotate: on && sort.dir === 'asc' ? 0 : 180, opacity: on ? 1 : 0.3 }} transition={spring.snappy} className="inline-flex">
+        <motion.span initial={false} animate={{ rotate: on && sort.dir === 'asc' ? 0 : 180, opacity: on ? 1 : 0 }} transition={spring.snappy} className="inline-flex">
           <ArrowUp className="size-3" strokeWidth={2} />
         </motion.span>
       </button>
     );
   };
   return (
-    <div role="table" aria-label="Activities" className={cn('rounded-lg border border-line-2 bg-surface-1 transition-opacity duration-(--dur-base)', fetching && 'opacity-70')}>
-      <div role="row" className={cn('sticky top-(--header-h) z-(--z-sticky) grid h-9 items-center gap-x-3 rounded-t-lg border-b border-line-1 bg-surface-1 px-4 text-micro font-[600] text-fg-3', COLS)}>
+    <div role="table" aria-label="Activities" className={cn('transition-opacity duration-(--dur-base)', fetching && 'opacity-70')}>
+      <div role="row" className={cn('sticky top-(--header-h) z-(--z-sticky) -mx-3 grid h-10 items-center gap-x-4 border-b border-line-1 bg-canvas px-3 text-label font-medium text-fg-3', COLS)}>
         {head('date', 'Date')}
-        <span />
-        {head('title', 'Title')}
+        {head('title', 'Activity')}
         {head('dur', 'Time', true)}
-        {head('dist', 'Dist', true)}
+        {head('dist', 'Distance', true)}
         {head('load', 'Load', true)}
-        {head('int', 'Int', true)}
-        {head('hr', 'HR', true)}
-        {head('out', 'Power / pace', true)}
-        <span />
-        <span className="justify-self-end">Effort</span>
+        {head('int', 'Intensity', true)}
       </div>
       {rows.map((a, i) => (
         <Row key={a.id} a={a} prevMonth={i > 0 && sort.key === 'date' ? rows[i - 1].localDate.slice(0, 7) : null} />
@@ -410,17 +401,16 @@ function ActivityTable({ items, fetching }: { items: Activity[]; fetching: boole
   );
 }
 
-function Out({ a }: { a: Activity }) {
-  const units = useUnits();
+function outText(a: Activity, units: ReturnType<typeof useUnits>): string | null {
   if (a.sport === 'bike' || (a.sport === 'row' && a.avgPower && !a.avgSpeedMps)) {
     const w = a.weightedPower ?? a.avgPower;
-    return w ? <>{formatNumber(w, 0)}<span className="text-fg-3"> W</span></> : <span className="text-fg-4">—</span>;
+    return w ? `${formatNumber(w, 0)} W` : null;
   }
   if (a.avgSpeedMps && SPORT_META[a.sport].hasDistance) {
     const p = paceParts(a.avgSpeedMps, a.sport, units);
-    return <>{p.value}<span className="text-fg-3"> {p.unit}</span></>;
+    return `${p.value} ${p.unit}`;
   }
-  return <span className="text-fg-4">—</span>;
+  return null;
 }
 
 function Row({ a, prevMonth }: { a: Activity; prevMonth: string | null }) {
@@ -428,10 +418,12 @@ function Row({ a, prevMonth }: { a: Activity; prevMonth: string | null }) {
   const on = useIsMorphTarget(a.id);
   const d = a.distanceM ? distanceParts(a.distanceM, a.sport, units) : null;
   const month = a.localDate.slice(0, 7);
+  const out = outText(a, units);
+  const tip = [a.avgHr ? `Avg HR ${a.avgHr} bpm` : null, out, a.compliance && a.compliance.state !== 'unplanned' ? complianceLabel(a.compliance.state) : null, a.postNote ? 'Has a note' : null].filter(Boolean).join(' · ');
   return (
     <>
       {prevMonth !== null && prevMonth !== month && (
-        <div className="border-b border-line-1 bg-canvas/40 px-4 pt-4 pb-1.5 text-micro text-fg-3">
+        <div className="-mx-3 border-b border-line-1 px-3 pt-8 pb-2 text-body-sm font-medium text-fg-2">
           {monthShort(a.localDate)} {a.localDate.slice(0, 4)}
         </div>
       )}
@@ -439,25 +431,20 @@ function Row({ a, prevMonth }: { a: Activity; prevMonth: string | null }) {
         {...links.activity(a.id)}
         {...morphSourceProps(a.id)}
         role="row"
-        onPointerMove={onSpotlightMove}
+        title={tip || undefined}
         style={vt(on, 'card')}
-        className={cn('spotlight group relative grid h-11 items-center gap-x-3 border-b border-line-1 px-4 text-body outline-none transition-colors duration-(--dur-fast) last:rounded-b-lg last:border-b-0 hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus', COLS)}
+        className={cn('group relative -mx-3 grid h-11 items-center gap-x-4 rounded-md border-b border-line-1 px-3 text-body outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus', COLS)}
       >
-        <span className="text-mono-sm text-fg-2">{formatDayShort(a.localDate)} <span className="text-fg-4">{monthShort(a.localDate)}</span></span>
-        <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} className="text-fg-1" />
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-fg-1" style={vt(on, 'title')}>{a.title}</span>
+        <span className="text-fg-3">{formatDayShort(a.localDate)} {monthShort(a.localDate)}</span>
+        <span className="flex min-w-0 items-center gap-2.5">
+          <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} className="shrink-0 text-fg-2" />
+          <span className={cn('truncate text-fg-1', a.isKey && 'font-medium')} style={vt(on, 'title')}>{a.title}</span>
           {a.isKey && <KeyStar pressed readOnly size="sm" />}
-          {a.postNote && <Pilcrow className="size-3 shrink-0 text-fg-3" aria-label="Has a note" />}
         </span>
-        <span className="text-right text-mono text-fg-1">{formatDuration(a.movingSec || a.durationSec)}</span>
-        <span className="text-right text-mono text-fg-2">{d ? <>{d.value}<span className="text-fg-3"> {d.unit}</span></> : <span className="text-fg-4">—</span>}</span>
-        <span className="text-right text-mono text-accent-ink">{formatNumber(a.load, 0)}</span>
-        <span className="flex justify-end"><IntensityPips intensity={a.intensity} /></span>
-        <span className="text-right text-mono text-fg-2">{a.avgHr ?? <span className="text-fg-4">—</span>}</span>
-        <span className="text-right text-mono whitespace-nowrap text-fg-1"><Out a={a} /></span>
-        <span className="flex justify-center">{a.compliance && <ComplianceGlyph state={a.compliance.state} />}</span>
-        <span className="flex justify-end">{a.sparkline && a.sparkline.length > 1 ? <MiniProfile values={a.sparkline} height={16} className="w-[4.5rem]" /> : null}</span>
+        <span className="text-right text-fg-1">{formatDuration(a.movingSec || a.durationSec)}</span>
+        <span className="text-right text-fg-2">{d ? <>{d.value}<span className="text-fg-3"> {d.unit}</span></> : <span className="text-fg-4">—</span>}</span>
+        <span className="text-right text-fg-1">{formatNumber(a.load, 0)}</span>
+        <span className="flex justify-end" aria-label={INTENSITY_META[a.intensity].label}><IntensityPips intensity={a.intensity} /></span>
       </Link>
     </>
   );
@@ -478,23 +465,23 @@ function MobileCard({ a, units }: { a: Activity; units: ReturnType<typeof useUni
   const on = useIsMorphTarget(a.id);
   const d = a.distanceM ? distanceParts(a.distanceM, a.sport, units) : null;
   return (
-    <Link {...links.activity(a.id)} {...morphSourceProps(a.id)} style={vt(on, 'card')} className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-1 p-3 outline-none active:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus">
+    <Link {...links.activity(a.id)} {...morphSourceProps(a.id)} style={vt(on, 'card')} className="flex flex-col gap-1 rounded-lg bg-surface-1 px-4 py-3 outline-none active:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus">
       <div className="flex items-center gap-2">
         <SportGlyph sport={a.sport} subSport={a.subSport} size={16} style={vt(on, 'glyph')} />
-        <span className="min-w-0 flex-1 truncate text-body font-[520] text-fg-1" style={vt(on, 'title')}>{a.title}</span>
+        <span className={cn('min-w-0 flex-1 truncate text-body text-fg-1', a.isKey && 'font-medium')} style={vt(on, 'title')}>{a.title}</span>
         {a.isKey && <KeyStar pressed readOnly size="sm" />}
-        {a.compliance && <ComplianceGlyph state={a.compliance.state} />}
       </div>
       <div className="flex items-end gap-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 text-mono-sm text-fg-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 text-body-sm text-fg-3">
           <span>{formatDayShort(a.localDate)} {monthShort(a.localDate)}</span>
-          <span className="text-fg-1">{formatDuration(a.movingSec || a.durationSec)}</span>
-          {d && <span>{d.value} {d.unit}</span>}
-          <span className="text-accent-ink">{formatNumber(a.load, 0)} <span className="font-sans text-fg-3">load</span></span>
+          <span>·</span>
+          <span className="text-fg-2">{formatDuration(a.movingSec || a.durationSec)}</span>
+          {d && <><span>·</span><span>{d.value} {d.unit}</span></>}
+          <span>·</span>
+          <span>{formatNumber(a.load, 0)} load</span>
         </div>
         <IntensityPips intensity={a.intensity} />
       </div>
-      {a.sparkline && a.sparkline.length > 1 && <MiniProfile values={a.sparkline} height={14} />}
     </Link>
   );
 }
@@ -519,10 +506,10 @@ function Sentinel({ onVisible, loading }: { onVisible: () => void; loading: bool
 
 function ListSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-1" aria-busy>
-      <div className="h-9 border-b border-line-1" />
+    <div className="flex flex-col" aria-busy>
+      <div className="h-10 border-b border-line-1" />
       {Array.from({ length: 12 }, (_, i) => (
-        <div key={i} className="flex h-11 items-center gap-4 border-b border-line-1 px-4">
+        <div key={i} className="flex h-11 items-center gap-4 border-b border-line-1">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="size-4" />
           <Skeleton className="h-3 flex-1" />

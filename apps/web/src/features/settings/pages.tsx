@@ -18,9 +18,8 @@ import { setUnits, useUnits } from '@/lib/units';
 import { setMotionPref, useMotionPref, type MotionPref } from '@/motion/prefs';
 import { spring } from '@/motion/tokens';
 import { listShortcuts } from '@/shell/shortcuts';
-import { setTheme, useTheme, type ThemePref } from '@/shell/theme';
+import { ACCENT_OPTIONS, setTheme, useAccent, useTheme, type AccentPref, type ThemePref } from '@/shell/theme';
 import { Button } from '@/ui/Button';
-import { Card } from '@/ui/Card';
 import { Combobox } from '@/ui/Combobox';
 import { Field, Input } from '@/ui/Field';
 import { Kbd } from '@/ui/Kbd';
@@ -75,10 +74,10 @@ function SettingsNav() {
             aria-current={on ? 'page' : undefined}
             className={cn(
               'relative flex h-9 shrink-0 items-center gap-2.5 whitespace-nowrap rounded-md px-3 text-body transition-colors duration-(--dur-fast) [&_svg]:size-4',
-              on ? 'text-fg-1' : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1',
+              on ? 'text-fg-1' : 'text-fg-3 hover:bg-surface-1 hover:text-fg-1',
             )}
           >
-            {on && <span aria-hidden style={{ viewTransitionName: 'settings-pill' }} className="absolute inset-0 rounded-md border border-line-2 bg-surface-3" />}
+            {on && <span aria-hidden style={{ viewTransitionName: 'settings-pill' }} className="absolute inset-0 rounded-md bg-surface-2" />}
             <span className={cn('relative flex', on ? 'text-fg-1' : 'text-fg-3')}>{n.icon}</span>
             <span className="relative">{n.label}</span>
           </Link>
@@ -90,10 +89,10 @@ function SettingsNav() {
 
 export function SettingsLayout() {
   return (
-    <Page width="page" header={<PageHeader title="Settings" eyebrow="Cadence" />}>
-      <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10">
+    <Page width="page" header={<PageHeader title="Settings" />}>
+      <div className="grid gap-8 lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-16">
         <SettingsNav />
-        <div className="flex min-w-0 flex-col gap-10">
+        <div className="flex min-w-0 max-w-[45rem] flex-col gap-14 md:gap-16">
           <Outlet />
         </div>
       </div>
@@ -137,7 +136,7 @@ export function SettingsProfilePage() {
   return (
     <>
       <Section title="Profile" description="Who you are, as far as the numbers care." actions={<SaveIndicator status={saver.status} />}>
-        <Card spotlight={false}>
+        <div>
           <Rows>
             <NameRow initial={s.name} save={(name) => saver.save({ name })} />
             <Row title="Sex" description="Picks default heart-rate assumptions when no thresholds are set.">
@@ -166,11 +165,11 @@ export function SettingsProfilePage() {
             </Row>
             <WeightRow />
           </Rows>
-        </Card>
+        </div>
       </Section>
 
       <Section title="Preferences">
-        <Card spotlight={false}>
+        <div>
           <Rows>
             <Row title="Units" description="Distances, paces, elevation and weight.">
               <Segmented
@@ -221,7 +220,7 @@ export function SettingsProfilePage() {
               />
             </Row>
           </Rows>
-        </Card>
+        </div>
       </Section>
 
       <Section title="Security">
@@ -291,7 +290,7 @@ function SecurityCard() {
   });
   const ok = current.length > 0 && passphraseStrength(next).score >= 2;
   return (
-    <Card spotlight={false}>
+    <div>
       <form
         className="flex flex-col gap-4"
         onSubmit={(e) => {
@@ -319,7 +318,7 @@ function SecurityCard() {
           </div>
         </div>
         {error && <InlineError>{error}</InlineError>}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line-1 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <Button variant="ghost" icon={<LogOut />} loading={logout.isPending} onClick={() => logout.mutate()}>
             Sign out
           </Button>
@@ -328,7 +327,7 @@ function SecurityCard() {
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 }
 
@@ -348,19 +347,19 @@ export function SettingsSportsPage() {
   return (
     <>
       <Section title="Sports" description="How each sport is scored. Thresholds live under Zones.">
-        <Card spotlight={false} padding="none">
+        <div>
           <ul className="divide-y divide-line-1">
             {LOAD_SOURCES.map((l) => (
-              <li key={l.sport} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+              <li key={l.sport} className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-3">
                 <span className="flex w-44 items-center gap-2.5 text-body text-fg-1">
-                  <SportGlyph sport={l.sport} size={16} />
+                  <SportGlyph sport={l.sport} size={16} className="text-fg-3" />
                   {l.label}
                 </span>
                 <ol className="flex flex-1 flex-wrap items-center gap-1.5">
                   {l.order.map((o, i) => (
                     <li key={o} className="flex items-center gap-1.5">
                       {i > 0 && <span className="text-fg-4">→</span>}
-                      <span className={cn('inline-flex h-6 items-center rounded-sm border px-2 text-label', i === 0 ? 'border-line-3 bg-surface-3 text-fg-1' : 'border-line-2 text-fg-2')}>{o}</span>
+                      <span className={cn('text-body-sm', i === 0 ? 'text-fg-1' : 'text-fg-3')}>{o}</span>
                     </li>
                   ))}
                 </ol>
@@ -372,20 +371,20 @@ export function SettingsSportsPage() {
               </li>
             ))}
           </ul>
-        </Card>
-        <p className="mt-3 text-body-sm text-fg-3">Load uses the first source an activity has data for. One hour at threshold = 100.</p>
+        </div>
+        <p className="mt-5 text-body-sm text-fg-3">Load uses the first source an activity has data for. One hour at threshold = 100.</p>
       </Section>
 
       <Section title="Compliance" description="How a completed session is compared with its plan.">
-        <Card spotlight={false}>
-          <div className="grid gap-4 sm:grid-cols-3">
+        <div>
+          <div className="grid gap-6 sm:grid-cols-3">
             {[
               ['1', 'Load', 'when the plan has a load and the activity has one'],
               ['2', 'Duration', 'otherwise'],
               ['3', 'Distance', 'when only distance was planned'],
             ].map(([n, t, d]) => (
               <div key={n} className="flex gap-3">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-line-3 text-mono-sm text-fg-2">{n}</span>
+                <span className="num w-4 shrink-0 text-body text-fg-3">{n}</span>
                 <div className="flex flex-col">
                   <span className="text-body text-fg-1">{t}</span>
                   <span className="text-body-sm text-fg-3">{d}</span>
@@ -393,12 +392,12 @@ export function SettingsSportsPage() {
               </div>
             ))}
           </div>
-          <p className="mt-4 border-t border-line-1 pt-4 text-body-sm text-fg-3">80–120 % of plan is compliant, 50–79 % or 121–150 % partial, beyond that off-plan.</p>
-        </Card>
+          <p className="mt-6 text-body-sm text-fg-3">80–120 % of plan is compliant, 50–79 % or 121–150 % partial, beyond that off-plan.</p>
+        </div>
       </Section>
 
       <Section title="Garmin" actions={<SaveIndicator status={saver.status} />}>
-        <Card spotlight={false}>
+        <div>
           <Rows>
             <Row title="Auto-send window" description="Planned workouts this many days ahead are sent to your Garmin calendar on every sync.">
               <Segmented
@@ -414,7 +413,7 @@ export function SettingsSportsPage() {
               />
             </Row>
           </Rows>
-        </Card>
+        </div>
       </Section>
     </>
   );
@@ -430,13 +429,13 @@ function ThemeTile({ kind, on, onSelect }: { kind: ThemePref; on: boolean; onSel
     const inv = inverted(k);
     return (
       <div className={cn('flex h-full gap-1.5 p-2', inv ? 'bg-fg-1' : 'bg-canvas', className)}>
-        <div className={cn('flex w-6 flex-col gap-1 rounded-xs p-1', inv ? 'bg-fg-2' : 'bg-surface-2')}>
-          {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={cn('h-1 rounded-full', i === 1 ? 'bg-accent' : inv ? 'bg-canvas/50' : 'bg-fg-4')} />
+        <div className={cn('flex w-5 flex-col gap-1 rounded-xs p-1', inv ? 'bg-fg-2' : 'bg-surface-2')}>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className={cn('h-1 rounded-full', inv ? 'bg-canvas/40' : 'bg-fg-4')} />
           ))}
         </div>
         <div className="flex flex-1 flex-col gap-1.5">
-          <span className={cn('h-2 w-1/2 rounded-full', inv ? 'bg-canvas' : 'bg-fg-1')} />
+          <span className={cn('h-1.5 w-1/2 rounded-full', inv ? 'bg-canvas' : 'bg-fg-1')} />
           <div className="grid flex-1 grid-cols-4 gap-1">
             {Array.from({ length: 8 }, (_, i) => (
               <span key={i} className={cn('rounded-xs', i === 5 ? 'bg-accent' : inv ? 'bg-canvas/15' : 'bg-surface-3')} />
@@ -448,23 +447,74 @@ function ThemeTile({ kind, on, onSelect }: { kind: ThemePref; on: boolean; onSel
   };
   const label = kind === 'dark' ? 'Dark' : kind === 'light' ? 'Light' : 'System';
   return (
-    <button role="radio" aria-checked={on} onClick={onSelect} className="group flex flex-col gap-2 text-left">
-      <span className={cn('relative block h-24 overflow-hidden rounded-lg border transition-colors duration-(--dur-fast)', on ? 'border-fg-1' : 'border-line-2 group-hover:border-line-3')}>
-        {kind === 'system' ? (
-          <span className="flex h-full">
-            <Mock k="dark" className="w-1/2 overflow-hidden" />
-            <Mock k="light" className="w-1/2 overflow-hidden" />
-          </span>
-        ) : (
-          <Mock k={kind} />
-        )}
-        {on && <motion.span layoutId="theme-ring" transition={spring.smooth} className="absolute inset-0 rounded-lg ring-2 ring-fg-1 ring-inset" />}
+    <button type="button" role="radio" aria-checked={on} onClick={onSelect} className="group flex flex-col gap-2.5 rounded-lg text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">
+      <span className="relative block h-20 rounded-lg">
+        <span className="absolute inset-0 overflow-hidden rounded-lg bg-surface-2 transition-transform duration-(--dur-fast) group-hover:scale-[1.015]">
+          {kind === 'system' ? (
+            <span className="flex h-full">
+              <Mock k="dark" className="w-1/2 overflow-hidden" />
+              <Mock k="light" className="w-1/2 overflow-hidden" />
+            </span>
+          ) : (
+            <Mock k={kind} />
+          )}
+        </span>
+        {on && <motion.span layoutId="theme-ring" transition={spring.smooth} className="absolute -inset-1 rounded-[calc(var(--radius-lg)+4px)] ring-2 ring-accent" aria-hidden />}
       </span>
-      <span className="flex items-center gap-1.5 text-label text-fg-1 [&_svg]:size-3.5">
+      <span className={cn('flex items-center gap-1.5 text-body-sm [&_svg]:size-3.5', on ? 'text-fg-1' : 'text-fg-3')}>
         {kind === 'dark' ? <Moon /> : kind === 'light' ? <Sun /> : <Monitor />}
         {label}
       </span>
     </button>
+  );
+}
+
+/** The three accent options as they look in each theme (mirrors the --accent values in app.css:
+ *  a picker has to preview the options it is not using, so these cannot come from the live token). */
+const SWATCH: Record<'dark' | 'light', Record<AccentPref, string>> = {
+  dark: { blue: 'oklch(0.72 0.12 252)', green: 'oklch(0.76 0.11 160)', rose: 'oklch(0.76 0.10 8)' },
+  light: { blue: 'oklch(0.53 0.14 252)', green: 'oklch(0.50 0.10 160)', rose: 'oklch(0.54 0.14 8)' },
+};
+
+function AccentPicker({ onPick }: { onPick: (a: AccentPref) => void }) {
+  const { accent } = useAccent();
+  const { resolved } = useTheme();
+  return (
+    <LayoutGroup id="accent">
+      <div role="radiogroup" aria-label="Accent" className="flex gap-6">
+        {ACCENT_OPTIONS.map((o) => {
+          const on = accent === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onPick(o.value)}
+              className="group flex flex-col items-center gap-2.5 rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+            >
+              <span className="relative flex size-10 items-center justify-center">
+                {on && <motion.span layoutId="accent-ring" transition={spring.bouncy} className="absolute -inset-1 rounded-full ring-2 ring-fg-2" aria-hidden />}
+                <motion.span
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  transition={spring.snappy}
+                  className="flex size-10 items-center justify-center rounded-full"
+                  style={{ background: SWATCH[resolved][o.value] }}
+                >
+                  {on && (
+                    <svg viewBox="0 0 12 12" className="size-4 text-on-accent" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <motion.path d="M2.5 6.2 5 8.5l4.5-5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.snappy, delay: 0.05 }} />
+                    </svg>
+                  )}
+                </motion.span>
+              </span>
+              <span className={cn('text-body-sm transition-colors duration-(--dur-fast)', on ? 'text-fg-1' : 'text-fg-3 group-hover:text-fg-2')}>{o.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </LayoutGroup>
   );
 }
 
@@ -473,60 +523,78 @@ export function SettingsAppearancePage() {
   const motionPref = useMotionPref();
   const { data: s } = useSettings();
   const saver = useSettingsSaver();
+  const { setAccent } = useAccent();
   const density = s?.density ?? 'comfortable';
   useEffect(() => {
     document.documentElement.dataset.density = density;
   }, [density]);
   return (
-    <Section title="Appearance" description="Black, white and one green. Theme and motion apply to this device instantly." actions={<SaveIndicator status={saver.status} />}>
-      <Card spotlight={false}>
-        <div className="flex flex-col gap-6">
-          <LayoutGroup id="theme">
-            <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-3 sm:gap-4">
-              {(['dark', 'light', 'system'] as const).map((k) => (
-                <ThemeTile
-                  key={k}
-                  kind={k}
-                  on={pref === k}
-                  onSelect={() => {
-                    setTheme(k);
-                    void saver.save({ theme: k });
-                  }}
-                />
-              ))}
+    <>
+      <Section title="Appearance" description="Quiet neutrals and one accent colour. Changes apply instantly." actions={<SaveIndicator status={saver.status} />}>
+        <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-4">
+            <span className="text-body text-fg-1">Theme</span>
+            <LayoutGroup id="theme">
+              <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-4 sm:gap-6">
+                {(['dark', 'light', 'system'] as const).map((k) => (
+                  <ThemeTile
+                    key={k}
+                    kind={k}
+                    on={pref === k}
+                    onSelect={() => {
+                      setTheme(k);
+                      void saver.save({ theme: k });
+                    }}
+                  />
+                ))}
+              </div>
+            </LayoutGroup>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-body text-fg-1">Accent</span>
+              <span className="text-body-sm text-fg-3">Marks today, the current selection and each page’s main action.</span>
             </div>
-          </LayoutGroup>
-          <Rows>
-            <Row title="Density" description="Compact fits more weeks and rows on screen.">
-              <Segmented
-                aria-label="Density"
-                value={density}
-                onValueChange={(d) => void saver.save({ density: d })}
-                options={[
-                  { value: 'comfortable', label: 'Comfortable' },
-                  { value: 'compact', label: 'Compact' },
-                ]}
-              />
-            </Row>
-            <Row title="Motion" description="Reduced replaces morphs and slides with short crossfades. System follows your OS.">
-              <Segmented<MotionPref>
-                aria-label="Motion"
-                value={motionPref}
-                onValueChange={(m) => {
-                  setMotionPref(m);
-                  void saver.save({ reducedMotion: m === 'reduced' });
-                }}
-                options={[
-                  { value: 'full', label: 'Full' },
-                  { value: 'reduced', label: 'Reduced' },
-                  { value: 'system', label: 'System' },
-                ]}
-              />
-            </Row>
-          </Rows>
+            <AccentPicker
+              onPick={(a) => {
+                setAccent(a);
+                void saver.save({ accent: a });
+              }}
+            />
+          </div>
         </div>
-      </Card>
-    </Section>
+      </Section>
+      <Section title="Layout and motion">
+        <Rows>
+          <Row title="Density" description="Compact fits more weeks and rows on screen.">
+            <Segmented
+              aria-label="Density"
+              value={density}
+              onValueChange={(d) => void saver.save({ density: d })}
+              options={[
+                { value: 'comfortable', label: 'Comfortable' },
+                { value: 'compact', label: 'Compact' },
+              ]}
+            />
+          </Row>
+          <Row title="Motion" description="Reduced replaces morphs and slides with short crossfades. System follows your device.">
+            <Segmented<MotionPref>
+              aria-label="Motion"
+              value={motionPref}
+              onValueChange={(m) => {
+                setMotionPref(m);
+                void saver.save({ reducedMotion: m === 'reduced' });
+              }}
+              options={[
+                { value: 'full', label: 'Full' },
+                { value: 'reduced', label: 'Reduced' },
+                { value: 'system', label: 'System' },
+              ]}
+            />
+          </Row>
+        </Rows>
+      </Section>
+    </>
   );
 }
 
@@ -539,7 +607,7 @@ function Highlight({ text, q }: { text: string; q: string }) {
   return (
     <>
       {text.slice(0, i)}
-      <mark className="rounded-xs bg-accent-a3 text-fg-1">{text.slice(i, i + q.length)}</mark>
+      <mark className="rounded-xs bg-surface-active text-fg-1">{text.slice(i, i + q.length)}</mark>
       {text.slice(i + q.length)}
     </>
   );
@@ -573,12 +641,13 @@ export function SettingsShortcutsPage() {
           <Input leading={<Search />} value={q} onChange={(e) => setQ(e.currentTarget.value)} placeholder="Filter: “week”, “undo”, “g”…" />
         </Field>
         {groups.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-line-2 px-4 py-6 text-center text-body text-fg-3">No shortcut matches “{q}”.</p>
+          <p className="py-6 text-body text-fg-3">No shortcut matches “{q}”.</p>
         ) : (
-          <div className="columns-1 gap-4 lg:columns-2">
+          <div className="columns-1 gap-12 md:columns-2">
             {groups.map((g) => (
-              <motion.div key={g.group} layout="position" transition={spring.smooth} className="mb-4 break-inside-avoid">
-                <Card title={g.group} spotlight={false}>
+              <motion.div key={g.group} layout="position" transition={spring.smooth} className="mb-10 break-inside-avoid">
+                <h3 className="mb-2 text-title-3 text-fg-1">{g.group}</h3>
+                <div>
                   <dl className="flex flex-col">
                     {g.items.map((it) => (
                       <div key={it.id} className="flex min-h-9 items-center justify-between gap-4 border-b border-line-1 py-1 last:border-b-0">
@@ -591,7 +660,7 @@ export function SettingsShortcutsPage() {
                       </div>
                     ))}
                   </dl>
-                </Card>
+                </div>
               </motion.div>
             ))}
           </div>

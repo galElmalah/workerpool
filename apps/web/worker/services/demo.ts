@@ -121,11 +121,11 @@ function progressOf(job: DemoJob, bf?: Awaited<ReturnType<typeof getBackfill>>):
 
 // ───────────────────────────── reset ─────────────────────────────
 
-/** Wipe every table except `auth` (and D1/SQLite internals); drop the in-memory mock. */
+/** Wipe every table except `auth` and `devices` (sign-ins survive) and D1/SQLite internals; drop the in-memory mock. */
 export async function resetDemoData(env: Env): Promise<string[]> {
   const tables = await all<{ name: string }>(
     env.DB,
-    `SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ('auth', 'd1_migrations')
+    `SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ('auth', 'devices', 'd1_migrations')
      AND substr(name, 1, 7) != 'sqlite_' AND substr(name, 1, 4) != '_cf_'`,
   );
   // children first (activity_streams/files reference activities)

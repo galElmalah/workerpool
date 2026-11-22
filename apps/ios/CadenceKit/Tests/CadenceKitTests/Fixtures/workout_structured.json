@@ -1,0 +1,117 @@
+{
+ "id": "wk_d20261110_2",
+ "date": "2026-11-10",
+ "startTime": "18:30",
+ "sport": "bike",
+ "subSport": "indoor",
+ "title": "Sweet spot 2×20′",
+ "description": "Muscular endurance. Should feel comfortably hard.",
+ "plannedDurationSec": 4320,
+ "plannedDistanceM": 34803,
+ "plannedLoad": 67.1,
+ "plannedIntensityFactor": 0.748,
+ "structure": {
+  "steps": [
+   {
+    "kind": "step",
+    "id": "s1",
+    "role": "warmup",
+    "measure": {
+     "type": "time",
+     "sec": 720
+    },
+    "target": {
+     "type": "ramp",
+     "basis": "power_pct",
+     "from": 50,
+     "to": 75
+    },
+    "label": "Warm up"
+   },
+   {
+    "kind": "repeat",
+    "id": "s4",
+    "count": 2,
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s2",
+      "role": "active",
+      "measure": {
+       "type": "time",
+       "sec": 1200
+      },
+      "target": {
+       "type": "power_pct",
+       "low": 85,
+       "high": 89
+      },
+      "label": "Sweet spot"
+     },
+     {
+      "kind": "step",
+      "id": "s3",
+      "role": "recovery",
+      "measure": {
+       "type": "time",
+       "sec": 300
+      },
+      "target": {
+       "type": "power_pct",
+       "low": 50,
+       "high": 55
+      }
+     }
+    ]
+   },
+   {
+    "kind": "step",
+    "id": "s5",
+    "role": "cooldown",
+    "measure": {
+     "type": "time",
+     "sec": 600
+    },
+    "target": {
+     "type": "power_pct",
+     "low": 45,
+     "high": 55
+    },
+    "label": "Cool down"
+   }
+  ]
+ },
+ "isKey": true,
+ "intensity": "tempo",
+ "tags": [
+  "intervals",
+  "sweet-spot"
+ ],
+ "environment": "indoor",
+ "pairedActivityId": "act_2f9p1pcbj0",
+ "status": "planned",
+ "sparkline": [
+  0.43,
+  0.456,
+  0.482,
+  0.508,
+  0.534,
+  0.56,
+  0.586,
+  0.612,
+  0.725,
+  0.725,
+  0.725,
+  0.725
+ ],
+ "garmin": {
+  "syncState": "none"
+ },
+ "createdAt": "2026-11-21T18:00:20.888Z",
+ "updatedAt": "2026-11-21T18:00:25.266Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 1.03,
+  "state": "on_target"
+ }
+}

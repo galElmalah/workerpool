@@ -1,0 +1,142 @@
+[
+ {
+  "isoWeek": "2026-W44",
+  "startDate": "2026-10-26",
+  "endDate": "2026-11-01",
+  "plannedSec": 27600,
+  "doneSec": 35135,
+  "plannedLoad": 354.5,
+  "doneLoad": 208.6,
+  "plannedDistanceM": 0,
+  "doneDistanceM": 42941.6,
+  "elevationGainM": 3306,
+  "projectedSec": 35135,
+  "projectedLoad": 208.6,
+  "bySport": [
+   {
+    "sport": "run",
+    "plannedSec": 2400,
+    "doneSec": 2404,
+    "plannedLoad": 30.8,
+    "doneLoad": 37.5,
+    "plannedDistanceM": 0,
+    "doneDistanceM": 6743.4,
+    "plannedCount": 1,
+    "doneCount": 1,
+    "elevationGainM": 199
+   },
+   {
+    "sport": "hike",
+    "plannedSec": 25200,
+    "doneSec": 28827,
+    "plannedLoad": 323.7,
+    "doneLoad": 153.1,
+    "plannedDistanceM": 0,
+    "doneDistanceM": 31124,
+    "plannedCount": 2,
+    "doneCount": 4,
+    "elevationGainM": 2999
+   }
+  ],
+  "keyPlanned": 0,
+  "keyDone": 0,
+  "intensitySec": {
+   "easy": 35082,
+   "moderate": 0,
+   "hard": 0
+  },
+  "compliancePct": 55.7,
+  "fitness": 64.3,
+  "fatigue": 34.2,
+  "form": 26.3,
+  "formPct": 40,
+  "formZone": "transition",
+  "fitnessDelta": -6.2,
+  "wowSec": 1.46,
+  "wowLoad": 0.741,
+  "wowDistanceM": -0.369,
+  "isProjected": false,
+  "hasNote": true,
+  "dailyLoad": [
+   14.8,
+   51.7,
+   24.2,
+   37.5,
+   0,
+   80.4,
+   0
+  ],
+  "targetLoad": 270,
+  "phaseId": "ph_demo_14"
+ },
+ {
+  "isoWeek": "2026-W45",
+  "startDate": "2026-11-02",
+  "endDate": "2026-11-08",
+  "plannedSec": 20019,
+  "doneSec": 20896,
+  "plannedLoad": 244.7,
+  "doneLoad": 195.7,
+  "plannedDistanceM": 1800,
+  "doneDistanceM": 67245.6,
+  "elevationGainM": 474,
+  "projectedSec": 20896,
+  "projectedLoad": 195.7,
+  "bySport": [
+   {
+    "sport": "bike",
+    "plannedSec": 7200,
+    "doneSec": 7341,
+    "plannedLoad": 60.5,
+    "doneLoad": 52.7,
+    "plannedDistanceM": 0,
+    "doneDistanceM": 49362.2,
+    "plannedCount": 1,
+    "doneCount": 1,
+    "elevationGainM": 427
+   },
+   {
+    "sport": "run",
+    "plannedSec": 5400,
+    "doneSec": 5413,
+    "plannedLoad": 69.3,
+    "doneLoad": 83.4,
+    "plannedDistanceM": 0,
+    "doneDistanceM": 16083.4,
+    "plannedCount": 2,
+    "doneCount": 2,
+    "elevationGainM": 47
+   }
+  ],
+  "keyPlanned": 0,
+  "keyDone": 0,
+  "intensitySec": {
+   "easy": 20872,
+   "moderate": 11,
+   "hard": 35
+  },
+  "compliancePct": 74.2,
+  "fitness": 58.7,
+  "fatigue": 31.8,
+  "form": 29.7,
+  "formPct": 50.4,
+  "formZone": "transition",
+  "fitnessDelta": -5.6,
+  "wowSec": -0.405,
+  "wowLoad": -0.062,
+  "wowDistanceM": 0.566,
+  "isProjected": false,
+  "hasNote": true,
+  "dailyLoad": [
+   17.1,
+   32.7,
+   34.8,
+   0,
+   9.8,
+   52.7,
+   48.6
+  ],
+  "targetLoad": 270,
+  "phaseId": "ph_demo_14"
+ }
+]

@@ -1,0 +1,25 @@
+{
+ "id": "wk_taodxdh882",
+ "date": "2026-12-23",
+ "sport": "run",
+ "title": "Endurance 45′",
+ "preNote": "Fixture note",
+ "plannedDurationSec": 2700,
+ "plannedLoad": 34.7,
+ "plannedIntensityFactor": 0.68,
+ "isKey": true,
+ "intensity": "endurance",
+ "tags": [],
+ "environment": "any",
+ "status": "planned",
+ "garmin": {
+  "syncState": "none"
+ },
+ "createdAt": "2026-11-22T05:55:50.448Z",
+ "updatedAt": "2026-11-22T05:55:50.448Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 0,
+  "state": "planned"
+ }
+}

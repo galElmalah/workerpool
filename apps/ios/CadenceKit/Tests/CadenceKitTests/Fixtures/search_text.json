@@ -1,0 +1,49 @@
+{
+ "q": "ride",
+ "groups": [
+  {
+   "type": "workouts",
+   "label": "Planned workouts",
+   "items": [
+    {
+     "type": "workout",
+     "id": "wk_d20261121_1",
+     "title": "Long ride 2h05 — Gavarres loop",
+     "subtitle": "Saturday 21 November 2026 · Ride · 2:05",
+     "date": "2026-11-21",
+     "href": "/workouts/wk_d20261121_1"
+    },
+    {
+     "type": "workout",
+     "id": "wk_d20261124_1",
+     "title": "Easy 30′ + 6×20″ strides",
+     "subtitle": "Tuesday 24 November 2026 · Run · 0:40",
+     "date": "2026-11-24",
+     "href": "/workouts/wk_d20261124_1"
+    }
+   ]
+  },
+  {
+   "type": "activities",
+   "label": "Activities",
+   "items": [
+    {
+     "type": "activity",
+     "id": "act_uxe16yozne",
+     "title": "Long ride 2h05 — Gavarres loop",
+     "subtitle": "Saturday 21 November 2026 · Ride · 2:06 · 57.8 km",
+     "date": "2026-11-21",
+     "href": "/activities/act_uxe16yozne"
+    },
+    {
+     "type": "activity",
+     "id": "act_jhmdeffixy",
+     "title": "Sweet spot 3×12′",
+     "subtitle": "Tuesday 17 November 2026 · Ride · 1:10 · 37.7 km",
+     "date": "2026-11-17",
+     "href": "/activities/act_jhmdeffixy"
+    }
+   ]
+  }
+ ]
+}

@@ -143,7 +143,7 @@ export function OverviewPage() {
 
       <Section
         title={<TitleLink to="/trends/volume">Weekly volume</TitleLink>}
-        description={sport ? 'Completed time per week for this sport. Click a week to review it.' : 'Completed time per week, all sports. Click a week to review it.'}
+        description={`Completed ${metric === 'hours' ? 'hours' : metric === 'load' ? 'load' : 'distance'} per week, ${sport ? 'this sport only' : 'all sports'}. Click a week to review it.`}
         actions={<Segmented aria-label="Metric" size="sm" value={metric} onValueChange={(m) => set({ metric: m })} options={METRIC_OPTIONS} />}
       >
         {weekly.isError ? (
@@ -216,8 +216,7 @@ function Headline({ all, today, compare, sport, fitness, loading }: { all: WeekS
   const baseLoading = compare === 'year' ? calLy.isPending : cal.isPending;
 
   const pct = (a?: number, b?: number | null) => (a == null || b == null ? null : b > 0 ? a / b - 1 : a > 0 ? null : 0);
-  const byDay = inProgress && today && compare !== 'year' ? ` by ${weekdayShort(today)}` : '';
-  const refText = (v: string) => (compare === 'prev' ? `vs ${v}${byDay} last week` : compare === 'avg' ? `vs ${v} 4-week avg` : `vs ${v} last year`);
+  const refText = (v: string) => `vs ${v}`;
   const noBase = baseLoading ? '' : compare === 'year' ? 'no data last year' : 'no earlier weeks yet';
 
   const fIdx = fitness ? todayIndex(fitness, today) : -1;
@@ -229,9 +228,8 @@ function Headline({ all, today, compare, sport, fitness, loading }: { all: WeekS
   const hoursDelta = pct(curT?.hours, base?.hours);
   const loadDelta = pct(curT?.load, base?.load);
 
-  const description = cur
-    ? `${formatIsoWeek(cur.isoWeek)}${inProgress ? `, ${7 - dow} day${7 - dow === 1 ? '' : 's'} to go` : ''}${sport ? ', this sport only' : ''}. Changes are against ${compare === 'prev' ? (inProgress ? 'last week at the same weekday' : 'last week') : compare === 'avg' ? 'the 4-week average' : 'the same week last year'}.`
-    : undefined;
+  const basis = compare === 'prev' ? (inProgress && today ? `last week by ${weekdayShort(today)}` : 'last week') : compare === 'avg' ? 'the 4-week average' : 'the same week last year';
+  const description = cur ? `${formatIsoWeek(cur.isoWeek)}${inProgress ? ` · ${7 - dow} day${7 - dow === 1 ? '' : 's'} to go` : ''}${sport ? ' · this sport only' : ''} · changes against ${basis}` : undefined;
 
   return (
     <Section
@@ -375,7 +373,14 @@ function WowSection({ all, weeks, metric, compare, sync, loading, onMetric, onOp
       ? wowSentence(METRIC_NAME[metric], items.map((i) => i.value), fmtPct)
       : `Last week's ${METRIC_NAME[metric].toLowerCase()} was ${fmtPct(lastV)} ${compare === 'avg' ? 'against the 4 weeks before it' : 'against the same week last year'}; ${above} of ${vals.length} weeks came in above.`;
   const lastItem = [...items].reverse().find((i) => i.value != null);
-  const name = { prev: 'the week before', avg: 'the 4 weeks before it', year: 'the same week a year earlier' }[compare];
+  // A calmer read under the headline: the last 4 complete weeks against the 4 before them.
+  const four = (k: number) => {
+    const ws = complete.slice(complete.length - 4 * (k + 1), complete.length - 4 * k);
+    return ws.length === 4 ? ws.reduce((a, w) => a + f(w), 0) / 4 : null;
+  };
+  const a4 = four(0);
+  const b4 = four(1);
+  const trend4 = a4 != null && b4 ? ` The last 4 weeks averaged ${fmtM(metric, a4)}, ${fmtPct(a4 / b4 - 1)} on the 4 before.` : '';
   return (
     <Section title="Week-over-week progression" actions={<Segmented aria-label="Progression metric" size="sm" value={metric} onValueChange={onMetric} options={METRIC_OPTIONS} />}>
       <div className="flex flex-col gap-2">
@@ -385,7 +390,8 @@ function WowSection({ all, weeks, metric, compare, sync, loading, onMetric, onOp
           </motion.p>
         </AnimatePresence>
         <p className="text-body text-fg-2">
-          {lastItem?.detail ? `Last complete week: ${lastItem.detail}. ` : ''}Each bar is a complete week against {name}; weeks above +15 % carry a caution mark.
+          {lastItem?.detail ? `Last week: ${lastItem.detail}.` : ''}
+          {trend4}
         </p>
       </div>
       <div className="mt-8">
@@ -403,8 +409,8 @@ function ConsistencyLine({ data }: { data: ReturnType<typeof useConsistency>['da
   const trained = data.days.filter((d) => d.count > 0).length;
   const best = s.currentWeeks3 >= s.longestWeeks3 && s.currentWeeks3 > 1;
   return (
-    <span title={`Training days in a row: ${s.currentDays} (best ${s.longestDays}). Longest run of weeks with 3+ sessions: ${s.longestWeeks3}.`}>
-      {s.currentWeeks3} week{s.currentWeeks3 === 1 ? '' : 's'} in a row with 3+ sessions{best ? ' (your best)' : ` (best ${s.longestWeeks3})`} · {trained} of {data.days.length} days trained · {s.daysSinceRest} day{s.daysSinceRest === 1 ? '' : 's'} since a rest day
+    <span title={`Training days in a row: ${s.currentDays} (best ${s.longestDays}). Longest run of weeks with 3+ sessions: ${s.longestWeeks3}. Days since the last full rest day: ${s.daysSinceRest}.`}>
+      {s.currentWeeks3} week{s.currentWeeks3 === 1 ? '' : 's'} in a row with 3+ sessions{best ? ', your best' : ` (best ${s.longestWeeks3})`} · {trained} of {data.days.length} days trained
     </span>
   );
 }

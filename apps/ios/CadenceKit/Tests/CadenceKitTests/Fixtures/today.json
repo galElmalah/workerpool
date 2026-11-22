@@ -1,0 +1,449 @@
+{
+ "date": "2026-11-21",
+ "workouts": [
+  {
+   "id": "wk_d20261121_1",
+   "date": "2026-11-21",
+   "startTime": "09:30",
+   "sport": "bike",
+   "subSport": "road",
+   "title": "Long ride 2h05 — Gavarres loop",
+   "description": "Aerobic endurance. Conversational, eat early and often.",
+   "plannedDurationSec": 7500,
+   "plannedLoad": 96.3,
+   "plannedIntensityFactor": 0.68,
+   "isKey": true,
+   "intensity": "endurance",
+   "tags": [
+    "long",
+    "endurance"
+   ],
+   "environment": "outdoor",
+   "pairedActivityId": "act_uxe16yozne",
+   "status": "planned",
+   "garmin": {
+    "workoutId": "1000000001",
+    "scheduleId": "500000001",
+    "syncState": "synced",
+    "lastPushedAt": "2026-11-21T18:02:06.782Z"
+   },
+   "createdAt": "2026-11-21T18:00:20.888Z",
+   "updatedAt": "2026-11-21T18:00:21.873Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.07,
+    "state": "on_target"
+   }
+  }
+ ],
+ "activities": [
+  {
+   "id": "act_uxe16yozne",
+   "source": "garmin",
+   "garminActivityId": "20380998387",
+   "garminTypeKey": "road_biking",
+   "startedAt": "2026-11-21T08:26:36.000Z",
+   "utcOffsetMin": 60,
+   "localDate": "2026-11-21",
+   "sport": "bike",
+   "subSport": "road",
+   "title": "Long ride 2h05 — Gavarres loop",
+   "durationSec": 7561,
+   "movingSec": 7561,
+   "distanceM": 57839.6,
+   "elevationGainM": 722,
+   "load": 102.6,
+   "loadSource": "power",
+   "intensityFactor": 0.699,
+   "avgHr": 132,
+   "maxHr": 164,
+   "avgPower": 168,
+   "weightedPower": 193,
+   "maxPower": 704,
+   "avgSpeedMps": 7.65,
+   "avgCadence": 86,
+   "calories": 1310,
+   "workKj": 1272.5,
+   "variability": 1.146,
+   "efficiency": 1.4569,
+   "aerobicEffect": 3.3,
+   "anaerobicEffect": 0.7,
+   "intensityAuto": "tempo",
+   "intensity": "tempo",
+   "isKey": true,
+   "rpe": 4,
+   "feel": 3,
+   "postNote": "57.8 km, 722 m. Coffee in Banyoles, headwind home.",
+   "tags": [],
+   "pairedWorkoutId": "wk_d20261121_1",
+   "hasStreams": true,
+   "sparkline": [
+    0.45,
+    0.58,
+    0.15,
+    0.84,
+    0.83,
+    0.5,
+    0.88,
+    0.78,
+    0.53,
+    0.81,
+    0.75,
+    0.9
+   ],
+   "createdAt": "2026-11-21T18:00:21.807Z",
+   "updatedAt": "2026-11-21T18:00:21.873Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.07,
+    "state": "on_target"
+   }
+  }
+ ],
+ "wellness": {
+  "today": {
+   "date": "2026-11-21",
+   "hrvMs": 60,
+   "hrvStatus": "BALANCED",
+   "restingHr": 49,
+   "sleepSec": 28260,
+   "sleepScore": 79,
+   "weightKg": 72.4,
+   "bodyBattery": 77,
+   "stress": 31,
+   "readiness": 60,
+   "vo2max": 54
+  },
+  "hrv": {
+   "b7Ms": 60.5,
+   "lowMs": 58.8,
+   "highMs": 64,
+   "status": "normal"
+  },
+  "restingHr": {
+   "today": 49,
+   "rhr7": 49.3,
+   "rhr60": 48.3,
+   "elevated": false
+  },
+  "sleep": {
+   "lastHours": 7.85,
+   "mean3Hours": 7.77,
+   "short": false
+  },
+  "readiness": {
+   "state": "green",
+   "reasons": [],
+   "inputs": [
+    "hrv",
+    "restingHr",
+    "sleep",
+    "form"
+   ],
+   "label": "Heuristic, not a validated or medical score"
+  }
+ },
+ "fitness": {
+  "date": "2026-11-21",
+  "load": 102.6,
+  "plannedLoad": 0,
+  "fitness": 65.6,
+  "fatigue": 71.5,
+  "form": -2,
+  "formPct": -3.1,
+  "formZone": "neutral",
+  "ramp": 2.5,
+  "projected": false
+ },
+ "weekStrip": [
+  {
+   "date": "2026-11-16",
+   "plannedCount": 2,
+   "doneCount": 2,
+   "load": 111.3,
+   "plannedLoad": 100.6,
+   "states": [
+    "on_target",
+    "partial_long"
+   ],
+   "isToday": false,
+   "hasKey": false
+  },
+  {
+   "date": "2026-11-17",
+   "plannedCount": 2,
+   "doneCount": 2,
+   "load": 111.8,
+   "plannedLoad": 91.4,
+   "states": [
+    "partial_long",
+    "on_target"
+   ],
+   "isToday": false,
+   "hasKey": true
+  },
+  {
+   "date": "2026-11-18",
+   "plannedCount": 2,
+   "doneCount": 2,
+   "load": 81.4,
+   "plannedLoad": 85.6,
+   "states": [
+    "on_target",
+    "on_target"
+   ],
+   "isToday": false,
+   "hasKey": false
+  },
+  {
+   "date": "2026-11-19",
+   "plannedCount": 1,
+   "doneCount": 1,
+   "load": 56.9,
+   "plannedLoad": 57.1,
+   "states": [
+    "on_target"
+   ],
+   "isToday": false,
+   "hasKey": true
+  },
+  {
+   "date": "2026-11-20",
+   "plannedCount": 1,
+   "doneCount": 0,
+   "load": 0,
+   "plannedLoad": 38.7,
+   "states": [
+    "missed"
+   ],
+   "isToday": false,
+   "hasKey": false
+  },
+  {
+   "date": "2026-11-21",
+   "plannedCount": 1,
+   "doneCount": 1,
+   "load": 102.6,
+   "plannedLoad": 96.3,
+   "states": [
+    "on_target"
+   ],
+   "isToday": true,
+   "hasKey": true
+  },
+  {
+   "date": "2026-11-22",
+   "plannedCount": 1,
+   "doneCount": 0,
+   "load": 0,
+   "plannedLoad": 69.4,
+   "states": [
+    "planned"
+   ],
+   "isToday": false,
+   "hasKey": false
+  }
+ ],
+ "week": {
+  "isoWeek": "2026-W47",
+  "startDate": "2026-11-16",
+  "endDate": "2026-11-22",
+  "plannedSec": 35087,
+  "doneSec": 28100,
+  "plannedLoad": 539.1,
+  "doneLoad": 464,
+  "plannedDistanceM": 62058,
+  "doneDistanceM": 124926.4,
+  "elevationGainM": 771,
+  "projectedSec": 33500,
+  "projectedLoad": 533.4,
+  "bySport": [
+   {
+    "sport": "bike",
+    "plannedSec": 11700,
+    "doneSec": 11762,
+    "plannedLoad": 160.4,
+    "doneLoad": 174.2,
+    "plannedDistanceM": 33683,
+    "doneDistanceM": 95501.3,
+    "plannedCount": 2,
+    "doneCount": 2,
+    "elevationGainM": 722
+   },
+   {
+    "sport": "run",
+    "plannedSec": 10500,
+    "doneSec": 5123,
+    "plannedLoad": 153.8,
+    "doneLoad": 97.1,
+    "plannedDistanceM": 15600,
+    "doneDistanceM": 16628.7,
+    "plannedCount": 3,
+    "doneCount": 2,
+    "elevationGainM": 49
+   }
+  ],
+  "keyPlanned": 3,
+  "keyDone": 3,
+  "intensitySec": {
+   "easy": 20701,
+   "moderate": 7266,
+   "hard": 1048
+  },
+  "compliancePct": 84.3,
+  "fitness": 65.7,
+  "fatigue": 71.2,
+  "form": -5.9,
+  "formPct": -9,
+  "formZone": "neutral",
+  "fitnessDelta": 1.8,
+  "wowSec": -0.281,
+  "wowLoad": -0.284,
+  "wowDistanceM": -0.134,
+  "isProjected": true,
+  "hasNote": true,
+  "dailyLoad": [
+   111.3,
+   111.8,
+   81.4,
+   56.9,
+   0,
+   102.6,
+   0
+  ],
+  "targetLoad": 450,
+  "phaseId": "ph_demo_15"
+ },
+ "nextEvent": {
+  "event": {
+   "id": "evt_demo_3",
+   "date": "2026-12-27",
+   "name": "Riu Ter Half Marathon",
+   "priority": "B",
+   "sport": "run",
+   "distanceM": 21097,
+   "goal": "Sub 1:30",
+   "location": "Girona",
+   "note": "Flat river course. Short build off the back of the tri season."
+  },
+  "daysUntil": 36
+ },
+ "nextAEvent": null,
+ "dayNote": null,
+ "markers": [],
+ "pendingLogs": [
+  {
+   "id": "act_u36nc7u0bn",
+   "source": "garmin",
+   "garminActivityId": "20380093699",
+   "garminTypeKey": "indoor_rowing",
+   "startedAt": "2026-11-18T17:37:04.000Z",
+   "utcOffsetMin": 60,
+   "localDate": "2026-11-18",
+   "sport": "row",
+   "subSport": "erg",
+   "title": "UT2 35′ r20",
+   "durationSec": 2102,
+   "movingSec": 2102,
+   "distanceM": 7996.4,
+   "load": 24.7,
+   "loadSource": "power",
+   "intensityFactor": 0.651,
+   "avgHr": 135,
+   "maxHr": 144,
+   "avgPower": 155,
+   "weightedPower": 157,
+   "maxPower": 181,
+   "avgSpeedMps": 3.804,
+   "avgCadence": 19,
+   "calories": 398,
+   "workKj": 325.5,
+   "variability": 1.013,
+   "efficiency": 1.1629,
+   "aerobicEffect": 1.5,
+   "anaerobicEffect": 0,
+   "intensityAuto": "endurance",
+   "intensity": "endurance",
+   "isKey": false,
+   "tags": [],
+   "pairedWorkoutId": "wk_d20261118_2",
+   "hasStreams": true,
+   "sparkline": [
+    0.83,
+    0.82,
+    0.8,
+    0.8,
+    0.8,
+    0.82,
+    0.85,
+    1,
+    0.97,
+    1,
+    1,
+    0.96
+   ],
+   "createdAt": "2026-11-21T18:00:22.249Z",
+   "updatedAt": "2026-11-21T18:00:22.262Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.03,
+    "state": "on_target"
+   }
+  },
+  {
+   "id": "act_xsctv4f4uc",
+   "source": "garmin",
+   "garminActivityId": "20379584007",
+   "garminTypeKey": "running",
+   "startedAt": "2026-11-17T06:13:21.000Z",
+   "utcOffsetMin": 60,
+   "localDate": "2026-11-17",
+   "sport": "run",
+   "subSport": "road_run",
+   "title": "Easy 25′ + 6×20″ strides",
+   "durationSec": 2174,
+   "movingSec": 2113,
+   "distanceM": 6869.8,
+   "elevationGainM": 20,
+   "load": 40.2,
+   "loadSource": "pace",
+   "intensityFactor": 0.827,
+   "avgHr": 150,
+   "maxHr": 172,
+   "avgSpeedMps": 3.251,
+   "adjustedSpeedMps": 3.335,
+   "avgCadence": 175,
+   "calories": 524,
+   "efficiency": 1.3305,
+   "aerobicEffect": 2.1,
+   "anaerobicEffect": 1,
+   "intensityAuto": "endurance",
+   "intensity": "endurance",
+   "isKey": false,
+   "tags": [],
+   "pairedWorkoutId": "wk_d20261117_1",
+   "hasStreams": true,
+   "sparkline": [
+    0.87,
+    0.9,
+    0.89,
+    0.88,
+    0.86,
+    0.85,
+    0.84,
+    0.67,
+    0.5,
+    0.83,
+    0.83,
+    0.84
+   ],
+   "createdAt": "2026-11-21T18:00:22.848Z",
+   "updatedAt": "2026-11-21T18:00:22.865Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.47,
+    "state": "partial_long"
+   }
+  }
+ ]
+}

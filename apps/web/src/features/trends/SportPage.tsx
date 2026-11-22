@@ -8,7 +8,7 @@ import { MorphPath, WeeklyBars, useChartSize } from '@/charts';
 import { formatDateMedium, formatNumber, formatPace } from '@/lib/format';
 import { useUnits } from '@/lib/units';
 import { spring } from '@/motion/tokens';
-import { DeltaBadge, SportGlyph } from '@/ui';
+import { SportGlyph, StatRow, StatTile } from '@/ui';
 import { filterWeeks, rangeWeeks, trimLeading, useSportTrend, useWeekly } from './data';
 import { fmtHours } from './Overview';
 import { ChartCard, InlineError, RangeControl, TrendsFrame, useTrendsSearch } from './shared';
@@ -48,21 +48,19 @@ export function TrendsSportPage() {
 
   return (
     <TrendsFrame title={SPORT_META[sport].label} back eyebrow={<span className="inline-flex items-center gap-1.5"><SportGlyph sport={sport} size={14} /> Sport trends</span>} toolbar={<RangeControl value={range} onChange={(r) => set({ range: r })} />}>
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Tile label="Sessions" value={formatNumber(sum((w) => w.bySport[0]?.doneCount ?? 0), 0)} />
-        <Tile label="Time" value={fmtHours(sum((w) => w.doneSec) / 3600)} />
-        <Tile label="Load" value={formatNumber(sum((w) => w.doneLoad), 0)} accent />
-        <Tile label={power ? `Power at ${q.data?.refHr ?? '—'} bpm` : `Pace at ${q.data?.refHr ?? '—'} bpm`} value={effB != null ? fmtOut(effB) : '—'} sub={<span className="inline-flex items-center gap-1.5"><DeltaBadge value={effA && effB ? effB / effA - 1 : null} size="sm" good={!!effA && !!effB && effB > effA} /> 2nd half vs 1st</span>} />
-      </section>
-      <section>
-        <ChartCard title="Weekly volume" question={`${SPORT_META[sport].label} only. Click a week to review it.`}>
-          <WeeklyBars weeks={weeks} loading={!weekly.data} metric={search.metric ?? 'hours'} onMetricChange={(m) => set({ metric: m })} height={220} onWeekClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
-        </ChartCard>
-      </section>
+      <ChartCard title="Weekly volume" question={`${SPORT_META[sport].label} only. Click a week to review it.`}>
+        <WeeklyBars weeks={weeks} loading={!weekly.data} metric={search.metric ?? 'hours'} onMetricChange={(m) => set({ metric: m })} stack="total" height={240} onWeekClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
+      </ChartCard>
+      <StatRow columns={4}>
+        <StatTile label="Sessions" value={sum((w) => w.bySport[0]?.doneCount ?? 0)} format={(v) => formatNumber(v, 0)} />
+        <StatTile label="Time" value={sum((w) => w.doneSec) / 3600} format={fmtHours} unit="h" />
+        <StatTile label="Load" value={sum((w) => w.doneLoad)} format={(v) => formatNumber(v, 0)} />
+        <StatTile label={power ? `Power at ${q.data?.refHr ?? '—'} bpm` : `Pace at ${q.data?.refHr ?? '—'} bpm`} value={effB} format={fmtOut} delta={effA && effB ? effB / effA - 1 : null} good={!!effA && !!effB && effB > effA} deltaSuffix="2nd half vs 1st" />
+      </StatRow>
       {q.isError ? (
         <InlineError onRetry={() => q.refetch()} />
       ) : (
-        <section className="grid gap-6 lg:grid-cols-2">
+        <section className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <ChartCard title="Efficiency" question={`${power ? 'Power' : 'Pace'} you hold at ${q.data?.refHr ?? 'a reference'} bpm, per session (dots) and its trend. Up means fitter.`}>
             <PointsTrend points={eff} fmt={fmtOut} higherIsBetter />
           </ChartCard>
@@ -81,16 +79,6 @@ export function TrendsSportPage() {
         </p>
       )}
     </TrendsFrame>
-  );
-}
-
-function Tile({ label, value, sub, accent }: { label: string; value: string; sub?: React.ReactNode; accent?: boolean }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <span className="truncate text-micro text-fg-3">{label}</span>
-      <span className={accent ? 'text-stat-md text-accent-ink' : 'text-stat-md text-fg-1'}>{value}</span>
-      <span className="min-h-5 text-body-sm text-fg-3">{sub}</span>
-    </div>
   );
 }
 
@@ -126,14 +114,14 @@ function PointsTrend({ points, fmt, higherIsBetter, refLine }: { points: { date:
           {ticks.map((t) => (
             <g key={t}>
               <line x1={L.l} x2={W - L.r} y1={y(t)} y2={y(t)} className="stroke-line-1" />
-              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 text-[11px]">
+              <text x={L.l - 8} y={y(t)} textAnchor="end" dominantBaseline="central" className="fill-fg-3 text-label font-normal">
                 {fmt(t)}
               </text>
             </g>
           ))}
           {refLine != null && <line x1={L.l} x2={W - L.r} y1={y(refLine)} y2={y(refLine)} className="stroke-fg-3" strokeDasharray="3 3" />}
-          <text x={L.l} y={H - 4} className="fill-fg-3 text-[11px]">{formatDateMedium(points[0].date)}</text>
-          <text x={W - L.r} y={H - 4} textAnchor="end" className="fill-fg-3 text-[11px]">{formatDateMedium(points[points.length - 1].date)}</text>
+          <text x={L.l} y={H - 4} className="fill-fg-3 text-label font-normal">{formatDateMedium(points[0].date)}</text>
+          <text x={W - L.r} y={H - 4} textAnchor="end" className="fill-fg-3 text-label font-normal">{formatDateMedium(points[points.length - 1].date)}</text>
           {points.map((p, i) => (
             <motion.circle key={p.id} cx={x(xs[i])} cy={y(p.v)} r={3} className="cursor-pointer fill-fg-2 hover:fill-fg-1" initial={{ opacity: 0 }} animate={{ opacity: 0.9 }} transition={{ ...spring.smooth, delay: Math.min(i * 0.004, 0.24) }} onClick={() => navigate({ to: '/activities/$id', params: { id: p.id } })}>
               <title>{`${formatDateMedium(p.date)} · ${fmt(p.v)}`}</title>

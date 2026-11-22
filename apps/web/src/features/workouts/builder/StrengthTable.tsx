@@ -36,16 +36,16 @@ export function StrengthTable() {
   const tonnage = rows.reduce((a, r) => a + (r.n.strength ? r.n.strength.sets * (r.n.strength.reps ?? 0) * (r.n.strength.weightKg ?? 0) : 0), 0);
   const add = () => b.apply((s) => insertNode(s, [s.steps.length], strengthStep(rows.length ? 'Romanian deadlift' : 'Back squat')), { label: 'Add exercise' });
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line-1 bg-line-1 sm:grid-cols-4">
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
         {[
           ['Exercises', rows.filter((r) => r.n.strength).length, ''],
           ['Sets', sets, ''],
           ['Reps', reps, ''],
           ['Tonnage', Math.round(tonnage), 'kg'],
         ].map(([l, v, u]) => (
-          <div key={l as string} className="bg-surface-1 px-4 py-3">
-            <div className="text-micro text-fg-3">{l}</div>
+          <div key={l as string} className="flex flex-col gap-0.5">
+            <div className="text-body-sm text-fg-3">{l}</div>
             <div className="text-stat-sm text-fg-1">
               <Ticker value={v as number} />
               {u && <span className="ml-1 text-body-sm text-fg-3">{u}</span>}
@@ -55,7 +55,7 @@ export function StrengthTable() {
       </div>
       <div className="overflow-x-auto">
         <div className="min-w-[640px]">
-          <div className="grid grid-cols-[20px_minmax(10rem,1fr)_4rem_4rem_6rem_4rem_4.5rem_3rem_56px] items-center gap-1 border-b border-line-1 px-1 pb-1.5 text-micro text-fg-3">
+          <div className="grid grid-cols-[20px_minmax(10rem,1fr)_4rem_4rem_6rem_4rem_4.5rem_3rem_56px] items-center gap-1 border-b border-line-1 px-1 pb-2 text-label text-fg-3">
             <span />
             <span className="pl-1.5">Exercise</span>
             <span className="text-right">Sets</span>
@@ -63,7 +63,7 @@ export function StrengthTable() {
             <span className="text-right">Load</span>
             <span className="text-right">RPE</span>
             <span className="text-right">Rest</span>
-            <span className="text-center">Grp</span>
+            <span className="text-center">Group</span>
             <span />
           </div>
           <datalist id={listId}>
@@ -86,7 +86,7 @@ export function StrengthTable() {
           </Reorder.Group>
         </div>
       </div>
-      <div>
+      <div className="-ml-2">
         <Button size="sm" variant="ghost" icon={<Plus />} onClick={add}>
           Add exercise
         </Button>
@@ -119,9 +119,9 @@ function ExerciseRow({ step, path, listId }: { step: Step; path: NodePath; listI
       exit={{ opacity: 0, transition: { duration: 0.12 } }}
       transition={spring.smooth}
       onPointerDown={() => b.select(step.id)}
-      className={cn('group/row grid grid-cols-[20px_minmax(10rem,1fr)_4rem_4rem_6rem_4rem_4.5rem_3rem_56px] items-center gap-1 border-b border-line-1 px-1 py-1', sel && 'bg-surface-2')}
+      className={cn('group/row grid grid-cols-[20px_minmax(10rem,1fr)_4rem_4rem_6rem_4rem_4.5rem_3rem_56px] min-h-11 items-center gap-1 border-b border-line-1 px-1 py-1 transition-colors duration-(--dur-fast) hover:bg-surface-1', sel && 'bg-surface-2 hover:bg-surface-2')}
     >
-      <button type="button" aria-label="Drag to reorder" onPointerDown={(e) => controls.start(e)} className="flex h-7 cursor-grab touch-none items-center justify-center text-fg-4 hover:text-fg-2">
+      <button type="button" aria-label="Drag to reorder" onPointerDown={(e) => controls.start(e)} className="flex h-8 cursor-grab touch-none items-center justify-center text-fg-4 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 hover:text-fg-2 focus-visible:opacity-100 pointer-coarse:opacity-100">
         <GripVertical className="size-3.5" />
       </button>
       {s ? (
@@ -136,7 +136,7 @@ function ExerciseRow({ step, path, listId }: { step: Step; path: NodePath; listI
               if (v && v !== s.exercise) set({ exercise: v });
             }}
             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-            className="h-7 min-w-0 rounded-sm border border-transparent bg-transparent px-1.5 text-body text-fg-1 outline-none hover:border-line-2 focus:border-line-3 focus:bg-surface-2"
+            className="h-8 min-w-0 rounded-sm border border-transparent bg-transparent px-2 text-body text-fg-1 outline-none hover:bg-surface-3 focus:border-line-3 focus:bg-surface-3"
           />
           <MiniField label="Sets" value={s.sets} width="w-full" format={String} parse={(v) => (+v >= 1 ? Math.round(+v) : null)} nudge={(v, d) => Math.max(1, v + d)} onCommit={(sets) => set({ sets })} />
           <MiniField
@@ -175,7 +175,7 @@ function ExerciseRow({ step, path, listId }: { step: Step; path: NodePath; listI
       ) : (
         <span className="col-span-7 px-1.5 text-body-sm text-fg-3">Warm-up / cardio step — edit it in the text pane</span>
       )}
-      <div className="flex justify-end opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 pointer-coarse:opacity-100">
+      <div className="flex justify-end opacity-0 transition-opacity duration-(--dur-fast) group-hover/row:opacity-100 group-focus-within/row:opacity-100 pointer-coarse:opacity-100">
         <IconButton size="sm" label="Duplicate" icon={<Copy />} onClick={() => b.apply((st) => duplicateNode(st, path))} />
         <IconButton size="sm" label="Delete" icon={<X />} onClick={() => b.remove(step.id)} />
       </div>

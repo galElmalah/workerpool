@@ -28,7 +28,7 @@ import {
   Popover,
   SaveIndicator,
   Section,
-  Segmented,
+  Select,
   Skeleton,
   SportGlyph,
   TagInput,
@@ -131,49 +131,57 @@ export function LibraryPage() {
       }
     >
       <Section stagger={false}>
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="w-full sm:w-72">
-              <Input leading={<Search className="size-4" />} value={text} onChange={(e) => setText(e.currentTarget.value)} placeholder="Search templates" aria-label="Search templates" trailing={text ? <IconButton size="sm" label="Clear" icon={<X />} onClick={() => setText('')} /> : undefined} />
-            </div>
-            <Segmented size="sm" aria-label="Sort" value={sort} onValueChange={setSort} options={[{ value: 'recent', label: 'Recent' }, { value: 'used', label: 'Most used' }, { value: 'duration', label: 'Duration' }, { value: 'load', label: 'Load' }]} />
-            {folders.length > 0 && (
-              <select
-                aria-label="Folder"
-                value={search.folder ?? ''}
-                onChange={(e) => navigate({ search: (s) => ({ ...s, folder: e.currentTarget.value || undefined }), replace: true })}
-                className="h-7 rounded-md border border-line-2 bg-surface-2 px-2 text-label text-fg-2 outline-none"
-              >
-                <option value="">All folders</option>
-                {folders.map((f) => (
-                  <option key={f}>{f}</option>
-                ))}
-              </select>
-            )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <div className="w-full sm:w-60">
+            <Input leading={<Search className="size-4" />} value={text} onChange={(e) => setText(e.currentTarget.value)} placeholder="Search templates" aria-label="Search templates" trailing={text ? <IconButton size="sm" label="Clear" icon={<X />} onClick={() => setText('')} /> : undefined} />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <FilterRow
-              id="sport"
-              value={search.sport ?? 'all'}
-              onChange={(v) => navigate({ search: (s) => ({ ...s, sport: v === 'all' ? undefined : (v as Sport) }), replace: true })}
-              options={[{ value: 'all', label: 'All' }, ...sports.map((s) => ({ value: s, label: SPORT_META[s].label, icon: <SportGlyph sport={s} size={14} /> }))]}
-            />
-            <span className="h-4 w-px bg-line-2 max-sm:hidden" />
-            <FilterRow
-              id="int"
+          <FilterRow
+            id="sport"
+            value={search.sport ?? 'all'}
+            onChange={(v) => navigate({ search: (s) => ({ ...s, sport: v === 'all' ? undefined : (v as Sport) }), replace: true })}
+            options={[{ value: 'all', label: 'All' }, ...sports.map((s) => ({ value: s, label: SPORT_META[s].label }))]}
+          />
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <Select<string>
+              size="sm"
+              hideLabel
+              label="Intensity"
               value={search.intensity ?? 'all'}
-              onChange={(v) => navigate({ search: (s) => ({ ...s, intensity: v === 'all' ? undefined : (v as IntensityClass) }), replace: true })}
-              options={[{ value: 'all', label: 'Any intensity' }, ...INTENSITY_CLASSES.filter((c) => c !== 'race').map((c) => ({ value: c, label: INTENSITY_META[c].label, icon: <IntensityPips intensity={c} /> }))]}
+              onValueChange={(v) => navigate({ search: (s) => ({ ...s, intensity: v === 'all' ? undefined : (v as IntensityClass) }), replace: true })}
+              options={[{ value: 'all', label: 'Any intensity' }, ...INTENSITY_CLASSES.filter((c) => c !== 'race').map((c) => ({ value: c, label: INTENSITY_META[c].label }))]}
+            />
+            {folders.length > 0 && (
+              <Select<string>
+                size="sm"
+                hideLabel
+                label="Folder"
+                value={search.folder ?? 'all'}
+                onValueChange={(v) => navigate({ search: (s) => ({ ...s, folder: v === 'all' ? undefined : v }), replace: true })}
+                options={[{ value: 'all', label: 'All folders' }, ...folders.map((f) => ({ value: f, label: f }))]}
+              />
+            )}
+            <Select<Sort>
+              size="sm"
+              hideLabel
+              label="Sort"
+              value={sort}
+              onValueChange={setSort}
+              options={[
+                { value: 'recent', label: 'Recent' },
+                { value: 'used', label: 'Most used' },
+                { value: 'duration', label: 'Longest' },
+                { value: 'load', label: 'Hardest' },
+              ]}
             />
           </div>
         </div>
       </Section>
 
-      <Section stagger={false}>
+      <Section stagger={false} className="-mt-4 md:-mt-6">
         {q.isPending ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="h-[150px]" radius="lg" />
+              <Skeleton key={i} className="h-[132px]" radius="lg" />
             ))}
           </div>
         ) : q.isError ? (
@@ -186,7 +194,7 @@ export function LibraryPage() {
           </EmptyState>
         ) : (
           <LayoutGroup>
-            <motion.div layout className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <motion.div layout className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <AnimatePresence mode="popLayout" initial={false}>
                 {list.map((t) => (
                   <TemplateCard key={t.id} t={t} thresholds={thresholds} today={today} />
@@ -202,7 +210,7 @@ export function LibraryPage() {
 
 function FilterRow({ id, value, onChange, options }: { id: string; value: string; onChange: (v: string) => void; options: { value: string; label: string; icon?: React.ReactNode }[] }) {
   return (
-    <div role="radiogroup" aria-label={id === 'sport' ? 'Sport' : 'Intensity'} className="flex gap-1 max-sm:-mx-4 max-sm:w-[calc(100%+2rem)] max-sm:overflow-x-auto max-sm:px-4 sm:flex-wrap [&>button]:shrink-0">
+    <div role="radiogroup" aria-label={id === 'sport' ? 'Sport' : 'Intensity'} className="flex gap-0.5 max-sm:-mx-4 max-sm:w-[calc(100%+2rem)] max-sm:overflow-x-auto max-sm:px-4 sm:flex-wrap [&>button]:shrink-0">
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -212,9 +220,9 @@ function FilterRow({ id, value, onChange, options }: { id: string; value: string
             role="radio"
             aria-checked={on}
             onClick={() => onChange(o.value)}
-            className={cn('relative inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-label transition-colors duration-(--dur-fast)', on ? 'text-fg-1' : 'text-fg-3 hover:text-fg-1')}
+            className={cn('relative isolate inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-body-sm transition-colors duration-(--dur-fast)', on ? 'text-fg-1' : 'text-fg-3 hover:text-fg-1')}
           >
-            {on && <motion.span layoutId={`lib-filter-${id}`} transition={spring.snappy} className="absolute inset-0 -z-10 rounded-md border border-line-3 bg-surface-active" />}
+            {on && <motion.span layoutId={`lib-filter-${id}`} transition={spring.snappy} className="absolute inset-0 -z-10 rounded-md bg-surface-2" />}
             {o.icon}
             {o.label}
           </button>
@@ -256,14 +264,14 @@ function TemplateCard({ t, thresholds, today }: { t: Template; thresholds: Param
       .then((c) => toast.success(<>Duplicated as <b>{c.title}</b></>), (e) => toast.error((e as Error).message));
   return (
     <motion.div layout initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.12 } }} transition={spring.smooth} className="group relative">
-      <Link {...links.template(t.id)} className="spotlight block rounded-lg border border-line-1 bg-surface-1 p-4 pb-12 transition-colors duration-(--dur-fast) hover:border-line-3 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+      <Link
+        {...links.template(t.id)}
+        title={t.usageCount ? `Used ${t.usageCount}×${t.lastUsedAt ? ` · last ${formatDateMedium(t.lastUsedAt.slice(0, 10))}` : ''}${t.folder ? ` · ${t.folder}` : ''}` : `Never used${t.folder ? ` · ${t.folder}` : ''}`}
+        className="spotlight block rounded-lg bg-surface-1 p-5 transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
         <TemplateMini t={t} thresholds={thresholds} />
       </Link>
-      <div className="absolute inset-x-4 bottom-3 flex items-center gap-1">
-        <span className="min-w-0 flex-1 truncate text-body-sm text-fg-3">
-          {t.usageCount ? `Used ${t.usageCount}×${t.lastUsedAt ? ` · last ${formatDateMedium(t.lastUsedAt.slice(0, 10))}` : ''}` : 'Never used'}
-          {t.folder && <span className="text-fg-4"> · {t.folder}</span>}
-        </span>
+      <div className="absolute right-3 bottom-3 flex items-center gap-0.5 opacity-0 transition-opacity duration-(--dur-fast) group-hover:opacity-100 group-focus-within:opacity-100 has-[[data-popup-open]]:opacity-100 pointer-coarse:opacity-100">
         <Popover title="Schedule on" trigger={<Button size="sm" variant="ghost" icon={<CalendarPlus />}>Schedule</Button>}>
           {(close) => (
             <MonthGrid
@@ -363,7 +371,7 @@ function TemplateView({ t }: { t: Template }) {
               <Popover
                 title="Intensity"
                 trigger={
-                  <button type="button" className="inline-flex h-7 items-center gap-2 rounded-sm border border-line-1 px-2 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1">
+                  <button type="button" aria-label="Intensity" className="inline-flex h-8 items-center gap-2 rounded-md px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-2 hover:text-fg-1 data-[popup-open]:bg-surface-2">
                     <IntensityPips intensity={t.intensity} size="md" />
                     {INTENSITY_META[t.intensity].label}
                   </button>
@@ -377,7 +385,7 @@ function TemplateView({ t }: { t: Template }) {
           actions={
             <>
               <SaveIndicator status={status} className="max-sm:hidden" />
-              <ButtonLink size="sm" variant="secondary" icon={<Plus />} {...links.newWorkout({ from: t.id, sport: t.sport })}>
+              <ButtonLink size="sm" variant="secondary" icon={<Plus />} aria-label="New workout from this template" {...links.newWorkout({ from: t.id, sport: t.sport })}>
                 <span className="max-sm:hidden">New workout</span>
               </ButtonLink>
               <IconButton size="sm" label="Delete template" icon={<Trash2 />} onClick={onDelete} />
@@ -393,8 +401,8 @@ function TemplateView({ t }: { t: Template }) {
         <TotalsTiles totals={totals} sport={t.sport} />
       </Section>
       <Section stagger={false}>
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="flex min-w-0 flex-col gap-6">
+        <div className="grid gap-x-16 gap-y-14 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="flex min-w-0 flex-col gap-14">
             <TplNotes t={t} patch={patch} />
             <Instances t={t} today={today} />
           </div>
@@ -408,11 +416,11 @@ function TemplateView({ t }: { t: Template }) {
 function TplNotes({ t, patch }: { t: Template; patch: (p: Record<string, unknown>) => Promise<void> }) {
   const [desc, setDesc] = useState(t.description ?? '');
   return (
-    <Section title="Description" variant="micro">
-      <div className="flex flex-col gap-4">
+    <Section stagger={false} title="Description">
+      <div className="flex flex-col gap-6">
         <Textarea value={desc} minRows={3} onChange={(e) => setDesc(e.currentTarget.value)} onBlur={() => desc.trim() !== (t.description ?? '') && void patch({ description: desc.trim() || null })} placeholder="Purpose, cues, fuelling…" className="bg-surface-1" />
-        <div className="flex flex-col gap-1.5">
-          <span className="text-micro text-fg-3">Tags</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-label text-fg-2">Tags</span>
           <TagInput value={t.tags} onValueChange={(tags) => void patch({ tags })} aria-label="Tags" />
         </div>
       </div>
@@ -435,13 +443,13 @@ function ScheduleCard({ t, today }: { t: Template; today: LocalDate }) {
       (e) => toast.error((e as Error).message),
     );
   return (
-    <Card padding="md" className="flex flex-col gap-3 self-start">
-      <span className="text-micro text-fg-3">Schedule</span>
+    <Card padding="md" className="flex flex-col gap-4 self-start">
+      <span className="text-body-sm text-fg-3">Schedule</span>
       <MonthGrid value={dates.at(-1) ?? null} today={today} min={today} onSelect={(d) => setDates((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d].sort()))} />
       <div className="flex min-h-7 flex-wrap gap-1">
         <AnimatePresence initial={false}>
           {dates.map((d) => (
-            <motion.button key={d} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={spring.snappy} type="button" onClick={() => setDates((x) => x.filter((y) => y !== d))} className="inline-flex h-6 items-center gap-1 rounded-sm border border-line-3 bg-surface-3 px-2 text-label text-fg-1">
+            <motion.button key={d} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={spring.snappy} type="button" onClick={() => setDates((x) => x.filter((y) => y !== d))} className="inline-flex h-7 items-center gap-1 rounded-md bg-surface-3 px-2 text-body-sm text-fg-1">
               {formatDayShort(d)} <X className="size-3 text-fg-3" />
             </motion.button>
           ))}
@@ -461,18 +469,18 @@ function Instances({ t, today }: { t: Template; today: LocalDate }) {
   const done = items.filter((w) => w.pairedActivityId && w.compliance);
   return (
     <>
-      <Section title="Scheduled instances" variant="micro">
+      <Section stagger={false} title="Scheduled instances">
         {q.isPending ? (
           <Skeleton className="h-20 w-full" radius="md" />
         ) : items.length ? (
           <ul className="flex flex-col gap-1">
             {items.slice(0, 12).map((w) => (
               <li key={w.id}>
-                <Link {...links.workout(w.id)} className="flex h-10 items-center gap-3 rounded-md px-3 text-body transition-colors hover:bg-surface-1">
+                <Link {...links.workout(w.id)} className="-mx-3 flex h-11 items-center gap-3 rounded-md px-3 text-body transition-colors duration-(--dur-fast) hover:bg-surface-1">
                   <ComplianceGlyph state={w.compliance?.state ?? 'planned'} />
-                  <span className="w-28 shrink-0 text-mono text-fg-2">{formatDateMedium(w.date)}</span>
+                  <span className="num w-28 shrink-0 text-fg-2">{formatDateMedium(w.date)}</span>
                   <span className="min-w-0 flex-1 truncate text-fg-1">{w.title}</span>
-                  <span className={cn('text-micro ', w.date >= today ? 'text-fg-2' : 'text-fg-3')}>{w.date >= today ? 'Upcoming' : w.pairedActivityId ? 'Done' : w.status === 'skipped' ? 'Skipped' : 'Missed'}</span>
+                  <span className={cn('text-body-sm', w.date >= today ? 'text-fg-2' : 'text-fg-3')}>{w.date >= today ? 'Upcoming' : w.pairedActivityId ? 'Done' : w.status === 'skipped' ? 'Skipped' : 'Missed'}</span>
                 </Link>
               </li>
             ))}
@@ -482,12 +490,12 @@ function Instances({ t, today }: { t: Template; today: LocalDate }) {
         )}
       </Section>
       {done.length > 0 && (
-        <Section title="Performance history" variant="micro">
+        <Section stagger={false} title="Performance history">
           <div className="flex items-end gap-1.5" role="list" aria-label="Compliance of past instances">
             {done.slice(0, 16).reverse().map((w) => (
               <Link key={w.id} {...links.workout(w.id)} role="listitem" title={`${formatDayShort(w.date)} · ${Math.round(w.compliance!.ratio * 100)}%`} className="flex flex-col items-center gap-1">
-                <span className="w-6 rounded-xs bg-accent" style={{ height: Math.max(4, Math.min(1.5, w.compliance!.ratio) * 40), opacity: w.compliance!.state === 'on_target' ? 1 : 0.5 }} />
-                <span className="text-mono-sm text-fg-3">{Math.round(w.compliance!.ratio * 100)}</span>
+                <span className={cn('w-6 rounded-xs', w.compliance!.state === 'on_target' ? 'bg-fg-3' : 'bg-fg-4')} style={{ height: Math.max(4, Math.min(1.5, w.compliance!.ratio) * 40) }} />
+                <span className="num text-label font-normal text-fg-3">{Math.round(w.compliance!.ratio * 100)}</span>
               </Link>
             ))}
           </div>

@@ -2,7 +2,7 @@
  * /workouts/$id (view + edit in place) and /workouts/$id/edit (same page, builder open + focused).
  * The header is the morph target of the calendar card (wk-card / wk-glyph / wk-title).
  */
-import { SKIP_REASONS, type PlannedWorkout, type WorkoutStructure, type LocalDate } from '@cadence/core';
+import { INTENSITY_META, SKIP_REASONS, type PlannedWorkout, type WorkoutStructure, type LocalDate } from '@cadence/core';
 import { addDays } from '@cadence/core/time';
 import { estimateWorkout, garminSupport } from '@cadence/core/workout';
 import { useNavigate, Link } from '@tanstack/react-router';
@@ -190,9 +190,9 @@ function WorkoutView({ w, edit }: { w: PlannedWorkout; edit: boolean }) {
           <Popover
             title="Intensity"
             trigger={
-              <button type="button" className="inline-flex h-7 items-center gap-2 rounded-sm border border-line-1 px-2 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1" aria-label="Intensity">
+              <button type="button" className="inline-flex h-8 items-center gap-2 rounded-md px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-2 hover:text-fg-1 data-[popup-open]:bg-surface-2" aria-label="Intensity">
                 <IntensityPips intensity={w.intensity} size="md" />
-                <span className="capitalize">{w.intensity}</span>
+                <span>{INTENSITY_META[w.intensity].label}</span>
               </button>
             }
           >
@@ -200,14 +200,14 @@ function WorkoutView({ w, edit }: { w: PlannedWorkout; edit: boolean }) {
           </Popover>
           <MoveDate w={w} today={today} onMove={(date) => patch({ date })} />
           {past && compliance && compliance !== 'planned' && (
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-sm px-2 text-label text-fg-2">
+            <span className="inline-flex h-8 items-center gap-1.5 px-2 text-body-sm text-fg-2">
               <ComplianceGlyph state={compliance} />
               {complianceLabel(compliance, w.skipReason)}
             </span>
           )}
           {w.garmin.syncState !== 'none' && <GarminStateIcon state={w.garmin.syncState} error={w.garmin.error} />}
           {w.seriesId && (
-            <span className="inline-flex h-7 items-center gap-1 text-label text-fg-3">
+            <span className="inline-flex h-8 items-center gap-1.5 px-2 text-body-sm text-fg-3">
               <Repeat className="size-3.5" /> Weekly series
             </span>
           )}
@@ -217,11 +217,11 @@ function WorkoutView({ w, edit }: { w: PlannedWorkout; edit: boolean }) {
         <>
           <SaveIndicator status={shownStatus} className="max-sm:hidden" />
           {edit ? (
-            <Button size="sm" variant="secondary" icon={<Check />} onClick={doneEdit} kbd="mod+enter">
+            <Button size="sm" variant="secondary" icon={<Check />} onClick={doneEdit} kbd="mod+enter" aria-label="Done">
               Done
             </Button>
           ) : (
-            <Button size="sm" variant="secondary" icon={<Pencil />} onClick={goEdit} kbd="e">
+            <Button size="sm" variant="secondary" icon={<Pencil />} onClick={goEdit} kbd="e" aria-label="Edit structure">
               <span className="max-sm:hidden">Edit structure</span>
             </Button>
           )}
@@ -235,8 +235,8 @@ function WorkoutView({ w, edit }: { w: PlannedWorkout; edit: boolean }) {
     <Page header={header}>
       {w.status === 'skipped' && (
         <Section stagger={false}>
-          <div className="flex items-center gap-3 rounded-lg border border-dashed border-line-3 px-4 py-3">
-            <SkipForward className="size-4 text-fg-2" />
+          <div className="flex items-center gap-3 rounded-lg bg-surface-1 px-4 py-3">
+            <SkipForward className="size-4 text-fg-3" />
             <span className="flex-1 text-body text-fg-1">Skipped · {SKIP_LABEL[w.skipReason ?? 'other']}</span>
             <UnskipButton id={w.id} />
           </div>
@@ -261,13 +261,13 @@ function WorkoutView({ w, edit }: { w: PlannedWorkout; edit: boolean }) {
             ) : undefined
           }
         >
-          <Builder sport={w.sport} subSport={w.subSport} structure={draft} onChange={setDraft} thresholds={thresholds} estimate={estimate} autoFocus={draft.steps.length ? 'steps' : 'text'} />
+          <Builder garminLine={false} sport={w.sport} subSport={w.subSport} structure={draft} onChange={setDraft} thresholds={thresholds} estimate={estimate} autoFocus={draft.steps.length ? 'steps' : 'text'} />
         </Section>
       ) : (
         structured &&
         w.sport !== 'strength' && (
           <Section>
-            <div className="rounded-xl border border-line-1 bg-surface-1 px-3 pt-3 pb-1" style={{ '--chart-bg': 'var(--color-surface-1)' } as React.CSSProperties}>
+            <div className="-mx-1">
               <IntensityProfile blocks={blocks} repeats={repeats} height={160} axisLabel={axisLabelFor(w.sport)} hoveredId={hovered} onHover={(id) => setHovered(id ? id.split('#')[0] : null)} />
             </div>
           </Section>
@@ -279,17 +279,17 @@ function WorkoutView({ w, edit }: { w: PlannedWorkout; edit: boolean }) {
       </Section>
 
       <Section stagger={false}>
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="flex min-w-0 flex-col gap-8">
+        <div className="grid gap-x-16 gap-y-14 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="flex min-w-0 flex-col gap-14">
             {!edit && (
-              <Section title="Steps" variant="micro" actions={<Button size="sm" variant="ghost" icon={<Pencil />} onClick={goEdit}>Edit</Button>}>
+              <Section stagger={false} title="Steps" actions={<Button size="sm" variant="ghost" icon={<Pencil />} onClick={goEdit}>Edit</Button>}>
                 <StepsReadable structure={structure} sport={w.sport} thresholds={thresholds} estimate={estimate} hovered={hovered} onHover={setHovered} />
               </Section>
             )}
             <Notes w={w} patch={patch} />
             <PairPanel w={w} past={past} today={today} />
           </div>
-          <div className="flex min-w-0 flex-col gap-6">
+          <div className="flex min-w-0 flex-col gap-10">
             <GarminPanel w={w} structure={structure} />
             <PlanActions w={w} today={today} />
           </div>
@@ -306,8 +306,8 @@ function MoveDate({ w, today, onMove }: { w: PlannedWorkout; today: LocalDate; o
     <Popover
       title="Move to"
       trigger={
-        <button type="button" className="inline-flex h-7 items-center gap-1.5 rounded-sm border border-line-1 px-2 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1">
-          <CalendarDays className="size-3.5" /> Move
+        <button type="button" className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-2 hover:text-fg-1 data-[popup-open]:bg-surface-2">
+          <CalendarDays className="size-3.5 text-fg-3" /> Move
         </button>
       }
     >
@@ -355,8 +355,8 @@ function NoteField({ label, value, placeholder, onSave }: { label: string; value
     if (!focused.current) setV(value ?? '');
   }, [value]);
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-micro text-fg-3">{label}</span>
+    <label className="flex flex-col gap-2">
+      <span className="text-label text-fg-2">{label}</span>
       <Textarea
         value={v}
         minRows={2}
@@ -375,12 +375,12 @@ function NoteField({ label, value, placeholder, onSave }: { label: string; value
 
 function Notes({ w, patch }: { w: PlannedWorkout; patch: (p: WorkoutPatch) => Promise<unknown> }) {
   return (
-    <Section title="Notes" variant="micro">
-      <div className="flex flex-col gap-4">
+    <Section stagger={false} title="Notes">
+      <div className="flex flex-col gap-6">
         <NoteField label="Pre-workout note" value={w.preNote} placeholder="Intent for the day — “legs heavy, keep it honest”" onSave={(v) => patch({ preNote: v || (null as never) })} />
         <NoteField label="Description & coaching cues" value={w.description} placeholder="Purpose, cues, fuelling…" onSave={(v) => patch({ description: v || (null as never) })} />
-        <div className="flex flex-col gap-1.5">
-          <span className="text-micro text-fg-3">Tags</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-label text-fg-2">Tags</span>
           <TagInput value={w.tags} onValueChange={(tags) => void patch({ tags })} aria-label="Tags" />
         </div>
       </div>
@@ -414,10 +414,10 @@ export function GarminPanel({ w, structure }: { w: PlannedWorkout; structure: Wo
           ? 'Last push failed'
           : 'Not on your Garmin yet';
   return (
-    <Card padding="md" className="flex flex-col gap-3">
+    <Card padding="md" className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <Watch className="size-4 text-fg-2" />
-        <span className="text-micro text-fg-3">Garmin</span>
+        <Watch className="size-4 text-fg-3" />
+        <span className="text-body-sm text-fg-3">Garmin</span>
         <span className="ml-auto">
           <GarminStateIcon state={g.syncState === 'none' ? null : g.syncState} error={g.error} />
         </span>
@@ -438,11 +438,11 @@ export function GarminPanel({ w, structure }: { w: PlannedWorkout; structure: Wo
         </p>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={g.syncState === 'synced' ? 'secondary' : 'primary'} loading={push.isPending} disabled={busy || !support.pushable || w.status === 'skipped'} onClick={send}>
+          <Button variant={g.syncState === 'synced' ? 'secondary' : 'primary'} loading={push.isPending} disabled={busy || !support.pushable || w.status === 'skipped'} onClick={send}>
             {g.syncState === 'synced' ? 'Resend' : g.syncState === 'pending' ? 'Send changes' : 'Send to Garmin'}
           </Button>
           {g.syncState !== 'none' && (
-            <Button size="sm" variant="ghost" loading={remove.isPending} disabled={busy} onClick={unsend}>
+            <Button variant="ghost" loading={remove.isPending} disabled={busy} onClick={unsend}>
               Remove
             </Button>
           )}
@@ -464,8 +464,8 @@ function PlanActions({ w, today }: { w: PlannedWorkout; today: LocalDate }) {
   const [open, setOpen] = useState<null | 'repeat' | 'skip'>(null);
   const [weeks, setWeeks] = useState(6);
   return (
-    <Card padding="md" className="flex flex-col gap-1">
-      <span className="mb-1 text-micro text-fg-3">Plan</span>
+    <section className="-mx-2 flex flex-col gap-0.5">
+      <h2 className="mb-2 px-2 text-body-sm text-fg-3">Plan</h2>
       <Popover
         title="Duplicate to"
         trigger={<ActionRow icon={<Copy />} label="Duplicate to…" />}
@@ -494,12 +494,12 @@ function PlanActions({ w, today }: { w: PlannedWorkout; today: LocalDate }) {
       <Expand open={open === 'repeat'}>
         <div className="flex items-center gap-2 py-2 pl-7">
           <span className="text-body-sm text-fg-2">For</span>
-          <div className="flex items-center rounded-sm border border-line-2 bg-surface-2">
-            <button type="button" aria-label="Fewer weeks" className="size-7 text-fg-3 hover:text-fg-1" onClick={() => setWeeks((x) => Math.max(2, x - 1))}>
+          <div className="flex items-center rounded-md bg-surface-2">
+            <button type="button" aria-label="Fewer weeks" className="size-8 text-fg-3 hover:text-fg-1" onClick={() => setWeeks((x) => Math.max(2, x - 1))}>
               −
             </button>
-            <span className="w-6 text-center text-mono text-fg-1">{weeks}</span>
-            <button type="button" aria-label="More weeks" className="size-7 text-fg-3 hover:text-fg-1" onClick={() => setWeeks((x) => Math.min(52, x + 1))}>
+            <span className="num w-6 text-center text-body text-fg-1">{weeks}</span>
+            <button type="button" aria-label="More weeks" className="size-8 text-fg-3 hover:text-fg-1" onClick={() => setWeeks((x) => Math.min(52, x + 1))}>
               +
             </button>
           </div>
@@ -542,7 +542,7 @@ function PlanActions({ w, today }: { w: PlannedWorkout; today: LocalDate }) {
                       },
                     )
                   }
-                  className="h-7 rounded-sm border border-line-2 px-2.5 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1"
+                  className="h-7 rounded-md bg-surface-1 px-2.5 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-2 hover:text-fg-1"
                 >
                   {SKIP_LABEL[r]}
                 </button>
@@ -561,7 +561,7 @@ function PlanActions({ w, today }: { w: PlannedWorkout; today: LocalDate }) {
           )
         }
       />
-    </Card>
+    </section>
   );
 }
 
@@ -572,7 +572,7 @@ function ActionRow({ icon, label, onClick, expanded, ...rest }: { icon: ReactNod
       onClick={onClick}
       aria-expanded={expanded}
       {...rest}
-      className="flex h-9 w-full items-center gap-2.5 rounded-md px-2 text-left text-body text-fg-1 transition-colors duration-(--dur-fast) hover:bg-surface-2 data-[popup-open]:bg-surface-2 [&_svg]:size-4 [&_svg]:text-fg-3"
+      className="flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-body text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-1 hover:text-fg-1 data-[popup-open]:bg-surface-1 [&_svg]:size-4 [&_svg]:text-fg-3"
     >
       {icon}
       {label}
@@ -611,7 +611,7 @@ function PairPanel({ w, past, today }: { w: PlannedWorkout; past: boolean; today
     return (
       <Section
         title="Plan vs actual"
-        variant="micro"
+        stagger={false}
         actions={
           <Button size="sm" variant="ghost" icon={<Unlink />} loading={pair.isPending} onClick={() => pair.mutate({ id: w.id, activityId: null }, { onSuccess: () => toast('Unpaired') })}>
             Unpair
@@ -622,7 +622,7 @@ function PairPanel({ w, past, today }: { w: PlannedWorkout; past: boolean; today
           {a ? (
             <Link {...links.activity(a.id)} className="group flex items-center gap-2 text-body text-fg-1">
               <SportGlyph sport={a.sport} size={16} className="text-fg-2" />
-              <span className="truncate font-[560] group-hover:underline">{a.title}</span>
+              <span className="truncate font-medium group-hover:underline">{a.title}</span>
               <ArrowUpRight className="size-3.5 text-fg-3" />
               {w.compliance && (
                 <span className="ml-auto inline-flex items-center gap-1.5 text-label text-fg-2">
@@ -635,10 +635,10 @@ function PairPanel({ w, past, today }: { w: PlannedWorkout; past: boolean; today
           )}
           {rows.map((r) => (
             <div key={r.label} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3">
-              <span className="text-micro text-fg-3">{r.label}</span>
+              <span className="text-body-sm text-fg-3">{r.label}</span>
               <Meter value={r.done ?? 0} max={Math.max(r.plan! * 1.3, r.done ?? 0)} target={r.plan} aria-label={`${r.label} compliance`} />
-              <span className="text-mono text-fg-2">
-                {r.done != null ? r.fmt(r.done) : '—'} <span className="text-fg-4">/ {r.fmt(r.plan!)}</span>
+              <span className="num text-body text-fg-1">
+                {r.done != null ? r.fmt(r.done) : '—'} <span className="text-fg-3">/ {r.fmt(r.plan!)}</span>
               </span>
             </div>
           ))}
@@ -649,7 +649,7 @@ function PairPanel({ w, past, today }: { w: PlannedWorkout; past: boolean; today
   if (!past || w.status === 'skipped') return null;
   const items = near.data ?? [];
   return (
-    <Section title="Pair with an activity" variant="micro">
+    <Section stagger={false} title="Pair with an activity">
       {near.isPending ? (
         <Skeleton className="h-12 w-full" radius="md" />
       ) : items.length ? (
@@ -659,12 +659,12 @@ function PairPanel({ w, past, today }: { w: PlannedWorkout; past: boolean; today
               <button
                 type="button"
                 onClick={() => pair.mutate({ id: w.id, activityId: a.id }, { onSuccess: () => toast.success(<>Paired with <b>{a.title}</b></>), onError: (e) => toast.error((e as Error).message) })}
-                className={cn('flex h-11 w-full items-center gap-3 rounded-md border border-line-1 px-3 text-left transition-colors hover:border-line-3 hover:bg-surface-1', a.sport === w.sport && 'border-line-2')}
+                className={cn('flex h-11 w-full items-center gap-3 rounded-md px-3 text-left transition-colors duration-(--dur-fast) hover:bg-surface-2', a.sport === w.sport ? 'bg-surface-1' : 'bg-transparent')}
               >
                 <SportGlyph sport={a.sport} size={16} className="text-fg-2" />
                 <span className="min-w-0 flex-1 truncate text-body text-fg-1">{a.title}</span>
-                <span className="text-mono-sm text-fg-3">{formatDayShort(a.localDate)}</span>
-                <span className="text-mono-sm text-fg-3">{formatDuration(a.movingSec || a.durationSec, 'clock')}</span>
+                <span className="text-body-sm text-fg-3">{formatDayShort(a.localDate)}</span>
+                <span className="text-body-sm text-fg-3">{formatDuration(a.movingSec || a.durationSec, 'clock')}</span>
               </button>
             </li>
           ))}

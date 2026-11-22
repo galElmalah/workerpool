@@ -1,0 +1,15 @@
+{
+ "name": "Jonas Weber",
+ "sex": "male",
+ "units": "metric",
+ "weekStart": "monday",
+ "timezone": "Europe/Madrid",
+ "theme": "dark",
+ "accent": "blue",
+ "density": "comfortable",
+ "reducedMotion": false,
+ "homeRoute": "calendar",
+ "garminAutoPushDays": 7,
+ "onboarded": true,
+ "birthYear": 1987
+}

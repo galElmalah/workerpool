@@ -8,15 +8,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi, useNavigate } from '@tanstack/react-router';
 import type { Threshold, ThresholdKind } from '@cadence/core/domain';
-import { ArrowLeft, ArrowRight, Check, Database, Lock, ShieldCheck, TriangleAlert, Watch } from 'lucide-react';
-import { AnimatePresence, LayoutGroup, motion, useAnimate } from 'motion/react';
+import { ArrowLeft, ArrowRight, Check, Database, Lock, TriangleAlert, Watch } from 'lucide-react';
+import { AnimatePresence, motion, useAnimate } from 'motion/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiError, api, call } from '@/lib/api';
 import { cn } from '@/lib/cn';
-import { formatDateMedium, formatNumber, paceParts } from '@/lib/format';
+import { formatDateMedium, formatNumber } from '@/lib/format';
 import { qk } from '@/lib/query';
 import { authQuery, settingsQuery, useAuthStatus, useGarminStatus, useLogin, useSetupPassphrase, useUpdateSettings } from '@/lib/queries/shared';
-import { setUnits, useUnits, type UnitPrefs } from '@/lib/units';
+import { setUnits, useUnits } from '@/lib/units';
 import { Odometer } from '@/motion/Ticker';
 import { useReducedMotionPref } from '@/motion/prefs';
 import { dur, spring, tween } from '@/motion/tokens';
@@ -26,7 +26,7 @@ import { Field, Input } from '@/ui/Field';
 import { Segmented } from '@/ui/Segmented';
 import { useBackfill, resumeBackfill, startBackfill, cancelBackfill } from './backfill';
 import { GarminConnectForm } from './garmin';
-import { BigThresholdInput, PassphraseInput, SourceChip, StrengthMeter, THRESHOLD_META, Wordmark, passphraseStrength, thresholdUnit } from './kit';
+import { BigThresholdInput, PassphraseInput, SourceChip, StrengthMeter, THRESHOLD_META, Wordmark, passphraseStrength } from './kit';
 
 // ───────────────────────────── frame ─────────────────────────────
 
@@ -38,7 +38,7 @@ function BareFrame({ children, right }: { children: ReactNode; right?: ReactNode
         {right}
       </header>
       <div className="flex flex-1 flex-col">{children}</div>
-      <footer className="flex h-12 shrink-0 items-center justify-center px-5 text-micro text-fg-4">Single athlete · self-hosted · your data</footer>
+      <footer className="flex h-12 shrink-0 items-center justify-center px-5 text-label font-normal text-fg-4">Single athlete · self-hosted · your data</footer>
     </div>
   );
 }
@@ -66,47 +66,35 @@ const STEPS = [
   { id: 'zones', label: 'Thresholds' },
 ] as const;
 
+/** Quiet progress: four short neutral segments (the current one longer) and the step name. */
 function StepIndicator({ step, done }: { step: number; done: boolean }) {
+  const cur = done ? STEPS.length : step;
   return (
-    <LayoutGroup id="welcome-steps">
-      <ol className="relative grid grid-cols-4 gap-1" aria-label="Setup progress">
+    <div className="flex items-center gap-4">
+      <ol className="flex items-center gap-1.5" aria-label="Setup progress">
         {STEPS.map((s, i) => {
-          const active = i === step && !done;
-          const complete = i < step || done;
+          const active = i === cur;
+          const complete = i < cur;
           return (
-            <li key={s.id} className="relative flex flex-col gap-2" aria-current={active ? 'step' : undefined}>
-              <span className="relative h-1 overflow-hidden rounded-full bg-surface-3">
-                <motion.span
-                  className={cn('absolute inset-0 origin-left rounded-full', complete ? 'bg-accent' : 'bg-fg-1')}
-                  initial={false}
-                  animate={{ scaleX: complete || active ? 1 : 0, opacity: active ? 0.9 : 1 }}
-                  transition={spring.smooth}
-                />
-              </span>
-              <span className="relative flex h-7 items-center gap-1.5 px-2">
-                {active && (
-                  <motion.span layoutId="welcome-step-pill" transition={spring.smooth} className="absolute inset-0 -z-0 rounded-sm border border-line-2 bg-surface-2" aria-hidden />
-                )}
-                <span className="relative flex size-4 items-center justify-center">
-                  <AnimatePresence initial={false} mode="popLayout">
-                    {complete ? (
-                      <motion.span key="c" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.4, opacity: 0 }} transition={spring.snappy}>
-                        <Check className="size-3.5 text-accent-ink" strokeWidth={2.5} />
-                      </motion.span>
-                    ) : (
-                      <motion.span key="n" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.4, opacity: 0 }} transition={spring.snappy} className={cn('text-mono-sm', active ? 'text-fg-1' : 'text-fg-4')}>
-                        {i + 1}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </span>
-                <span className={cn('relative truncate text-label', active ? 'text-fg-1' : complete ? 'text-fg-2 max-sm:sr-only' : 'text-fg-3 max-sm:sr-only')}>{s.label}</span>
+            <li key={s.id} aria-current={active ? 'step' : undefined} className="flex">
+              <motion.span
+                initial={false}
+                animate={{ width: active ? 20 : 6 }}
+                transition={spring.smooth}
+                className={cn('block h-1.5 rounded-full transition-colors duration-(--dur-base)', active ? 'bg-fg-1' : complete ? 'bg-fg-3' : 'bg-surface-3')}
+              />
+              <span className="sr-only">
+                {s.label}
+                {complete ? ' (done)' : active ? ' (current)' : ''}
               </span>
             </li>
           );
         })}
       </ol>
-    </LayoutGroup>
+      <span className="text-body-sm text-fg-3" aria-hidden>
+        {done ? 'Done' : `${STEPS[step]?.label} · ${step + 1} of ${STEPS.length}`}
+      </span>
+    </div>
   );
 }
 
@@ -164,31 +152,35 @@ export function WelcomePage() {
     }
   };
 
-  const finish = (home: 'today' | 'calendar') => {
+  // Saving `onboarded: true` updates the settings cache optimistically, which would trip the gate
+  // above and jump straight to the app: hold the gate *before* the save starts so the finale shows.
+  const [home, setHome] = useState<'today' | 'calendar'>('calendar');
+  const holdGate = (on: boolean) => {
+    finishing.current = on;
+  };
+  const enterApp = (to: 'today' | 'calendar') => void navigate({ to: to === 'today' ? '/today' : '/calendar' });
+  const finish = (next: 'today' | 'calendar') => {
     finishing.current = true;
+    setHome(next);
     setDone(true);
     try {
       sessionStorage.removeItem(STEP_KEY);
     } catch {
       /* ignore */
     }
-    setTimeout(() => void navigate({ to: home === 'today' ? '/today' : '/calendar' }), 1100);
   };
 
   if (step === null) return <Splash />;
 
   return (
-    <BareFrame right={auth.data?.demo ? <span className="rounded-xs border border-dashed border-line-3 px-1.5 py-0.5 text-micro text-fg-3">Demo mode</span> : undefined}>
-      <div className="mx-auto grid w-full max-w-[1120px] flex-1 grid-cols-1 gap-10 px-5 pb-10 pt-4 md:px-8 lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)] lg:gap-16 lg:pt-10">
-        <div className="flex min-w-0 flex-col gap-8">
-          <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="max-w-[30rem] text-body-lg text-fg-2">
-            Your training calendar, Garmin sync and progress — one quiet instrument for one athlete.
-          </motion.p>
+    <BareFrame right={auth.data?.demo ? <span className="text-body-sm text-fg-3">Demo mode</span> : undefined}>
+      <div className="mx-auto flex w-full max-w-[34rem] flex-1 flex-col px-5 pb-16 pt-6 md:pt-16">
+        <div className="flex min-w-0 flex-col gap-10">
           <StepIndicator step={step} done={done} />
           <div className="relative min-h-[420px]">
             <AnimatePresence mode="wait" custom={dir} initial={false}>
               {done ? (
-                <Finale key="done" />
+                <Finale key="done" home={home} onOpen={() => enterApp(home)} />
               ) : (
                 <motion.div
                   key={step}
@@ -206,17 +198,12 @@ export function WelcomePage() {
                   {step === 0 && <StepPassphrase onNext={() => go(1)} />}
                   {step === 1 && <StepYou onNext={() => go(2)} />}
                   {step === 2 && <StepGarmin demo={!!auth.data?.demo} onBack={() => go(1)} onNext={() => go(3)} />}
-                  {step === 3 && <StepThresholds onBack={() => go(2)} onFinish={finish} />}
+                  {step === 3 && <StepThresholds onBack={() => go(2)} onSaving={holdGate} onFinish={finish} />}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
-        <aside className="hidden min-w-0 lg:block" aria-hidden>
-          <div className="sticky top-10">
-            <Preview step={done ? 4 : step} />
-          </div>
-        </aside>
       </div>
     </BareFrame>
   );
@@ -224,8 +211,8 @@ export function WelcomePage() {
 
 function StepHead({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-micro text-fg-3">{eyebrow}</span>
+    <div className="flex flex-col gap-3">
+      <span className="sr-only">{eyebrow}</span>
       <h1 data-page-title tabIndex={-1} className="text-title-1 text-fg-1 outline-none">
         {title}
       </h1>
@@ -236,7 +223,7 @@ function StepHead({ eyebrow, title, children }: { eyebrow: string; title: string
 
 function InlineError({ children }: { children: ReactNode }) {
   return (
-    <p role="alert" className="flex items-start gap-2 rounded-md border border-dashed border-line-3 px-3 py-2 text-body-sm text-fg-1">
+    <p role="alert" className="flex items-start gap-2 rounded-md bg-surface-1 px-3 py-2.5 text-body-sm text-fg-1">
       <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
       {children}
     </p>
@@ -266,7 +253,7 @@ function StepPassphrase({ onNext }: { onNext: () => void }) {
   return (
     <>
       <StepHead eyebrow="Step 1 of 4" title="Create your passphrase">
-        Cadence has one user: you. This passphrase unlocks it on every device.
+        Cadence is your training calendar, Garmin sync and progress, for one athlete: you. This passphrase unlocks it on every device.
       </StepHead>
       <form
         className="flex flex-col gap-4"
@@ -281,7 +268,7 @@ function StepPassphrase({ onNext }: { onNext: () => void }) {
         <PassphraseInput id="pp" value={value} onChange={setValue} autoComplete="new-password" autoFocus placeholder="A few words you will remember" aria-describedby="pp-strength" />
         <StrengthMeter value={value} id="pp-strength" />
         {setup.isError && !(setup.error instanceof ApiError && setup.error.code === 'already_configured') && <InlineError>{setup.error.message}</InlineError>}
-        <div className="flex items-center justify-between gap-3 pt-2">
+        <div className="flex items-center justify-between gap-3 pt-4">
           <span className="flex items-center gap-1.5 text-body-sm text-fg-3">
             <Lock className="size-3.5" /> Stored only as a salted hash
           </span>
@@ -375,7 +362,7 @@ function StepYou({ onNext }: { onNext: () => void }) {
           placeholder="Search timezones"
         />
         {update.isError && <InlineError>{update.error.message}</InlineError>}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-4">
           <Button type="submit" variant="primary" size="lg" iconRight={<ArrowRight />} loading={update.isPending}>
             Continue
           </Button>
@@ -452,8 +439,8 @@ type Status = NonNullable<ReturnType<typeof useGarminStatus>['data']>;
 
 function ConnectionSummary({ status }: { status: Status }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-1 p-4">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-accent-a2 text-accent-ink">
+    <div className="flex items-center gap-3">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-fg-2">
         <Watch className="size-5" />
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -472,8 +459,8 @@ function ConnectionSummary({ status }: { status: Status }) {
 
 function CapChip({ on, children }: { on: boolean; children: ReactNode }) {
   return (
-    <span className={cn('inline-flex h-6 items-center gap-1 rounded-sm border px-2 text-label', on ? 'border-transparent bg-accent-a2 text-accent-ink' : 'border-dashed border-line-3 text-fg-3')}>
-      {on ? <Check className="size-3" strokeWidth={2.5} /> : <span className="text-fg-4">–</span>}
+    <span className={cn('inline-flex h-6 items-center gap-1 text-body-sm', on ? 'text-fg-2' : 'text-fg-4 line-through')}>
+      {on ? <Check className="size-3.5 text-fg-3" strokeWidth={2.25} /> : <span>–</span>}
       {children}
     </span>
   );
@@ -496,7 +483,7 @@ function BackfillPanel({ defaultMonths }: { defaultMonths: (typeof MONTHS)[numbe
   const total = p?.total ?? null;
   const frac = p ? (p.phase === 'done' ? 1 : total ? Math.min(1, p.done / Math.max(1, total)) : 0.04) : 0;
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-line-2 p-4">
+    <div className="flex flex-col gap-5 rounded-lg bg-surface-1 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col">
           <span className="text-body text-fg-1">History</span>
@@ -507,30 +494,24 @@ function BackfillPanel({ defaultMonths }: { defaultMonths: (typeof MONTHS)[numbe
       {started ? (
         <div className="flex flex-col gap-3" aria-live="polite">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-label text-fg-2">{p ? PHASE_LABEL[p.phase] ?? p.phase : 'Waiting for the first sync to finish…'}</span>
-            <span className="text-mono text-fg-2">
+            <span className="text-body-sm text-fg-3">{p ? PHASE_LABEL[p.phase] ?? p.phase : 'Waiting for the first sync to finish…'}</span>
+            <span className="num text-stat-sm text-fg-1">
               {p && total ? `${formatNumber(p.done)} / ${formatNumber(total)}` : p?.phase === 'done' ? '' : '…'}
             </span>
           </div>
-          <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-3" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(frac * 100)}>
-            <motion.div className="absolute inset-0 origin-left rounded-full bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: frac }} transition={spring.gentle} />
+          <div className="relative h-1 overflow-hidden rounded-full bg-surface-3" role="progressbar" aria-label="History import" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(frac * 100)}>
+            <motion.div className="absolute inset-0 origin-left rounded-full bg-fg-2" initial={{ scaleX: 0 }} animate={{ scaleX: frac }} transition={spring.gentle} />
             {bf.looping && <div className="skeleton absolute inset-0 opacity-60" />}
           </div>
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-micro text-fg-3">Activities imported</span>
-              <span className="text-stat-sm text-fg-1">
-                <Odometer value={p ? p.created + p.updated : 0} />
-              </span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-micro text-fg-3">Oldest reached</span>
-              <span className="text-stat-sm text-fg-1">{p?.oldestDate ? formatDateMedium(p.oldestDate, true) : '—'}</span>
-            </div>
-          </div>
+          <p className="num text-body-sm text-fg-3">
+            <span className="text-fg-2">
+              <Odometer value={p ? p.created + p.updated : 0} />
+            </span>{' '}
+            activities imported{p?.oldestDate ? ` · back to ${formatDateMedium(p.oldestDate, true)}` : ''}
+          </p>
           {bf.error && <InlineError>{bf.error}</InlineError>}
           {bf.looping && (
-            <div className="flex justify-end">
+            <div className="-mr-2 flex justify-end">
               <Button variant="ghost" size="sm" onClick={() => void cancelBackfill()}>
                 Stop import
               </Button>
@@ -556,7 +537,7 @@ function latest(history: Threshold[], kind: ThresholdKind, today: string): Thres
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom) || (a.sport === 'all' ? -1 : 1))[0];
 }
 
-function StepThresholds({ onBack, onFinish }: { onBack: () => void; onFinish: (home: 'today' | 'calendar') => void }) {
+function StepThresholds({ onBack, onFinish, onSaving }: { onBack: () => void; onFinish: (home: 'today' | 'calendar') => void; onSaving: (on: boolean) => void }) {
   const units = useUnits();
   const history = useQuery({ queryKey: qk.thresholds.history, queryFn: () => call(api.thresholds.$get()), staleTime: 0 });
   const est = useQuery({ queryKey: qk.trends.of('thresholds'), queryFn: () => call(api.trends.thresholds.$get()), staleTime: 0 });
@@ -587,6 +568,7 @@ function StepThresholds({ onBack, onFinish }: { onBack: () => void; onFinish: (h
     if (!initial || !today) return;
     setSaving(true);
     setError(null);
+    onSaving(true);
     try {
       if (!skip) {
         const from = status.data?.backfillProgress?.sinceDate ?? status.data?.counts.oldestGarminDate ?? today;
@@ -610,6 +592,7 @@ function StepThresholds({ onBack, onFinish }: { onBack: () => void; onFinish: (h
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setSaving(false);
+      onSaving(false);
     }
   };
 
@@ -649,7 +632,7 @@ function StepThresholds({ onBack, onFinish }: { onBack: () => void; onFinish: (h
           );
         })}
       </div>
-      <p className="text-body-sm text-fg-3">Applied to your whole history. Add dated changes any time in Settings → Zones.</p>
+      <p className="text-body-sm text-fg-3">Applied to your whole history. Add dated changes any time in Settings → Zones & thresholds.</p>
       {error && <InlineError>{error}</InlineError>}
       <div className="flex items-center justify-between gap-3 pt-2">
         <Button variant="ghost" icon={<ArrowLeft />} onClick={onBack} disabled={saving}>
@@ -668,220 +651,35 @@ function StepThresholds({ onBack, onFinish }: { onBack: () => void; onFinish: (h
   );
 }
 
-function Finale() {
+function Finale({ home, onOpen }: { home: 'today' | 'calendar'; onOpen: () => void }) {
   const { data: s } = useQuery(settingsQuery);
+  const btn = useRef<HTMLButtonElement>(null);
+  // Linger long enough to read, then carry on by itself; the button skips the wait.
+  useEffect(() => {
+    const focus = setTimeout(() => btn.current?.focus(), 400);
+    const t = setTimeout(onOpen, 4200);
+    return () => {
+      clearTimeout(focus);
+      clearTimeout(t);
+    };
+  }, [onOpen]);
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={spring.smooth} className="flex flex-col items-start gap-5 pt-6">
-      <span className="flex size-14 items-center justify-center rounded-full bg-accent text-on-accent">
-        <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <motion.path d="M5 12.5 10 17l9-10" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.smooth, delay: 0.1 }} />
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="flex flex-col items-start gap-6">
+      <span className="flex size-12 items-center justify-center rounded-full bg-surface-2 text-fg-1">
+        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <motion.path d="M5 12.5 10 17l9-10" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ ...spring.bouncy, delay: 0.15 }} />
         </svg>
       </span>
-      <h1 data-page-title tabIndex={-1} className="text-title-1 text-fg-1 outline-none">
-        You're set{s?.name ? `, ${s.name}` : ''}.
-      </h1>
-      <p className="text-body-lg text-fg-2">Opening your calendar…</p>
+      <div className="flex flex-col gap-3">
+        <h1 data-page-title tabIndex={-1} className="text-title-1 text-fg-1 outline-none">
+          You’re set{s?.name ? `, ${s.name}` : ''}.
+        </h1>
+        <p className="text-body-lg text-fg-2">Your history is in and your zones follow your thresholds. Plan the week ahead next.</p>
+      </div>
+      <Button ref={btn} variant="primary" size="lg" iconRight={<ArrowRight />} onClick={onOpen}>
+        {home === 'today' ? 'Open today' : 'Open calendar'}
+      </Button>
     </motion.div>
-  );
-}
-
-// ───────────────────────────── live preview (desktop) ─────────────────────────────
-
-function Preview({ step }: { step: number }) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-line-2 bg-surface-1">
-      <div className="absolute inset-0 bg-dots-fg opacity-[0.18]" />
-      <div className="relative min-h-[460px] p-8">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={Math.min(step, 4)} initial={{ opacity: 0, y: 10, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, transition: tween('fast', 'in') }} transition={spring.smooth}>
-            {step === 0 && <PreviewPrivacy />}
-            {step === 1 && <PreviewWeek />}
-            {step === 2 && <PreviewGarmin />}
-            {step >= 3 && <PreviewZones />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-function PreviewTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
-  return (
-    <div className="mb-8 flex flex-col gap-1.5">
-      <span className="text-micro text-fg-3">{eyebrow}</span>
-      <span className="text-title-2 text-fg-1">{title}</span>
-    </div>
-  );
-}
-
-function PreviewPrivacy() {
-  const rows = [
-    { icon: <Lock />, t: 'One athlete, one passphrase', d: 'No accounts, no sign-up, no one else.' },
-    { icon: <Database />, t: 'Your database', d: 'Everything lives in your own Cloudflare D1. Export it whole, any time.' },
-    { icon: <ShieldCheck />, t: 'Encrypted credentials', d: 'Garmin keys are sealed with AES-GCM before they touch the disk.' },
-  ];
-  return (
-    <>
-      <PreviewTitle eyebrow="Private by design" title="Built for exactly one person." />
-      <ul className="flex flex-col gap-6">
-        {rows.map((r, i) => (
-          <motion.li key={r.t} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ ...spring.smooth, delay: 0.08 + i * 0.05 }} className="flex gap-4">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line-2 bg-surface-2 text-fg-2 [&_svg]:size-4">{r.icon}</span>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-body text-fg-1">{r.t}</span>
-              <span className="text-body-sm text-fg-3">{r.d}</span>
-            </div>
-          </motion.li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
-const WEEK = [
-  { sport: 'Swim', title: 'CSS repeats', min: 50, m: 2800, load: 52 },
-  { sport: 'Ride', title: 'Threshold 3×12', min: 75, m: 38000, load: 96 },
-  { sport: 'Run', title: 'Easy aerobic', min: 45, m: 8600, load: 41 },
-  { sport: 'Rest', title: '', min: 0, m: 0, load: 0 },
-  { sport: 'Run', title: 'Tempo 2×20', min: 60, m: 12400, load: 78 },
-  { sport: 'Ride', title: 'Long endurance', min: 180, m: 86000, load: 152 },
-  { sport: 'Run', title: 'Long run', min: 95, m: 18000, load: 104 },
-];
-
-function PreviewWeek() {
-  const { data: s } = useQuery(settingsQuery);
-  const units = useUnits();
-  const sunday = s?.weekStart === 'sunday';
-  const days = sunday ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const items = sunday ? [WEEK[6], ...WEEK.slice(0, 6)] : WEEK;
-  const dist = (m: number, sport: string) => {
-    if (sport === 'Swim') return units.system === 'imperial' ? `${formatNumber(m / 0.9144)} yd` : `${formatNumber(m)} m`;
-    return units.system === 'imperial' ? `${(m / 1609.344).toFixed(1)} mi` : `${(m / 1000).toFixed(1)} km`;
-  };
-  return (
-    <>
-      <PreviewTitle eyebrow="This is how a week reads" title={s?.name ? `${s.name}'s week` : 'Your week'} />
-      <LayoutGroup>
-        <ul className="flex flex-col">
-          {items.map((w, i) => (
-            <motion.li layout transition={spring.smooth} key={w.sport + w.title + i} className="flex h-12 items-center gap-4 border-b border-line-1 last:border-b-0">
-              <span className="w-10 text-mono text-fg-3">{days[i]}</span>
-              {w.load ? (
-                <>
-                  <span className="w-12 text-micro text-fg-3">{w.sport}</span>
-                  <span className="min-w-0 flex-1 truncate text-body text-fg-1">{w.title}</span>
-                  <span className="w-20 text-right text-mono text-fg-2">{dist(w.m, w.sport)}</span>
-                  <span className="w-10 text-right text-mono text-accent-ink">{w.load}</span>
-                </>
-              ) : (
-                <span className="text-body-sm text-fg-4">Rest day</span>
-              )}
-            </motion.li>
-          ))}
-        </ul>
-      </LayoutGroup>
-      <div className="mt-6 flex items-baseline gap-2 text-body-sm text-fg-3">
-        Threshold pace example:
-        <span className="text-mono text-fg-1">
-          {paceParts(1000 / 270, 'run', units).value} {paceParts(1000 / 270, 'run', units).unit}
-        </span>
-      </div>
-    </>
-  );
-}
-
-function PreviewGarmin() {
-  const bf = useBackfill();
-  const status = useGarminStatus().data;
-  const p = bf.progress;
-  const matrix: [string, boolean, boolean][] = [
-    ['Activities & FIT files', true, true],
-    ['Sleep, HRV, resting HR', true, true],
-    ['FTP, LTHR from Garmin', false, true],
-    ['Send workouts to watch', false, true],
-  ];
-  return (
-    <>
-      <PreviewTitle eyebrow="Garmin" title={p ? (p.running ? 'Importing your history' : 'History imported') : status?.connected ? 'Your training, arriving.' : 'Two keys, two powers.'} />
-      {p || status?.connected ? (
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col gap-1">
-            <span className="text-micro text-fg-3">Activities in Cadence</span>
-            <span className="text-stat-xl text-fg-1">
-              <Odometer value={Math.max(status?.counts.activities ?? 0, p ? p.created + p.updated : 0)} />
-            </span>
-          </div>
-          {p?.oldestDate && (
-            <div className="flex flex-col gap-1">
-              <span className="text-micro text-fg-3">Back to</span>
-              <span className="text-stat-md text-fg-1">{formatDateMedium(p.oldestDate, true)}</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <table className="w-full text-body">
-          <thead>
-            <tr className="text-micro text-fg-3">
-              <th className="pb-3 text-left font-[600]" />
-              <th className="pb-3 text-center font-[600]">API key</th>
-              <th className="pb-3 text-center font-[600]">Tokens</th>
-            </tr>
-          </thead>
-          <tbody>
-            {matrix.map(([label, a, b]) => (
-              <tr key={label} className="border-t border-line-1">
-                <td className="py-3 text-fg-2">{label}</td>
-                {[a, b].map((v, i) => (
-                  <td key={i} className="py-3 text-center">
-                    {v ? <Check className="mx-auto size-4 text-accent-ink" strokeWidth={2.25} /> : <span className="text-fg-4">—</span>}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </>
-  );
-}
-
-const COGGAN = [
-  { z: 'Z1', name: 'Recovery', lo: 0, hi: 0.55 },
-  { z: 'Z2', name: 'Endurance', lo: 0.55, hi: 0.75 },
-  { z: 'Z3', name: 'Tempo', lo: 0.75, hi: 0.9 },
-  { z: 'Z4', name: 'Threshold', lo: 0.9, hi: 1.05 },
-  { z: 'Z5', name: 'VO2max', lo: 1.05, hi: 1.2 },
-  { z: 'Z6', name: 'Anaerobic', lo: 1.2, hi: 1.5 },
-];
-
-function PreviewZones() {
-  const { data } = useQuery({ queryKey: qk.thresholds.history, queryFn: () => call(api.thresholds.$get()) });
-  const ftp = data?.filter((t) => t.kind === 'ftp').sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0]?.value ?? 250;
-  const units: UnitPrefs = useUnits();
-  return (
-    <>
-      <PreviewTitle eyebrow="Zones follow your thresholds" title="Every session, scored the same way." />
-      <div className="flex flex-col gap-2.5">
-        {COGGAN.map((z, i) => (
-          <div key={z.z} className="flex items-center gap-3">
-            <span className="w-7 text-mono text-fg-3">{z.z}</span>
-            <div className="relative h-6 flex-1 overflow-hidden rounded-xs bg-surface-2">
-              <motion.div
-                className={cn('absolute inset-y-0 left-0 origin-left rounded-xs', `bg-z${i + 1}`)}
-                style={{ width: `${(z.hi / 1.5) * 100}%` }}
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ ...spring.gentle, delay: 0.05 + i * 0.035 }}
-              />
-              <span className="absolute inset-y-0 left-2 flex items-center text-label text-fg-1">{z.name}</span>
-            </div>
-            <span className="w-24 text-right text-mono text-fg-2">
-              {i === COGGAN.length - 1 ? `${Math.round(ftp * z.lo)}+` : `${Math.round(ftp * z.lo)}–${Math.round(ftp * z.hi) - 1}`} {thresholdUnit(THRESHOLD_META.ftp, units)}
-            </span>
-          </div>
-        ))}
-      </div>
-    </>
   );
 }
 
@@ -972,11 +770,11 @@ export function LoginPage() {
   if (!auth.data || auth.data.authenticated || !auth.data.configured) return <Splash />;
 
   return (
-    <BareFrame right={auth.data.demo ? <span className="rounded-xs border border-dashed border-line-3 px-1.5 py-0.5 text-micro text-fg-3">Demo mode</span> : undefined}>
+    <BareFrame right={auth.data.demo ? <span className="text-body-sm text-fg-3">Demo mode</span> : undefined}>
       <div className="flex flex-1 items-center justify-center px-5 pb-16">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="flex w-full max-w-[22rem] flex-col gap-8">
           <div className="flex flex-col gap-2">
-            <span className="text-micro text-fg-3">Welcome back</span>
+            <span className="text-body-sm text-fg-3">Welcome back</span>
             <h1 data-page-title tabIndex={-1} className="text-title-1 text-fg-1 outline-none">
               Unlock Cadence
             </h1>
@@ -998,7 +796,7 @@ export function LoginPage() {
               <AnimatePresence mode="wait" initial={false}>
                 {locked ? (
                   <motion.span key="lock" initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-fg-1">
-                    <Lock className="size-3.5" /> Too many attempts. Try again in <span className="text-mono tabular-nums">{secondsLeft}s</span>
+                    <Lock className="size-3.5" /> Too many attempts. Try again in <span className="num">{secondsLeft}s</span>
                   </motion.span>
                 ) : wrong ? (
                   <motion.span key="wrong" initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-fg-1">

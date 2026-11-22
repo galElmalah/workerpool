@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Threshold, ThresholdKind } from '@cadence/core/domain';
-import { Trash2, Wand2 } from 'lucide-react';
+import { HeartPulse, Trash2, Wand2 } from 'lucide-react';
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { api, call } from '@/lib/api';
@@ -10,7 +10,6 @@ import { invalidateTraining, qk } from '@/lib/query';
 import { useUnits, type UnitPrefs } from '@/lib/units';
 import { spring, tween } from '@/motion/tokens';
 import { Button, IconButton } from '@/ui/Button';
-import { Card } from '@/ui/Card';
 import { DatePicker } from '@/ui/DatePicker';
 import { SaveIndicator, type SaveStatus } from '@/ui/SaveIndicator';
 import { Section } from '@/ui/Section';
@@ -129,10 +128,10 @@ export function SettingsZonesPage() {
   return (
     <>
       <Section title="Zones & thresholds" description="Thresholds are dated. A new value applies from its date onward, and every activity after it is rescored." actions={<SaveIndicator status={status} />}>
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-8">
           <SportTabs value={tab} onChange={setTab} />
-          <Card spotlight={false} padding="none">
-            <div className="flex flex-col gap-6 p-5 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
               <div className={cn('grid flex-1 gap-x-8 gap-y-6', def.entries.length > 2 ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
                 {history.isPending || !today
                   ? def.entries.map((e) => <Skeleton key={e.kind + e.sport} className="h-[76px] w-40" />)
@@ -162,16 +161,16 @@ export function SettingsZonesPage() {
             </div>
             <AnimatePresence initial={false}>
               {suggestions.length > 0 && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-2 border-t border-line-1 p-5">
-                  <span className="text-micro text-fg-3">Suggested from your recent bests</span>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-8 flex flex-col gap-1">
+                  <span className="mb-1 text-body-sm text-fg-3">Suggested from your recent bests</span>
                   {suggestions.map((sg) => {
                     const meta = THRESHOLD_META[sg.kind];
                     return (
-                      <div key={sg.kind + sg.sport} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-line-3 px-3 py-2">
-                        <span className="flex items-center gap-2 text-body text-fg-1">
+                      <div key={sg.kind + sg.sport} className="-mx-3 flex flex-wrap items-center justify-between gap-3 rounded-md bg-surface-1 px-3 py-2">
+                        <span className="flex flex-wrap items-center gap-2 text-body text-fg-1">
                           <Wand2 className="size-4 text-fg-3" />
                           {meta.label}
-                          <span className="text-mono">
+                          <span className="num font-medium">
                             {thresholdText(meta, sg.value, units)} {thresholdUnit(meta, units)}
                           </span>
                           <span className="text-body-sm text-fg-3">
@@ -181,7 +180,7 @@ export function SettingsZonesPage() {
                         </span>
                         <Button
                           size="sm"
-                          variant="secondary"
+                          variant="ghost"
                           onClick={() => add.mutate({ kind: sg.kind, sport: sg.sport === 'all' ? 'all' : sg.sport, value: sg.value, effectiveFrom: today ?? effective, source: 'estimated', note: sg.basis })}
                         >
                           Apply
@@ -192,7 +191,7 @@ export function SettingsZonesPage() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </Card>
+          </div>
         </div>
       </Section>
 
@@ -202,7 +201,7 @@ export function SettingsZonesPage() {
         ) : zones.isError ? (
           <InlineError action={<Button size="sm" variant="ghost" onClick={() => void zones.refetch()}>Retry</Button>}>Couldn't load zones.</InlineError>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-12">
             {z?.power && <ZoneTable title={tab === 'row' ? 'Erg power' : 'Power'} t={z.power} units={units} sport={tab} />}
             {z?.pace && <ZoneTable title={tab === 'swim' ? 'Swim pace' : 'Pace'} t={z.pace} units={units} sport={tab} />}
             {z?.hr && <ZoneTable title="Heart rate" t={z.hr} units={units} sport={tab} />}
@@ -215,12 +214,11 @@ export function SettingsZonesPage() {
         {history.isPending ? (
           <Skeleton className="h-40 w-full" radius="lg" />
         ) : tabHistory.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-line-2 px-4 py-6 text-center text-body text-fg-3">No dated values yet for {def.label.toLowerCase()}. Type one above.</p>
+          <p className="text-body text-fg-3">No dated values yet for {def.label.toLowerCase()}. Type one above.</p>
         ) : (
-          <Card spotlight={false} padding="none">
+          <div>
             <LayoutGroup>
-              <ol className="relative py-2">
-                <span className="absolute bottom-5 left-[24.5px] top-5 w-px bg-line-2" aria-hidden />
+              <ol className="relative">
                 <AnimatePresence initial={false}>
                   {tabHistory.map((t, i) => {
                     const meta = THRESHOLD_META[t.kind];
@@ -232,15 +230,15 @@ export function SettingsZonesPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, transition: tween('fast', 'in') }}
                         transition={spring.smooth}
-                        className="group relative flex items-center gap-4 px-5 py-2.5"
+                        className="group relative flex min-h-11 items-center gap-4 border-b border-line-1 last:border-b-0"
                       >
-                        <span className={cn('relative z-10 size-2.5 shrink-0 rounded-full border-2 border-surface-1', i === 0 ? 'bg-accent' : 'bg-fg-3')} />
-                        <span className="w-36 shrink-0 whitespace-nowrap text-mono text-fg-2">{formatDateMedium(t.effectiveFrom, true)}</span>
+                        <span className={cn('size-1.5 shrink-0 rounded-full', i === 0 ? 'bg-fg-1' : 'bg-fg-4')} aria-hidden />
+                        <span className="num w-36 shrink-0 whitespace-nowrap text-body text-fg-2">{formatDateMedium(t.effectiveFrom, true)}</span>
                         <span className="min-w-0 flex-1 truncate text-body text-fg-1">
                           {meta.label}
                           {t.sport !== 'all' && t.kind === 'lthr' ? ` · ${t.sport}` : ''}
                         </span>
-                        <span className="text-mono text-fg-1">
+                        <span className="num text-body font-medium text-fg-1">
                           {thresholdText(meta, t.value, units)} <span className="text-fg-3">{thresholdUnit(meta, units)}</span>
                         </span>
                         <span className="hidden w-24 justify-end sm:flex">
@@ -253,7 +251,7 @@ export function SettingsZonesPage() {
                 </AnimatePresence>
               </ol>
             </LayoutGroup>
-          </Card>
+          </div>
         )}
       </Section>
     </>
@@ -262,7 +260,7 @@ export function SettingsZonesPage() {
 
 function SportTabs({ value, onChange }: { value: ZoneSport; onChange: (v: ZoneSport) => void }) {
   return (
-    <div role="tablist" aria-label="Sport" className="flex gap-1 overflow-x-auto rounded-lg border border-line-1 bg-surface-1 p-1 [scrollbar-width:none]">
+    <div role="tablist" aria-label="Sport" className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none]">
       {TABS.map((t) => {
         const on = t.id === value;
         return (
@@ -271,11 +269,11 @@ function SportTabs({ value, onChange }: { value: ZoneSport; onChange: (v: ZoneSp
             role="tab"
             aria-selected={on}
             onClick={() => onChange(t.id)}
-            className={cn('relative flex h-9 flex-1 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-label transition-colors duration-(--dur-fast)', on ? 'text-fg-1' : 'text-fg-3 hover:text-fg-1')}
+            className={cn('relative flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-body-sm transition-colors duration-(--dur-fast)', on ? 'text-fg-1' : 'text-fg-3 hover:text-fg-1')}
           >
-            {on && <motion.span layoutId="zones-tab" transition={spring.snappy} className="absolute inset-0 rounded-md border border-line-2 bg-surface-3" />}
+            {on && <motion.span layoutId="zones-tab" transition={spring.snappy} className="absolute inset-0 rounded-md bg-surface-2" />}
             <span className="relative flex items-center gap-2">
-              {t.glyph ? <SportGlyph sport={t.glyph} size={16} /> : <span className="text-mono-sm">♥</span>}
+              {t.glyph ? <SportGlyph sport={t.glyph} size={16} /> : <HeartPulse className="size-4" />}
               {t.label}
             </span>
           </button>
@@ -306,12 +304,12 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
   const pct = (v: number | null) => (v == null ? null : Math.round((v / t.threshold) * 100));
   const maxPct = 1.5;
   return (
-    <Card spotlight={false} padding="none" className="overflow-hidden">
-      <div className="flex items-baseline justify-between gap-3 px-5 pb-3 pt-4">
+    <div>
+      <div className="flex items-baseline justify-between gap-3 pb-3">
         <h3 className="text-title-3 text-fg-1">{title}</h3>
         <span className="flex items-center gap-2 text-body-sm text-fg-3">
           threshold
-          <motion.span key={fmt(t.threshold)} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={spring.snappy} className="text-mono text-fg-1">
+          <motion.span key={fmt(t.threshold)} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={spring.snappy} className="num text-fg-1">
             {fmt(t.threshold)} {unit}
           </motion.span>
           {t.defaulted && <SourceChip source="default" />}
@@ -319,10 +317,10 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
       </div>
       <table className="w-full">
         <thead>
-          <tr className="border-y border-line-1 text-micro text-fg-3">
-            <th className="py-2 pl-5 text-left font-[600]">Zone</th>
-            <th className="py-2 text-right font-[600]">{unit}</th>
-            <th className="hidden py-2 pr-5 text-right font-[600] sm:table-cell">% thr</th>
+          <tr className="border-b border-line-1 text-label text-fg-3">
+            <th className="py-2 text-left font-medium">Zone</th>
+            <th className="py-2 text-right font-medium">{unit}</th>
+            <th className="hidden py-2 text-right font-medium sm:table-cell">% thr</th>
           </tr>
         </thead>
         <tbody>
@@ -333,21 +331,21 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
             const fill = Math.min(7, Math.round(((i + 1) / t.zones.length) * 7));
             return (
               <tr key={zn.label} className="border-b border-line-1 last:border-b-0">
-                <td className="py-2 pl-5">
+                <td className="h-11 py-2">
                   <div className="flex items-center gap-3">
-                    <span className="w-9 text-mono text-fg-2">{zn.label}</span>
-                    <span className="relative hidden h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2 sm:block" aria-hidden>
+                    <span className="num w-7 text-body-sm text-fg-3">{zn.label}</span>
+                    <span className="relative hidden h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-surface-2 sm:block" aria-hidden>
                       <span className={cn('absolute inset-y-0 left-0 rounded-full', `bg-z${fill}`)} style={{ width: `${Math.max(6, (hiF / maxPct) * 100)}%` }} />
                     </span>
                     <span className="truncate text-body text-fg-1">{zn.name}</span>
                   </div>
                 </td>
-                <td className="whitespace-nowrap py-2 pl-3 text-right text-mono text-fg-1">
+                <td className="num whitespace-nowrap py-2 pl-3 text-right text-body text-fg-1">
                   <motion.span key={range(zn.low, zn.high)} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.snappy, delay: i * 0.02 }} className="inline-block">
                     {range(zn.low, zn.high)}
                   </motion.span>
                 </td>
-                <td className="hidden whitespace-nowrap py-2 pl-3 pr-5 text-right text-mono text-fg-3 sm:table-cell">
+                <td className="num hidden whitespace-nowrap py-2 pl-3 text-right text-body-sm text-fg-3 sm:table-cell">
                   {zn.low == null ? `< ${hi}` : hi == null ? `${lo}+` : `${lo}–${hi}`}
                 </td>
               </tr>
@@ -355,6 +353,6 @@ function ZoneTable({ title, t, units, sport }: { title: string; t: Table; units:
           })}
         </tbody>
       </table>
-    </Card>
+    </div>
   );
 }

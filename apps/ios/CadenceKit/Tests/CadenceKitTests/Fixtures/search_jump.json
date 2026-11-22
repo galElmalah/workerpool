@@ -1,0 +1,19 @@
+{
+ "q": "tomorrow",
+ "groups": [
+  {
+   "type": "jump",
+   "label": "Go to",
+   "items": [
+    {
+     "type": "date",
+     "id": "2026-11-22",
+     "title": "Tomorrow",
+     "subtitle": "Sunday 22 November 2026",
+     "date": "2026-11-22",
+     "href": "/calendar/day/2026-11-22"
+    }
+   ]
+  }
+ ]
+}

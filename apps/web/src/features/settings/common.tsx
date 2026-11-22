@@ -14,7 +14,7 @@ import type { SaveStatus } from '@/ui/SaveIndicator';
 
 export function Row({ title, description, children, className, stack }: { title: ReactNode; description?: ReactNode; children?: ReactNode; className?: string; stack?: boolean }) {
   return (
-    <div className={cn('flex flex-col gap-3 py-4 first:pt-0 last:pb-0', !stack && 'sm:flex-row sm:items-center sm:justify-between sm:gap-6', className)}>
+    <div className={cn('flex flex-col gap-3 py-5 first:pt-0 last:pb-0', !stack && 'sm:flex-row sm:items-center sm:justify-between sm:gap-8', className)}>
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-body text-fg-1">{title}</span>
         {description && <span className="max-w-[46ch] text-body-sm text-fg-3">{description}</span>}
@@ -30,7 +30,7 @@ export function Rows({ children }: { children: ReactNode }) {
 
 export function InlineError({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div role="alert" className="flex items-start justify-between gap-3 rounded-md border border-dashed border-line-3 px-3 py-2 text-body-sm text-fg-1">
+    <div role="alert" className="flex items-start justify-between gap-3 rounded-md bg-surface-1 px-3 py-2.5 text-body-sm text-fg-1">
       <span className="flex items-start gap-2">
         <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
         {children}
@@ -101,7 +101,7 @@ export function TwoStepButton({ label, confirmLabel, onConfirm, icon, loading, s
               onConfirm();
             } else setArmed(true);
           }}
-          className={armed ? '!border-solid !border-fg-1' : undefined}
+          className={armed ? '!bg-surface-active' : undefined}
         >
           {armed ? confirmLabel : label}
         </Button>

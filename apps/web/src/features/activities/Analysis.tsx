@@ -72,7 +72,7 @@ export function StreamsSection({ a }: { a: ActivityDetail }) {
   };
   const panel = s && <SelectionPanel a={a} s={s} sel={sel} side={hasMap} onClear={() => setSel(null)} onZoom={zoomToSel} />;
   return (
-    <Section id="charts" title="Charts" description={hasMap ? 'Hover the chart to trace the route; drag to select a range.' : 'Drag across the chart to select a range.'}>
+    <Section id="charts" className="!scroll-mt-28" title="Charts" description={hasMap ? 'Hover the chart to trace the route; drag to select a range.' : 'Drag across the chart to select a range.'}>
       {q.isPending ? (
         <div className="flex flex-col gap-3" aria-busy>
           <div className="flex gap-6">
@@ -81,22 +81,22 @@ export function StreamsSection({ a }: { a: ActivityDetail }) {
           <Skeleton className="h-[440px] w-full" radius="lg" />
         </div>
       ) : q.isError || !s ? (
-        <div className="flex items-center gap-3 rounded-lg border border-dashed border-line-3 p-4 text-body text-fg-1">
+        <div className="flex items-center gap-3 rounded-lg bg-surface-1 p-4 text-body text-fg-1">
           Streams didn’t load. <Button size="sm" icon={<RotateCcw />} onClick={() => q.refetch()}>Retry</Button>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-10">
           {hasMap ? (
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="overflow-hidden rounded-lg border border-line-2 bg-surface-1" style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
-                <RouteMap streams={s} cursor={cursor} selection={hover ?? sel} height={340} elevationShading />
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="overflow-hidden rounded-lg bg-surface-1" style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
+                <RouteMap streams={s} cursor={cursor} selection={hover ?? sel} height={340} elevationShading kmMarkers={false} />
               </div>
               {panel}
             </div>
           ) : (
             panel
           )}
-          <div ref={chartRef} className="rounded-lg border border-line-2 bg-surface-1 p-4" style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
+          <div ref={chartRef}>
             <StreamChart
               streams={s}
               laps={a.laps.length > 1 ? a.laps : undefined}
@@ -123,10 +123,10 @@ function SelectionPanel({ a, s, sel, side, onClear, onZoom }: { a: ActivityDetai
   const st = useMemo(() => streamStats(s, sel?.startSec ?? 0, sel?.endSec ?? s.t[s.t.length - 1]), [s, sel]);
   const pace = PACE_SPORTS.has(a.sport);
   const pb = paceBasis(a.sport, units);
-  const rows: { label: string; value: number | null; format: (n: number) => string; unit?: string; accent?: boolean }[] = [
+  const rows: { label: string; value: number | null; format: (n: number) => string; unit?: string }[] = [
     { label: 'Duration', value: st.durationSec, format: (n) => formatDuration(n, 'hms') },
     ...(st.distanceM != null && st.distanceM > 0 ? [{ label: 'Distance', value: st.distanceM / (pb.meters === 100 || pb.meters === 500 ? 1 : 1000), format: (n: number) => formatNumber(n, pb.meters === 100 || pb.meters === 500 ? 0 : 2), unit: pb.meters === 100 || pb.meters === 500 ? 'm' : 'km' }] : []),
-    ...(st.avgPower != null ? [{ label: 'Avg power', value: st.avgPower, format: (n: number) => formatNumber(n, 0), unit: 'W', accent: true }] : []),
+    ...(st.avgPower != null ? [{ label: 'Avg power', value: st.avgPower, format: (n: number) => formatNumber(n, 0), unit: 'W' }] : []),
     ...(st.weightedPower != null && a.sport === 'bike' ? [{ label: 'Weighted Power', value: st.weightedPower, format: (n: number) => formatNumber(n, 0), unit: 'W' }] : []),
     ...(st.avgHr != null ? [{ label: 'Avg HR', value: st.avgHr, format: (n: number) => formatNumber(n, 0), unit: 'bpm' }] : []),
     ...(st.avgSpeed != null && st.avgSpeed > 0
@@ -138,13 +138,12 @@ function SelectionPanel({ a, s, sel, side, onClear, onZoom }: { a: ActivityDetai
     ...(st.elevationGain != null && st.elevationGain > 0 ? [{ label: 'Elevation', value: st.elevationGain, format: (n: number) => formatNumber(n, 0), unit: 'm' }] : []),
   ];
   return (
-    <div className={cn('relative flex flex-col gap-3 overflow-hidden rounded-lg border bg-surface-1 p-4 transition-colors duration-(--dur-base)', sel ? 'border-accent-a5' : 'border-line-2')}>
+    <div className="relative flex flex-col gap-4 py-1">
       <div className="flex h-7 items-center justify-between gap-2">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div key={sel ? 'sel' : 'all'} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6, transition: tween('fast', 'in') }} transition={spring.smooth} className="flex items-center gap-2">
-            {sel ? <span className="size-2 rounded-full bg-accent" aria-hidden /> : null}
-            <span className="text-micro text-fg-2">{sel ? 'Selection' : 'Whole activity'}</span>
-            {sel && <span className="text-mono-sm text-fg-3">{formatDuration(sel.startSec, 'hms')}–{formatDuration(sel.endSec, 'hms')}</span>}
+            <span className="text-body-sm font-medium text-fg-1">{sel ? 'Selection' : 'Whole activity'}</span>
+            {sel && <span className="text-body-sm text-fg-3">{formatDuration(sel.startSec, 'hms')}–{formatDuration(sel.endSec, 'hms')}</span>}
           </motion.div>
         </AnimatePresence>
         <AnimatePresence>
@@ -159,10 +158,10 @@ function SelectionPanel({ a, s, sel, side, onClear, onZoom }: { a: ActivityDetai
       <div className={cn('grid gap-x-4 gap-y-3', side ? 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-2' : 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-8')}>
         {rows.map((r) => (
           <div key={r.label} className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-micro text-fg-3">{r.label}</span>
-            <span className={cn('flex items-baseline gap-1 text-stat-sm', r.accent ? 'text-accent-ink' : 'text-fg-1')}>
+            <span className="truncate text-body-sm text-fg-3">{r.label}</span>
+            <span className="flex items-baseline gap-1 text-body-lg text-fg-1">
               {r.value == null ? '—' : <Ticker value={r.value} format={r.format} />}
-              {r.unit && <span className="text-label font-[450] text-fg-3">{r.unit}</span>}
+              {r.unit && <span className="text-body-sm text-fg-3">{r.unit}</span>}
             </span>
           </div>
         ))}
@@ -197,8 +196,8 @@ export function LapsSection({ a }: { a: ActivityDetail }) {
   return <LapTable a={a} />;
 }
 
-const th = 'h-9 border-b border-line-1 px-3 text-micro font-[600] text-fg-3 first:pl-4 last:pr-4';
-const td = 'h-10 border-b border-line-1 px-3 text-mono first:pl-4 last:pr-4';
+const th = 'h-9 border-b border-line-1 px-3 text-label font-medium text-fg-3 first:pl-0 last:pr-0';
+const td = 'h-11 border-b border-line-1 px-3 text-body first:pl-0 last:pr-0';
 
 function useLapInteraction() {
   const [selected, setSelected] = useState<number | null>(null);
@@ -238,19 +237,19 @@ function LapTable({ a }: { a: ActivityDetail }) {
   const hasElev = a.laps.some((l) => l.elevationGainM);
   const pb = paceBasis(a.sport, units);
   return (
-    <Section id="laps" title="Laps" description={kinds.includes('work') ? 'Work laps are marked with a solid rail; recoveries are dimmed. Hover to highlight, click to select.' : 'Hover a lap to highlight it on the chart; click to select it.'}>
-      <div className="overflow-x-auto rounded-lg border border-line-2 bg-surface-1">
+    <Section stagger={false} id="laps" title="Laps" description={kinds.includes('work') ? 'Recoveries are dimmed. Hover a lap to see it on the chart; click to select it.' : 'Hover a lap to highlight it on the chart; click to select it.'}>
+      <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[640px] border-separate border-spacing-0 text-body">
           <thead>
             <tr className="text-right">
               <th className={cn(th, 'w-14 text-left')}>Lap</th>
               <th className={th}>Time</th>
               <th className={th}>Distance</th>
-              {hasPower && <th className={th}>{a.sport === 'bike' ? 'Avg / Wtd' : 'Power'}</th>}
+              {hasPower && <th className={th}>{a.sport === 'bike' ? 'Power · weighted' : 'Power'}</th>}
               {(pace || !hasPower) && <th className={th}>{pace ? (a.sport === 'row' ? 'Split' : 'Pace') : 'Speed'}</th>}
               <th className={th}>HR</th>
               {hasCad && <th className={th}>Cadence</th>}
-              {hasElev && <th className={th}>Elev</th>}
+              {hasElev && <th className={th}>Elevation</th>}
             </tr>
           </thead>
           <tbody>
@@ -259,11 +258,11 @@ function LapTable({ a }: { a: ActivityDetail }) {
               const sel = selected === l.index;
               const dim = k === 'rest';
               return (
-                <tr key={l.index} {...rowProps(l)} className={cn('group relative cursor-default text-right outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:bg-surface-2', sel && 'bg-accent-a1', dim && 'text-fg-3')}>
-                  <td className={cn(td, 'relative text-left font-sans text-label')}>
-                    <span className={cn('absolute inset-y-2 left-0 w-[3px] rounded-r-full', sel ? 'bg-accent' : k === 'work' ? 'bg-fg-1' : k === 'rest' ? 'bg-hatch-fg' : 'bg-transparent')} aria-hidden />
-                    <span className={dim ? 'text-fg-3' : 'text-fg-1'}>{l.index + 1}</span>
-                    {k === 'work' && <span className="ml-2 text-micro text-fg-3">Work</span>}
+                <tr key={l.index} {...rowProps(l)} className={cn('group relative cursor-default text-right outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:bg-surface-2', sel && 'bg-surface-3', dim && 'text-fg-3')}>
+                  <td className={cn(td, 'text-left')}>
+                    <span className={dim ? 'text-fg-3' : k === 'work' ? 'font-medium text-fg-1' : 'text-fg-1'}>{l.index + 1}</span>
+                    {k === 'work' && <span className="ml-2 text-body-sm text-fg-3">Work</span>}
+                    {k === 'rest' && <span className="ml-2 text-body-sm text-fg-4">Easy</span>}
                   </td>
                   <td className={cn(td, dim ? 'text-fg-3' : 'text-fg-1')}>{formatDuration(l.durationSec, 'hms')}</td>
                   <td className={cn(td, 'text-fg-2')}>{l.distanceM ? (pb.meters >= 500 && a.sport !== 'row' ? formatNumber(l.distanceM / 1000, 2) + ' km' : formatNumber(l.distanceM, 0) + ' m') : '—'}</td>
@@ -304,8 +303,8 @@ function SwimSection({ a }: { a: ActivityDetail }) {
     return n?.isRest ? n.durationSec : null;
   };
   return (
-    <Section id="laps" title="Intervals" description={`${work.length} swims · ${formatNumber(a.poolLengthM ?? 25, 0)} m pool. Rest is shown after each interval.`}>
-      <div className="overflow-x-auto rounded-lg border border-line-2 bg-surface-1">
+    <Section stagger={false} id="laps" title="Intervals" description={`${work.length} swims · ${formatNumber(a.poolLengthM ?? 25, 0)} m pool. Rest is shown after each interval.`}>
+      <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[600px] border-separate border-spacing-0 text-body">
           <thead>
             <tr className="text-right">
@@ -328,12 +327,11 @@ function SwimSection({ a }: { a: ActivityDetail }) {
               const drill = l.stroke === 'drill' || l.stroke === 'kick';
               const rest = restAfter(i);
               return (
-                <tr key={l.index} {...rowProps(l)} className={cn('cursor-default text-right outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:bg-surface-2', sel && 'bg-accent-a1')}>
-                  <td className={cn(td, 'relative text-left font-sans text-label text-fg-1')}>
-                    <span className={cn('absolute inset-y-2 left-0 w-[3px] rounded-r-full', sel ? 'bg-accent' : drill ? 'bg-hatch-fg' : 'bg-fg-1')} aria-hidden />
+                <tr key={l.index} {...rowProps(l)} className={cn('cursor-default text-right outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:bg-surface-2', sel && 'bg-surface-3')}>
+                  <td className={cn(td, 'text-left', drill ? 'text-fg-3' : 'text-fg-1')}>
                     {n}
                   </td>
-                  <td className={cn(td, 'text-left font-sans text-body-sm', drill ? 'text-fg-3' : 'text-fg-1')}>{STROKE[l.stroke ?? ''] ?? (l.stroke ? l.stroke : '—')}</td>
+                  <td className={cn(td, 'text-left', drill ? 'text-fg-3' : 'text-fg-1')}>{STROKE[l.stroke ?? ''] ?? (l.stroke ? l.stroke : '—')}</td>
                   <td className={cn(td, 'text-fg-2')}>{l.lengths ?? '—'}</td>
                   <td className={cn(td, 'text-fg-1')}>{formatNumber(l.distanceM, 0)} m</td>
                   <td className={cn(td, 'text-fg-1')}>{formatDuration(l.movingSec ?? l.durationSec, 'hms')}</td>
@@ -369,8 +367,8 @@ function StrengthSection({ a }: { a: ActivityDetail }) {
   const kg = (v: number) => (units.system === 'imperial' ? v / 0.4536 : v);
   const wu = units.system === 'imperial' ? 'lb' : 'kg';
   return (
-    <Section id="laps" title="Sets" description={`${groups.length} exercises · ${a.totalSets ?? 0} sets · ${a.totalReps ?? 0} reps`}>
-      <div className="overflow-x-auto rounded-lg border border-line-2 bg-surface-1">
+    <Section stagger={false} id="laps" title="Sets" description={`${groups.length} exercises · ${a.totalSets ?? 0} sets · ${a.totalReps ?? 0} reps`}>
+      <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <table className="w-full min-w-[620px] border-separate border-spacing-0 text-body">
           <thead>
             <tr className="text-right">
@@ -383,11 +381,11 @@ function StrengthSection({ a }: { a: ActivityDetail }) {
           <tbody>
             {groups.map((g) => (
               <tr key={g.exercise} className="text-right transition-colors duration-(--dur-fast) hover:bg-surface-2">
-                <td className={cn(td, 'text-left font-sans text-body font-[520] text-fg-1')}>{g.exercise}</td>
+                <td className={cn(td, 'text-left font-medium text-fg-1')}>{g.exercise}</td>
                 <td className={cn(td, 'text-left')}>
                   <span className="flex flex-wrap gap-1 py-2">
                     {g.sets.map((s, i) => (
-                      <span key={i} className="rounded-xs border border-line-2 bg-surface-2 px-1.5 text-mono-sm text-fg-1">
+                      <span key={i} className="rounded-xs bg-surface-2 px-1.5 text-body-sm text-fg-1">
                         {s.reps}
                         {s.weightKg ? <span className="text-fg-3"> × {formatNumber(kg(s.weightKg), 1, { trim: true })}</span> : null}
                       </span>
@@ -451,15 +449,16 @@ export function ZonesSection({ a }: { a: ActivityDetail }) {
   };
   return (
     <Section
+      stagger={false}
       id="zones"
       title="Time in zones"
       description={basis ? <>Zones from <span className="text-fg-1">{basis}</span> on this date.</> : undefined}
       actions={opts.length > 1 ? <Segmented size="sm" aria-label="Zone model" value={kind} onValueChange={setKind} options={opts} /> : undefined}
     >
-      <div className="grid gap-6 rounded-lg border border-line-2 bg-surface-1 p-4 md:p-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
         <ZoneBars key={kind} zones={zones} formatRange={fmtRange} />
-        <div className="flex flex-col gap-4 lg:border-l lg:border-line-1 lg:pl-6">
-          <span className="text-micro text-fg-3">Easy · Moderate · Hard</span>
+        <div className="flex flex-col gap-4">
+          <span className="text-body-sm text-fg-3">Easy · moderate · hard</span>
           <SplitBar easy={sp.easy} moderate={sp.moderate} hard={sp.hard} height={8} />
           <div className="grid grid-cols-3 gap-2">
             {(['easy', 'moderate', 'hard'] as const).map((k) => (
@@ -467,8 +466,7 @@ export function ZonesSection({ a }: { a: ActivityDetail }) {
                 <span className="text-stat-sm text-fg-1">
                   <Ticker value={(sp[k] / total) * 100} format={(n) => `${Math.round(n)}%`} />
                 </span>
-                <span className="text-micro text-fg-3">{k}</span>
-                <span className="text-mono-sm text-fg-3">{formatDuration(sp[k], 'hms')}</span>
+                <span className="text-body-sm text-fg-3" title={formatDuration(sp[k], 'hms')}>{k}</span>
               </div>
             ))}
           </div>
@@ -486,7 +484,7 @@ const EFFORT_LABEL: Record<number, string> = { 400: '400 m', 500: '500 m', 1000:
 
 function Badge({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-xs bg-accent-a2 px-1.5 py-px text-micro text-accent-ink">
+    <span className="mt-0.5 inline-flex items-center gap-1 text-body-sm text-fg-2">
       <Award className="size-3" aria-hidden />
       {children}
     </span>
@@ -509,9 +507,9 @@ export function PeaksSection({ a }: { a: ActivityDetail }) {
     ];
     const rows = KEY_DURS.map((d) => ({ d, me: at(a.peaks.power, d), b90: at(r90?.power, d), all: at(rAll?.power, d) })).filter((r) => r.me);
     return (
-      <Section id="peaks" title="Peaks" description="Best average power for each duration in this session, against your 90-day and all-time bests.">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="rounded-lg border border-line-2 bg-surface-1 p-4" style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
+      <Section stagger={false} id="peaks" title="Peaks" description="Best average power for each duration in this session, against your 90-day and all-time bests.">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div>
             <PowerCurve series={series} weightKg={a.thresholdsUsed.weightKg} loading={q.isPending} height={280} />
           </div>
           <PeakTable
@@ -545,14 +543,14 @@ export function PeaksSection({ a }: { a: ActivityDetail }) {
         ]
       : [];
   return (
-    <Section id="peaks" title={efforts.length ? 'Best efforts' : 'Peaks'} description={efforts.length ? 'Fastest time over each distance within this session.' : 'Highest average heart rate held for each duration.'}>
-      <div className={cn('grid gap-4', (speedSeries.length || !efforts.length) && 'lg:grid-cols-[minmax(0,1fr)_340px]')}>
+    <Section stagger={false} id="peaks" title={efforts.length ? 'Best efforts' : 'Peaks'} description={efforts.length ? 'Fastest time over each distance within this session.' : 'Highest average heart rate held for each duration.'}>
+      <div className={cn('grid gap-10', (speedSeries.length || !efforts.length) && 'lg:grid-cols-[minmax(0,1fr)_320px]')}>
         {speedSeries.length > 0 ? (
-          <div className="rounded-lg border border-line-2 bg-surface-1 p-4" style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
+          <div>
             <PaceCurve series={speedSeries} per={pb.meters} loading={q.isPending} height={280} />
           </div>
         ) : !efforts.length && a.peaks.hr?.length ? (
-          <div className="rounded-lg border border-line-2 bg-surface-1 p-4" style={{ ['--chart-bg' as string]: 'var(--color-surface-1)' }}>
+          <div>
             <EffortCurve series={[{ id: 'hr', label: 'Heart rate', points: a.peaks.hr, variant: 'primary' }]} unit="bpm" zeroBased={false} height={260} />
           </div>
         ) : null}
@@ -581,7 +579,7 @@ export function PeaksSection({ a }: { a: ActivityDetail }) {
 
 function PeakTable({ head, rows }: { head: string[]; rows: { key: number; label: string; me: string; sub?: string; b90: string; all: string; badge: string | null }[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-line-2 bg-surface-1">
+    <div>
       <table className="w-full border-separate border-spacing-0">
         <thead>
           <tr className="text-right">
@@ -593,13 +591,13 @@ function PeakTable({ head, rows }: { head: string[]; rows: { key: number; label:
         <tbody>
           {rows.map((r) => (
             <tr key={r.key} className="text-right">
-              <td className={cn(td, 'py-2 text-left font-sans')}>
-                <div className="text-label text-fg-1">{r.label}</div>
+              <td className={cn(td, 'py-2 text-left')}>
+                <div className="text-body text-fg-1">{r.label}</div>
                 {r.badge && <Badge>{r.badge}</Badge>}
               </td>
               <td className={cn(td, 'text-fg-1')}>
                 {r.me}
-                {r.sub && <div className="text-mono-sm text-fg-3">{r.sub}</div>}
+                {r.sub && <div className="text-body-sm text-fg-3">{r.sub}</div>}
               </td>
               <td className={cn(td, 'text-fg-2')}>{r.b90}</td>
               <td className={cn(td, 'text-fg-3')}>{r.all}</td>

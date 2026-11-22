@@ -232,7 +232,7 @@ export function Builder({ sport, subSport, structure, onChange, thresholds, esti
   const isStrength = sport === 'strength';
 
   const graph = !isStrength && (
-    <div className={cn('rounded-xl border border-line-1 bg-surface-1 px-3 pt-3 pb-1', mobile && 'sticky top-(--header-h) z-10')} style={{ '--chart-bg': 'var(--color-surface-1)' } as React.CSSProperties}>
+    <div className={cn('-mx-1', mobile && 'sticky top-(--header-h) z-10 bg-canvas pt-2 pb-1')}>
       <IntensityProfile
         blocks={blocks}
         repeats={repeats}
@@ -251,7 +251,7 @@ export function Builder({ sport, subSport, structure, onChange, thresholds, esti
   );
 
   const steps = (
-    <div ref={listRef} onKeyDown={onListKey} className="flex min-w-0 flex-col gap-3">
+    <div ref={listRef} onKeyDown={onListKey} className="flex min-w-0 flex-col gap-4">
       {isStrength ? (
         <StrengthTable />
       ) : (
@@ -260,18 +260,19 @@ export function Builder({ sport, subSport, structure, onChange, thresholds, esti
           {structure.steps.length ? (
             <StepList nodes={structure.steps as AnyNode[]} parent={[]} meta={meta} />
           ) : (
-            <div className="rounded-lg border border-dashed border-line-3 px-4 py-6 text-center text-body-sm text-fg-3">Add a warm-up to start, or type in the text pane.</div>
+            <p className="rounded-lg bg-surface-1 px-4 py-8 text-center text-body-sm text-fg-3">Add a warm-up to start, or type in the text pane.</p>
           )}
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="-ml-2 flex flex-wrap items-center gap-0.5">
             {PRESETS.map(({ p, label }) => (
               <Button key={p} size="sm" variant="ghost" icon={<Plus />} onClick={() => addPreset(p)}>
                 {label}
               </Button>
             ))}
-            <span className="mx-1 h-4 w-px bg-line-2" />
-            <Button size="sm" variant="ghost" icon={<Group />} onClick={wrap} disabled={!selected.length}>
-              Wrap in repeat <Kbd keys="mod+g" className="ml-1" />
-            </Button>
+            {selected.length > 0 && (
+              <Button size="sm" variant="ghost" icon={<Group />} onClick={wrap} className="sm:ml-auto">
+                Wrap in repeat <Kbd keys="mod+g" className="ml-1" />
+              </Button>
+            )}
           </div>
         </>
       )}
@@ -294,7 +295,7 @@ export function Builder({ sport, subSport, structure, onChange, thresholds, esti
 
   return (
     <Ctx.Provider value={ctx}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         {graph}
         {mobile ? (
           <>
@@ -311,7 +312,7 @@ export function Builder({ sport, subSport, structure, onChange, thresholds, esti
             {tab === 'steps' ? steps : textPane}
           </>
         ) : (
-          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6">
+          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-8">
             {steps}
             {textPane}
           </div>
@@ -326,7 +327,7 @@ function PoolLength({ structure, onChange }: { structure: WorkoutStructure; onCh
   const v = structure.poolLengthM === 50 ? '50' : structure.poolLengthM && Math.abs(structure.poolLengthM - 22.86) < 0.01 ? '25y' : '25';
   return (
     <div className="flex items-center gap-3">
-      <span className="text-micro text-fg-3">Pool</span>
+      <span className="text-body-sm text-fg-3">Pool</span>
       <Segmented
         size="sm"
         aria-label="Pool length"
@@ -360,7 +361,7 @@ export function GarminLine({ sport, subSport, structure, thresholds, className }
   const rest = g.warnings.filter((w) => !(sport === 'row' && w.startsWith('Garmin has no rowing')));
   return (
     <div className={cn('flex items-start gap-2 text-body-sm text-fg-3', className)}>
-      <Watch className="mt-0.5 size-3.5 shrink-0" />
+      <Watch className="mt-0.5 size-3.5 shrink-0 text-fg-4" />
       <div className="min-w-0">
         <span className="text-fg-2">{first}.</span>
         {rest.length > 0 && <span> {rest.join(' ')}</span>}

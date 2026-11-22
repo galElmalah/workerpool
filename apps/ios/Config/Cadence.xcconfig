@@ -1,0 +1,28 @@
+// Cadence iOS — the ONE file to edit for signing and identifiers.
+// project.yml reads these settings for both targets (app + widget extension), their Info.plists
+// and their entitlements. After changing anything here: `xcodegen` (regenerates the project).
+
+// Your Apple Developer team ID (Xcode → Settings → Accounts, or developer.apple.com → Membership).
+// Leave empty to sign "to run locally" in the simulator only.
+CADENCE_TEAM_ID =
+
+// Bundle identifier of the app. The widget extension is $(CADENCE_BUNDLE_ID).widgets.
+CADENCE_BUNDLE_ID = com.example.cadence
+
+// App Group shared by the app and the widget extension (snapshot cache + shared preferences).
+// Must start with "group." and be registered for both bundle ids (Xcode does this automatically
+// with automatic signing when the team is set).
+CADENCE_APP_GROUP = group.com.example.cadence
+
+// Keychain access group for the device token (without the team prefix; Xcode prepends
+// $(AppIdentifierPrefix)). Both targets list it under keychain-access-groups.
+CADENCE_KEYCHAIN_GROUP = com.example.cadence.shared
+
+// Version shown in Settings and sent as X-Cadence-Client: ios/<version>.
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+DEVELOPMENT_TEAM = $(CADENCE_TEAM_ID)
+CODE_SIGN_STYLE = Automatic
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+SWIFT_VERSION = 5.0

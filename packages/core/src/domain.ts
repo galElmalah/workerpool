@@ -743,3 +743,79 @@ export const GarminStatus = z.object({
     .optional(),
 });
 export type GarminStatus = z.infer<typeof GarminStatus>;
+
+// ───────────────────────────── native clients (docs/MOBILE_API.md) ─────────────────────────────
+
+export const DEVICE_PLATFORMS = ['ios', 'other'] as const;
+export const DevicePlatform = z.enum(DEVICE_PLATFORMS);
+export type DevicePlatform = z.infer<typeof DevicePlatform>;
+
+/** A native client holding a long-lived bearer token (`cad_…`; only its SHA-256 hash is stored). */
+export const Device = z.object({
+  id: z.string(), // "dev_…"
+  name: z.string().min(1).max(64),
+  platform: DevicePlatform,
+  createdAt: IsoInstant,
+  lastUsedAt: IsoInstant.nullable(), // updated at most once per hour
+});
+export type Device = z.infer<typeof Device>;
+
+/** One row of a widget's session list: a planned workout, a completed activity, or both (paired). */
+export const SnapshotSession = z.object({
+  id: z.string(), // workout id for planned/paired, activity id for activity
+  kind: z.enum(['planned', 'activity', 'paired']),
+  sport: Sport,
+  title: z.string(),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/).nullable(), // local "HH:MM", planned or actual
+  durationSec: z.number().nonnegative().nullable(), // actual (moving, else elapsed) when done, else planned
+  distanceM: z.number().nonnegative().nullable(),
+  load: z.number().nonnegative().nullable(),
+  isKey: z.boolean(),
+  intensity: IntensityClass.nullable(),
+  state: z.enum(['planned', 'done', 'missed', 'skipped']),
+  workoutId: z.string().nullable(),
+  activityId: z.string().nullable(),
+});
+export type SnapshotSession = z.infer<typeof SnapshotSession>;
+
+export const SNAPSHOT_DAY_STATES = ['rest', 'planned', 'done', 'partial', 'missed'] as const;
+
+/** `GET /api/mobile/snapshot`: everything the widgets and the app's first paint need, in one response. */
+export const MobileSnapshot = z.object({
+  generatedAt: IsoInstant,
+  today: LocalDate,
+  units: z.enum(['metric', 'imperial']),
+  athleteName: z.string().nullable(),
+  status: z.object({
+    fitness: z.number().nullable(),
+    fatigue: z.number().nullable(),
+    form: z.number().nullable(),
+    formZone: FormZone.nullable(),
+    rampPerWeek: z.number().nullable(),
+    headline: z.string(),
+  }),
+  todaySessions: z.array(SnapshotSession),
+  tomorrowSessions: z.array(SnapshotSession),
+  week: z.object({
+    isoWeek: IsoWeek,
+    label: z.string(),
+    phase: z.string().nullable(),
+    doneSec: z.number(),
+    plannedSec: z.number(),
+    doneLoad: z.number(),
+    plannedLoad: z.number(),
+    keyDone: z.number().int(),
+    keyPlanned: z.number().int(),
+    days: z
+      .array(z.object({ date: LocalDate, plannedSec: z.number(), doneSec: z.number(), state: z.enum(SNAPSHOT_DAY_STATES) }))
+      .length(7),
+  }),
+  nextEvent: z
+    .object({ id: z.string(), name: z.string(), date: LocalDate, daysTo: z.number().int(), priority: z.enum(['A', 'B', 'C']) })
+    .nullable(),
+  fitnessSeries: z.array(z.object({ date: LocalDate, fitness: z.number(), fatigue: z.number(), form: z.number() })),
+  recentWeeks: z.array(z.object({ isoWeek: IsoWeek, label: z.string(), hours: z.number(), load: z.number() })),
+  lastActivity: SnapshotSession.nullable(),
+  lastSyncAt: IsoInstant.nullable(),
+});
+export type MobileSnapshot = z.infer<typeof MobileSnapshot>;

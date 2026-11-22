@@ -48,6 +48,7 @@ import { STRUCTURED_SPORTS, presetNode, useThresholdsOn } from './model';
 import { SportGrid, SubSportChips, TemplateMini, TotalsTiles } from './parts';
 import { useCreateTemplate, useGarminPush, useTemplate, useTemplates, useWorkout } from './queries';
 import { useUnits } from '@/lib/units';
+import { useGarminStatus } from '@/lib/queries/shared';
 
 const route = getRouteApi('/_app/workouts/new');
 
@@ -215,6 +216,8 @@ export function WorkoutNewPage() {
     }
   };
   useShortcut('workout.save', () => void save(), { allowInInputs: true });
+  // "Send to Garmin" is the page's one accent action when a watch is connected; Save stays neutral.
+  const garminOn = !!useGarminStatus().data?.connected;
 
   const header = (
     <PageHeader
@@ -251,10 +254,10 @@ export function WorkoutNewPage() {
           <Button size="sm" variant="ghost" icon={<Library />} onClick={saveToLibrary} disabled={!sport} className="max-md:hidden">
             Save to library
           </Button>
-          <Button size="sm" variant="secondary" icon={<Watch />} onClick={() => save('garmin')} disabled={!sport} className="max-sm:hidden">
+          <Button size="sm" variant={garminOn ? 'primary' : 'ghost'} icon={<Watch />} onClick={() => save('garmin')} disabled={!sport} className="max-sm:hidden" aria-label="Save and send to Garmin">
             Save & send
           </Button>
-          <Button size="sm" variant="primary" kbd="mod+enter" loading={create.isPending} onClick={() => save()} disabled={!sport}>
+          <Button size="sm" variant={garminOn ? 'secondary' : 'primary'} kbd="mod+enter" loading={create.isPending} onClick={() => save()} disabled={!sport} aria-label="Save">
             Save
           </Button>
         </>
@@ -272,14 +275,14 @@ export function WorkoutNewPage() {
                 <SportGrid onPick={pickSport} />
               </motion.div>
             ) : (
-              <motion.div key="bar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center gap-3">
+              <motion.div key="bar" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring.smooth} className="flex flex-col gap-6">
+                <div className="-ml-2 flex flex-wrap items-center gap-2">
                   <Button size="sm" variant="ghost" icon={<LayoutGrid />} onClick={() => setSport(undefined)}>
                     Change sport
                   </Button>
                   <SubSportChips sport={sport} value={subSport} onChange={setSubSport} />
                 </div>
-                <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-3 sm:grid-cols-[14rem_8rem]">
+                <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-4 sm:grid-cols-[14rem_8rem]">
                   <DatePicker label="Date" value={date || null} onValueChange={setDate} />
                   <Field label="Start time">
                     <Input type="time" value={startTime} onChange={(e) => setStartTime(e.currentTarget.value)} aria-label="Start time" />
@@ -334,7 +337,7 @@ export function WorkoutNewPage() {
                       </Field>
                     )}
                   </div>
-                  <p className="text-body-sm text-fg-3">Load is estimated from duration and intensity. Add steps any time for a precise target profile.</p>
+                  <p className="max-w-[60ch] text-body-sm text-fg-3">Load is estimated from duration and intensity. Add steps any time for a precise target profile.</p>
                   <GarminLine sport={sport} subSport={subSport} />
                 </div>
               )}
@@ -344,11 +347,11 @@ export function WorkoutNewPage() {
               <TotalsTiles totals={totals} sport={sport} />
             </Section>
 
-            <Section title="Details" variant="micro">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-wrap items-start gap-6">
-                    <div className="flex flex-col gap-1.5">
+            <Section title="Details">
+              <div className="grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-wrap items-start gap-8">
+                    <div className="flex flex-col gap-2">
                       <span className="text-label text-fg-2">Intensity {!intensityEdited && suggested && <span className="text-fg-3">· auto</span>}</span>
                       <IntensityPicker
                         value={effIntensity}
@@ -369,15 +372,15 @@ export function WorkoutNewPage() {
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-2">
                       <span className="text-label text-fg-2">Key session</span>
                       <div className="flex h-8 items-center gap-2">
                         <KeyStar pressed={isKey} onPressedChange={setIsKey} />
-                        <span className={cn('text-body-sm', isKey ? 'text-accent-ink' : 'text-fg-3')}>{isKey ? 'Main workout of the week' : 'Mark as a main workout'}</span>
+                        <span className={cn('text-body-sm', isKey ? 'text-fg-1' : 'text-fg-3')}>{isKey ? 'Main workout of the week' : 'Mark as a main workout'}</span>
                       </div>
                     </div>
                     {sport !== 'strength' && sport !== 'yoga' && (
-                      <div className="flex flex-col gap-1.5">
+                      <div className="flex flex-col gap-2">
                         <span className="text-label text-fg-2">Where</span>
                         <Segmented
                           size="sm"
@@ -393,12 +396,12 @@ export function WorkoutNewPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     <span className="text-label text-fg-2">Tags</span>
                     <TagInput value={tags} onValueChange={setTags} aria-label="Tags" suggestions={['vo2', 'threshold', 'long', 'hills', 'brick', 'recovery', 'race-pace', 'technique']} />
                   </div>
                 </div>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-6">
                   <Field label="Pre-workout note">
                     <Textarea value={preNote} minRows={2} onChange={(e) => setPreNote(e.currentTarget.value)} placeholder="Intent for the day — “legs heavy, keep it honest”" />
                   </Field>
@@ -428,9 +431,9 @@ function TemplateStrip({ sport, thresholds, onPick }: { sport: Sport; thresholds
   const [open, setOpen] = useState(false);
   return (
     <div className="flex w-full min-w-0 flex-col gap-1.5">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex h-9 items-center gap-2 self-start rounded-md border border-line-2 px-3 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1">
-        <Library className="size-4" /> Start from a template
-        <span className="text-mono-sm text-fg-4">{list.length || ''}</span>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="-ml-2 flex h-8 items-center gap-2 self-start rounded-md px-2 text-body-sm text-fg-2 transition-colors duration-(--dur-fast) hover:bg-surface-2 hover:text-fg-1 aria-expanded:bg-surface-2">
+        <Library className="size-4 text-fg-3" /> Start from a template
+        <span className="text-fg-4">{list.length || ''}</span>
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -446,7 +449,7 @@ function TemplateStrip({ sport, thresholds, onPick }: { sport: Sport; thresholds
                     onPick(t);
                     setOpen(false);
                   }}
-                  className="spotlight w-60 shrink-0 rounded-lg border border-line-1 bg-surface-1 p-3 text-left transition-colors hover:border-line-3 hover:bg-surface-2"
+                  className="spotlight w-60 shrink-0 rounded-lg bg-surface-1 p-4 text-left transition-colors duration-(--dur-fast) hover:bg-surface-2"
                 >
                   <TemplateMini t={t} thresholds={thresholds} />
                 </motion.button>

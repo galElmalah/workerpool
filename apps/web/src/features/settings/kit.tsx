@@ -14,7 +14,7 @@ import { spring } from '@/motion/tokens';
 
 // ───────────── wordmark ─────────────
 export function Wordmark({ className }: { className?: string }) {
-  return <span className={cn('select-none text-[1.0625rem] font-[600] tracking-[-0.03em] text-fg-1', className)}>cadence</span>;
+  return <span className={cn('select-none text-title-3 font-semibold tracking-tight text-fg-1', className)}>cadence</span>;
 }
 
 // ───────────── passphrase ─────────────
@@ -74,8 +74,8 @@ export function PassphraseInput({
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         className={cn(
-          'h-11 w-full rounded-md border border-line-3 bg-surface-2 pl-3.5 pr-11 text-body-lg text-fg-1 outline-none placeholder:text-fg-4',
-          'transition-[border-color] duration-(--dur-fast) hover:border-gray-8 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus',
+          'h-12 w-full rounded-md border border-line-2 bg-surface-1 pl-4 pr-11 text-body-lg text-fg-1 outline-none placeholder:text-fg-4',
+          'transition-[border-color] duration-(--dur-fast) hover:border-fg-4 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus',
           'aria-[invalid=true]:border-dashed aria-[invalid=true]:border-fg-1 disabled:opacity-40',
           !show && value && 'tracking-[0.12em]',
         )}
@@ -101,7 +101,7 @@ export function StrengthMeter({ value, id }: { value: string; id?: string }) {
         {[1, 2, 3, 4].map((i) => (
           <span key={i} className="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-3">
             <motion.span
-              className={cn('absolute inset-0 origin-left rounded-full', s.score >= 4 ? 'bg-accent' : 'bg-fg-2')}
+              className="absolute inset-0 origin-left rounded-full bg-fg-2"
               initial={false}
               animate={{ scaleX: s.score >= i ? 1 : 0 }}
               transition={spring.snappy}
@@ -109,7 +109,7 @@ export function StrengthMeter({ value, id }: { value: string; id?: string }) {
           </span>
         ))}
       </div>
-      <span className={cn('w-44 text-right text-body-sm', s.score >= 4 ? 'text-accent-ink' : 'text-fg-3')}>{s.label}</span>
+      <span className={cn('w-44 text-right text-body-sm', s.score >= 4 ? 'text-fg-1' : 'text-fg-3')}>{s.label}</span>
     </div>
   );
 }
@@ -237,7 +237,7 @@ export function BigThresholdInput({
       {(label || aside) && (
         <div className="flex items-baseline justify-between gap-2">
           {label && (
-            <label htmlFor={id} className="text-micro text-fg-3">
+            <label htmlFor={id} className="text-body-sm text-fg-3">
               {label}
             </label>
           )}
@@ -247,7 +247,7 @@ export function BigThresholdInput({
       <div
         className={cn(
           'group/big flex items-baseline gap-1.5 rounded-md border border-transparent px-2 -mx-2 transition-colors duration-(--dur-fast)',
-          'hover:border-line-2 hover:bg-surface-2 focus-within:border-line-3 focus-within:bg-surface-2',
+          'hover:bg-surface-1 focus-within:border-line-3 focus-within:bg-surface-1',
           bad && 'border-dashed !border-fg-1',
         )}
       >
@@ -297,15 +297,7 @@ export function BigThresholdInput({
 export function SourceChip({ source }: { source: 'manual' | 'garmin' | 'estimated' | 'default' }) {
   const label = source === 'manual' ? 'Manual' : source === 'garmin' ? 'Garmin' : source === 'estimated' ? 'Estimated' : 'Default';
   return (
-    <span
-      className={cn(
-        'inline-flex h-5 items-center rounded-xs border px-1.5 text-micro ',
-        source === 'garmin' && 'border-line-3 bg-surface-3 text-fg-1',
-        source === 'manual' && 'border-line-2 text-fg-2',
-        source === 'estimated' && 'border-dashed border-line-3 text-fg-2',
-        source === 'default' && 'border-dashed border-line-2 text-fg-3',
-      )}
-    >
+    <span className={cn('inline-flex h-5 items-center text-label font-normal', source === 'default' ? 'text-fg-4' : 'text-fg-3')}>
       {label}
     </span>
   );

@@ -11,11 +11,16 @@ declare global {
   }
 }
 
+/** Who made an authenticated request: the browser session cookie or a native device token. */
+export type Principal = { kind: 'session' } | { kind: 'device'; deviceId: string };
+
 export type AppEnv = {
   Bindings: Env;
   Variables: {
     /** Set by the auth middleware on authenticated requests. */
     authenticated: boolean;
+    /** Set by the auth middleware: null on open routes (they resolve it themselves when needed). */
+    principal: Principal | null;
   };
 };
 

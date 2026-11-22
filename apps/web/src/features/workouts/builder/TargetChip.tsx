@@ -37,14 +37,13 @@ export function TargetChip({ step, sport, th, units, onChange }: Props) {
           }}
           aria-label={`Target ${targetLabel(t, sport, units)}${abs ? `, ${abs}` : ''}. Arrow keys adjust.`}
           className={cn(
-            'inline-flex h-7 max-w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-sm border border-transparent px-1.5 text-left transition-colors duration-(--dur-fast)',
-            'hover:border-line-2 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus data-[popup-open]:border-line-3 data-[popup-open]:bg-surface-2',
+            'inline-flex h-8 max-w-full min-w-0 items-center gap-2 overflow-hidden rounded-sm px-2 text-left transition-colors duration-(--dur-fast)',
+            'hover:bg-surface-3 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus data-[popup-open]:bg-surface-3',
           )}
         >
-          <span className="text-fg-4">@</span>
-          <span className={cn('truncate text-mono', t && t.type !== 'open' ? 'text-fg-1' : 'text-fg-3')}>{targetLabel(t, sport, units)}</span>
-          {abs && <span className="truncate text-mono-sm text-fg-3 max-sm:hidden">{abs}</span>}
-          {sec && <span className="truncate text-mono-sm text-fg-3 max-md:hidden">· {targetLabel(sec, sport, units)}</span>}
+          <span className={cn('num truncate text-body', t && t.type !== 'open' ? 'text-fg-1' : 'text-fg-3')}>{targetLabel(t, sport, units)}</span>
+          {abs && <span className="num truncate text-body-sm text-fg-3 max-sm:hidden">{abs}</span>}
+          {sec && <span className="num truncate text-body-sm text-fg-3 max-md:hidden">· {targetLabel(sec, sport, units)}</span>}
         </button>
       }
     >
@@ -72,8 +71,8 @@ function TargetEditor({ step, sport, th, units, onChange }: Props) {
             aria-checked={t.type === k}
             onClick={() => setKind(k)}
             className={cn(
-              'h-6 rounded-sm border px-2 text-label transition-colors duration-(--dur-fast)',
-              t.type === k ? 'border-line-3 bg-surface-active text-fg-1' : 'border-line-1 text-fg-2 hover:border-line-3 hover:text-fg-1',
+              'h-7 rounded-md px-2.5 text-body-sm transition-colors duration-(--dur-fast)',
+              t.type === k ? 'bg-surface-active text-fg-1' : 'text-fg-3 hover:bg-surface-3 hover:text-fg-1',
             )}
           >
             {k === 'pace_pct' && sport === 'swim' ? '% CSS' : TARGET_KIND_LABEL[k]}
@@ -81,27 +80,27 @@ function TargetEditor({ step, sport, th, units, onChange }: Props) {
         ))}
       </div>
       <TargetValues t={t} sport={sport} units={units} onChange={(target) => onChange({ target })} />
-      {targetAbsolute(t, sport, th, units) && <div className="text-mono-sm text-fg-3">= {targetAbsolute(t, sport, th, units)}</div>}
+      {targetAbsolute(t, sport, th, units) && <div className="num text-body-sm text-fg-3">= {targetAbsolute(t, sport, th, units)}</div>}
       {(sport === 'bike' || sport === 'run') && (
-        <div className="flex items-center justify-between gap-2 border-t border-line-1 pt-2">
-          <span className="text-label text-fg-2">Cadence</span>
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <span className="text-body-sm text-fg-2">Cadence</span>
           {cad ? (
             <span className="flex items-center gap-1">
               <MiniField label="Cadence range" value={[cad.low, cad.high] as [number, number]} format={fmtRange} parse={parseRange} width="w-20" onCommit={([low, high]) => onChange({ secondary: { type: 'cadence', low, high } })} suffix={sport === 'run' ? 'spm' : 'rpm'} />
-              <button type="button" className="px-1 text-label text-fg-3 hover:text-fg-1" onClick={() => onChange({ secondary: undefined })}>
+              <button type="button" className="px-1 text-body-sm text-fg-3 hover:text-fg-1" onClick={() => onChange({ secondary: undefined })}>
                 Clear
               </button>
             </span>
           ) : (
-            <button type="button" className="text-label text-fg-2 hover:text-fg-1" onClick={() => onChange({ secondary: { type: 'cadence', low: sport === 'run' ? 170 : 85, high: sport === 'run' ? 180 : 95 } })}>
+            <button type="button" className="text-body-sm text-fg-2 hover:text-fg-1" onClick={() => onChange({ secondary: { type: 'cadence', low: sport === 'run' ? 170 : 85, high: sport === 'run' ? 180 : 95 } })}>
               + Add
             </button>
           )}
         </div>
       )}
       {sport === 'row' && (
-        <div className="flex items-center justify-between gap-2 border-t border-line-1 pt-2">
-          <span className="text-label text-fg-2">Stroke rate</span>
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <span className="text-body-sm text-fg-2">Stroke rate</span>
           <MiniField
             label="Stroke rate"
             value={[step.row?.strokeRateLow ?? 0, step.row?.strokeRateHigh ?? 0] as [number, number]}
@@ -121,7 +120,7 @@ function TargetEditor({ step, sport, th, units, onChange }: Props) {
 function TargetValues({ t, sport, units, onChange }: { t: Target; sport: Sport; units: UnitPrefs; onChange: (t: Target | undefined) => void }) {
   const row = (label: string, el: React.ReactNode) => (
     <label className="flex items-center justify-between gap-2">
-      <span className="text-label text-fg-2">{label}</span>
+      <span className="text-body-sm text-fg-2">{label}</span>
       {el}
     </label>
   );
@@ -175,7 +174,7 @@ function TargetValues({ t, sport, units, onChange }: { t: Target; sport: Sport; 
               key={z}
               type="button"
               onClick={() => onChange({ type: 'hr_zone', zone: z })}
-              className={cn('h-7 w-8 rounded-sm border text-mono transition-colors duration-(--dur-fast)', t.zone === z ? 'border-line-3 bg-surface-active text-fg-1' : 'border-line-1 text-fg-2 hover:text-fg-1')}
+              className={cn('h-7 w-8 rounded-md text-body-sm transition-colors duration-(--dur-fast)', t.zone === z ? 'bg-surface-active text-fg-1' : 'text-fg-3 hover:bg-surface-3 hover:text-fg-1')}
             >
               Z{z}
             </button>

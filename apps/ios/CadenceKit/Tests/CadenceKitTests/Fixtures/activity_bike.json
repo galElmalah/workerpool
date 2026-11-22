@@ -1,0 +1,252 @@
+{
+ "id": "act_uxe16yozne",
+ "source": "garmin",
+ "garminActivityId": "20380998387",
+ "garminTypeKey": "road_biking",
+ "startedAt": "2026-11-21T08:26:36.000Z",
+ "utcOffsetMin": 60,
+ "localDate": "2026-11-21",
+ "sport": "bike",
+ "subSport": "road",
+ "title": "Long ride 2h05 — Gavarres loop",
+ "durationSec": 7561,
+ "movingSec": 7561,
+ "distanceM": 57839.6,
+ "elevationGainM": 722,
+ "load": 102.6,
+ "loadSource": "power",
+ "intensityFactor": 0.699,
+ "avgHr": 132,
+ "maxHr": 164,
+ "avgPower": 168,
+ "weightedPower": 193,
+ "maxPower": 704,
+ "avgSpeedMps": 7.65,
+ "avgCadence": 86,
+ "calories": 1310,
+ "workKj": 1272.5,
+ "variability": 1.146,
+ "efficiency": 1.4569,
+ "aerobicEffect": 3.3,
+ "anaerobicEffect": 0.7,
+ "intensityAuto": "tempo",
+ "intensity": "tempo",
+ "isKey": true,
+ "rpe": 4,
+ "feel": 3,
+ "postNote": "57.8 km, 722 m. Coffee in Banyoles, headwind home.",
+ "tags": [],
+ "pairedWorkoutId": "wk_d20261121_1",
+ "hasStreams": true,
+ "sparkline": [
+  0.45,
+  0.58,
+  0.15,
+  0.84,
+  0.83,
+  0.5,
+  0.88,
+  0.78,
+  0.53,
+  0.81,
+  0.75,
+  0.9
+ ],
+ "createdAt": "2026-11-21T18:00:21.807Z",
+ "updatedAt": "2026-11-21T18:00:21.873Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 1.07,
+  "state": "on_target"
+ },
+ "laps": [
+  {
+   "index": 0,
+   "startSec": 0,
+   "durationSec": 581,
+   "movingSec": 545,
+   "distanceM": 4996.6,
+   "avgHr": 108,
+   "maxHr": 138,
+   "avgPower": 110,
+   "weightedPower": 139,
+   "avgSpeedMps": 9.168,
+   "avgCadence": 79,
+   "elevationGainM": 10
+  },
+  {
+   "index": 1,
+   "startSec": 581,
+   "durationSec": 664,
+   "movingSec": 664,
+   "distanceM": 4998.5,
+   "avgHr": 133,
+   "maxHr": 148,
+   "avgPower": 180,
+   "weightedPower": 195,
+   "avgSpeedMps": 7.528,
+   "avgCadence": 82,
+   "elevationGainM": 64
+  }
+ ],
+ "zones": {
+  "power": [
+   {
+    "zone": 1,
+    "name": "Active Recovery",
+    "low": null,
+    "high": 151.8,
+    "seconds": 2089
+   },
+   {
+    "zone": 2,
+    "name": "Endurance",
+    "low": 151.8,
+    "high": 207,
+    "seconds": 2977
+   }
+  ],
+  "hr": [
+   {
+    "zone": 1,
+    "name": "Recovery",
+    "low": null,
+    "high": 137.70000000000002,
+    "seconds": 3745
+   },
+   {
+    "zone": 2,
+    "name": "Aerobic",
+    "low": 137.70000000000002,
+    "high": 153,
+    "seconds": 3201
+   }
+  ]
+ },
+ "peaks": {
+  "power": [
+   {
+    "durationSec": 1,
+    "value": 704,
+    "startSec": 2985
+   },
+   {
+    "durationSec": 2,
+    "value": 611,
+    "startSec": 2984
+   }
+  ],
+  "hr": [
+   {
+    "durationSec": 1,
+    "value": 164,
+    "startSec": 4143
+   },
+   {
+    "durationSec": 2,
+    "value": 163,
+    "startSec": 4139
+   }
+  ]
+ },
+ "thresholdsUsed": {
+  "ftp": 276,
+  "runThresholdMps": 4.032,
+  "swimCssMps": 0.99,
+  "rowThresholdW": 241,
+  "lthr": 170,
+  "hrMax": 187,
+  "hrRest": 47,
+  "weightKg": 72.6
+ },
+ "plannedWorkout": {
+  "id": "wk_d20261121_1",
+  "date": "2026-11-21",
+  "startTime": "09:30",
+  "sport": "bike",
+  "subSport": "road",
+  "title": "Long ride 2h05 — Gavarres loop",
+  "description": "Aerobic endurance. Conversational, eat early and often.",
+  "plannedDurationSec": 7500,
+  "plannedLoad": 96.3,
+  "plannedIntensityFactor": 0.68,
+  "isKey": true,
+  "intensity": "endurance",
+  "tags": [
+   "long",
+   "endurance"
+  ],
+  "environment": "outdoor",
+  "pairedActivityId": "act_uxe16yozne",
+  "status": "planned",
+  "garmin": {
+   "workoutId": "1000000001",
+   "scheduleId": "500000001",
+   "syncState": "synced",
+   "lastPushedAt": "2026-11-21T18:02:06.782Z"
+  },
+  "createdAt": "2026-11-21T18:00:20.888Z",
+  "updatedAt": "2026-11-21T18:00:21.873Z",
+  "compliance": {
+   "metric": "load",
+   "ratio": 1.07,
+   "state": "on_target"
+  }
+ },
+ "previousSimilar": {
+  "id": "act_v688xoq2u2",
+  "source": "garmin",
+  "garminActivityId": "20378581511",
+  "garminTypeKey": "road_biking",
+  "startedAt": "2026-11-14T08:36:17.000Z",
+  "utcOffsetMin": 60,
+  "localDate": "2026-11-14",
+  "sport": "bike",
+  "subSport": "road",
+  "title": "Long ride 1h55 — Coast loop",
+  "durationSec": 6972,
+  "movingSec": 6972,
+  "distanceM": 52914.9,
+  "elevationGainM": 589,
+  "load": 91.3,
+  "loadSource": "power",
+  "intensityFactor": 0.687,
+  "avgHr": 132,
+  "maxHr": 171,
+  "avgPower": 169,
+  "weightedPower": 190,
+  "maxPower": 658,
+  "avgSpeedMps": 7.59,
+  "avgCadence": 86,
+  "calories": 1218,
+  "workKj": 1176,
+  "variability": 1.124,
+  "efficiency": 1.4359,
+  "aerobicEffect": 3.1,
+  "anaerobicEffect": 0.9,
+  "intensityAuto": "tempo",
+  "intensity": "tempo",
+  "isKey": true,
+  "rpe": 4,
+  "feel": 4,
+  "tags": [],
+  "pairedWorkoutId": "wk_d20261114_1",
+  "hasStreams": true,
+  "sparkline": [
+   0.62,
+   0.5,
+   0.38,
+   0.64,
+   0.5,
+   0.74,
+   0.86,
+   0.34,
+   0.68,
+   0.64,
+   0.45,
+   0.8
+  ],
+  "createdAt": "2026-11-21T18:00:24.263Z",
+  "updatedAt": "2026-11-21T18:00:24.314Z"
+ }
+}

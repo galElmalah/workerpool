@@ -115,11 +115,11 @@ function TodayBody({ d, cards }: { d: TodayData; cards: CalendarCard[] }) {
   const otherMarkers = d.markers.filter((m) => m.type !== 'rest');
 
   return (
-    <PageItem className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_288px] lg:gap-12 xl:gap-16">
-      {/* main: the hero, then the day's writing */}
-      <div className="flex min-w-0 flex-col gap-14 lg:gap-16">
-        <Section
+    <PageItem className="grid items-start gap-14 lg:grid-cols-[minmax(0,1fr)_288px] lg:gap-x-12 lg:gap-y-16 xl:gap-x-16">
+      {/* main: the hero first (also first on phones), then the aside, then the day's writing */}
+      <Section
           stagger={false}
+          className="min-w-0"
           title="Sessions"
           description={otherMarkers.length ? otherMarkers.map((m) => `${MARKER_LABEL[m.type] ?? m.type}${m.label ? ` · ${m.label}` : ''}`).join(' · ') : undefined}
         >
@@ -132,8 +132,17 @@ function TodayBody({ d, cards }: { d: TodayData; cards: CalendarCard[] }) {
               ))}
             </div>
           )}
-        </Section>
+      </Section>
 
+      {/* aside: am I fresh, the week, what's next */}
+      <aside className="flex min-w-0 flex-col gap-12 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:gap-14" aria-label="Freshness and week">
+        <Freshness d={d} />
+        <Wellness d={d} />
+        <WeekSoFar d={d} />
+        <UpNext d={d} />
+      </aside>
+
+      <div className="flex min-w-0 flex-col gap-14 lg:gap-16">
         {otherPending.length > 0 && (
           <Section stagger={false} title="Log how it went" description="Two taps for each: how hard, how it felt.">
             <div className="flex flex-col gap-2">
@@ -151,14 +160,6 @@ function TodayBody({ d, cards }: { d: TodayData; cards: CalendarCard[] }) {
           </div>
         </Section>
       </div>
-
-      {/* aside: am I fresh, the week, what's next */}
-      <aside className="flex min-w-0 flex-col gap-12 lg:gap-14" aria-label="Freshness and week">
-        <Freshness d={d} />
-        <Wellness d={d} />
-        <WeekSoFar d={d} />
-        <UpNext d={d} />
-      </aside>
     </PageItem>
   );
 }
@@ -174,8 +175,8 @@ function PendingLog({ activity: a }: { activity: TodayData['pendingLogs'][number
         <Link {...links.activity(a.id)} className="min-w-0 truncate text-body font-medium text-fg-1 hover:underline">
           {a.title}
         </Link>
-        <span className="shrink-0 text-body-sm text-fg-3 num">
-          {weekdayLong(a.localDate)} · {formatDuration(a.movingSec || a.durationSec, 'clock')}
+        <span className="shrink-0 text-body-sm text-fg-3" title={formatDuration(a.movingSec || a.durationSec, 'clock')}>
+          {weekdayLong(a.localDate)}
         </span>
         <Button size="sm" variant={open ? 'ghost' : 'secondary'} className="ml-auto shrink-0" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           {open ? 'Close' : 'Log it'}

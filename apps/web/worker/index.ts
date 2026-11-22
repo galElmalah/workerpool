@@ -19,6 +19,8 @@ import { settingsRoutes } from './routes/settings';
 import { dataRoutes } from './routes/data';
 import { garminRoutes } from './routes/garmin';
 import { demoRoutes } from './routes/demo';
+import { devicesRoutes } from './routes/devices';
+import { mobileRoutes } from './routes/mobile';
 
 const app = new Hono<AppEnv>().basePath('/api');
 
@@ -44,7 +46,9 @@ const routes = app
   .route('/', settingsRoutes)
   .route('/', dataRoutes)
   .route('/', garminRoutes)
-  .route('/', demoRoutes);
+  .route('/', demoRoutes)
+  .route('/', devicesRoutes)
+  .route('/', mobileRoutes);
 
 export type AppType = typeof routes;
 

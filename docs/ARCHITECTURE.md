@@ -82,7 +82,9 @@ Feature folders never import from each other; shared things move down into `ui/`
   workouts, one backfill step). Backfill is a resumable cursor stored in D1, advanced by cron and by
   an explicit "continue" API call, so it works on the free plan (no Queues required).
 - **Auth**: single user. First visit sets a passphrase (PBKDF2 hash in D1); login issues an
-  HMAC-signed, HttpOnly session cookie. All `/api/*` except `/api/auth/*` and `/api/health` require it.
+  HMAC-signed, HttpOnly session cookie. All `/api/*` except `/api/auth/*` and `/api/health` require it
+  (or, for native clients, an `Authorization: Bearer cad_…` device token — `docs/MOBILE_API.md`;
+  `GET/DELETE auth/devices…` are protected too).
 - **Secrets**: `SESSION_SECRET`, `ENCRYPTION_KEY` (AES-GCM for Garmin credentials at rest).
   PBKDF2 is capped at 100 000 iterations in production Workers (local workerd does not enforce it).
 - **Plan note**: parsing a 3 h FIT file costs 20–55 ms CPU; the Workers Free plan allows 10 ms per
@@ -112,7 +114,9 @@ Module ownership and cross-module function signatures: `apps/web/worker/CONTRACT
 
 | Area | Endpoints |
 |---|---|
-| auth | `GET auth/status` → `{ configured, authenticated }` · `POST auth/setup` · `POST auth/login` · `POST auth/logout` |
+| auth | `GET auth/status` → `{ configured, authenticated, demo }` (cookie or bearer) · `POST auth/setup` · `POST auth/login` · `POST auth/logout` · `POST auth/change {current,next}` (revokes all sessions and device tokens) |
+| devices | `POST auth/devices {passphrase,name,platform}` → `201 { token, device }` (open; login throttle) · `GET auth/devices` → `{ devices }` · `DELETE auth/devices/:id` · `DELETE auth/devices/current` — native-client bearer tokens, see `docs/MOBILE_API.md` |
+| mobile | `GET mobile/snapshot` → `MobileSnapshot` (widgets / app first paint; see `docs/MOBILE_API.md`) |
 | calendar | `GET calendar?from&to` → `CalendarResponse` (weeks fully covering the range, one extra prior week computed for WoW) |
 | workouts | `GET workouts?from&to` · `POST workouts` · `GET/PATCH/DELETE workouts/:id` · `POST workouts/:id/duplicate {date}` · `POST workouts/:id/repeat {weeks}` · `POST workouts/:id/skip {reason}` · `POST workouts/:id/pair {activityId}` · `DELETE workouts/:id/pair` · `POST workouts/quick {date,text}` (quick-add grammar) · `POST workouts/estimate {sport,structure}` (planned totals preview) |
 | bulk | `POST calendar/copy-week {from,to,progressionPct}` · `POST calendar/shift {fromDate,days}` · `POST calendar/restore {workouts}` (undo support: re-insert deleted items verbatim) |

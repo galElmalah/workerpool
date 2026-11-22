@@ -1,0 +1,1061 @@
+{
+ "from": "2026-11-09",
+ "to": "2026-11-29",
+ "today": "2026-11-21",
+ "workouts": [
+  {
+   "id": "wk_d20261109_2",
+   "date": "2026-11-09",
+   "startTime": "18:30",
+   "sport": "strength",
+   "subSport": "gym",
+   "title": "Full-body strength A",
+   "description": "Heavy and slow on the way down. Leave 1–2 reps in the tank.",
+   "plannedDurationSec": 2538,
+   "plannedLoad": 47.4,
+   "plannedIntensityFactor": 0.82,
+   "structure": {
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s1",
+      "role": "active",
+      "measure": {
+       "type": "reps",
+       "n": 6
+      },
+      "label": "Back squat",
+      "strength": {
+       "exercise": "Back squat",
+       "exerciseKey": "BARBELL_BACK_SQUAT",
+       "sets": 4,
+       "restSec": 150,
+       "reps": 6,
+       "weightKg": 80
+      }
+     },
+     {
+      "kind": "step",
+      "id": "s5",
+      "role": "active",
+      "measure": {
+       "type": "time",
+       "sec": 45
+      },
+      "label": "Plank",
+      "strength": {
+       "exercise": "Plank",
+       "exerciseKey": "PLANK",
+       "sets": 3,
+       "restSec": 45,
+       "durationSec": 45
+      }
+     }
+    ]
+   },
+   "isKey": false,
+   "intensity": "tempo",
+   "tags": [
+    "strength"
+   ],
+   "environment": "indoor",
+   "pairedActivityId": "act_q1s60z4rip",
+   "status": "planned",
+   "sparkline": [
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683,
+    0.683
+   ],
+   "garmin": {
+    "syncState": "none"
+   },
+   "createdAt": "2026-11-21T18:00:20.888Z",
+   "updatedAt": "2026-11-21T18:00:25.517Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.28,
+    "state": "partial_long"
+   }
+  },
+  {
+   "id": "wk_d20261110_1",
+   "date": "2026-11-10",
+   "startTime": "07:00",
+   "sport": "run",
+   "subSport": "road_run",
+   "title": "Easy 25′ + 6×20″ strides",
+   "plannedDurationSec": 2100,
+   "plannedDistanceM": 5657,
+   "plannedLoad": 27.3,
+   "plannedIntensityFactor": 0.684,
+   "structure": {
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s1",
+      "role": "active",
+      "measure": {
+       "type": "time",
+       "sec": 1380
+      },
+      "target": {
+       "type": "hr_zone",
+       "zone": 2
+      },
+      "label": "Easy"
+     },
+     {
+      "kind": "repeat",
+      "id": "s4",
+      "count": 6,
+      "steps": [
+       {
+        "kind": "step",
+        "id": "s2",
+        "role": "active",
+        "measure": {
+         "type": "time",
+         "sec": 20
+        },
+        "target": {
+         "type": "pace_pct",
+         "low": 118,
+         "high": 128
+        },
+        "label": "Stride",
+        "cue": "Tall, relaxed, quick feet"
+       },
+       {
+        "kind": "step",
+        "id": "s3",
+        "role": "recovery",
+        "measure": {
+         "type": "time",
+         "sec": 70
+        },
+        "target": {
+         "type": "pace_pct",
+         "low": 55,
+         "high": 65
+        },
+        "label": "Walk back"
+       }
+      ]
+     }
+    ]
+   },
+   "isKey": false,
+   "intensity": "endurance",
+   "tags": [
+    "easy",
+    "strides"
+   ],
+   "environment": "outdoor",
+   "pairedActivityId": "act_1en9evwr0r",
+   "status": "planned",
+   "sparkline": [
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55,
+    0.55
+   ],
+   "garmin": {
+    "syncState": "none"
+   },
+   "createdAt": "2026-11-21T18:00:20.888Z",
+   "updatedAt": "2026-11-21T18:00:25.438Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.38,
+    "state": "partial_long"
+   }
+  },
+  {
+   "id": "wk_d20261111_2",
+   "date": "2026-11-11",
+   "startTime": "18:45",
+   "sport": "row",
+   "subSport": "erg",
+   "title": "UT2 30′ r20",
+   "plannedDurationSec": 1800,
+   "plannedDistanceM": 6816,
+   "plannedLoad": 20.2,
+   "plannedIntensityFactor": 0.636,
+   "structure": {
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s1",
+      "role": "warmup",
+      "measure": {
+       "type": "time",
+       "sec": 300
+      },
+      "target": {
+       "type": "power_pct",
+       "low": 50,
+       "high": 60
+      },
+      "row": {
+       "strokeRateLow": 18,
+       "strokeRateHigh": 20
+      }
+     },
+     {
+      "kind": "step",
+      "id": "s2",
+      "role": "active",
+      "measure": {
+       "type": "time",
+       "sec": 1320
+      },
+      "target": {
+       "type": "power_pct",
+       "low": 62,
+       "high": 72
+      },
+      "label": "UT2",
+      "row": {
+       "strokeRateLow": 18,
+       "strokeRateHigh": 20
+      }
+     }
+    ]
+   },
+   "isKey": false,
+   "intensity": "endurance",
+   "tags": [
+    "erg",
+    "ut2"
+   ],
+   "environment": "indoor",
+   "pairedActivityId": "act_86a7q99g9l",
+   "status": "planned",
+   "sparkline": [
+    0.458,
+    0.458,
+    0.458,
+    0.458,
+    0.458,
+    0.458,
+    0.458,
+    0.458,
+    0.558,
+    0.558,
+    0.558,
+    0.558
+   ],
+   "garmin": {
+    "syncState": "none"
+   },
+   "createdAt": "2026-11-21T18:00:20.888Z",
+   "updatedAt": "2026-11-21T18:00:24.830Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.1,
+    "state": "on_target"
+   }
+  },
+  {
+   "id": "wk_d20261116_1",
+   "date": "2026-11-16",
+   "startTime": "07:00",
+   "sport": "swim",
+   "subSport": "pool",
+   "title": "Technique + 10×50 fast",
+   "plannedDurationSec": 3126,
+   "plannedDistanceM": 2300,
+   "plannedLoad": 53.2,
+   "plannedIntensityFactor": 0.902,
+   "structure": {
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s1",
+      "role": "warmup",
+      "measure": {
+       "type": "distance",
+       "m": 400
+      },
+      "target": {
+       "type": "pace_pct",
+       "low": 80,
+       "high": 88
+      },
+      "label": "400 choice",
+      "swim": {
+       "stroke": "choice",
+       "restSec": 20
+      }
+     },
+     {
+      "kind": "repeat",
+      "id": "s5",
+      "count": 6,
+      "steps": [
+       {
+        "kind": "step",
+        "id": "s4",
+        "role": "active",
+        "measure": {
+         "type": "distance",
+         "m": 100
+        },
+        "target": {
+         "type": "pace_pct",
+         "low": 80,
+         "high": 88
+        },
+        "label": "Kick / drill",
+        "swim": {
+         "stroke": "kick",
+         "equipment": [
+          "fins"
+         ],
+         "restSec": 20
+        }
+       }
+      ]
+     },
+     {
+      "kind": "repeat",
+      "id": "s7",
+      "count": 10,
+      "steps": [
+       {
+        "kind": "step",
+        "id": "s6",
+        "role": "active",
+        "measure": {
+         "type": "distance",
+         "m": 50
+        },
+        "target": {
+         "type": "pace_pct",
+         "low": 108,
+         "high": 113
+        },
+        "label": "50 fast",
+        "swim": {
+         "stroke": "free",
+         "sendOffSec": 75
+        }
+       }
+      ]
+     }
+    ],
+    "poolLengthM": 25
+   },
+   "isKey": false,
+   "intensity": "high",
+   "tags": [
+    "endurance"
+   ],
+   "environment": "indoor",
+   "pairedActivityId": "act_syn0za0ivc",
+   "status": "planned",
+   "sparkline": [
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.69,
+    0.667,
+    0.667,
+    0.667,
+    0.667
+   ],
+   "garmin": {
+    "syncState": "none"
+   },
+   "createdAt": "2026-11-21T18:00:20.888Z",
+   "updatedAt": "2026-11-21T18:00:23.147Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 0.82,
+    "state": "on_target"
+   }
+  },
+  {
+   "id": "wk_d20261124_2",
+   "date": "2026-11-24",
+   "startTime": "18:30",
+   "sport": "bike",
+   "subSport": "indoor",
+   "title": "Tempo 3×15′",
+   "description": "Muscular endurance. Should feel comfortably hard.",
+   "plannedDurationSec": 4920,
+   "plannedDistanceM": 39151,
+   "plannedLoad": 70,
+   "plannedIntensityFactor": 0.716,
+   "structure": {
+    "steps": [
+     {
+      "kind": "step",
+      "id": "s1",
+      "role": "warmup",
+      "measure": {
+       "type": "time",
+       "sec": 720
+      },
+      "target": {
+       "type": "ramp",
+       "basis": "power_pct",
+       "from": 50,
+       "to": 75
+      },
+      "label": "Warm up"
+     },
+     {
+      "kind": "repeat",
+      "id": "s4",
+      "count": 3,
+      "steps": [
+       {
+        "kind": "step",
+        "id": "s2",
+        "role": "active",
+        "measure": {
+         "type": "time",
+         "sec": 900
+        },
+        "target": {
+         "type": "power_pct",
+         "low": 80,
+         "high": 85
+        },
+        "label": "Tempo",
+        "cue": "Low cadence 75–80 on #2"
+       },
+       {
+        "kind": "step",
+        "id": "s3",
+        "role": "recovery",
+        "measure": {
+         "type": "time",
+         "sec": 300
+        },
+        "target": {
+         "type": "power_pct",
+         "low": 50,
+         "high": 55
+        }
+       }
+      ]
+     },
+     {
+      "kind": "step",
+      "id": "s5",
+      "role": "cooldown",
+      "measure": {
+       "type": "time",
+       "sec": 600
+      },
+      "target": {
+       "type": "power_pct",
+       "low": 45,
+       "high": 55
+      },
+      "label": "Cool down"
+     }
+    ]
+   },
+   "isKey": true,
+   "intensity": "tempo",
+   "tags": [
+    "intervals",
+    "sweet-spot"
+   ],
+   "environment": "indoor",
+   "status": "planned",
+   "sparkline": [
+    0.431,
+    0.461,
+    0.491,
+    0.52,
+    0.55,
+    0.58,
+    0.609,
+    0.686,
+    0.688,
+    0.688,
+    0.688,
+    0.688
+   ],
+   "garmin": {
+    "workoutId": "1000000006",
+    "scheduleId": "500000006",
+    "syncState": "synced",
+    "lastPushedAt": "2026-11-21T18:02:06.802Z"
+   },
+   "createdAt": "2026-11-21T18:00:20.888Z",
+   "updatedAt": "2026-11-21T18:00:20.888Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 0,
+    "state": "planned"
+   }
+  },
+  {
+   "id": "wk_d20261125_1",
+   "date": "2026-11-25",
+   "startTime": "07:00",
+   "sport": "swim",
+   "subSport": "pool",
+   "title": "CSS 16×75",
+   "description": "Threshold swim. Hold the pace clock, not your ego.",
+   "plannedDurationSec": 2781,
+   "plannedDistanceM": 2300,
+   "plannedLoad": 58.1,
+   "plannedIntensityFactor": 0.943,
+   "structure": {
+    "steps": [
+     {
+      "kind": "repeat",
+      "id": "s3",
+      "count": 4,
+      "steps": [
+       {
+        "kind": "step",
+        "id": "s2",
+        "role": "active",
+        "measure": {
+         "type": "distance",
+         "m": 50
+        },
+        "target": {
+         "type": "pace_pct",
+         "low": 75,
+         "high": 85
+        },
+        "label": "Drill: catch-up / fingertip",
+        "swim": {
+         "stroke": "drill",
+         "restSec": 15
+        }
+       }
+      ]
+     },
+     {
+      "kind": "repeat",
+      "id": "s5",
+      "count": 16,
+      "steps": [
+       {
+        "kind": "step",
+        "id": "s4",
+        "role": "active",
+        "measure": {
+         "type": "distance",
+         "m": 75
+        },
+        "target": {
+         "type": "pace_pct",
+         "low": 102,
+         "high": 105
+        },
+        "label": "75 @ CSS−",
+        "swim": {
+         "stroke": "free",
+         "sendOffSec": 85
+        }
+       }
+      ]
+     },
+     {
+      "kind": "step",
+      "id": "s6",
+      "role": "active",
+      "measure": {
+       "type": "distance",
+       "m": 300
+      },
+      "target": {
+       "type": "pace_pct",
+       "low": 88,
+       "high": 93
+      },
+      "label": "Pull",
+      "swim": {
+       "stroke": "free",
+       "equipment": [
+        "pull_buoy",
+        "paddles"
+       ],
+       "restSec": 20
+      }
+     }
+    ],
+    "poolLengthM": 25
+   },
+   "isKey": false,
+   "intensity": "threshold",
+   "tags": [
+    "css",
+    "intervals"
+   ],
+   "environment": "indoor",
+   "status": "planned",
+   "sparkline": [
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.7,
+    0.688,
+    0.667,
+    0.667,
+    0.667
+   ],
+   "garmin": {
+    "workoutId": "1000000007",
+    "scheduleId": "500000007",
+    "syncState": "synced",
+    "lastPushedAt": "2026-11-21T18:02:06.806Z"
+   },
+   "createdAt": "2026-11-21T18:00:20.888Z",
+   "updatedAt": "2026-11-21T18:00:20.888Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 0,
+    "state": "planned"
+   }
+  }
+ ],
+ "activities": [
+  {
+   "id": "act_ahgt68fc27",
+   "source": "garmin",
+   "garminActivityId": "20376819963",
+   "garminTypeKey": "lap_swimming",
+   "startedAt": "2026-11-09T06:16:30.000Z",
+   "utcOffsetMin": 60,
+   "localDate": "2026-11-09",
+   "sport": "swim",
+   "subSport": "pool",
+   "title": "Aerobic 10×200",
+   "durationSec": 3522,
+   "movingSec": 3276,
+   "distanceM": 2800,
+   "load": 58.6,
+   "loadSource": "swim_pace",
+   "intensityFactor": 0.863,
+   "avgHr": 142,
+   "maxHr": 155,
+   "avgSpeedMps": 0.855,
+   "avgCadence": 23,
+   "calories": 478,
+   "aerobicEffect": 2.7,
+   "anaerobicEffect": 0.4,
+   "poolLengthM": 25,
+   "strokes": 1152,
+   "avgSwolf": 40,
+   "intensityAuto": "endurance",
+   "intensity": "endurance",
+   "isKey": false,
+   "rpe": 3,
+   "feel": 3,
+   "postNote": "Smooth. Focused on the catch.",
+   "tags": [],
+   "pairedWorkoutId": "wk_d20261109_1",
+   "hasStreams": true,
+   "sparkline": [
+    0.94,
+    0.88,
+    0.89,
+    0.9,
+    0.88,
+    0.9,
+    0.58,
+    0.7,
+    0.57,
+    0.53,
+    0.54,
+    0.64
+   ],
+   "createdAt": "2026-11-21T18:00:25.689Z",
+   "updatedAt": "2026-11-21T18:00:25.702Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 0.94,
+    "state": "on_target"
+   }
+  },
+  {
+   "id": "act_q1s60z4rip",
+   "source": "garmin",
+   "garminActivityId": "20376983931",
+   "garminTypeKey": "strength_training",
+   "startedAt": "2026-11-09T17:39:42.000Z",
+   "utcOffsetMin": 60,
+   "localDate": "2026-11-09",
+   "sport": "strength",
+   "subSport": "gym",
+   "title": "Full-body strength A",
+   "durationSec": 3131,
+   "movingSec": 3131,
+   "load": 60.9,
+   "loadSource": "rpe",
+   "avgHr": 104,
+   "maxHr": 135,
+   "calories": 303,
+   "aerobicEffect": 1.7,
+   "anaerobicEffect": 0,
+   "totalSets": 19,
+   "totalReps": 147,
+   "volumeKg": 7180.5,
+   "intensityAuto": "endurance",
+   "intensity": "endurance",
+   "isKey": false,
+   "rpe": 6,
+   "feel": 3,
+   "postNote": "Squat felt solid.",
+   "tags": [],
+   "pairedWorkoutId": "wk_d20261109_2",
+   "hasStreams": true,
+   "sparkline": [
+    0.59,
+    0.77,
+    0.81,
+    0.84,
+    0.87,
+    0.92,
+    0.93,
+    0.47,
+    0.65,
+    0.5,
+    0.4,
+    0.76
+   ],
+   "createdAt": "2026-11-21T18:00:25.509Z",
+   "updatedAt": "2026-11-21T18:00:25.517Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.28,
+    "state": "partial_long"
+   }
+  },
+  {
+   "id": "act_1en9evwr0r",
+   "source": "garmin",
+   "garminActivityId": "20377164267",
+   "garminTypeKey": "running",
+   "startedAt": "2026-11-10T06:11:06.000Z",
+   "utcOffsetMin": 60,
+   "localDate": "2026-11-10",
+   "sport": "run",
+   "subSport": "road_run",
+   "title": "Easy 25′ + 6×20″ strides",
+   "durationSec": 2118,
+   "movingSec": 2106,
+   "distanceM": 6631.9,
+   "elevationGainM": 20,
+   "load": 37.6,
+   "loadSource": "pace",
+   "intensityFactor": 0.801,
+   "avgHr": 149,
+   "maxHr": 171,
+   "avgSpeedMps": 3.149,
+   "adjustedSpeedMps": 3.23,
+   "avgCadence": 174,
+   "calories": 501,
+   "efficiency": 1.2969,
+   "aerobicEffect": 2.1,
+   "anaerobicEffect": 1,
+   "intensityAuto": "endurance",
+   "intensity": "endurance",
+   "isKey": false,
+   "tags": [],
+   "pairedWorkoutId": "wk_d20261110_1",
+   "hasStreams": true,
+   "sparkline": [
+    0.78,
+    0.81,
+    0.8,
+    0.8,
+    0.8,
+    0.8,
+    0.79,
+    0.79,
+    0.48,
+    0.78,
+    0.78,
+    0.78
+   ],
+   "createdAt": "2026-11-21T18:00:25.421Z",
+   "updatedAt": "2026-11-21T18:00:25.438Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.38,
+    "state": "partial_long"
+   }
+  },
+  {
+   "id": "act_2f9p1pcbj0",
+   "source": "garmin",
+   "garminActivityId": "20377330971",
+   "garminTypeKey": "indoor_cycling",
+   "startedAt": "2026-11-10T17:45:42.000Z",
+   "utcOffsetMin": 60,
+   "localDate": "2026-11-10",
+   "sport": "bike",
+   "subSport": "indoor",
+   "title": "Sweet spot 2×20′",
+   "durationSec": 4320,
+   "movingSec": 4320,
+   "distanceM": 38465.9,
+   "load": 69.3,
+   "loadSource": "power",
+   "intensityFactor": 0.76,
+   "avgHr": 141,
+   "maxHr": 160,
+   "avgPower": 197,
+   "weightedPower": 210,
+   "maxPower": 258,
+   "avgSpeedMps": 8.904,
+   "avgCadence": 87,
+   "calories": 891,
+   "workKj": 851.2,
+   "variability": 1.065,
+   "efficiency": 1.4919,
+   "decouplingPct": 6.26,
+   "aerobicEffect": 2.9,
+   "anaerobicEffect": 0,
+   "intensityAuto": "tempo",
+   "intensity": "tempo",
+   "isKey": true,
+   "rpe": 4,
+   "feel": 4,
+   "postNote": "Sweet spot 2×20′: avg 197 W, NP 210. Last rep ugly but done.",
+   "tags": [],
+   "pairedWorkoutId": "wk_d20261110_2",
+   "hasStreams": true,
+   "sparkline": [
+    0.58,
+    0.61,
+    0.63,
+    0.65,
+    0.7,
+    0.74,
+    0.78,
+    0.83,
+    0.98,
+    0.97,
+    0.97,
+    0.99
+   ],
+   "createdAt": "2026-11-21T18:00:25.243Z",
+   "updatedAt": "2026-11-21T18:00:25.266Z",
+   "compliance": {
+    "metric": "load",
+    "ratio": 1.03,
+    "state": "on_target"
+   }
+  }
+ ],
+ "events": [],
+ "phases": [
+  {
+   "id": "ph_demo_15",
+   "type": "base",
+   "label": "Run base",
+   "startDate": "2026-11-09",
+   "endDate": "2026-11-29",
+   "weeklyLoadTarget": 450
+  }
+ ],
+ "markers": [],
+ "dayNotes": [],
+ "wellness": [
+  {
+   "date": "2026-11-09",
+   "hrvMs": 64,
+   "hrvStatus": "BALANCED",
+   "restingHr": 49,
+   "sleepSec": 25800,
+   "sleepScore": 69,
+   "weightKg": 72.3,
+   "bodyBattery": 70,
+   "stress": 31,
+   "readiness": 60
+  },
+  {
+   "date": "2026-11-12",
+   "hrvMs": 65,
+   "hrvStatus": "BALANCED",
+   "restingHr": 47,
+   "sleepSec": 26700,
+   "sleepScore": 62,
+   "weightKg": 72.6,
+   "bodyBattery": 61,
+   "stress": 27,
+   "readiness": 59,
+   "vo2max": 53
+  }
+ ],
+ "weeks": [
+  {
+   "isoWeek": "2026-W46",
+   "startDate": "2026-11-09",
+   "endDate": "2026-11-15",
+   "plannedSec": 35247,
+   "doneSec": 39070,
+   "plannedLoad": 577,
+   "doneLoad": 647.7,
+   "plannedDistanceM": 80975,
+   "doneDistanceM": 144173.8,
+   "elevationGainM": 759,
+   "projectedSec": 39070,
+   "projectedLoad": 647.7,
+   "bySport": [
+    {
+     "sport": "bike",
+     "plannedSec": 11220,
+     "doneSec": 11292,
+     "plannedLoad": 155.7,
+     "doneLoad": 160.6,
+     "plannedDistanceM": 34803,
+     "doneDistanceM": 91380.8,
+     "plannedCount": 2,
+     "doneCount": 2,
+     "elevationGainM": 589
+    },
+    {
+     "sport": "run",
+     "plannedSec": 10980,
+     "doneSec": 10995,
+     "plannedLoad": 186,
+     "doneLoad": 221.5,
+     "plannedDistanceM": 33856,
+     "doneDistanceM": 36577.4,
+     "plannedCount": 3,
+     "doneCount": 3,
+     "elevationGainM": 155
+    }
+   ],
+   "keyPlanned": 4,
+   "keyDone": 4,
+   "intensitySec": {
+    "easy": 29867,
+    "moderate": 8048,
+    "hard": 1660
+   },
+   "compliancePct": 98.3,
+   "fitness": 63.9,
+   "fatigue": 69.3,
+   "form": -1.6,
+   "formPct": -2.6,
+   "formZone": "neutral",
+   "fitnessDelta": 5.2,
+   "wowSec": 0.87,
+   "wowLoad": 2.31,
+   "wowDistanceM": 1.144,
+   "isProjected": false,
+   "hasNote": false,
+   "dailyLoad": [
+    119.5,
+    106.9,
+    81.3,
+    84.4,
+    54.1,
+    102,
+    99.5
+   ],
+   "targetLoad": 450,
+   "phaseId": "ph_demo_15"
+  },
+  {
+   "isoWeek": "2026-W47",
+   "startDate": "2026-11-16",
+   "endDate": "2026-11-22",
+   "plannedSec": 35087,
+   "doneSec": 28100,
+   "plannedLoad": 539.1,
+   "doneLoad": 464,
+   "plannedDistanceM": 62058,
+   "doneDistanceM": 124926.4,
+   "elevationGainM": 771,
+   "projectedSec": 33500,
+   "projectedLoad": 533.4,
+   "bySport": [
+    {
+     "sport": "bike",
+     "plannedSec": 11700,
+     "doneSec": 11762,
+     "plannedLoad": 160.4,
+     "doneLoad": 174.2,
+     "plannedDistanceM": 33683,
+     "doneDistanceM": 95501.3,
+     "plannedCount": 2,
+     "doneCount": 2,
+     "elevationGainM": 722
+    },
+    {
+     "sport": "run",
+     "plannedSec": 10500,
+     "doneSec": 5123,
+     "plannedLoad": 153.8,
+     "doneLoad": 97.1,
+     "plannedDistanceM": 15600,
+     "doneDistanceM": 16628.7,
+     "plannedCount": 3,
+     "doneCount": 2,
+     "elevationGainM": 49
+    }
+   ],
+   "keyPlanned": 3,
+   "keyDone": 3,
+   "intensitySec": {
+    "easy": 20701,
+    "moderate": 7266,
+    "hard": 1048
+   },
+   "compliancePct": 84.3,
+   "fitness": 65.7,
+   "fatigue": 71.2,
+   "form": -5.9,
+   "formPct": -9,
+   "formZone": "neutral",
+   "fitnessDelta": 1.8,
+   "wowSec": -0.281,
+   "wowLoad": -0.284,
+   "wowDistanceM": -0.134,
+   "isProjected": true,
+   "hasNote": true,
+   "dailyLoad": [
+    111.3,
+    111.8,
+    81.4,
+    56.9,
+    0,
+    102.6,
+    0
+   ],
+   "targetLoad": 450,
+   "phaseId": "ph_demo_15"
+  }
+ ]
+}

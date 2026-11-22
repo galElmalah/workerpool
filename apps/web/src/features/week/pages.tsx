@@ -8,7 +8,7 @@ import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
 import { CalendarDays, ChevronLeft, ChevronRight, Copy, Flag, Medal, Star, Timer, TriangleAlert } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ProgressRing, SplitBar } from '@/charts';
+import { SplitBar } from '@/charts';
 import { cn } from '@/lib/cn';
 import {
   distanceParts,
@@ -32,15 +32,15 @@ import {
   ComplianceGlyph,
   DeltaBadge,
   EmptyState,
-  FormZoneLabel,
   IconButton,
-  Meter,
   NumberField,
   Page,
   PageHeader,
   SaveIndicator,
   Section,
   Skeleton,
+  StatRow,
+  StatTile,
   Slider,
   SportGlyph,
   Textarea,
@@ -135,17 +135,17 @@ function phaseLabel(p: Phase, start: LocalDate) {
 }
 
 function StatusChip({ mode, reflected }: { mode: Mode; reflected: boolean }) {
-  if (mode === 'future') return <Chip tone="outline">Planned</Chip>;
-  if (mode === 'current') return <Chip tone="signal">In progress</Chip>;
-  return <Chip tone="neutral">{reflected ? 'Reviewed ✓' : 'Complete · not reviewed'}</Chip>;
+  const text = mode === 'future' ? 'Planned' : mode === 'current' ? 'In progress' : reflected ? 'Reviewed' : 'Complete, not reviewed yet';
+  return <span className="text-body-sm text-fg-3">{text}</span>;
 }
 
 function WeekSkeleton() {
   return (
     <div className="flex flex-col gap-8" aria-hidden>
-      <div className="grid gap-3 md:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-[148px] rounded-xl" />
+      <Skeleton className="h-7 w-3/4" />
+      <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-[84px]" />
         ))}
       </div>
       <Skeleton className="h-[220px] rounded-xl" />
@@ -156,19 +156,23 @@ function WeekSkeleton() {
 
 // ───────────────────────── body ─────────────────────────
 
+/**
+ * A calm narrative, top to bottom: headline sentence + four figures → planned vs done (day by day,
+ * key sessions, highlights) → by sport → intensity and recovery → reflection → plan next week.
+ */
 function WeekBody({ data, mode, today, phase }: { data: WeekBundle; mode: Mode; today?: LocalDate; phase?: Phase }) {
   const s = data.summary as WeekSummary;
   const p = data.previous as WeekSummary | undefined;
   return (
     <>
-      <Section title={mode === 'future' ? 'The plan' : mode === 'current' ? 'So far' : 'Plan vs actual'}>
+      <Section>
         <Headline s={s} p={p} mode={mode} />
       </Section>
-      <Section title="Day by day" actions={<span className="text-body-sm text-fg-3 max-sm:hidden">Click a session to open it</span>}>
+      <Section title={mode === 'future' ? 'The plan, day by day' : 'Planned vs done'} description={mode === 'future' ? undefined : 'Each day’s sessions, with completed Load against the plan. Click a session to open it.'}>
         <DayStrip data={data} today={today} mode={mode} />
       </Section>
       {mode !== 'future' && (
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <Section title="Key sessions">
             <KeySessions data={data} />
           </Section>
@@ -181,7 +185,7 @@ function WeekBody({ data, mode, today, phase }: { data: WeekBundle; mode: Mode; 
         <BySport s={s} mode={mode} />
       </Section>
       {mode !== 'future' && (
-        <Section title="Body & balance">
+        <Section title="Intensity and recovery">
           <Balance data={data} />
         </Section>
       )}
@@ -199,112 +203,75 @@ function WeekBody({ data, mode, today, phase }: { data: WeekBundle; mode: Mode; 
 
 // ───────────────────────── headline ─────────────────────────
 
+/** One plain sentence that answers "how did the week go?", then four figures with one line of context each. */
+function headlineSentence(s: WeekSummary, mode: Mode): string {
+  const keys = s.keyPlanned ? `${s.keyDone === s.keyPlanned ? `all ${s.keyPlanned}` : `${s.keyDone} of ${s.keyPlanned}`} key session${s.keyPlanned === 1 ? '' : 's'}` : null;
+  if (mode === 'future') return `${fmtH(s.plannedSec)} h and ${fmtInt(s.plannedLoad)} Load planned${s.keyPlanned ? `, with ${s.keyPlanned} key session${s.keyPlanned === 1 ? '' : 's'}` : ''}.`;
+  const share = s.plannedSec > 0 ? Math.round((s.doneSec / s.plannedSec) * 100) : null;
+  if (mode === 'current') return `${fmtH(s.doneSec)} of ${fmtH(s.plannedSec)} h done so far${keys ? `, ${keys} done` : ''}.`;
+  return `${share != null ? `You completed ${share}% of the planned time` : `You trained ${fmtH(s.doneSec)} h`}${keys ? ` and ${keys}` : ''}${s.compliancePct != null ? `; compliance ${Math.round(s.compliancePct)}%` : ''}.`;
+}
+
 function Headline({ s, p, mode }: { s: WeekSummary; p?: WeekSummary; mode: Mode }) {
+  const future = mode === 'future';
+  const loadDelta = pct(s.doneLoad, p?.doneLoad);
+  return (
+    <div className="flex flex-col gap-8">
+      <p className="max-w-[48ch] text-title-2 font-medium text-fg-1">{headlineSentence(s, mode)}</p>
+      <StatRow columns={4}>
+        <StatTile
+          label={future ? 'Hours planned' : mode === 'current' ? 'Hours so far' : 'Hours'}
+          value={future ? s.plannedSec / 3600 : s.doneSec / 3600}
+          format={(h) => fmtH(h * 3600)}
+          unit="h"
+          hint={future ? (s.targetHours ? `target ${fmtH(s.targetHours * 3600)}` : undefined) : `of ${fmtH(s.plannedSec)} planned`}
+        />
+        <StatTile
+          label={future ? 'Load planned' : 'Load'}
+          value={future ? s.plannedLoad : s.doneLoad}
+          format={fmtInt}
+          hint={future ? (s.targetLoad ? `target ${fmtInt(s.targetLoad)}` : undefined) : `of ${fmtInt(s.plannedLoad)} planned`}
+        />
+        <StatTile label={mode === 'past' ? 'Fitness at week end' : 'Fitness, projected'} value={s.fitness} format={fmtInt} delta={s.fitnessDelta} deltaKind="number" good={s.fitnessDelta > 0} hint="ramp this week" />
+        <StatTile
+          label="Form at week end"
+          value={s.form}
+          format={(v) => formatSigned(Math.round(v))}
+          delta={p ? s.form - p.form : undefined}
+          deltaKind="number"
+          hint={s.formZone ? s.formZone[0].toUpperCase() + s.formZone.slice(1) : undefined}
+        />
+      </StatRow>
+      {!future && p && <WowLine s={s} p={p} mode={mode} caution={(loadDelta ?? 0) > 0.15 && mode === 'past'} />}
+    </div>
+  );
+}
+
+/** Week over week in one line: "Against last week: hours −28 % (10:51), load −28 % (648), distance −13 % (144 km)." */
+function WowLine({ s, p, mode, caution }: { s: WeekSummary; p: WeekSummary; mode: Mode; caution: boolean }) {
   const units = useUnits();
   const du = distanceUnit('run', units);
-  const done = mode === 'future' ? 0 : 1;
-  const cards = [
-    { label: 'Hours', done: s.doneSec / 3600, planned: s.plannedSec / 3600, proj: s.projectedSec / 3600, target: s.targetHours, prev: p ? p.doneSec / 3600 : null, fmt: (h: number) => fmtH(h * 3600), unit: 'h', signal: false },
-    { label: 'Load', done: s.doneLoad, planned: s.plannedLoad, proj: s.projectedLoad, target: s.targetLoad, prev: p?.doneLoad ?? null, fmt: fmtInt, unit: '', signal: true },
-    { label: 'Distance', done: s.doneDistanceM / du.mPer, planned: s.plannedDistanceM / du.mPer, proj: Math.max(s.doneDistanceM, s.plannedDistanceM) / du.mPer, target: undefined, prev: p ? p.doneDistanceM / du.mPer : null, fmt: fmtInt, unit: du.unit, signal: false },
+  const items = [
+    { name: 'hours', d: pct(s.doneSec, p.doneSec), was: fmtH(p.doneSec) },
+    { name: 'load', d: pct(s.doneLoad, p.doneLoad), was: fmtInt(p.doneLoad) },
+    { name: 'distance', d: pct(s.doneDistanceM, p.doneDistanceM), was: `${fmtInt(p.doneDistanceM / du.mPer)} ${du.unit}` },
   ];
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid gap-3 md:grid-cols-3">
-        {cards.map((c, i) => {
-          const value = done ? c.done : c.planned;
-          return (
-            <motion.div key={c.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.smooth, delay: i * 0.035 }} className="flex min-w-0 items-center gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5">
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <span className="text-micro text-fg-3">{c.label}{mode === 'current' ? ' · so far' : mode === 'future' ? ' · planned' : ''}</span>
-                <span className={cn('flex items-baseline gap-1 text-stat-lg', c.signal && done ? 'text-accent-ink' : 'text-fg-1')}>
-                  <Ticker value={value} format={c.fmt} from={0} />
-                  {c.unit && <span className="text-[1.25rem] font-[450] tracking-normal text-fg-3">{c.unit}</span>}
-                </span>
-                {done ? (
-                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-mono-sm text-fg-3">
-                    <span>
-                      of <span className="text-fg-1">{c.fmt(c.planned)}</span> planned
-                    </span>
-                    {c.target ? (
-                      <span>
-                        · target <span className="text-fg-1">{c.fmt(c.target)}</span>
-                      </span>
-                    ) : null}
-                  </span>
-                ) : (
-                  <span className="text-mono-sm text-fg-3">{c.target ? `target ${c.fmt(c.target)}` : 'no target set'}</span>
-                )}
-                {mode !== 'future' && (
-                  <span className="flex items-center gap-1.5">
-                    <DeltaBadge value={pct(c.done, c.prev)} good={c.signal && (pct(c.done, c.prev) ?? 0) > 0 && (pct(c.done, c.prev) ?? 0) <= 0.15} warning={c.signal && (pct(c.done, c.prev) ?? 0) > 0.15 && mode === 'past'} />
-                    <span className="text-body-sm text-fg-3">vs last week ({c.prev == null ? '—' : c.fmt(c.prev)})</span>
-                  </span>
-                )}
-                {mode === 'current' && c.proj > c.done && (
-                  <Meter value={c.done} max={c.proj} ghost={c.proj} target={c.target} size="xs" className="mt-1" aria-label={`${c.label} so far vs plan`} />
-                )}
-              </div>
-              {mode !== 'future' && <ProgressRing done={c.done} planned={c.planned} size={64} stroke={5} />}
-            </motion.div>
-          );
-        })}
-      </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <MiniStat label="Compliance" value={s.compliancePct == null ? '—' : `${Math.round(s.compliancePct)}%`} sub={p?.compliancePct != null && s.compliancePct != null ? <DeltaBadge value={(s.compliancePct ?? 0) - p.compliancePct} kind="number" suffix="pts" size="sm" /> : null} />
-        <MiniStat
-          label="Key sessions"
-          value={
-            <span>
-              {s.keyDone}
-              <span className="text-fg-3"> / {s.keyPlanned}</span>
-            </span>
-          }
-          sub={<KeyPips done={s.keyDone} planned={s.keyPlanned} />}
-        />
-        <MiniStat
-          label={`Fitness ${mode === 'past' ? 'at week end' : 'projected'}`}
-          value={<span className="text-accent-ink">{fmtInt(s.fitness)}</span>}
-          sub={
-            <span className="flex items-center gap-1.5">
-              <DeltaBadge value={s.fitnessDelta} kind="number" decimals={1} good={s.fitnessDelta > 0} size="sm" />
-              <span className="text-body-sm text-fg-3">ramp</span>
-            </span>
-          }
-        />
-        <MiniStat
-          label="Form at week end"
-          value={formatSigned(Math.round(s.form))}
-          sub={
-            <span className="flex items-center gap-2">
-              <FormZoneLabel zone={s.formZone} />
-              {p && <span className="text-mono-sm text-fg-3">was {formatSigned(Math.round(p.form))}</span>}
-            </span>
-          }
-        />
-      </div>
-    </div>
-  );
-}
-
-function KeyPips({ done, planned }: { done: number; planned: number }) {
-  if (!planned) return <span className="text-body-sm text-fg-3">None planned</span>;
-  return (
-    <span className="flex items-center gap-1" aria-label={`${done} of ${planned} key sessions done`}>
-      {Array.from({ length: planned }, (_, i) => (
-        <Star key={i} className={cn('size-3.5', i < done ? 'fill-accent text-accent-ink' : 'text-fg-4')} strokeWidth={1.75} />
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body text-fg-2">
+      <span>{mode === 'current' ? 'So far against last week:' : 'Against last week:'}</span>
+      {items.map((it, i) => (
+        <span key={it.name} className="inline-flex items-center gap-1.5">
+          {it.name}
+          <DeltaBadge value={it.d} size="sm" />
+          <span className="text-fg-3">({it.was}){i < items.length - 1 ? ',' : '.'}</span>
+        </span>
       ))}
-    </span>
-  );
-}
-
-function MiniStat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <span className="truncate text-micro text-fg-3">{label}</span>
-      <span className="text-stat-sm text-fg-1">{value}</span>
-      <span className="min-h-5">{sub}</span>
-    </div>
+      {caution && (
+        <span className="inline-flex items-center gap-1.5 text-fg-1">
+          <TriangleAlert className="size-3.5" aria-hidden /> Load rose more than 15 %.
+        </span>
+      )}
+    </p>
   );
 }
 
@@ -318,7 +285,7 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
   const max = Math.max(1, ...s.dailyLoad, ...plannedDaily);
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col divide-y divide-line-1 overflow-hidden rounded-xl border border-line-1 bg-surface-1">
+      <div className="flex flex-col divide-y divide-line-1">
         {data.days.map((d, i) => {
           const cards = dayCards({ workouts: d.workouts, activities: d.activities }, d.date);
           const isToday = d.date === today;
@@ -330,21 +297,20 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ ...spring.smooth, delay: Math.min(i * 0.03, 0.24) }}
-              className={cn('relative grid min-w-0 grid-cols-[56px_1fr] items-start gap-x-3 gap-y-2 px-3 py-3 md:grid-cols-[72px_1fr_200px] md:px-4', isToday && 'bg-surface-2')}
+              className={cn('relative -mx-3 grid min-w-0 grid-cols-[56px_1fr] items-start gap-x-3 gap-y-2 rounded-md px-3 py-3 md:grid-cols-[72px_1fr_200px] md:gap-x-4', isToday && 'bg-surface-1')}
             >
-              {isToday && <span className="absolute inset-y-0 left-0 w-0.5 bg-accent" aria-hidden />}
               <Link {...links.calendarDay(d.date)} aria-label={`Open ${weekdayShort(d.date)} ${formatDayMonth(d.date)}`} className="group/day flex flex-col self-start rounded-xs pt-1 outline-none focus-visible:outline-2 focus-visible:outline-focus">
-                <span className={cn('text-micro ', isToday ? 'text-accent-ink' : 'text-fg-3')}>{isToday ? 'Today' : weekdayShort(d.date)}</span>
-                <span className="text-mono-sm text-fg-2 group-hover/day:text-fg-1 group-hover/day:underline">{formatDayMonth(d.date)}</span>
+                <span className={cn('text-body-sm', isToday ? 'font-medium text-fg-1' : 'text-fg-3')}>{isToday ? 'Today' : weekdayShort(d.date)}</span>
+                <span className="text-body-sm text-fg-2 group-hover/day:text-fg-1 group-hover/day:underline">{formatDayMonth(d.date)}</span>
               </Link>
               <div className="flex min-w-0 flex-wrap gap-2">
                 {d.markers.map((m) => (
-                  <Chip key={m.id} tone="outline" className="self-center">
+                  <Chip key={m.id} tone="neutral" className="self-center">
                     {MARKER_LABEL[m.type] ?? m.type}
                     {m.label ? ` · ${m.label}` : ''}
                   </Chip>
                 ))}
-                {cards.length === 0 && !d.markers.length && <span className="py-1.5 text-body-sm text-fg-4">Rest day</span>}
+                {cards.length === 0 && !d.markers.length && <span className="py-1.5 text-body-sm text-fg-3">Rest day</span>}
                 {cards.map((c) => (
                   <WorkoutCard
                     key={c.key}
@@ -356,11 +322,11 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
                 ))}
               </div>
               <div className="col-span-2 flex items-center gap-2 md:col-span-1 md:pt-1.5">
-                <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-surface-3">
-                  {plan > load && <span className="absolute inset-y-0 left-0 rounded-full border border-dashed border-line-3 bg-hatch-faint" style={{ width: `${(plan / max) * 100}%` }} />}
-                  <motion.span className="absolute inset-y-0 left-0 origin-left rounded-full bg-accent" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ ...spring.gentle, delay: Math.min(i * 0.012, 0.24) }} style={{ width: `${(load / max) * 100}%` }} />
+                <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-surface-2" title={`Load ${fmtInt(load)}${plan ? ` of ${fmtInt(plan)} planned` : ''}`}>
+                  {plan > load && <span className="absolute inset-y-0 left-0 rounded-full bg-surface-3" style={{ width: `${(plan / max) * 100}%` }} />}
+                  <motion.span className="absolute inset-y-0 left-0 origin-left rounded-full bg-fg-2" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ ...spring.gentle, delay: Math.min(i * 0.012, 0.24) }} style={{ width: `${(load / max) * 100}%` }} />
                 </div>
-                <span className="w-24 text-right text-mono-sm text-fg-2">
+                <span className="w-24 text-right text-body-sm text-fg-1">
                   {d.activities.length > 0 && <span className="text-fg-3">{fmtH(d.activities.reduce((a, x) => a + (x.movingSec || x.durationSec), 0))} · </span>}
                   {load ? fmtInt(load) : '—'}
                   {plan > 0 && mode !== 'past' ? <span className="text-fg-4"> /{fmtInt(plan)}</span> : null}
@@ -370,7 +336,6 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
           );
         })}
       </div>
-      <p className="text-body-sm text-fg-3">Right: Load per day — green done, dashed planned. Missed sessions are dimmed and struck through.</p>
     </div>
   );
 }
@@ -380,7 +345,7 @@ function DayStrip({ data, today, mode }: { data: WeekBundle; today?: LocalDate; 
 function KeySessions({ data }: { data: WeekBundle }) {
   if (!data.keySessions.length) return <EmptyState size="sm" icon={<Star />} title="No key sessions this week">Mark a workout as key to track it here.</EmptyState>;
   return (
-    <ul className="flex flex-col divide-y divide-line-1 rounded-xl border border-line-1 bg-surface-1">
+    <ul className="flex flex-col divide-y divide-line-1">
       {data.keySessions.map((k) => {
         const w = k.workout;
         const a = 'activity' in k ? k.activity : undefined;
@@ -388,18 +353,18 @@ function KeySessions({ data }: { data: WeekBundle }) {
         const missed = st === 'missed' || st === 'excused';
         return (
           <li key={w.id}>
-            <Link {...(a ? links.activity(a.id) : links.workout(w.id))} className={cn('flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2', missed && 'opacity-70')}>
+            <Link {...(a ? links.activity(a.id) : links.workout(w.id))} className="-mx-3 flex items-center gap-3 rounded-md px-3 py-3 transition-colors hover:bg-surface-2">
               <SportGlyph sport={w.sport} subSport={w.subSport} size={20} />
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className={cn('truncate text-body text-fg-1', missed && 'line-through decoration-fg-3')}>{w.title}</span>
-                <span className="text-mono-sm text-fg-3">
+                <span className={cn('truncate text-body', missed ? 'text-fg-4 line-through decoration-fg-4' : 'text-fg-1')}>{w.title}</span>
+                <span className="text-body-sm text-fg-3">
                   {weekdayShort(w.date)} · {a ? `${fmtH(a.movingSec || a.durationSec)} · Load ${fmtInt(a.load)}` : `${w.plannedDurationSec ? fmtH(w.plannedDurationSec) : '—'} planned`}
                   {w.plannedLoad ? ` / ${fmtInt(w.plannedLoad)} planned` : ''}
                 </span>
               </div>
               <span className="flex shrink-0 items-center gap-2">
                 <span className="text-body-sm text-fg-2 max-sm:hidden">{complianceLabel(st, w.skipReason)}</span>
-                {k.compliance?.ratio && !missed ? <span className="text-mono-sm text-fg-1">{Math.round(k.compliance.ratio * 100)}%</span> : null}
+                {k.compliance?.ratio && !missed ? <span className="text-body-sm text-fg-1">{Math.round(k.compliance.ratio * 100)}%</span> : null}
                 <ComplianceGlyph state={st} size={14} />
               </span>
             </Link>
@@ -419,7 +384,7 @@ function Highlights({ data }: { data: WeekBundle }) {
   const h = data.highlights;
   const items: { icon: ReactNode; label: string; title: string; value: string; link?: ReturnType<typeof links.activity> }[] = [];
   if (h.longest) items.push({ icon: <Timer />, label: 'Longest', title: h.longest.title, value: fmtH(h.longest.movingSec || h.longest.durationSec), link: links.activity(h.longest.id) });
-  if (h.biggestLoad) items.push({ icon: <Flag />, label: 'Biggest Load', title: h.biggestLoad.title, value: fmtInt(h.biggestLoad.load), link: links.activity(h.biggestLoad.id) });
+  if (h.biggestLoad) items.push({ icon: <Flag />, label: 'Biggest load', title: h.biggestLoad.title, value: fmtInt(h.biggestLoad.load), link: links.activity(h.biggestLoad.id) });
   if (h.biggestLoadDay) items.push({ icon: <CalendarDays />, label: 'Biggest day', title: `${weekdayShort(h.biggestLoadDay.date)} ${formatDayMonth(h.biggestLoadDay.date)}`, value: fmtInt(h.biggestLoadDay.load) });
   for (const b of h.newBests.slice(0, 4)) {
     const what = b.kind === 'power' ? `${DUR_LABEL[b.durationSec ?? 0] ?? `${b.durationSec}s`} power` : `${(() => { const d = distanceParts(b.distanceM, b.sport, units); return `${d.value} ${d.unit}`; })()}`;
@@ -429,26 +394,26 @@ function Highlights({ data }: { data: WeekBundle }) {
   }
   if (!items.length) return <EmptyState size="sm" icon={<Medal />} title="Nothing recorded yet">Highlights appear as sessions are completed.</EmptyState>;
   return (
-    <ul className="flex flex-col divide-y divide-line-1 rounded-xl border border-line-1 bg-surface-1">
+    <ul className="flex flex-col divide-y divide-line-1">
       {items.map((it, i) => {
         const inner = (
           <>
-            <span className={cn('grid size-8 shrink-0 place-items-center rounded-md bg-surface-2 text-fg-2 [&_svg]:size-4', it.label.startsWith('New best') && 'bg-accent-a2 text-accent-ink')}>{it.icon}</span>
+            <span className="shrink-0 text-fg-3 [&_svg]:size-4">{it.icon}</span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-micro text-fg-3">{it.label}</span>
+              <span className="text-body-sm text-fg-3">{it.label}</span>
               <span className="truncate text-body text-fg-1">{it.title}</span>
             </span>
-            <span className="text-mono text-fg-1">{it.value}</span>
+            <span className="text-body text-fg-1">{it.value}</span>
           </>
         );
         return (
           <li key={i}>
             {it.link ? (
-              <Link {...it.link} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2">
+              <Link {...it.link} className="-mx-3 flex items-center gap-3 rounded-md px-3 py-3 transition-colors hover:bg-surface-2">
                 {inner}
               </Link>
             ) : (
-              <div className="flex items-center gap-3 px-4 py-3">{inner}</div>
+              <div className="flex items-center gap-3 py-3">{inner}</div>
             )}
           </li>
         );
@@ -471,38 +436,38 @@ function BySport({ s, mode }: { s: WeekSummary; mode: Mode }) {
   };
   const future = mode === 'future';
   return (
-    <div className="overflow-x-auto rounded-xl border border-line-1 bg-surface-1">
+    <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
       <table className="w-full min-w-[560px] text-left">
         <thead>
-          <tr className="border-b border-line-1 text-micro text-fg-3">
-            <th className="px-4 py-2.5 font-[600]">Sport</th>
-            <th className="px-3 py-2.5 text-right font-[600]">Sessions</th>
-            <th className="px-3 py-2.5 text-right font-[600]">Time{future ? '' : ' done / plan'}</th>
-            <th className="px-3 py-2.5 text-right font-[600]">Distance</th>
-            <th className="px-3 py-2.5 text-right font-[600]">Load</th>
-            {!future && <th className="w-[22%] px-4 py-2.5 font-[600]">Share of time</th>}
+          <tr className="border-b border-line-1 text-label text-fg-3">
+            <th className="h-9 pr-3 font-medium">Sport</th>
+            <th className="h-9 px-3 text-right font-medium">Sessions</th>
+            <th className="h-9 px-3 text-right font-medium">Time{future ? '' : ', done of planned'}</th>
+            <th className="h-9 px-3 text-right font-medium">Distance</th>
+            <th className="h-9 px-3 text-right font-medium">Load</th>
+            {!future && <th className="h-9 w-[22%] pl-6 font-medium">Share of time</th>}
           </tr>
         </thead>
-        <tbody className="text-mono">
+        <tbody className="num text-body">
           {rows.map((r) => (
-            <tr key={r.sport} className="border-b border-line-1 last:border-0">
-              <td className="px-4 py-2.5">
-                <span className="inline-flex items-center gap-2 font-sans text-body text-fg-1">
+            <tr key={r.sport} className="h-11 border-b border-line-1 last:border-0">
+              <td className="pr-3">
+                <span className="inline-flex items-center gap-2 text-body text-fg-1">
                   <SportGlyph sport={r.sport} size={16} />
                   {SPORT_META[r.sport].label}
                 </span>
               </td>
-              <td className="px-3 py-2.5 text-right text-fg-1">{future ? r.plannedCount : <>{r.doneCount}<span className="text-fg-3">/{r.plannedCount}</span></>}</td>
-              <td className="px-3 py-2.5 text-right text-fg-1">{future ? fmtH(r.plannedSec) : <>{fmtH(r.doneSec)}<span className="text-fg-3"> / {fmtH(r.plannedSec)}</span></>}</td>
-              <td className="px-3 py-2.5 text-right text-fg-1">{dist(future ? r.plannedDistanceM : r.doneDistanceM, r.sport)}</td>
-              <td className="px-3 py-2.5 text-right text-fg-1">{fmtInt(future ? r.plannedLoad : r.doneLoad)}</td>
+              <td className="px-3 text-right text-fg-1">{future ? r.plannedCount : <>{r.doneCount}<span className="text-fg-3">/{r.plannedCount}</span></>}</td>
+              <td className="px-3 text-right text-fg-1">{future ? fmtH(r.plannedSec) : <>{fmtH(r.doneSec)}<span className="text-fg-3"> / {fmtH(r.plannedSec)}</span></>}</td>
+              <td className="px-3 text-right text-fg-1">{dist(future ? r.plannedDistanceM : r.doneDistanceM, r.sport)}</td>
+              <td className="px-3 text-right text-fg-1">{fmtInt(future ? r.plannedLoad : r.doneLoad)}</td>
               {!future && (
-                <td className="px-4 py-2.5">
+                <td className="pl-6">
                   <span className="flex items-center gap-2">
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3">
+                    <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-3">
                       <motion.span className="block h-full origin-left rounded-full bg-fg-2" initial={{ scaleX: 0 }} animate={{ scaleX: r.doneSec / totalDone }} transition={spring.gentle} />
                     </span>
-                    <span className="w-9 text-right text-mono-sm text-fg-3">{Math.round((r.doneSec / totalDone) * 100)}%</span>
+                    <span className="w-9 text-right text-body-sm text-fg-3">{Math.round((r.doneSec / totalDone) * 100)}%</span>
                   </span>
                 </td>
               )}
@@ -540,32 +505,28 @@ function Balance({ data }: { data: WeekBundle }) {
     w.hrvVsBaselinePct != null
       ? `HRV averaged ${Math.abs(w.hrvVsBaselinePct)}% ${w.hrvVsBaselinePct >= 0 ? 'above' : 'below'} baseline${w.avgSleepSec ? `; sleep ${fmtH(w.avgSleepSec)} a night` : ''}.`
       : null;
+  const share = (v: number) => Math.round((v / (t || 1)) * 100);
+  const intensityLine =
+    t > 0
+      ? `${share(s.intensitySec.easy)}% easy, ${share(s.intensitySec.moderate)}% moderate, ${share(s.intensitySec.hard)}% hard${share(s.intensitySec.moderate) > 10 ? ': more grey-zone time than the 80 / 5 / 15 target' : share(s.intensitySec.easy) >= 75 ? ': close to the 80 / 5 / 15 target' : ''}.`
+      : 'No completed time yet.';
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
-      <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-micro text-fg-3">Intensity split</span>
-          <span className="text-mono-sm text-fg-3">by time in zone</span>
-        </div>
-        {t > 0 ? (
+    <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="flex flex-col gap-5">
+        <p className="text-body text-fg-2">{intensityLine}</p>
+        {t > 0 && (
           <>
             <SplitRow label="This week" split={s.intensitySec} total={t} />
             {p && pt > 0 && <SplitRow label="Last week" split={p.intensitySec} total={pt} dim />}
-            <p className="text-body-sm text-fg-3">Target ≈ 80 % easy · 5 % moderate · 15 % hard.</p>
           </>
-        ) : (
-          <span className="text-body-sm text-fg-3">No completed time yet.</span>
         )}
       </div>
-      <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-micro text-fg-3">Wellness · weekly average</span>
-          <span className="text-mono-sm text-fg-3">vs prior week</span>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
+      <div className="flex flex-col gap-5">
+        <p className="text-body text-fg-2">{sentence ?? 'Weekly averages against the week before.'}</p>
+        <div className="grid grid-cols-3 gap-6">
           {rows.map((r) => (
             <div key={r.label} className="flex min-w-0 flex-col gap-1">
-              <span className="text-micro text-fg-3">{r.label}</span>
+              <span className="text-body-sm text-fg-3">{r.label}</span>
               <span className="flex items-baseline gap-1 text-stat-sm text-fg-1">
                 {r.cur == null ? '—' : r.fmt(r.cur)}
                 <span className="text-body-sm text-fg-3">{r.unit}</span>
@@ -574,7 +535,6 @@ function Balance({ data }: { data: WeekBundle }) {
             </div>
           ))}
         </div>
-        {sentence && <p className="text-body-sm text-fg-2">{sentence}</p>}
       </div>
     </div>
   );
@@ -583,14 +543,14 @@ function Balance({ data }: { data: WeekBundle }) {
 function SplitRow({ label, split, total, dim }: { label: string; split: { easy: number; moderate: number; hard: number }; total: number; dim?: boolean }) {
   const pc = (v: number) => `${Math.round((v / total) * 100)}%`;
   return (
-    <div className={cn('flex flex-col gap-1.5', dim && 'opacity-60')}>
+    <div className={cn('flex flex-col gap-2', dim && 'opacity-60')}>
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-label text-fg-1">{label}</span>
-        <span className="text-mono-sm text-fg-2">
-          easy {pc(split.easy)} · mod {pc(split.moderate)} · hard {pc(split.hard)}
+        <span className="text-body-sm text-fg-1">{label}</span>
+        <span className="text-body-sm text-fg-3">
+          {pc(split.easy)} · {pc(split.moderate)} · {pc(split.hard)}
         </span>
       </div>
-      <SplitBar {...split} height={10} />
+      <SplitBar {...split} height={6} />
     </div>
   );
 }
@@ -603,15 +563,15 @@ function Reflection({ data, mode }: { data: WeekBundle; mode: Mode }) {
   const status = useAutosaveChanges(body, (v) => save.mutateAsync({ isoWeek: data.isoWeek, body: v }), { delay: 700 });
   const prompts = mode === 'future' ? ['Focus for the week', 'What must not slip?', 'Life constraints'] : ['What went well?', "What didn't?", 'Focus for next week'];
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5">
+    <div className="flex flex-col gap-3 rounded-lg bg-surface-1 p-5 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="-ml-2 flex flex-wrap gap-1">
           {prompts.map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setBody((b) => (b.trim() ? `${b.trimEnd()}\n\n${p}\n` : `${p}\n`))}
-              className="h-6 rounded-sm border border-dashed border-line-3 px-2 text-label text-fg-2 transition-colors hover:border-line-3 hover:text-fg-1"
+              className="h-7 rounded-md px-2 text-body-sm text-fg-3 transition-colors hover:bg-surface-2 hover:text-fg-1"
             >
               + {p}
             </button>
@@ -628,7 +588,7 @@ function Reflection({ data, mode }: { data: WeekBundle; mode: Mode }) {
         placeholder={mode === 'future' ? 'What is this week for?' : 'What went well? What would you change? One line is enough.'}
         className="!border-0 !bg-transparent !px-0 text-body-lg"
       />
-      <p className="text-body-sm text-fg-4">Autosaves · appears in your journal and on the calendar week.</p>
+      <p className="text-body-sm text-fg-3">Autosaves. Appears in your journal and on the calendar week.</p>
     </div>
   );
 }
@@ -690,16 +650,16 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
   };
 
   return (
-    <div className="grid gap-3 lg:grid-cols-5">
-      <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5 lg:col-span-2">
-        <span className="text-micro text-fg-3">Already planned for W{Number(nextWeek.slice(6))}</span>
+    <div className="grid gap-12 lg:grid-cols-5 lg:gap-10">
+      <div className="flex flex-col gap-4 lg:col-span-2">
+        <span className="text-body-sm text-fg-3">Already planned for W{Number(nextWeek.slice(6))}</span>
         {n && n.plannedSec > 0 ? (
           <>
             <div className="flex items-baseline gap-6">
               <span className="flex items-baseline gap-1 text-stat-md text-fg-1">{fmtH(n.plannedSec)}<span className="text-body text-fg-3">h</span></span>
-              <span className="flex items-baseline gap-1 text-stat-md text-fg-1">{fmtInt(n.plannedLoad)}<span className="text-body text-fg-3">Load</span></span>
+              <span className="flex items-baseline gap-1 text-stat-md text-fg-1">{fmtInt(n.plannedLoad)}<span className="text-body text-fg-3">load</span></span>
             </div>
-            <span className="text-mono-sm text-fg-3">
+            <span className="text-body-sm text-fg-3">
               {data.next.workoutCount} workouts · {data.next.keyCount} key · {formatPercent(pct(n.plannedLoad, s.plannedLoad) ?? 0, { signed: true })} Load vs this week's plan
             </span>
             <span className="flex flex-wrap gap-1.5">
@@ -714,13 +674,13 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
           <p className="text-body text-fg-2">Nothing planned yet. Copy this week forward to start from what worked.</p>
         )}
         <TargetFields isoWeek={nextWeek} suggestHours={(s.plannedSec / 3600) * (1 + sug.pct / 100)} suggestLoad={s.plannedLoad * (1 + sug.pct / 100)} />
-        <ButtonLink {...links.calendarWeek(nextWeek)} variant="outline" size="sm" icon={<CalendarDays />} className="self-start">
+        <ButtonLink {...links.calendarWeek(nextWeek)} variant="ghost" size="sm" icon={<CalendarDays />} className="-ml-2.5 self-start">
           Open W{Number(nextWeek.slice(6))} in the calendar
         </ButtonLink>
       </div>
-      <div className="flex flex-col gap-4 rounded-xl border border-line-1 bg-surface-1 p-4 md:p-5 lg:col-span-3">
+      <div className="flex flex-col gap-5 rounded-lg bg-surface-1 p-5 md:p-6 lg:col-span-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="text-micro text-fg-3">Copy this week forward</span>
+          <span className="text-title-3 text-fg-1">Copy this week forward</span>
           <span className="text-body-sm text-fg-3">{count} workouts from W{Number(data.isoWeek.slice(6))}</span>
         </div>
         <p className="text-body text-fg-2">
@@ -734,13 +694,13 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
           max={20}
           step={5}
           ticks
-          valueLabel={<span className="text-mono text-fg-1">{formatSigned(p)}%</span>}
+          valueLabel={<span className="text-body text-fg-1">{formatSigned(p)}%</span>}
         />
-        <div className="grid grid-cols-2 gap-4 border-t border-line-1 pt-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-6 pt-1 sm:grid-cols-3">
           <PreviewStat label="Copied hours ≈" value={addSec / 3600} fmt={(v) => fmtH(v * 3600)} sub={`from ${fmtH(s.plannedSec)}`} />
-          <PreviewStat label="Copied Load ≈" value={addLoad} fmt={fmtInt} sub={`from ${fmtInt(s.plannedLoad)}`} accent />
+          <PreviewStat label="Copied load ≈" value={addLoad} fmt={fmtInt} sub={`from ${fmtInt(s.plannedLoad)}`} />
           {haveSec > 0 ? (
-            <PreviewStat label={`W${Number(nextWeek.slice(6))} total after`} value={(addSec + haveSec) / 3600} fmt={(v) => fmtH(v * 3600)} sub={`${fmtInt(addLoad + haveLoad)} Load · adds to the existing plan`} />
+            <PreviewStat label={`W${Number(nextWeek.slice(6))} total after`} value={(addSec + haveSec) / 3600} fmt={(v) => fmtH(v * 3600)} sub={`${fmtInt(addLoad + haveLoad)} load, on top of the plan`} />
           ) : (
             <PreviewStat label="Fitness ramp ≈" value={ramp} fmt={(v) => formatSigned(v, 1)} sub="per week" />
           )}
@@ -767,14 +727,14 @@ function PlanNext({ data, phase }: { data: WeekBundle; phase?: Phase }) {
   );
 }
 
-function PreviewStat({ label, value, fmt, sub, accent }: { label: string; value: number; fmt: (v: number) => string; sub: string; accent?: boolean }) {
+function PreviewStat({ label, value, fmt, sub }: { label: string; value: number; fmt: (v: number) => string; sub: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <span className="truncate text-micro text-fg-3">{label}</span>
-      <span className={cn('text-stat-sm', accent ? 'text-accent-ink' : 'text-fg-1')}>
+      <span className="truncate text-body-sm text-fg-3">{label}</span>
+      <span className="text-stat-sm text-fg-1">
         <Ticker value={value} format={fmt} />
       </span>
-      <span className="truncate text-mono-sm text-fg-3">{sub}</span>
+      <span className="truncate text-body-sm text-fg-3">{sub}</span>
     </div>
   );
 }
@@ -793,9 +753,9 @@ function TargetFields({ isoWeek, suggestHours, suggestLoad }: { isoWeek: string;
   const val = useMemo(() => ({ h, l }), [h, l]);
   const status = useAutosaveChanges(val, (v) => save.mutateAsync({ isoWeek, body: noteQ.data?.body ?? '', targetHours: v.h, targetLoad: v.l }), { delay: 700, baselineKey: noteQ.isSuccess ? JSON.stringify({ h: noteQ.data?.targetHours ?? null, l: noteQ.data?.targetLoad ?? null }) : null });
   return (
-    <div className="flex flex-col gap-2 border-t border-line-1 pt-4">
+    <div className="flex flex-col gap-3 pt-4">
       <div className="flex items-center justify-between">
-        <span className="text-micro text-fg-3">Targets for W{Number(isoWeek.slice(6))}</span>
+        <span className="text-body-sm text-fg-3">Targets for W{Number(isoWeek.slice(6))}</span>
         <SaveIndicator status={status} />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -804,7 +764,7 @@ function TargetFields({ isoWeek, suggestHours, suggestLoad }: { isoWeek: string;
       </div>
       {h == null && l == null && (
         <button type="button" className="self-start text-label text-fg-2 underline decoration-line-3 underline-offset-3 hover:text-fg-1" onClick={() => { setH(Math.round(suggestHours * 2) / 2); setL(Math.round(suggestLoad / 10) * 10); }}>
-          Use suggestion: {fmtH(suggestHours * 3600)} h · {fmtInt(suggestLoad)} Load
+          Use suggestion: {fmtH(suggestHours * 3600)} h · {fmtInt(suggestLoad)} load
         </button>
       )}
     </div>

@@ -1,0 +1,60 @@
+{
+ "from": "2026-11-08",
+ "to": "2026-11-28",
+ "today": "2026-11-21",
+ "days": [
+  {
+   "date": "2026-11-08",
+   "load": 48.6,
+   "plannedLoad": 0,
+   "fitness": 58.7,
+   "fatigue": 31.8,
+   "form": 29.7,
+   "formPct": 50.4,
+   "formZone": "transition",
+   "ramp": -5.5,
+   "projected": false
+  },
+  {
+   "date": "2026-11-09",
+   "load": 119.5,
+   "plannedLoad": 0,
+   "fitness": 60.2,
+   "fatigue": 43.5,
+   "form": 26.9,
+   "formPct": 45.8,
+   "formZone": "transition",
+   "ramp": -3,
+   "projected": false
+  }
+ ],
+ "events": [],
+ "phases": [
+  {
+   "id": "ph_demo_14",
+   "type": "transition",
+   "label": "Transition",
+   "startDate": "2026-10-26",
+   "endDate": "2026-11-08",
+   "weeklyLoadTarget": 270
+  },
+  {
+   "id": "ph_demo_15",
+   "type": "base",
+   "label": "Run base",
+   "startDate": "2026-11-09",
+   "endDate": "2026-11-29",
+   "weeklyLoadTarget": 450
+  }
+ ],
+ "thresholdChanges": [
+  {
+   "id": "thr_xmquhathg6",
+   "kind": "weight",
+   "sport": "all",
+   "value": 72.6,
+   "effectiveFrom": "2026-11-16",
+   "source": "manual"
+  }
+ ]
+}

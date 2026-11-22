@@ -1,5 +1,5 @@
 /**
- * The text side of the builder: a monospace editor with a line gutter, wavy underlines on lines
+ * The text side of the builder: a monospace editor (one of the three places Geist Mono is allowed) with a line gutter, wavy underlines on lines
  * with issues (a mirror layer behind a transparent-background textarea), the issue list and a
  * compact syntax cheat-sheet popover.
  */
@@ -22,7 +22,7 @@ interface Props {
   minRows?: number;
 }
 
-const LINE = 20; // px, text-mono line-height
+const LINE = 20; // px, editor line-height (leading-5)
 
 export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, activeLine, textareaRef, minRows = 12 }: Props) {
   const lines = value.split('\n');
@@ -64,14 +64,14 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-micro text-fg-3">Text</span>
+        <span className="text-body-sm text-fg-3">Text</span>
         <Popover
           title="Syntax"
           showTitle
           side="bottom"
           align="end"
           trigger={
-            <button type="button" className="inline-flex h-6 items-center gap-1 rounded-sm px-1.5 text-label text-fg-3 transition-colors hover:bg-surface-2 hover:text-fg-1">
+            <button type="button" className="inline-flex h-7 items-center gap-1.5 rounded-sm px-2 text-body-sm text-fg-3 transition-colors duration-(--dur-fast) hover:bg-surface-2 hover:text-fg-1">
               <BookOpen className="size-3.5" /> Syntax
             </button>
           }
@@ -79,21 +79,21 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
           <CheatSheet sport={sport} />
         </Popover>
       </div>
-      <div className="relative overflow-hidden rounded-md border border-line-2 bg-surface-1 focus-within:border-line-3" style={{ height: rows * LINE + 20 }}>
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-9 border-r border-line-1 bg-canvas/40">
-          <div ref={gutter} className="pt-2.5">
+      <div className="relative overflow-hidden rounded-lg bg-surface-1 transition-shadow duration-(--dur-fast) focus-within:ring-1 focus-within:ring-line-3" style={{ height: rows * LINE + 24 }}>
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-10">
+          <div ref={gutter} className="pt-3">
             {lines.map((_, i) => (
-              <div key={i} className={cn('flex h-5 items-center justify-end gap-1 pr-2 text-mono-sm', activeLine === i + 1 ? 'text-fg-1' : 'text-fg-4')}>
+              <div key={i} className={cn('flex h-5 items-center justify-end gap-1 pr-2.5 font-mono text-label font-normal', activeLine === i + 1 ? 'text-fg-2' : 'text-fg-4')}>
                 {byLine.has(i + 1) && <span className={cn('size-1.5 rounded-full', byLine.get(i + 1)!.severity === 'error' ? 'bg-fg-1' : 'border border-fg-2')} />}
                 {i + 1}
               </div>
             ))}
           </div>
         </div>
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 left-9 overflow-hidden">
-          <div ref={mirror} className="py-2.5 pr-3 pl-3 text-mono whitespace-pre text-transparent">
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 left-10 overflow-hidden">
+          <div ref={mirror} className="py-3 pr-3 pl-2 font-mono text-body-sm leading-5 whitespace-pre text-transparent">
             {lines.map((l, i) => (
-              <div key={i} className={cn('h-5', activeLine === i + 1 && 'bg-surface-2 -mx-3 px-3')}>
+              <div key={i} className={cn('h-5', activeLine === i + 1 && '-mr-3 -ml-2 bg-surface-2 pr-3 pl-2')}>
                 <span className={cn(byLine.has(i + 1) && 'underline decoration-fg-2 decoration-wavy underline-offset-4')}>{l || ' '}</span>
               </div>
             ))}
@@ -121,7 +121,7 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
             }
           }}
           wrap="off"
-          className="absolute inset-y-0 right-0 left-9 resize-none bg-transparent py-2.5 pr-3 pl-3 text-mono leading-5 whitespace-pre text-fg-1 caret-accent outline-none placeholder:text-fg-4"
+          className="absolute inset-y-0 right-0 left-10 resize-none bg-transparent py-3 pr-3 pl-2 font-mono text-body-sm leading-5 whitespace-pre text-fg-1 caret-accent outline-none placeholder:text-fg-4"
           placeholder={PLACEHOLDER[sport] ?? '- 45m z2'}
         />
       </div>
@@ -130,7 +130,7 @@ export function TextPane({ value, onChange, onFocus, onBlur, issues, sport, acti
           <li key={k}>
             <button type="button" onClick={() => jump(i.line, i.col)} className="flex w-full items-start gap-2 rounded-sm px-1 py-0.5 text-left text-body-sm text-fg-2 hover:bg-surface-2 hover:text-fg-1">
               <TriangleAlert className={cn('mt-0.5 size-3.5 shrink-0', i.severity === 'error' ? 'text-fg-1' : 'text-fg-3')} />
-              <span className="text-mono-sm text-fg-3">
+              <span className="num text-fg-3">
                 {i.line}:{i.col}
               </span>
               <span className="min-w-0">{i.message}</span>
@@ -172,7 +172,7 @@ function CheatSheet({ sport }: { sport: Sport }) {
     <dl className="grid w-76 grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-1 pb-1">
       {rows.map(([k, v]) => (
         <div key={k} className="contents">
-          <dt className="text-mono-sm whitespace-pre text-fg-1">{k}</dt>
+          <dt className="font-mono text-label font-normal whitespace-pre text-fg-1">{k}</dt>
           <dd className="text-body-sm text-fg-3">{v}</dd>
         </div>
       ))}

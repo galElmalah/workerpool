@@ -1,0 +1,83 @@
+{
+ "id": "wk_d20261109_2",
+ "date": "2026-11-09",
+ "startTime": "18:30",
+ "sport": "strength",
+ "subSport": "gym",
+ "title": "Full-body strength A",
+ "description": "Heavy and slow on the way down. Leave 1–2 reps in the tank.",
+ "plannedDurationSec": 2538,
+ "plannedLoad": 47.4,
+ "plannedIntensityFactor": 0.82,
+ "structure": {
+  "steps": [
+   {
+    "kind": "step",
+    "id": "s1",
+    "role": "active",
+    "measure": {
+     "type": "reps",
+     "n": 6
+    },
+    "label": "Back squat",
+    "strength": {
+     "exercise": "Back squat",
+     "exerciseKey": "BARBELL_BACK_SQUAT",
+     "sets": 4,
+     "restSec": 150,
+     "reps": 6,
+     "weightKg": 80
+    }
+   },
+   {
+    "kind": "step",
+    "id": "s5",
+    "role": "active",
+    "measure": {
+     "type": "time",
+     "sec": 45
+    },
+    "label": "Plank",
+    "strength": {
+     "exercise": "Plank",
+     "exerciseKey": "PLANK",
+     "sets": 3,
+     "restSec": 45,
+     "durationSec": 45
+    }
+   }
+  ]
+ },
+ "isKey": false,
+ "intensity": "tempo",
+ "tags": [
+  "strength"
+ ],
+ "environment": "indoor",
+ "pairedActivityId": "act_q1s60z4rip",
+ "status": "planned",
+ "sparkline": [
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683,
+  0.683
+ ],
+ "garmin": {
+  "syncState": "none"
+ },
+ "createdAt": "2026-11-21T18:00:20.888Z",
+ "updatedAt": "2026-11-21T18:00:25.517Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 1.28,
+  "state": "partial_long"
+ }
+}

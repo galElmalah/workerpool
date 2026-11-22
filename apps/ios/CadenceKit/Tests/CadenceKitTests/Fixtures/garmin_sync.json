@@ -1,0 +1,40 @@
+{
+ "status": "ok",
+ "reason": "manual",
+ "activities": {
+  "created": 0,
+  "updated": 0,
+  "unchanged": 0,
+  "deleted": 0,
+  "failed": 0,
+  "queued": 0,
+  "complete": true
+ },
+ "wellnessDays": 2,
+ "thresholds": 0,
+ "push": {
+  "pushed": 0,
+  "removed": 0,
+  "failed": 0,
+  "remaining": 0
+ },
+ "requests": 11,
+ "durationMs": 41,
+ "summary": "No new activities, wellness 2 days",
+ "backfill": {
+  "running": false,
+  "phase": "done",
+  "done": 443,
+  "total": 443,
+  "listed": 443,
+  "created": 443,
+  "updated": 0,
+  "failed": 0,
+  "wellnessDays": 356,
+  "sinceDate": "2025-10-21",
+  "startedAt": "2026-11-21T18:00:21.075Z",
+  "steps": 23,
+  "oldestDate": "2025-12-01",
+  "finishedAt": "2026-11-21T18:02:06.672Z"
+ }
+}

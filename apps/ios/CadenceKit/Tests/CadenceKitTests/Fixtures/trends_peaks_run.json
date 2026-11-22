@@ -1,0 +1,112 @@
+{
+ "sport": "run",
+ "today": "2026-11-21",
+ "ranges": [
+  {
+   "key": "42d",
+   "from": "2026-10-11",
+   "to": "2026-11-21",
+   "activities": 13,
+   "speed": [
+    {
+     "durationSec": 1,
+     "value": 5.75,
+     "activityId": "act_xsctv4f4uc",
+     "date": "2026-11-17"
+    },
+    {
+     "durationSec": 2,
+     "value": 5.64,
+     "activityId": "act_xsctv4f4uc",
+     "date": "2026-11-17"
+    }
+   ],
+   "efforts": [
+    {
+     "distanceM": 400,
+     "timeSec": 82.7,
+     "activityId": "act_75wdcbcrzq",
+     "date": "2026-10-29"
+    },
+    {
+     "distanceM": 1000,
+     "timeSec": 211,
+     "activityId": "act_75wdcbcrzq",
+     "date": "2026-10-29"
+    }
+   ],
+   "hr": [
+    {
+     "durationSec": 1,
+     "value": 180,
+     "activityId": "act_1hfy84quli",
+     "date": "2026-11-12"
+    },
+    {
+     "durationSec": 2,
+     "value": 180,
+     "activityId": "act_1hfy84quli",
+     "date": "2026-11-12"
+    }
+   ]
+  },
+  {
+   "key": "season",
+   "from": "2026-01-01",
+   "to": "2026-11-21",
+   "activities": 117,
+   "speed": [
+    {
+     "durationSec": 1,
+     "value": 5.75,
+     "activityId": "act_xsctv4f4uc",
+     "date": "2026-11-17"
+    },
+    {
+     "durationSec": 2,
+     "value": 5.64,
+     "activityId": "act_xsctv4f4uc",
+     "date": "2026-11-17"
+    }
+   ],
+   "efforts": [
+    {
+     "distanceM": 400,
+     "timeSec": 77.5,
+     "activityId": "act_gaajhw1y5s",
+     "date": "2026-01-08"
+    },
+    {
+     "distanceM": 1000,
+     "timeSec": 211,
+     "activityId": "act_75wdcbcrzq",
+     "date": "2026-10-29"
+    }
+   ],
+   "hr": [
+    {
+     "durationSec": 1,
+     "value": 188,
+     "activityId": "act_gzaccprsnd",
+     "date": "2026-07-26"
+    },
+    {
+     "durationSec": 2,
+     "value": 188,
+     "activityId": "act_gzaccprsnd",
+     "date": "2026-07-26"
+    }
+   ]
+  }
+ ],
+ "estimate": {
+  "thresholds": [
+   {
+    "kind": "run_threshold",
+    "sport": "run",
+    "value": 3.761,
+    "basis": "best 5000 m run (Riegel to 60 min)"
+   }
+  ]
+ }
+}

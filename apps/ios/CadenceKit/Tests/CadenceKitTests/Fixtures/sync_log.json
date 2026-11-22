@@ -1,0 +1,21 @@
+{
+ "entries": [
+  {
+   "id": "log_tmn36d2gzk",
+   "at": "2026-11-21T18:02:06.827Z",
+   "kind": "backfill",
+   "status": "ok",
+   "summary": "Demo seed complete: 443 activities, 518 planned workouts in 106s",
+   "durationMs": 105972
+  },
+  {
+   "id": "log_77qsguoyq6",
+   "at": "2026-11-21T18:02:06.715Z",
+   "kind": "pull_activities",
+   "status": "ok",
+   "summary": "No new activities, wellness 3 days, pushed 11 workouts",
+   "detail": "reason=demo requests=60 complete=true unchanged=0",
+   "durationMs": 111
+  }
+ ]
+}

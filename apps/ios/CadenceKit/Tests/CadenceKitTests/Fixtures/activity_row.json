@@ -1,0 +1,307 @@
+{
+ "id": "act_u36nc7u0bn",
+ "source": "garmin",
+ "garminActivityId": "20380093699",
+ "garminTypeKey": "indoor_rowing",
+ "startedAt": "2026-11-18T17:37:04.000Z",
+ "utcOffsetMin": 60,
+ "localDate": "2026-11-18",
+ "sport": "row",
+ "subSport": "erg",
+ "title": "UT2 35′ r20",
+ "durationSec": 2102,
+ "movingSec": 2102,
+ "distanceM": 7996.4,
+ "load": 24.7,
+ "loadSource": "power",
+ "intensityFactor": 0.651,
+ "avgHr": 135,
+ "maxHr": 144,
+ "avgPower": 155,
+ "weightedPower": 157,
+ "maxPower": 181,
+ "avgSpeedMps": 3.804,
+ "avgCadence": 19,
+ "calories": 398,
+ "workKj": 325.5,
+ "variability": 1.013,
+ "efficiency": 1.1629,
+ "aerobicEffect": 1.5,
+ "anaerobicEffect": 0,
+ "intensityAuto": "endurance",
+ "intensity": "endurance",
+ "isKey": false,
+ "tags": [],
+ "pairedWorkoutId": "wk_d20261118_2",
+ "hasStreams": true,
+ "sparkline": [
+  0.83,
+  0.82,
+  0.8,
+  0.8,
+  0.8,
+  0.82,
+  0.85,
+  1,
+  0.97,
+  1,
+  1,
+  0.96
+ ],
+ "createdAt": "2026-11-21T18:00:22.249Z",
+ "updatedAt": "2026-11-21T18:00:22.262Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 1.03,
+  "state": "on_target"
+ },
+ "laps": [
+  {
+   "index": 0,
+   "startSec": 0,
+   "durationSec": 300,
+   "movingSec": 300,
+   "distanceM": 1093.4,
+   "avgHr": 124,
+   "maxHr": 130,
+   "avgPower": 137,
+   "weightedPower": 137,
+   "avgSpeedMps": 3.645,
+   "avgCadence": 19
+  },
+  {
+   "index": 1,
+   "startSec": 300,
+   "durationSec": 1620,
+   "movingSec": 1620,
+   "distanceM": 6265.5,
+   "avgHr": 138,
+   "maxHr": 144,
+   "avgPower": 162,
+   "weightedPower": 162,
+   "avgSpeedMps": 3.868,
+   "avgCadence": 19
+  }
+ ],
+ "zones": {
+  "power": [
+   {
+    "zone": 1,
+    "name": "Below UT2",
+    "low": null,
+    "high": 144.6,
+    "seconds": 460
+   },
+   {
+    "zone": 2,
+    "name": "Utilisation 2",
+    "low": 144.6,
+    "high": 192.79999999999998,
+    "seconds": 1642
+   }
+  ],
+  "hr": [
+   {
+    "zone": 1,
+    "name": "Recovery",
+    "low": null,
+    "high": 144.5,
+    "seconds": 2102
+   },
+   {
+    "zone": 2,
+    "name": "Aerobic",
+    "low": 144.5,
+    "high": 153,
+    "seconds": 0
+   }
+  ]
+ },
+ "peaks": {
+  "power": [
+   {
+    "durationSec": 1,
+    "value": 181,
+    "startSec": 438
+   },
+   {
+    "durationSec": 2,
+    "value": 179,
+    "startSec": 333
+   }
+  ],
+  "hr": [
+   {
+    "durationSec": 1,
+    "value": 144,
+    "startSec": 1899
+   },
+   {
+    "durationSec": 2,
+    "value": 144,
+    "startSec": 1899
+   }
+  ],
+  "efforts": [
+   {
+    "distanceM": 500,
+    "timeSec": 128.1,
+    "startSec": 320
+   },
+   {
+    "distanceM": 1000,
+    "timeSec": 257,
+    "startSec": 300
+   }
+  ]
+ },
+ "thresholdsUsed": {
+  "ftp": 276,
+  "runThresholdMps": 4.032,
+  "swimCssMps": 0.99,
+  "rowThresholdW": 241,
+  "lthr": 170,
+  "hrMax": 187,
+  "hrRest": 47,
+  "weightKg": 72.6
+ },
+ "plannedWorkout": {
+  "id": "wk_d20261118_2",
+  "date": "2026-11-18",
+  "startTime": "18:45",
+  "sport": "row",
+  "subSport": "erg",
+  "title": "UT2 35′ r20",
+  "plannedDurationSec": 2100,
+  "plannedDistanceM": 7975,
+  "plannedLoad": 24,
+  "plannedIntensityFactor": 0.641,
+  "structure": {
+   "steps": [
+    {
+     "kind": "step",
+     "id": "s1",
+     "role": "warmup",
+     "measure": {
+      "type": "time",
+      "sec": 300
+     },
+     "target": {
+      "type": "power_pct",
+      "low": 50,
+      "high": 60
+     },
+     "row": {
+      "strokeRateLow": 18,
+      "strokeRateHigh": 20
+     }
+    },
+    {
+     "kind": "step",
+     "id": "s2",
+     "role": "active",
+     "measure": {
+      "type": "time",
+      "sec": 1620
+     },
+     "target": {
+      "type": "power_pct",
+      "low": 62,
+      "high": 72
+     },
+     "label": "UT2",
+     "row": {
+      "strokeRateLow": 18,
+      "strokeRateHigh": 20
+     }
+    }
+   ]
+  },
+  "isKey": false,
+  "intensity": "endurance",
+  "tags": [
+   "erg",
+   "ut2"
+  ],
+  "environment": "indoor",
+  "pairedActivityId": "act_u36nc7u0bn",
+  "status": "planned",
+  "sparkline": [
+   0.458,
+   0.458,
+   0.458,
+   0.458,
+   0.458,
+   0.458,
+   0.473,
+   0.558,
+   0.558,
+   0.558,
+   0.558,
+   0.558
+  ],
+  "garmin": {
+   "syncState": "none"
+  },
+  "createdAt": "2026-11-21T18:00:20.888Z",
+  "updatedAt": "2026-11-21T18:00:22.262Z",
+  "compliance": {
+   "metric": "load",
+   "ratio": 1.03,
+   "state": "on_target"
+  }
+ },
+ "previousSimilar": {
+  "id": "act_86a7q99g9l",
+  "source": "garmin",
+  "garminActivityId": "20377676963",
+  "garminTypeKey": "indoor_rowing",
+  "startedAt": "2026-11-11T17:47:20.000Z",
+  "utcOffsetMin": 60,
+  "localDate": "2026-11-11",
+  "sport": "row",
+  "subSport": "erg",
+  "title": "UT2 30′ r20",
+  "durationSec": 1801,
+  "movingSec": 1801,
+  "distanceM": 6897,
+  "load": 22.3,
+  "loadSource": "power",
+  "intensityFactor": 0.667,
+  "avgHr": 135,
+  "maxHr": 142,
+  "avgPower": 158,
+  "weightedPower": 161,
+  "maxPower": 190,
+  "avgSpeedMps": 3.83,
+  "avgCadence": 19,
+  "calories": 353,
+  "workKj": 284.8,
+  "variability": 1.017,
+  "efficiency": 1.1939,
+  "aerobicEffect": 1.4,
+  "anaerobicEffect": 0,
+  "intensityAuto": "endurance",
+  "intensity": "endurance",
+  "isKey": false,
+  "tags": [],
+  "pairedWorkoutId": "wk_d20261111_2",
+  "hasStreams": true,
+  "sparkline": [
+   0.78,
+   0.81,
+   0.77,
+   0.8,
+   0.8,
+   0.8,
+   0.79,
+   0.83,
+   0.98,
+   0.97,
+   0.97,
+   0.96
+  ],
+  "createdAt": "2026-11-21T18:00:24.820Z",
+  "updatedAt": "2026-11-21T18:00:24.830Z"
+ }
+}

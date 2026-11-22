@@ -1,0 +1,249 @@
+{
+ "from": "2026-11-15",
+ "to": "2026-11-21",
+ "today": "2026-11-21",
+ "days": [
+  {
+   "date": "2026-11-15",
+   "hrvMs": 61,
+   "hrvStatus": "BALANCED",
+   "restingHr": 50,
+   "sleepSec": 27720,
+   "sleepScore": 76,
+   "bodyBattery": 65,
+   "stress": 26,
+   "readiness": {
+    "state": "green",
+    "reasons": [],
+    "inputs": [
+     "hrv",
+     "restingHr",
+     "sleep",
+     "form"
+    ]
+   },
+   "load": 99.5,
+   "hrvBaseline": {
+    "b7Ms": 62.3,
+    "lowMs": 58.9,
+    "highMs": 64.2,
+    "cv7": 0.83,
+    "status": "normal"
+   },
+   "restingHrTrend": {
+    "rhr7": 48.7,
+    "rhr60": 48.2,
+    "elevated": false
+   }
+  },
+  {
+   "date": "2026-11-16",
+   "hrvMs": 59,
+   "hrvStatus": "BALANCED",
+   "restingHr": 48,
+   "sleepSec": 22260,
+   "sleepScore": 56,
+   "weightKg": 72.6,
+   "bodyBattery": 54,
+   "stress": 28,
+   "readiness": {
+    "state": "green",
+    "reasons": [],
+    "inputs": [
+     "hrv",
+     "restingHr",
+     "sleep",
+     "form"
+    ]
+   },
+   "load": 111.3,
+   "hrvBaseline": {
+    "b7Ms": 61.5,
+    "lowMs": 59,
+    "highMs": 64.2,
+    "cv7": 0.9,
+    "status": "normal"
+   },
+   "restingHrTrend": {
+    "rhr7": 48.6,
+    "rhr60": 48.2,
+    "elevated": false
+   }
+  },
+  {
+   "date": "2026-11-17",
+   "hrvMs": 62,
+   "hrvStatus": "BALANCED",
+   "restingHr": 49,
+   "sleepSec": 23760,
+   "sleepScore": 64,
+   "weightKg": 73.1,
+   "bodyBattery": 54,
+   "stress": 28,
+   "readiness": {
+    "state": "green",
+    "reasons": [],
+    "inputs": [
+     "hrv",
+     "restingHr",
+     "sleep",
+     "form"
+    ]
+   },
+   "vo2max": 54,
+   "load": 111.8,
+   "hrvBaseline": {
+    "b7Ms": 62,
+    "lowMs": 59,
+    "highMs": 64.2,
+    "cv7": 0.78,
+    "status": "normal"
+   },
+   "restingHrTrend": {
+    "rhr7": 48.6,
+    "rhr60": 48.3,
+    "elevated": false
+   }
+  },
+  {
+   "date": "2026-11-18",
+   "hrvMs": 64,
+   "hrvStatus": "BALANCED",
+   "restingHr": 51,
+   "sleepSec": 24060,
+   "sleepScore": 66,
+   "weightKg": 73.3,
+   "bodyBattery": 60,
+   "stress": 21,
+   "readiness": {
+    "state": "amber",
+    "reasons": [
+     "Short sleep"
+    ],
+    "inputs": [
+     "hrv",
+     "restingHr",
+     "sleep",
+     "form"
+    ]
+   },
+   "load": 81.4,
+   "hrvBaseline": {
+    "b7Ms": 62,
+    "lowMs": 59,
+    "highMs": 64.2,
+    "cv7": 0.78,
+    "status": "normal"
+   },
+   "restingHrTrend": {
+    "rhr7": 48.9,
+    "rhr60": 48.3,
+    "elevated": false
+   }
+  },
+  {
+   "date": "2026-11-19",
+   "hrvMs": 63,
+   "hrvStatus": "BALANCED",
+   "restingHr": 51,
+   "sleepSec": 28560,
+   "sleepScore": 78,
+   "bodyBattery": 74,
+   "stress": 38,
+   "readiness": {
+    "state": "green",
+    "reasons": [],
+    "inputs": [
+     "hrv",
+     "restingHr",
+     "sleep",
+     "form"
+    ]
+   },
+   "vo2max": 53,
+   "load": 56.9,
+   "hrvBaseline": {
+    "b7Ms": 61.7,
+    "lowMs": 59.1,
+    "highMs": 64.3,
+    "cv7": 0.63,
+    "status": "normal"
+   },
+   "restingHrTrend": {
+    "rhr7": 49.4,
+    "rhr60": 48.3,
+    "elevated": false
+   }
+  },
+  {
+   "date": "2026-11-20",
+   "hrvMs": 55,
+   "hrvStatus": "BALANCED",
+   "restingHr": 47,
+   "sleepSec": 27120,
+   "sleepScore": 80,
+   "weightKg": 71.8,
+   "bodyBattery": 74,
+   "stress": 31,
+   "readiness": {
+    "state": "green",
+    "reasons": [],
+    "inputs": [
+     "hrv",
+     "restingHr",
+     "sleep",
+     "form"
+    ]
+   },
+   "load": 0,
+   "hrvBaseline": {
+    "b7Ms": 60.6,
+    "lowMs": 58.9,
+    "highMs": 64.1,
+    "cv7": 1.23,
+    "status": "normal"
+   },
+   "restingHrTrend": {
+    "rhr7": 49.3,
+    "rhr60": 48.3,
+    "elevated": false
+   }
+  },
+  {
+   "date": "2026-11-21",
+   "hrvMs": 60,
+   "hrvStatus": "BALANCED",
+   "restingHr": 49,
+   "sleepSec": 28260,
+   "sleepScore": 79,
+   "weightKg": 72.4,
+   "bodyBattery": 77,
+   "stress": 31,
+   "readiness": {
+    "state": "green",
+    "reasons": [],
+    "inputs": [
+     "hrv",
+     "restingHr",
+     "sleep",
+     "form"
+    ]
+   },
+   "vo2max": 54,
+   "load": 102.6,
+   "hrvBaseline": {
+    "b7Ms": 60.5,
+    "lowMs": 58.8,
+    "highMs": 64,
+    "cv7": 1.23,
+    "status": "normal"
+   },
+   "restingHrTrend": {
+    "rhr7": 49.3,
+    "rhr60": 48.3,
+    "elevated": false
+   }
+  }
+ ],
+ "readinessLabel": "Heuristic, not a validated or medical score"
+}

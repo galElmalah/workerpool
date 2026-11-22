@@ -1,0 +1,333 @@
+{
+ "id": "act_4gigf12r5h",
+ "source": "garmin",
+ "garminActivityId": "20379927799",
+ "garminTypeKey": "lap_swimming",
+ "startedAt": "2026-11-18T06:05:49.000Z",
+ "utcOffsetMin": 60,
+ "localDate": "2026-11-18",
+ "sport": "swim",
+ "subSport": "pool",
+ "title": "CSS 3×400",
+ "durationSec": 3158,
+ "movingSec": 2808,
+ "distanceM": 2500,
+ "load": 56.7,
+ "loadSource": "swim_pace",
+ "intensityFactor": 0.899,
+ "avgHr": 146,
+ "maxHr": 167,
+ "avgSpeedMps": 0.89,
+ "avgCadence": 25,
+ "calories": 430,
+ "aerobicEffect": 2.6,
+ "anaerobicEffect": 0.4,
+ "poolLengthM": 25,
+ "strokes": 1027,
+ "avgSwolf": 38,
+ "intensityAuto": "high",
+ "intensity": "high",
+ "isKey": false,
+ "rpe": 7,
+ "feel": 3,
+ "tags": [],
+ "pairedWorkoutId": "wk_d20261118_1",
+ "hasStreams": true,
+ "sparkline": [
+  0.87,
+  0.81,
+  0.84,
+  0.79,
+  0.83,
+  0.79,
+  0.85,
+  0.49,
+  0.64,
+  0.47,
+  0.48,
+  0.63
+ ],
+ "createdAt": "2026-11-21T18:00:22.426Z",
+ "updatedAt": "2026-11-21T18:00:22.439Z",
+ "compliance": {
+  "metric": "load",
+  "ratio": 0.92,
+  "state": "on_target"
+ },
+ "laps": [
+  {
+   "index": 0,
+   "startSec": 0,
+   "durationSec": 494.9,
+   "movingSec": 495,
+   "distanceM": 400,
+   "avgHr": 138,
+   "maxHr": 144,
+   "avgSpeedMps": 0.808,
+   "avgCadence": 22,
+   "lengths": 16,
+   "stroke": "choice",
+   "swolf": 42
+  },
+  {
+   "index": 1,
+   "startSec": 495,
+   "durationSec": 22.7,
+   "movingSec": 0,
+   "distanceM": 0,
+   "avgHr": 118,
+   "maxHr": 132,
+   "avgCadence": 21,
+   "lengths": 0,
+   "isRest": true
+  }
+ ],
+ "zones": {
+  "pace": [
+   {
+    "zone": 1,
+    "name": "Active Recovery",
+    "low": null,
+    "high": 0.9207000000000001,
+    "seconds": 1664
+   },
+   {
+    "zone": 2,
+    "name": "Endurance",
+    "low": 0.9207000000000001,
+    "high": 0.9602999999999999,
+    "seconds": 394
+   }
+  ],
+  "hr": [
+   {
+    "zone": 1,
+    "name": "Recovery",
+    "low": null,
+    "high": 144.5,
+    "seconds": 1511
+   },
+   {
+    "zone": 2,
+    "name": "Aerobic",
+    "low": 144.5,
+    "high": 153,
+    "seconds": 243
+   }
+  ]
+ },
+ "peaks": {
+  "hr": [
+   {
+    "durationSec": 1,
+    "value": 167,
+    "startSec": 2138
+   },
+   {
+    "durationSec": 2,
+    "value": 167,
+    "startSec": 2138
+   }
+  ],
+  "efforts": [
+   {
+    "distanceM": 50,
+    "timeSec": 44.6,
+    "startSec": 2327.6
+   },
+   {
+    "distanceM": 200,
+    "timeSec": 260.7,
+    "startSec": 2896.7
+   }
+  ]
+ },
+ "thresholdsUsed": {
+  "ftp": 276,
+  "runThresholdMps": 4.032,
+  "swimCssMps": 0.99,
+  "rowThresholdW": 241,
+  "lthr": 170,
+  "hrMax": 187,
+  "hrRest": 47,
+  "weightKg": 72.6
+ },
+ "plannedWorkout": {
+  "id": "wk_d20261118_1",
+  "date": "2026-11-18",
+  "startTime": "07:00",
+  "sport": "swim",
+  "subSport": "pool",
+  "title": "CSS 3×400",
+  "description": "Threshold swim. Hold the pace clock, not your ego.",
+  "plannedDurationSec": 3051,
+  "plannedDistanceM": 2500,
+  "plannedLoad": 61.6,
+  "plannedIntensityFactor": 0.933,
+  "structure": {
+   "steps": [
+    {
+     "kind": "repeat",
+     "id": "s3",
+     "count": 4,
+     "steps": [
+      {
+       "kind": "step",
+       "id": "s2",
+       "role": "active",
+       "measure": {
+        "type": "distance",
+        "m": 50
+       },
+       "target": {
+        "type": "pace_pct",
+        "low": 75,
+        "high": 85
+       },
+       "label": "Drill: catch-up / fingertip",
+       "swim": {
+        "stroke": "drill",
+        "restSec": 15
+       }
+      }
+     ]
+    },
+    {
+     "kind": "repeat",
+     "id": "s7",
+     "count": 4,
+     "steps": [
+      {
+       "kind": "step",
+       "id": "s6",
+       "role": "active",
+       "measure": {
+        "type": "distance",
+        "m": 50
+       },
+       "target": {
+        "type": "pace_pct",
+        "low": 108,
+        "high": 114
+       },
+       "label": "50 fast",
+       "swim": {
+        "stroke": "free",
+        "sendOffSec": 70
+       }
+      }
+     ]
+    },
+    {
+     "kind": "step",
+     "id": "s8",
+     "role": "active",
+     "measure": {
+      "type": "distance",
+      "m": 300
+     },
+     "target": {
+      "type": "pace_pct",
+      "low": 88,
+      "high": 93
+     },
+     "label": "Pull",
+     "swim": {
+      "stroke": "free",
+      "equipment": [
+       "pull_buoy",
+       "paddles"
+      ],
+      "restSec": 20
+     }
+    }
+   ],
+   "poolLengthM": 25
+  },
+  "isKey": false,
+  "intensity": "threshold",
+  "tags": [
+   "css",
+   "intervals"
+  ],
+  "environment": "indoor",
+  "pairedActivityId": "act_4gigf12r5h",
+  "status": "planned",
+  "sparkline": [
+   0.7,
+   0.7,
+   0.7,
+   0.7,
+   0.7,
+   0.7,
+   0.7,
+   0.696,
+   0.667,
+   0.667,
+   0.667,
+   0.667
+  ],
+  "garmin": {
+   "syncState": "none"
+  },
+  "createdAt": "2026-11-21T18:00:20.888Z",
+  "updatedAt": "2026-11-21T18:00:22.439Z",
+  "compliance": {
+   "metric": "load",
+   "ratio": 0.92,
+   "state": "on_target"
+  }
+ },
+ "previousSimilar": {
+  "id": "act_syn0za0ivc",
+  "source": "garmin",
+  "garminActivityId": "20379235271",
+  "garminTypeKey": "lap_swimming",
+  "startedAt": "2026-11-16T06:00:17.000Z",
+  "utcOffsetMin": 60,
+  "localDate": "2026-11-16",
+  "sport": "swim",
+  "subSport": "pool",
+  "title": "Technique + 10×50 fast",
+  "durationSec": 3390,
+  "movingSec": 2825,
+  "distanceM": 2300,
+  "load": 43.6,
+  "loadSource": "swim_pace",
+  "intensityFactor": 0.822,
+  "avgHr": 132,
+  "maxHr": 162,
+  "avgSpeedMps": 0.814,
+  "avgCadence": 25,
+  "calories": 398,
+  "aerobicEffect": 2.3,
+  "anaerobicEffect": 0.4,
+  "poolLengthM": 25,
+  "strokes": 689,
+  "avgSwolf": 39,
+  "intensityAuto": "high",
+  "intensity": "high",
+  "isKey": false,
+  "rpe": 7,
+  "feel": 5,
+  "tags": [],
+  "pairedWorkoutId": "wk_d20261116_1",
+  "hasStreams": true,
+  "sparkline": [
+   0.92,
+   0.89,
+   0.93,
+   0.87,
+   0.89,
+   0.89,
+   0.77,
+   0.54,
+   0.55,
+   0.55,
+   0.67,
+   0.57
+  ],
+  "createdAt": "2026-11-21T18:00:23.132Z",
+  "updatedAt": "2026-11-21T18:00:23.147Z"
+ }
+}

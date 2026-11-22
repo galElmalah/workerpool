@@ -1,0 +1,25 @@
+[
+ {
+  "id": "evt_demo_0",
+  "date": "2026-03-08",
+  "name": "Girona Winter 10K",
+  "priority": "C",
+  "sport": "run",
+  "distanceM": 10000,
+  "goal": "Sub 40, even splits",
+  "location": "Girona",
+  "note": "Fitness check in the middle of the winter block. No taper.",
+  "resultActivityId": "act_5rijxhq409"
+ },
+ {
+  "id": "evt_demo_1",
+  "date": "2026-08-09",
+  "name": "Banyoles Sprint Triathlon",
+  "priority": "C",
+  "distanceM": 25750,
+  "goal": "Practise transitions, race the bike hard",
+  "location": "Banyoles",
+  "note": "750 m lake swim / 20 km / 5 km. Training race inside Build 1.",
+  "resultActivityId": "act_63m34f4gvf"
+ }
+]

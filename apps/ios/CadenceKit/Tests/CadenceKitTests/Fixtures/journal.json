@@ -1,0 +1,20 @@
+{
+ "items": [
+  {
+   "type": "week",
+   "date": "2026-12-27",
+   "title": "Week 52 reflection",
+   "body": "Taper + race. Sleep, carbs, don’t do anything stupid. Goal sub 1:30.",
+   "ref": "2026-W52"
+  },
+  {
+   "type": "workout_pre",
+   "date": "2026-12-22",
+   "title": "Track 3×1 km @ HM pace",
+   "body": "With the club at 18:30, lane 2",
+   "ref": "wk_d20261222_1",
+   "sport": "run"
+  }
+ ],
+ "nextCursor": "WyIyMDI2LTExLTIyIiwwLCIyMDI2LVc0NyJd"
+}

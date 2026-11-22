@@ -265,7 +265,7 @@ export const hm = (sec: number | null | undefined) => {
 export function Stat({ label, value, unit, className, size = 'sm' }: { label: ReactNode; value: ReactNode; unit?: ReactNode; className?: string; size?: 'sm' | 'md' }) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-0.5', className)}>
-      <span className="text-micro text-fg-3">{label}</span>
+      <span className="text-label font-normal text-fg-3">{label}</span>
       <span className={cn('flex items-baseline gap-1 text-fg-1', size === 'md' ? 'text-stat-md' : 'text-stat-sm')}>
         {value}
         {unit && <span className="text-label font-normal text-fg-3">{unit}</span>}

@@ -1,0 +1,86 @@
+{
+ "sport": "bike",
+ "today": "2026-11-21",
+ "ranges": [
+  {
+   "key": "42d",
+   "from": "2026-10-11",
+   "to": "2026-11-21",
+   "activities": 10,
+   "power": [
+    {
+     "durationSec": 1,
+     "value": 704,
+     "activityId": "act_uxe16yozne",
+     "date": "2026-11-21"
+    },
+    {
+     "durationSec": 2,
+     "value": 636,
+     "activityId": "act_v688xoq2u2",
+     "date": "2026-11-14"
+    }
+   ],
+   "hr": [
+    {
+     "durationSec": 1,
+     "value": 178,
+     "activityId": "act_ijdv4ysogd",
+     "date": "2026-10-18"
+    },
+    {
+     "durationSec": 2,
+     "value": 177,
+     "activityId": "act_ijdv4ysogd",
+     "date": "2026-10-18"
+    }
+   ]
+  },
+  {
+   "key": "season",
+   "from": "2026-01-01",
+   "to": "2026-11-21",
+   "activities": 101,
+   "power": [
+    {
+     "durationSec": 1,
+     "value": 704,
+     "activityId": "act_uxe16yozne",
+     "date": "2026-11-21"
+    },
+    {
+     "durationSec": 2,
+     "value": 659,
+     "activityId": "act_zmn5wh7gky",
+     "date": "2026-07-11"
+    }
+   ],
+   "hr": [
+    {
+     "durationSec": 1,
+     "value": 188,
+     "activityId": "act_kuh34yguzd",
+     "date": "2026-05-16"
+    },
+    {
+     "durationSec": 2,
+     "value": 187,
+     "activityId": "act_kuh34yguzd",
+     "date": "2026-05-16"
+    }
+   ]
+  }
+ ],
+ "estimate": {
+  "ftp": {
+   "value": 297,
+   "basis": "0.95x20min"
+  },
+  "criticalPower": {
+   "cp": 307,
+   "wPrime": 7296,
+   "r2": 1,
+   "valid": true
+  }
+ }
+}

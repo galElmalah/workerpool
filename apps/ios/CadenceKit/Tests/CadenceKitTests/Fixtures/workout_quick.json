@@ -1,0 +1,27 @@
+{
+ "workout": {
+  "id": "wk_fwls2tiq5w",
+  "date": "2026-12-21",
+  "sport": "run",
+  "title": "Endurance 45′",
+  "plannedDurationSec": 2700,
+  "plannedLoad": 34.7,
+  "plannedIntensityFactor": 0.68,
+  "isKey": false,
+  "intensity": "endurance",
+  "tags": [],
+  "environment": "any",
+  "status": "planned",
+  "garmin": {
+   "syncState": "none"
+  },
+  "createdAt": "2026-11-22T05:55:50.409Z",
+  "updatedAt": "2026-11-22T05:55:50.409Z",
+  "compliance": {
+   "metric": "load",
+   "ratio": 0,
+   "state": "planned"
+  }
+ },
+ "issues": []
+}

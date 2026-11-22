@@ -65,7 +65,7 @@ export function TrendsNav() {
   }, [active]);
   return (
     <nav aria-label="Trends sections" className="relative -mx-4 overflow-x-auto px-4 scrollbar-none md:mx-0 md:px-0">
-      <div className="relative -ml-3 flex w-max items-center gap-1">
+      <div className="relative flex w-max items-center gap-1 md:-ml-3">
         {rect && (
           <motion.span
             aria-hidden
@@ -80,6 +80,7 @@ export function TrendsNav() {
             key={it.to}
             to={it.to}
             search={keep as never}
+            activeOptions={{ exact: true, includeSearch: false }}
             ref={(el) => {
               refs.current[it.to] = el;
             }}

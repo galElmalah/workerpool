@@ -8,7 +8,7 @@ import { IntensityDistribution, ZoneBars, type IntensitySplit } from '@/charts';
 import { cn } from '@/lib/cn';
 import { formatDayMonth, formatIsoWeek } from '@/lib/format';
 import { spring } from '@/motion/tokens';
-import { DeltaBadge, Segmented, SportGlyph } from '@/ui';
+import { Segmented, SportGlyph, StatRow, StatTile } from '@/ui';
 import { rangeWeeks, trimLeading, useIntensity, useWeekly } from './data';
 import { ChartCard, InlineError, RangeControl, TrendsFrame, useTrendsSearch } from './shared';
 
@@ -44,40 +44,23 @@ export function TrendsIntensityPage() {
 
   return (
     <TrendsFrame title="Intensity" back eyebrow="How hard the training was" toolbar={<RangeControl value={range} onChange={(r) => set({ range: r })} />}>
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Tile label="Distribution" value={total?.distribution ? (DIST_LABEL[total.distribution] ?? total.distribution) : '—'} />
-        <Tile label="Easy" value={total?.pct ? `${Math.round(total.pct.easy)}%` : '—'} sub="target ≈ 80%" />
-        <Tile label="Moderate" value={total?.pct ? `${Math.round(total.pct.moderate)}%` : '—'} sub="the grey zone" />
-        <Tile
-          label="Moderate + hard, last 4 wk"
-          value={last4 != null ? `${Math.round(last4 * 100)}%` : '—'}
-          sub={<span className="inline-flex items-center gap-1.5"><DeltaBadge value={last4 != null && prev4 ? last4 / prev4 - 1 : null} size="sm" /> vs prior 4</span>}
-        />
-      </section>
-      <section>
-        <ChartCard title="Weekly distribution" question="Time in easy / moderate / hard each week, from zones when recorded. Click a week to review it.">
-          {q.isError ? <InlineError onRetry={() => q.refetch()} /> : <IntensityDistribution items={items} loading={!q.data} height={220} onItemClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />}
-        </ChartCard>
-      </section>
-      <section className="grid gap-6 lg:grid-cols-12">
+      <ChartCard title="Weekly distribution" question="Easy, moderate and hard time each week, from zones when recorded. Click a week to review it.">
+        {q.isError ? <InlineError onRetry={() => q.refetch()} /> : <IntensityDistribution items={items} loading={!q.data} height={240} onItemClick={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />}
+      </ChartCard>
+      <StatRow columns={3}>
+        <StatTile label="Easy" value={total?.pct ? total.pct.easy : null} format={(v) => `${Math.round(v)}%`} hint={total?.distribution ? `${DIST_LABEL[total.distribution] ?? total.distribution} overall · target ≈ 80%` : 'target ≈ 80%'} />
+        <StatTile label="Moderate" value={total?.pct ? total.pct.moderate : null} format={(v) => `${Math.round(v)}%`} hint="the grey zone" />
+        <StatTile label="Moderate + hard, last 4 weeks" value={last4 != null ? last4 * 100 : null} format={(v) => `${Math.round(v)}%`} delta={last4 != null && prev4 ? last4 / prev4 - 1 : null} deltaSuffix="vs the 4 before" />
+      </StatRow>
+      <section className="grid gap-12 lg:grid-cols-12 lg:gap-16">
         <ChartCard className="lg:col-span-7" title="Time in zone by sport" question="Where the minutes went, per sport and zone model.">
           <ZonesBySport list={(q.data?.bySport ?? []) as unknown as SportZones[]} />
         </ChartCard>
-        <ChartCard className="lg:col-span-5" title="Key sessions per week" question="Hit / planned. The sessions that matter most.">
+        <ChartCard className="lg:col-span-5" title="Key sessions per week" question="Done of planned, the 12 most recent weeks.">
           <KeyPerWeek weeks={weeks.map((w) => ({ isoWeek: w.isoWeek, done: w.keyDone, planned: w.keyPlanned }))} onOpen={(w) => navigate({ to: '/week/$isoWeek', params: { isoWeek: w } })} />
         </ChartCard>
       </section>
     </TrendsFrame>
-  );
-}
-
-function Tile({ label, value, sub }: { label: string; value: string; sub?: React.ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1.5 rounded-lg border border-line-1 bg-surface-1 p-4">
-      <span className="truncate text-micro text-fg-3">{label}</span>
-      <span className="text-stat-md text-fg-1">{value}</span>
-      <span className="min-h-5 text-body-sm text-fg-3">{sub}</span>
-    </div>
   );
 }
 
@@ -112,18 +95,18 @@ function KeyPerWeek({ weeks, onOpen }: { weeks: { isoWeek: string; done: number;
       {rows.map((w, i) => (
         <li key={w.isoWeek}>
           <button type="button" onClick={() => onOpen(w.isoWeek)} className="grid w-full grid-cols-[44px_1fr_44px] items-center gap-3 rounded-sm px-1 py-1 text-left hover:bg-surface-2">
-            <span className="text-mono-sm text-fg-3">{formatIsoWeek(w.isoWeek)}</span>
+            <span className="text-body-sm text-fg-3">{formatIsoWeek(w.isoWeek)}</span>
             <span className="flex items-center gap-1">
               {Array.from({ length: Math.max(w.planned, w.done) }, (_, k) => (
                 <motion.span key={k} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ...spring.smooth, delay: Math.min((i * 3 + k) * 0.012, 0.24) }}>
-                  <Star className={cn('size-3.5', k < w.done ? 'fill-accent text-accent-ink' : 'text-fg-4')} strokeWidth={1.75} />
+                  <Star className={cn('size-3.5', k < w.done ? 'fill-fg-2 text-fg-2' : 'text-fg-4')} strokeWidth={1.75} />
                 </motion.span>
               ))}
               {!w.planned && !w.done && <span className="text-body-sm text-fg-4">none</span>}
               <span className="sr-only">{`${w.done} of ${w.planned}`}</span>
               <span aria-hidden style={{ width: 0 }} data-max={max} />
             </span>
-            <span className="text-right text-mono-sm text-fg-2">
+            <span className="text-right text-body-sm text-fg-2">
               {w.done}/{w.planned}
             </span>
           </button>

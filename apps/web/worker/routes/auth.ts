@@ -6,8 +6,9 @@ import { ApiError, badRequest, conflict } from '../lib/http';
 import { nowIso } from '../lib/ids';
 import { hashPassphrase, verifyPassphrase } from '../lib/crypto';
 import { first, parseJson, run } from '../db/sql';
+import { deleteAllDevicesStmt } from '../db/devices';
 import { validate } from '../services/context';
-import { clearSession, isAuthenticated, issueSession, readAuthState, rememberAuthState } from '../middleware/auth';
+import { clearSession, forgetAllDevices, isAuthenticated, issueSession, readAuthState, rememberAuthState } from '../middleware/auth';
 
 const Passphrase = z.string().min(8, 'Use at least 8 characters').max(1024);
 
@@ -61,8 +62,11 @@ async function checkPassphrase(db: D1Database, passphrase: string): Promise<{ ok
   return { ok, epoch: row.session_epoch };
 }
 
-/** Throttled passphrase check: throws 429 while locked, 401 on a wrong passphrase. */
-async function authenticate(db: D1Database, passphrase: string): Promise<number> {
+/**
+ * Throttled passphrase check: throws 429 while locked, 401 on a wrong passphrase. Shared by
+ * login, passphrase change and device-token creation (one throttle for all of them).
+ */
+export async function authenticate(db: D1Database, passphrase: string): Promise<number> {
   const t = await assertNotLocked(db);
   const { ok, epoch } = await checkPassphrase(db, passphrase);
   if (!ok) {
@@ -114,15 +118,18 @@ export const authRoutes = new Hono<AppEnv>()
     const epoch = await authenticate(c.env.DB, current);
     const h = await hashPassphrase(next);
     const nextEpoch = epoch + 1;
-    await run(
-      c.env.DB,
-      'UPDATE auth SET password_hash = ?, salt = ?, iterations = ?, session_epoch = ? WHERE id = 1',
-      h.hash,
-      h.salt,
-      h.iterations,
-      nextEpoch,
-    );
+    // New epoch invalidates every cookie session; deleting the devices revokes every device token.
+    await c.env.DB.batch([
+      c.env.DB.prepare('UPDATE auth SET password_hash = ?, salt = ?, iterations = ?, session_epoch = ? WHERE id = 1').bind(
+        h.hash,
+        h.salt,
+        h.iterations,
+        nextEpoch,
+      ),
+      deleteAllDevicesStmt(c.env.DB),
+    ]);
     rememberAuthState({ configured: true, epoch: nextEpoch });
+    forgetAllDevices();
     await issueSession(c, nextEpoch);
     return c.json({ configured: true, authenticated: true });
   });

@@ -22,7 +22,7 @@ import { dayCards, useCalendar, type CalendarCard } from '@/lib/queries/training
 import { spring, tween } from '@/motion/tokens';
 import { links } from '@/shell/links';
 import { useShortcut } from '@/shell/shortcuts';
-import { Button, ButtonLink, ComplianceGlyph, DeltaBadge, Page, PageHeader, Skeleton, SportGlyph, WorkoutCard } from '@/ui';
+import { Button, ButtonLink, ComplianceGlyph, DeltaBadge, Page, PageHeader, Skeleton, SportGlyph, Tooltip, WorkoutCard } from '@/ui';
 import { MARKER_META } from '../day/furniture';
 import { ActivityLogger, hm } from '../day/kit';
 
@@ -114,7 +114,7 @@ export function AgendaPage() {
         <AgendaWindow key={from} from={from} onLoaded={() => setTick((t) => t + 1)} />
       ))}
       <div ref={bottom} className="flex justify-center py-8" aria-hidden>
-        <span className="text-mono-sm text-fg-4">loading later weeks…</span>
+        <span className="text-body-sm text-fg-4">Loading later weeks…</span>
       </div>
     </Page>
   );
@@ -136,7 +136,7 @@ function WeekStrip({ today, onPick }: { today: LocalDate; onPick: (d: LocalDate)
     if (el) el.scrollLeft = el.clientWidth * 4;
   }, []);
   return (
-    <div className="sticky top-(--header-h) z-(--z-sticky) -mx-4 mb-2 border-b border-line-1 bg-canvas/90 backdrop-blur-md sm:hidden">
+    <div className="sticky top-(--header-h) z-(--z-sticky) -mx-4 mb-2 bg-canvas/90 backdrop-blur-md sm:hidden">
       <div ref={ref} className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none]" aria-label="Weeks — swipe to change">
         {weeks.map((ws) => (
           <div key={ws} className="grid w-full shrink-0 snap-center grid-cols-7 gap-1 px-3 py-2">
@@ -154,8 +154,8 @@ function WeekStrip({ today, onPick }: { today: LocalDate; onPick: (d: LocalDate)
                   aria-label={weekdayLong(d)}
                 >
                   {isToday && <span className="absolute inset-x-1 inset-y-0.5 rounded-md bg-accent" aria-hidden />}
-                  <span className="relative text-micro ">{weekdayShort(d).slice(0, 2)}</span>
-                  <span className="relative text-mono">{Number(d.slice(8))}</span>
+                  <span className="relative text-label font-normal">{weekdayShort(d).slice(0, 2)}</span>
+                  <span className="relative text-body-sm num">{Number(d.slice(8))}</span>
                 </button>
               );
             })}
@@ -222,23 +222,28 @@ function WeekDivider({ iso, week, current }: { iso: string; week?: WeekSummary; 
   return (
     <Link
       {...links.calendarWeek(iso)}
-      className="group/wd mt-8 mb-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line-2 pb-2 outline-none focus-visible:outline-2 focus-visible:outline-focus"
+      className="group/wd mt-12 mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line-1 pb-3 outline-none focus-visible:outline-2 focus-visible:outline-focus"
     >
-      <span className={cn('text-micro ', current ? 'text-accent-ink' : 'text-fg-2')}>
-        W{Number(iso.slice(6))} · {formatIsoWeekRange(iso)}
+      <span className="text-title-3 text-fg-1 group-hover/wd:underline">
+        W{Number(iso.slice(6))}
+        <span className="ml-2 text-body-sm font-normal text-fg-3">
+          {formatIsoWeekRange(iso)}
+          {current ? ' · this week' : ''}
+        </span>
       </span>
       {week && (
-        <span className="ml-auto flex items-baseline gap-3 text-mono-sm text-fg-2">
+        <span className="ml-auto flex items-baseline gap-3 text-body-sm text-fg-2 num">
           <span>
             {hm(week.doneSec)}
-            {week.plannedSec > week.doneSec && <span className="text-fg-4">/{hm(week.plannedSec)}</span>}
+            {week.plannedSec > week.doneSec && <span className="text-fg-3"> of {hm(week.plannedSec)}</span>}
           </span>
-          <span>
-            <span className="text-accent-ink">{formatLoad(week.doneLoad)}</span>
-            {week.plannedLoad > week.doneLoad && <span className="text-fg-4">/{formatLoad(week.plannedLoad)}</span>}
-            <span className="font-sans text-fg-3"> load</span>
-          </span>
-          {!week.isProjected || week.doneLoad > 0 ? <DeltaBadge value={week.wowLoad} size="sm" /> : null}
+          <Tooltip content={!week.isProjected || week.doneLoad > 0 ? <DeltaBadge value={week.wowLoad} size="sm" suffix="load vs last week" /> : null}>
+            <span tabIndex={0} className="outline-none">
+              {formatLoad(week.doneLoad)}
+              {week.plannedLoad > week.doneLoad && <span className="text-fg-3"> of {formatLoad(week.plannedLoad)}</span>}
+              <span className="text-fg-3"> load</span>
+            </span>
+          </Tooltip>
         </span>
       )}
     </Link>
@@ -273,18 +278,18 @@ function AgendaDay({ date, data }: { date: LocalDate; data: CalendarResponse }) 
           aria-expanded={open}
           className="flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left outline-none focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span className={cn('grid size-7 shrink-0 place-items-center rounded-full text-mono', isToday ? 'bg-accent text-on-accent' : past ? 'text-fg-3' : 'text-fg-1')}>
+          <span className={cn('grid size-7 shrink-0 place-items-center rounded-full text-body-sm num', isToday ? 'bg-accent text-on-accent' : past ? 'text-fg-3' : 'text-fg-1')}>
             {Number(date.slice(8))}
           </span>
-          <span className={cn('text-label', past ? 'text-fg-2' : 'text-fg-1')}>{weekdayLong(date)}</span>
-          {Math.abs(diffDays(today, date)) <= 1 && <span className={cn('text-micro ', isToday ? 'text-accent-ink' : 'text-fg-3')}>{rel}</span>}
+          <span className={cn('text-body-sm font-medium', past ? 'text-fg-2' : 'text-fg-1')}>{weekdayLong(date)}</span>
+          {Math.abs(diffDays(today, date)) <= 1 && <span className="text-body-sm text-fg-3">{rel}</span>}
           {!open && <CollapsedSummary cards={cards} />}
           {note && <Pilcrow className="size-3 shrink-0 text-fg-3" aria-label="Has a note" />}
           <motion.span initial={false} animate={{ rotate: open ? 0 : -90 }} transition={spring.snappy} className="ml-auto shrink-0 text-fg-3">
             <ChevronDown className="size-4" />
           </motion.span>
         </button>
-        <Link {...links.calendarDay(date)} className="shrink-0 rounded-sm px-1.5 text-micro text-fg-3 outline-none hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus">
+        <Link {...links.calendarDay(date)} className="shrink-0 rounded-sm px-1.5 text-label font-normal text-fg-3 outline-none hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus">
           Day
         </Link>
       </div>
@@ -300,10 +305,10 @@ function AgendaDay({ date, data }: { date: LocalDate; data: CalendarResponse }) 
           >
             <div className="flex flex-col gap-2 pt-1 pb-4 pl-9">
               {events.map((e) => (
-                <Link key={e.id} {...links.event(e.id)} className={cn('flex items-center gap-2 rounded-md px-3 py-2 text-body font-[560]', e.priority === 'A' ? 'bg-accent text-on-accent' : e.priority === 'B' ? 'border border-accent-a6 text-fg-1' : 'border border-line-3 text-fg-1')}>
-                  <Flag className={cn('size-3.5', e.priority === 'A' && 'fill-current')} />
+                <Link key={e.id} {...links.event(e.id)} className="flex items-center gap-2 rounded-lg bg-surface-1 px-3 py-2.5 text-body font-semibold text-fg-1 outline-none transition-colors duration-(--dur-fast) hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-focus">
+                  <Flag className={cn('size-3.5', e.priority === 'A' ? 'fill-fg-1' : 'text-fg-3')} />
                   {e.name}
-                  <span className="ml-auto text-micro opacity-70">{e.priority}-race</span>
+                  <span className="ml-auto text-body-sm font-normal text-fg-3">{e.priority} race</span>
                 </Link>
               ))}
               {markers.map((m) => (
@@ -311,7 +316,7 @@ function AgendaDay({ date, data }: { date: LocalDate; data: CalendarResponse }) 
                   {MARKER_META[m.type].icon}
                   {MARKER_META[m.type].label}
                   {m.label && <span className="text-fg-3">· {m.label}</span>}
-                  {m.endDate && <span className="text-mono-sm text-fg-3">until {formatDayMonth(m.endDate)}</span>}
+                  {m.endDate && <span className="text-fg-3">until {formatDayMonth(m.endDate)}</span>}
                 </span>
               ))}
               {cards.map((c) => (
@@ -327,7 +332,12 @@ function AgendaDay({ date, data }: { date: LocalDate; data: CalendarResponse }) 
                   )}
                 </span>
               )}
-              {note && <p className="line-clamp-2 border-l-2 border-line-3 pl-3 text-body-sm text-fg-2">{note.body}</p>}
+              {note && (
+                <p className="flex items-start gap-2 px-3 text-body-sm text-fg-2">
+                  <Pilcrow className="mt-0.5 size-3 shrink-0 text-fg-3" aria-hidden />
+                  <span className="line-clamp-2">{note.body}</span>
+                </p>
+              )}
             </div>
           </motion.div>
         )}
@@ -343,7 +353,7 @@ function CollapsedSummary({ cards }: { cards: CalendarCard[] }) {
       {cards.slice(0, 3).map((c) => (
         <span key={c.key} className="inline-flex shrink-0 items-center gap-1">
           <SportGlyph sport={c.model.sport} size={14} className="text-fg-2" />
-          <span className="text-mono-sm">{formatDuration(c.model.durationSec, 'prime')}</span>
+          <span className="num">{formatDuration(c.model.durationSec, 'prime')}</span>
           <ComplianceGlyph state={c.model.compliance?.state ?? 'planned'} size={10} />
         </span>
       ))}
@@ -360,14 +370,14 @@ function AgendaCard({ card, log }: { card: CalendarCard; log: boolean }) {
     <div className="flex flex-col">
       <WorkoutCard model={card.model} density="full" link={card.target.type === 'activity' ? links.activity(card.target.id) : links.workout(card.target.id)} morphId={`ag-${card.key}`} />
       {needsLog && !logging && (
-        <button type="button" onClick={() => setLogging(true)} className="mt-1 self-start rounded-sm px-1 py-1 text-label text-accent-ink outline-none hover:underline focus-visible:outline-2 focus-visible:outline-focus pointer-coarse:py-2">
-          Log how it went →
+        <button type="button" onClick={() => setLogging(true)} className="mt-1 ml-2 self-start rounded-sm px-1 py-1 text-label text-fg-2 underline decoration-line-3 underline-offset-4 outline-none hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus pointer-coarse:py-2">
+          Log how it went
         </button>
       )}
       <AnimatePresence initial={false}>
         {needsLog && logging && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={spring.smooth} className="overflow-hidden">
-            <div className="mt-2 rounded-md border border-line-2 bg-surface-1 p-3">
+            <div className="mt-2 rounded-lg bg-surface-1 p-4">
               <ActivityLogger activity={a!} compact />
             </div>
           </motion.div>

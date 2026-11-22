@@ -1,0 +1,45 @@
+{
+ "connected": true,
+ "state": "connected",
+ "capabilities": {
+  "read": true,
+  "write": true
+ },
+ "credentials": {
+  "personalApiKey": true,
+  "connectToken": true
+ },
+ "counts": {
+  "activities": 443,
+  "garminActivities": 443,
+  "workoutsSynced": 11,
+  "workoutsPending": 0,
+  "workoutsError": 0,
+  "oldestGarminDate": "2025-12-01"
+ },
+ "demo": true,
+ "backfill": {
+  "running": false,
+  "done": 443,
+  "total": 443,
+  "oldestDate": "2025-12-01"
+ },
+ "backfillProgress": {
+  "running": false,
+  "phase": "done",
+  "done": 443,
+  "total": 443,
+  "listed": 443,
+  "created": 443,
+  "updated": 0,
+  "failed": 0,
+  "wellnessDays": 356,
+  "sinceDate": "2025-10-21",
+  "startedAt": "2026-11-21T18:00:21.075Z",
+  "steps": 23,
+  "oldestDate": "2025-12-01",
+  "finishedAt": "2026-11-21T18:02:06.672Z"
+ },
+ "displayName": "jonas.tri",
+ "lastSyncAt": "2026-11-21T18:02:06.824Z"
+}

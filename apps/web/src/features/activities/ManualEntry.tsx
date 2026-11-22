@@ -54,14 +54,14 @@ export function ManualEntry({ today, onDone }: { today?: LocalDate; onDone: () =
         e.preventDefault();
         void submit();
       }}
-      className="flex flex-col gap-5 rounded-xl border border-line-3 bg-surface-1 p-4 md:p-5"
+      className="flex flex-col gap-6 rounded-lg bg-surface-1 p-5 md:p-6"
       aria-label="Log an activity"
     >
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="text-title-3 text-fg-1">Log an activity</h2>
         <span className="flex items-baseline gap-1.5">
-          <span className="text-micro text-fg-3">Est. load</span>
-          <span className="text-stat-sm text-accent-ink"><Ticker value={load} format={(n) => String(Math.round(n))} /></span>
+          <span className="text-body-sm text-fg-3">Estimated load</span>
+          <span className="text-stat-sm text-fg-1"><Ticker value={load} format={(n) => String(Math.round(n))} /></span>
         </span>
       </div>
       <div role="radiogroup" aria-label="Sport" className="flex flex-wrap gap-1.5">
@@ -72,7 +72,7 @@ export function ManualEntry({ today, onDone }: { today?: LocalDate; onDone: () =
             role="radio"
             aria-checked={sport === s}
             onClick={() => setSport(s)}
-            className={cn('flex h-9 items-center gap-2 rounded-md border px-3 text-label transition-colors duration-(--dur-fast)', sport === s ? 'border-line-3 bg-surface-3 text-fg-1' : 'border-line-1 text-fg-2 hover:bg-surface-2 hover:text-fg-1')}
+            className={cn('flex h-9 items-center gap-2 rounded-md px-3 text-body-sm transition-colors duration-(--dur-fast)', sport === s ? 'bg-surface-3 font-medium text-fg-1' : 'text-fg-2 hover:bg-surface-2 hover:text-fg-1')}
           >
             <SportGlyph sport={s} size={16} />
             {SPORT_META[s].label}

@@ -55,7 +55,7 @@ function Body({ text, words, onTag }: { text: string; words: string[]; onTag: (t
     return text.split(re);
   }, [text, words]);
   return (
-    <p className="whitespace-pre-wrap break-words text-body-lg text-fg-1">
+    <p className="max-w-[65ch] whitespace-pre-wrap break-words text-body-lg leading-relaxed text-fg-1">
       {parts.map((p, i) => {
         if (!p) return null;
         if (p.startsWith('#') && p.length > 1)
@@ -137,18 +137,18 @@ export function JournalPage() {
   const filtered = !!(search.type || search.q || search.tag);
 
   return (
-    <Page width="prose" header={<PageHeader title="Journal" eyebrow="Notes" />}>
+    <Page width="prose" header={<PageHeader title="Journal" eyebrow="Everything you wrote" />}>
       <Composer />
 
-      <PageItem className="sticky top-(--header-h) z-(--z-sticky) -mx-4 flex flex-col gap-3 bg-canvas/85 px-4 py-3 backdrop-blur-md md:-mx-6 md:px-6">
-        <div className="relative flex items-center">
+      <PageItem className="sticky top-(--header-h) z-(--z-sticky) -mx-4 flex flex-col gap-3 bg-canvas/85 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center md:-mx-6 md:px-6">
+        <div className="relative flex min-w-0 flex-1 items-center">
           <Search className="pointer-events-none absolute left-3 size-4 text-fg-3" />
           <input
             value={text}
             onChange={(e) => setText(e.currentTarget.value)}
             placeholder="Search everything you wrote"
             aria-label="Search notes"
-            className="h-10 w-full rounded-md border border-line-2 bg-surface-1 pl-9 pr-9 text-body text-fg-1 outline-none placeholder:text-fg-4 hover:border-line-3 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus"
+            className="h-9 w-full rounded-md bg-surface-1 pl-9 pr-9 text-body text-fg-1 outline-none placeholder:text-fg-3 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-[-1px] focus-visible:outline-focus"
           />
           {text && (
             <button aria-label="Clear search" onClick={() => setText('')} className="absolute right-2 flex size-6 items-center justify-center rounded-sm text-fg-3 hover:bg-surface-3 hover:text-fg-1">
@@ -156,7 +156,7 @@ export function JournalPage() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none]">
+        <div className="flex shrink-0 items-center gap-2 overflow-x-auto [scrollbar-width:none]">
           <LayoutGroup id="journal-type">
             <div role="radiogroup" aria-label="Type" className="flex shrink-0 gap-1">
               {FILTERS.map((f) => {
@@ -169,7 +169,7 @@ export function JournalPage() {
                     onClick={() => void navigate({ search: (s) => ({ ...s, type: f.value }) })}
                     className={cn('relative h-7 shrink-0 rounded-full px-3 text-label transition-colors duration-(--dur-fast)', on ? 'text-fg-1' : 'text-fg-3 hover:text-fg-1')}
                   >
-                    {on && <motion.span layoutId="chip" transition={spring.snappy} className="absolute inset-0 rounded-full border border-line-3 bg-surface-3" />}
+                    {on && <motion.span layoutId="chip" transition={spring.snappy} className="absolute inset-0 rounded-full bg-surface-active" />}
                     <span className="relative">{f.label}</span>
                   </button>
                 );
@@ -184,7 +184,8 @@ export function JournalPage() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={spring.snappy}
                 onClick={() => setTag(undefined)}
-                className="ml-auto flex h-7 shrink-0 items-center gap-1 rounded-full border border-dashed border-line-3 px-2.5 text-label text-fg-1"
+                aria-label={`Remove tag ${search.tag}`}
+                className="flex h-7 shrink-0 items-center gap-1 rounded-full bg-surface-2 px-2.5 text-label text-fg-1 hover:bg-surface-3"
               >
                 #{search.tag} <X className="size-3" />
               </motion.button>
@@ -193,7 +194,7 @@ export function JournalPage() {
         </div>
       </PageItem>
 
-      <PageItem className="-mt-4">
+      <PageItem className="-mt-10">
         {feed.isPending ? (
           <div className="flex flex-col gap-6 pt-2">
             {Array.from({ length: 4 }, (_, i) => (
@@ -204,14 +205,14 @@ export function JournalPage() {
             ))}
           </div>
         ) : feed.isError ? (
-          <div className="rounded-lg border border-dashed border-line-3 p-6 text-body text-fg-1">
+          <div className="flex items-center gap-2 py-6 text-body text-fg-1">
             Couldn't load your journal.{' '}
             <Button size="sm" variant="ghost" onClick={() => void feed.refetch()}>
               Retry
             </Button>
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-line-2">
+          <div className="py-6">
             {filtered ? (
               <EmptyState icon={<Search />} title="Nothing matches" action={<Button onClick={() => (setText(''), void navigate({ search: {} }))}>Clear filters</Button>}>
                 Try fewer words or another type.
@@ -226,8 +227,8 @@ export function JournalPage() {
           <div className={cn('flex flex-col transition-opacity duration-(--dur-fast)', feed.isPlaceholderData && 'opacity-60')}>
             {months.map((m) => (
               <section key={m.key} aria-label={formatMonthYearLong(`${m.key}-01`)}>
-                <h2 className="sticky top-[calc(var(--header-h)+6.5rem)] z-[1] -mx-1 bg-canvas/85 px-1 py-2 text-micro text-fg-3 backdrop-blur-sm">{formatMonthYearLong(`${m.key}-01`)}</h2>
-                <motion.ol variants={listContainer} initial="hidden" animate="show" className="flex flex-col">
+                <h2 className="sticky top-[calc(var(--header-h)+7.5rem)] z-[1] -mx-1 mt-8 bg-canvas/85 px-1 py-2 text-body-sm font-medium text-fg-2 backdrop-blur-sm sm:top-[calc(var(--header-h)+3.75rem)]">{formatMonthYearLong(`${m.key}-01`)}</h2>
+                <motion.ol variants={listContainer} initial="hidden" animate="show" className="flex flex-col gap-2">
                   {m.items.map((it) => (
                     <motion.li key={`${it.type}-${it.ref}`} variants={listItem} layout="position" transition={spring.smooth}>
                       <Entry it={it} words={words} onTag={setTag} />
@@ -247,7 +248,7 @@ export function JournalPage() {
 }
 
 function EntryLink({ it, children }: { it: Item; children: ReactNode }) {
-  const cls = 'group block rounded-lg -mx-3 px-3 py-4 transition-colors duration-(--dur-fast) hover:bg-surface-1 focus-visible:outline-offset-0';
+  const cls = 'group block rounded-lg -mx-4 px-4 py-5 transition-colors duration-(--dur-fast) hover:bg-surface-1 focus-visible:outline-offset-0';
   if (it.type === 'activity_post') return <Link to="/activities/$id" params={{ id: it.ref }} className={cls}>{children}</Link>;
   if (it.type === 'workout_pre') return <Link to="/workouts/$id" params={{ id: it.ref }} className={cls}>{children}</Link>;
   if (it.type === 'week') return <Link to="/week/$isoWeek" params={{ isoWeek: it.ref }} className={cls}>{children}</Link>;
@@ -257,23 +258,23 @@ function EntryLink({ it, children }: { it: Item; children: ReactNode }) {
 function Entry({ it, words, onTag }: { it: Item; words: string[]; onTag: (t: string) => void }) {
   return (
     <EntryLink it={it}>
-      <div className="flex gap-4">
-        <div className="flex w-14 shrink-0 flex-col items-start gap-1 pt-0.5">
-          <span className="text-mono text-fg-2">{formatDayShort(it.date)}</span>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body-sm text-fg-3">
+          {it.sport ? <SportGlyph sport={it.sport as Sport} size={14} className="text-fg-3" /> : it.type === 'week' ? <CalendarDays className="size-3.5" /> : <NotebookPen className="size-3.5" />}
+          <span className="text-fg-2 num">{formatDayShort(it.date)}</span>
+          <span aria-hidden>·</span>
+          <span>{KIND_LABEL[it.type]}</span>
+          {it.type !== 'day' && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="min-w-0 truncate">{it.type === 'week' ? `${it.title} · ${formatIsoWeekRange(it.ref)}` : it.title}</span>
+            </>
+          )}
+          {it.rpe != null && <span className="num">· RPE {it.rpe}</span>}
+          {it.feel != null && <Dots value={it.feel} />}
+          <ArrowUpRight className="ml-auto size-3.5 text-fg-4 opacity-0 transition-opacity duration-(--dur-fast) group-hover:opacity-100" />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            {it.sport ? <SportGlyph sport={it.sport as Sport} size={16} className="text-fg-2" /> : it.type === 'week' ? <CalendarDays className="size-4 text-fg-3" /> : <NotebookPen className="size-4 text-fg-3" />}
-            <span className="text-micro text-fg-3">{KIND_LABEL[it.type]}</span>
-            {it.type !== 'day' && <span className="min-w-0 truncate text-body text-fg-2">{it.type === 'week' ? `${it.title} · ${formatIsoWeekRange(it.ref)}` : it.title}</span>}
-            {it.rpe != null && <span className="text-mono-sm text-fg-2">RPE {it.rpe}</span>}
-            {it.feel != null && <Dots value={it.feel} />}
-            <ArrowUpRight className="ml-auto size-3.5 text-fg-4 opacity-0 transition-opacity duration-(--dur-fast) group-hover:opacity-100" />
-          </div>
-          <div className={cn(it.type === 'week' && 'border-l-2 border-line-3 pl-3', it.type === 'workout_pre' && 'border-l-2 border-dashed border-line-3 pl-3')}>
-            <Body text={it.body} words={words} onTag={onTag} />
-          </div>
-        </div>
+        <Body text={it.body} words={words} onTag={onTag} />
       </div>
     </EntryLink>
   );
@@ -315,9 +316,9 @@ function Composer() {
 
   return (
     <Section stagger>
-      <div className="rounded-xl border border-line-2 bg-surface-1 p-4 transition-colors duration-(--dur-fast) focus-within:border-line-3">
+      <div className="rounded-lg bg-surface-1 p-5 transition-colors duration-(--dur-fast) focus-within:bg-surface-2 md:p-6">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <span className="text-micro text-fg-3">{today ? `Today · ${formatDateLong(today)}` : 'Today'}</span>
+          <span className="text-body-sm text-fg-3">{today ? `Today · ${formatDateLong(today)}` : 'Today'}</span>
           <SaveIndicator status={status} />
         </div>
         {body === null ? (
@@ -330,12 +331,12 @@ function Composer() {
             maxRows={14}
             placeholder="How did today feel? Sleep, legs, mood, anything worth remembering. Use #tags to find it later."
             aria-label="Today's note"
-            className="!border-0 !bg-transparent !px-0 text-body-lg focus-visible:!outline-0"
+            className="!border-0 !bg-transparent !px-0 text-body-lg leading-relaxed focus-visible:!outline-0"
           />
         )}
         <AnimatePresence>
           {body !== null && body.length > 0 && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: tween('fast', 'in') }} className="mt-1 text-body-sm text-fg-4">
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: tween('fast', 'in') }} className="mt-1 text-body-sm text-fg-3">
               Saves as you type. Clear it to remove the note.
             </motion.p>
           )}
