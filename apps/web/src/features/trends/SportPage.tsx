@@ -135,7 +135,7 @@ function PointsTrend({ points, fmt, higherIsBetter, refLine }: { points: { date:
           <text x={L.l} y={H - 4} className="fill-fg-3 font-mono text-[11px]">{formatDateMedium(points[0].date)}</text>
           <text x={W - L.r} y={H - 4} textAnchor="end" className="fill-fg-3 font-mono text-[11px]">{formatDateMedium(points[points.length - 1].date)}</text>
           {points.map((p, i) => (
-            <motion.circle key={p.id} cx={x(xs[i])} cy={y(p.v)} r={3} className="cursor-pointer fill-fg-3 hover:fill-fg-1" initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} transition={{ ...spring.smooth, delay: Math.min(i * 0.004, 0.24) }} onClick={() => navigate({ to: '/activities/$id', params: { id: p.id } })}>
+            <motion.circle key={p.id} cx={x(xs[i])} cy={y(p.v)} r={3} className="cursor-pointer fill-fg-2 hover:fill-fg-1" initial={{ opacity: 0 }} animate={{ opacity: 0.9 }} transition={{ ...spring.smooth, delay: Math.min(i * 0.004, 0.24) }} onClick={() => navigate({ to: '/activities/$id', params: { id: p.id } })}>
               <title>{`${formatDateMedium(p.date)} · ${fmt(p.v)}`}</title>
             </motion.circle>
           ))}

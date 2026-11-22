@@ -224,8 +224,8 @@ function ReadinessCard({ d }: { d: TodayData }) {
 
   return (
     <Card padding="none" className="flex flex-col" style={{ '--chart-bg': 'var(--color-surface-1)' } as React.CSSProperties}>
-      <div className="grid grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
-        <div className="col-span-2 flex flex-col gap-2 border-b border-line-1 p-4 xl:col-span-1 xl:border-r xl:border-b-0 xl:p-5">
+      <div className="grid grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
+        <div className="col-span-2 flex flex-col gap-2 border-b border-line-1 p-4 lg:col-span-1 lg:border-r lg:border-b-0 xl:p-5">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-micro uppercase text-fg-3">HRV · 7-day</span>
             <span className="text-body-sm text-fg-3">{hrvCopy}</span>
@@ -248,9 +248,9 @@ function ReadinessCard({ d }: { d: TodayData }) {
           format={(h) => hm(h * 3600)}
           unit="h"
           note={w.sleep.mean3Hours != null ? `3-night ${hm(w.sleep.mean3Hours * 3600)}${w.sleep.short ? ' · short' : ''}` : undefined}
-          className="xl:border-r xl:border-line-1"
+          className="lg:border-r lg:border-line-1"
         />
-        <div className="col-span-2 flex flex-col gap-1.5 border-t border-line-1 p-4 xl:col-span-1 xl:border-t-0 xl:p-5">
+        <div className="col-span-2 flex flex-col gap-1.5 border-t border-line-1 p-4 lg:col-span-1 lg:border-t-0 xl:p-5">
           <span className="text-micro uppercase text-fg-3">Readiness</span>
           <span className="flex items-center gap-2 text-title-3 text-fg-1">
             <span className="flex items-end gap-0.5" aria-hidden>
