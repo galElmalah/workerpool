@@ -31,11 +31,10 @@ struct TodayScreen: View {
                 .frame(maxWidth: 700)
                 .frame(maxWidth: .infinity)
             }
-            .onChange(of: model.focusCheckIn) { _, focus in
-                guard focus else { return }
-                withAnimation(Theme.Motion.smooth) { proxy.scrollTo("check-in", anchor: .center) }
-                model.focusCheckIn = false
-            }
+            // cadence://checkin/<date> (Check-in widget): may arrive before this screen exists or
+            // before its content loaded, so check on appear and again once content is there.
+            .onChange(of: model.focusCheckIn, initial: true) { _, _ in focusCheckInIfNeeded(proxy) }
+            .onChange(of: remote.value == nil) { _, _ in focusCheckInIfNeeded(proxy) }
         }
         .screenBackground()
         .refreshable {
@@ -53,6 +52,15 @@ struct TodayScreen: View {
         }
         .task(id: model.dataVersion) { await load() }
         .sensoryFeedback(.success, trigger: checkIns)
+    }
+
+    private func focusCheckInIfNeeded(_ proxy: ScrollViewProxy) {
+        guard model.focusCheckIn, remote.value != nil else { return }
+        model.focusCheckIn = false
+        Task { @MainActor in
+            // one runloop later, so the check-in card is laid out before scrolling to it
+            withAnimation(Theme.Motion.smooth) { proxy.scrollTo("check-in", anchor: .center) }
+        }
     }
 
     // MARK: Content

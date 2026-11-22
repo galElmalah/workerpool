@@ -33,6 +33,7 @@ import { focusDay, onGridTab, useCalendarKeys } from '../shared/keys';
 import { cardMenu, dayMenu } from '../shared/menu';
 import { calStore, useCal } from '../shared/store';
 import { DragLayer, useCalendarDrag } from '../shared/useDrag';
+import { ImportNote } from '../shared/ImportNote';
 import { NewButton, PagingControls, RollingTitle, ViewSwitcher } from '../shared/Toolbar';
 import { PeekLayer } from '../shared/Peek';
 import { COL_GAP, COLS, WeekRow, type MonthLayout } from './WeekRow';
@@ -288,6 +289,7 @@ export function MonthView({ anchor }: { anchor?: LocalDate }) {
         toolbar={<ViewSwitcher value="month" onChange={(v) => goView(v, calStore.get().cursor ?? today ?? guess)} />}
         actions={
           <>
+            <ImportNote />
             <PagingControls onPrev={() => stepMonth(-1)} onNext={() => stepMonth(1)} onToday={goToday} prevLabel="Previous month" nextLabel="Next month" />
             <NewButton />
           </>

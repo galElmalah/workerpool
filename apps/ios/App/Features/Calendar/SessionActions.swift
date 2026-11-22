@@ -198,6 +198,7 @@ extension AppModel {
             if let rpe { result = try await client.setRPE(activityId: id, rpe) }
             if let feel { result = try await client.setFeel(activityId: id, feel) }
             if let note { result = try await client.setActivityNote(activityId: id, note) }
+            await didWriteQuietly()
             return result
         } catch {
             showError(error, doing: "save the log")

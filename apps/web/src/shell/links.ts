@@ -52,6 +52,7 @@ export const links = {
   settingsSync: () => linkOptions({ to: '/settings/sync' }),
   settingsAppearance: () => linkOptions({ to: '/settings/appearance' }),
   settingsData: () => linkOptions({ to: '/settings/data' }),
+  settingsDevices: () => linkOptions({ to: '/settings/devices' }),
   settingsShortcuts: () => linkOptions({ to: '/settings/shortcuts' }),
 
   welcome: () => linkOptions({ to: '/welcome' }),

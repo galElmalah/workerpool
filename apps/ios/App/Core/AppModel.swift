@@ -157,12 +157,19 @@ final class AppModel {
         didLoseAuthorization()
     }
 
+    /// Signed out (by the user, or the token was revoked: 401). Drops everything this phone keeps
+    /// about the account — token, snapshot (App Group), cached responses (app + widget), the widget's
+    /// check-in record — then reloads the widgets so they show "Connect in the app".
     private func didLoseAuthorization() {
         client = nil
         snapshot = nil
         snapshotFetchedAt = nil
         settings = nil
+        tokenStore.clear()
         snapshotCache.clear()
+        responseCache.removeAll()
+        ResponseCache(directory: config.containerURL.appendingPathComponent("WidgetResponses", isDirectory: true)).removeAll()
+        CheckInStore(defaults: config.defaults).clear()
         todayPath = []; calendarPath = []; trendsPath = []; activitiesPath = []; morePath = []
         selectedTab = .today
         toast = nil
@@ -201,6 +208,12 @@ final class AppModel {
     /// Call after any mutation: refreshes the snapshot, reloads widgets and tells visible screens to reload.
     func didWrite() async {
         dataVersion &+= 1
+        await refreshSnapshot()
+    }
+
+    /// After a small write the current screen already shows (autosaved notes, quick log): refresh the
+    /// snapshot and the widgets without making visible screens reload under the user's fingers.
+    func didWriteQuietly() async {
         await refreshSnapshot()
     }
 
@@ -287,7 +300,9 @@ final class AppModel {
         case .newWorkout(let date):
             show(.calendar, [.newWorkout(date: date ?? today)])
         case .template:
+            // workout templates (library) have no screen in the app yet
             show(.calendar, [])
+            showToast("Workout templates open in the web app for now.")
         case .trends:
             show(.trends, [])
         }

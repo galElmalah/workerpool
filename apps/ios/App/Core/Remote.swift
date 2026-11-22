@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import CadenceKit
 
 /// One remote value for a screen: shows the cached response instantly (offline first paint), then

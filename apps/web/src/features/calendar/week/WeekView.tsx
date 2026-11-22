@@ -35,6 +35,7 @@ import { PeekLayer } from '../shared/Peek';
 import { QuickAdd } from '../shared/QuickAdd';
 import { calStore, useCal, type DragPreview } from '../shared/store';
 import { WeekSummaryBlock } from '../shared/Summary';
+import { ImportNote } from '../shared/ImportNote';
 import { NewButton, PagingControls, ViewSwitcher } from '../shared/Toolbar';
 import { DragLayer, useCalendarDrag } from '../shared/useDrag';
 
@@ -253,6 +254,7 @@ export function WeekView({ isoWeek }: { isoWeek: string }) {
           toolbar={<ViewSwitcher value="week" onChange={(v) => goView(v, calStore.get().cursor ?? start)} />}
           actions={
             <>
+              <ImportNote />
               <PagingControls onPrev={() => page(-1)} onNext={() => page(1)} onToday={goToday} prevLabel="Previous week" nextLabel="Next week" />
               <NewButton />
             </>

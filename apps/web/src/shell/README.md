@@ -35,7 +35,7 @@ chrome). Route ids are `/_app<path>` — read params/search with `getRouteApi('/
 | `/week/$isoWeek` | week → `WeekPage` | `isoWeek` | |
 | `/journal` | journal → `JournalPage` | | `type: day\|workout\|week`, `q`, `tag` |
 | `/settings` | settings → `SettingsLayout` (must render `<Outlet/>`); `/settings` redirects to `/settings/profile` | | |
-| `/settings/profile` · `zones` · `sports` · `garmin` · `sync` · `appearance` · `data` · `shortcuts` | settings → `SettingsProfilePage` · `SettingsZonesPage` · `SettingsSportsPage` · `SettingsGarminPage` · `SettingsSyncPage` · `SettingsAppearancePage` · `SettingsDataPage` · `SettingsShortcutsPage` | | sync: `status: ok\|error\|running` |
+| `/settings/profile` · `zones` · `sports` · `garmin` · `sync` · `devices` · `appearance` · `data` · `shortcuts` | settings → `SettingsProfilePage` · `SettingsZonesPage` · `SettingsSportsPage` · `SettingsGarminPage` · `SettingsSyncPage` · `SettingsDevicesPage` · `SettingsAppearancePage` · `SettingsDataPage` · `SettingsShortcutsPage` | | sync: `status: ok\|error\|running` |
 | `/welcome` | welcome → `WelcomePage` (bare) | | |
 | `/login` | welcome → `LoginPage` (bare) | | `redirect` |
 | `/dev/gallery`, `/dev/morph`, `/dev/morph/$id` | `shell/dev/pages` | | |

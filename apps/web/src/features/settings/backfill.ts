@@ -7,6 +7,7 @@
 import { useSyncExternalStore } from 'react';
 import { ApiError, api, call } from '@/lib/api';
 import { invalidateTraining, qk, queryClient } from '@/lib/query';
+import { garminStatusQuery } from '@/lib/queries/shared';
 
 const postStep = () => call(api.garmin.backfill.step.$post());
 export type BackfillProgress = Awaited<ReturnType<typeof postStep>>;
@@ -47,6 +48,7 @@ export async function startBackfill(months: number): Promise<void> {
       const p = await call(api.garmin.backfill.$post({ json: { months } }));
       if (my !== token) return;
       set({ progress: p });
+      publish(p);
       return loop(my);
     } catch (e) {
       // the initial connect sync holds the lock for a few seconds
@@ -77,7 +79,7 @@ async function loop(my: number): Promise<void> {
       if (my !== token) return;
       failures = 0;
       set({ progress: p });
-      if (p.done % 10 === 0) void queryClient.invalidateQueries({ queryKey: qk.garmin.status });
+      publish(p);
     } catch (e) {
       if (my !== token) return;
       if (busy(e) || ++failures < 3) {
@@ -92,6 +94,18 @@ async function loop(my: number): Promise<void> {
   if (my === token) set({ looping: false });
   void queryClient.invalidateQueries({ queryKey: qk.garmin.status });
   void invalidateTraining();
+}
+
+/**
+ * Mirror each step's progress into the cached Garmin status, so the rail's sync state and the
+ * calendar's import note know about the import at once (and the status query switches to its
+ * fast poll, which in turn refreshes the training views as activities arrive — see
+ * `useGarminStatusSync`).
+ */
+function publish(p: BackfillProgress): void {
+  queryClient.setQueryData(garminStatusQuery.queryKey, (s) =>
+    s ? { ...s, backfillProgress: p, backfill: { running: p.running, done: p.done, total: p.total, ...(p.oldestDate ? { oldestDate: p.oldestDate } : {}) } } : s,
+  );
 }
 
 export async function cancelBackfill(): Promise<void> {

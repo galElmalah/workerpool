@@ -31,6 +31,15 @@ describe('backfill', () => {
       perStep.push(mock.state.requests.length - reqs);
       steps++;
       if (p.phase === 'activities') expect(p.total).not.toBeNull();
+      if (steps === 3 && p.running) {
+        // Mid-import the status says so and counts what has landed: the web app polls it to show
+        // "Importing history" on the calendar and to refresh the training views as activities arrive.
+        const mid = await json('/garmin/status');
+        const stored = await env.DB.prepare('SELECT count(*) AS n FROM activities WHERE deleted_at IS NULL').first<number>('n');
+        expect(mid.backfill).toMatchObject({ running: true, done: p.done });
+        expect(mid.counts.activities).toBe(stored);
+        expect(stored).toBeGreaterThan(0);
+      }
     }
     expect(p).toMatchObject({ running: false, phase: 'done', failed: 0 });
     expect(p.done).toBe(visible);

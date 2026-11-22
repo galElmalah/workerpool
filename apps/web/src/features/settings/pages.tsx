@@ -6,7 +6,7 @@ import './settings.css';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, useLocation } from '@tanstack/react-router';
 import type { Threshold } from '@cadence/core/domain';
-import { Database, Gauge, Keyboard, Layers, LogOut, Monitor, Moon, Palette, RefreshCw, Search, Sun, User, Watch } from 'lucide-react';
+import { Database, Gauge, Keyboard, Layers, LogOut, Monitor, Moon, Palette, RefreshCw, Search, Smartphone, Sun, User, Watch } from 'lucide-react';
 import { LayoutGroup, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiError, api, call } from '@/lib/api';
@@ -38,6 +38,7 @@ export { SettingsGarminPage } from './garmin-page';
 export { SettingsZonesPage } from './zones';
 export { SettingsSyncPage } from './sync';
 export { SettingsDataPage } from './data';
+export { SettingsDevicesPage } from './devices';
 
 // ───────────────────────────── layout ─────────────────────────────
 
@@ -47,6 +48,7 @@ const NAV = [
   { to: '/settings/sports', label: 'Sports', icon: <Layers /> },
   { to: '/settings/garmin', label: 'Garmin', icon: <Watch /> },
   { to: '/settings/sync', label: 'Sync log', icon: <RefreshCw /> },
+  { to: '/settings/devices', label: 'Devices', icon: <Smartphone /> },
   { to: '/settings/appearance', label: 'Appearance', icon: <Palette /> },
   { to: '/settings/data', label: 'Data', icon: <Database /> },
   { to: '/settings/shortcuts', label: 'Shortcuts', icon: <Keyboard /> },

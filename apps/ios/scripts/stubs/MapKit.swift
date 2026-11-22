@@ -46,7 +46,7 @@ public protocol MapContent {
     @MapContentBuilder @MainActor var body: Body { get }
 }
 extension Never: MapContent {}
-extension Optional: MapContent where Wrapped: MapContent {}
+extension Optional: MapContent where Wrapped: MapContent { public var body: Never { fatalError() } }
 @resultBuilder public struct MapContentBuilder {
     public static func buildExpression<C: MapContent>(_ content: C) -> C { content }
     public static func buildBlock() -> _EmptyMapContent { _EmptyMapContent() }
@@ -56,8 +56,8 @@ extension Optional: MapContent where Wrapped: MapContent {}
     public static func buildBlock<C0: MapContent, C1: MapContent, C2: MapContent, C3: MapContent>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3) -> _TupleMapContent { _TupleMapContent() }
     public static func buildBlock<C0: MapContent, C1: MapContent, C2: MapContent, C3: MapContent, C4: MapContent>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4) -> _TupleMapContent { _TupleMapContent() }
     public static func buildIf<C: MapContent>(_ content: C?) -> C? { content }
-    public static func buildEither<T: MapContent, F: MapContent>(first: T) -> _TupleMapContent { _TupleMapContent() }
-    public static func buildEither<T: MapContent, F: MapContent>(second: F) -> _TupleMapContent { _TupleMapContent() }
+    public static func buildEither<T: MapContent>(first: T) -> _TupleMapContent { _TupleMapContent() }
+    public static func buildEither<F: MapContent>(second: F) -> _TupleMapContent { _TupleMapContent() }
 }
 public struct _EmptyMapContent: MapContent { public var body: Never { fatalError() } }
 public struct _TupleMapContent: MapContent { public var body: Never { fatalError() } }

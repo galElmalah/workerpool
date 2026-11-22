@@ -8,6 +8,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi, useNavigate } from '@tanstack/react-router';
 import type { Threshold, ThresholdKind } from '@cadence/core/domain';
+import { addDays, diffDays, weekStart } from '@cadence/core/time';
 import { ArrowLeft, ArrowRight, Check, Database, Lock, TriangleAlert, Watch } from 'lucide-react';
 import { AnimatePresence, motion, useAnimate } from 'motion/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -15,6 +16,7 @@ import { ApiError, api, call } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { formatDateMedium, formatNumber } from '@/lib/format';
 import { qk } from '@/lib/query';
+import { calendarQuery } from '@/lib/queries/training';
 import { authQuery, settingsQuery, useAuthStatus, useGarminStatus, useLogin, useSetupPassphrase, useUpdateSettings } from '@/lib/queries/shared';
 import { setUnits, useUnits } from '@/lib/units';
 import { Odometer } from '@/motion/Ticker';
@@ -527,6 +529,20 @@ function BackfillPanel({ defaultMonths }: { defaultMonths: (typeof MONTHS)[numbe
   );
 }
 
+/**
+ * Warm the calendar's first window while the finale plays, so the first paint after onboarding has
+ * the imported history instead of a long skeleton. Mirrors the month view's windowing: whole
+ * 12-week pages aligned to 2000-01-03 (calendar/shared/data.ts) — the page with today and the next.
+ */
+function prefetchCalendar(qc: ReturnType<typeof useQueryClient>, today: string): void {
+  const EPOCH = '2000-01-03';
+  const page = Math.floor(Math.floor(diffDays(EPOCH, weekStart(today)) / 7) / 12);
+  for (const p of [page, page + 1]) {
+    const from = addDays(EPOCH, p * 84);
+    void qc.prefetchQuery(calendarQuery(from, addDays(from, 83)));
+  }
+}
+
 // ── step 4: thresholds ──
 const ONBOARD_KINDS: ThresholdKind[] = ['ftp', 'run_threshold', 'swim_css', 'row_threshold', 'lthr', 'hr_max'];
 type Src = 'manual' | 'garmin' | 'estimated' | 'default';
@@ -588,6 +604,7 @@ function StepThresholds({ onBack, onFinish, onSaving }: { onBack: () => void; on
         void qc.invalidateQueries({ queryKey: qk.thresholds.all });
       }
       const s = await update.mutateAsync({ onboarded: true });
+      if (s.homeRoute === 'calendar') prefetchCalendar(qc, today);
       onFinish(s.homeRoute);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

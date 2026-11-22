@@ -424,6 +424,7 @@ struct DayNoteEditor: View {
             self.saved = draft
             state = .saved
             onSaved?(body)
+            await model.didWriteQuietly()
         } catch {
             state = .failed
         }

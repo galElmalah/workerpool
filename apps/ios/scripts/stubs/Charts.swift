@@ -46,8 +46,8 @@ extension ForEach: ChartContent where Content: ChartContent {
     public var body: Never { fatalError() }
 }
 extension ForEach where Content: ChartContent {
-    public init(_ data: Data, @ChartContentBuilder content: @escaping (Data.Element) -> Content) where ID == Data.Element.ID, Data.Element: Identifiable { self.data = data }
-    public init(_ data: Data, id: KeyPath<Data.Element, ID>, @ChartContentBuilder content: @escaping (Data.Element) -> Content) { self.data = data }
+    public init(_ data: Data, @ChartContentBuilder content: @escaping (Data.Element) -> Content) where ID == Data.Element.ID, Data.Element: Identifiable { fatalError() }
+    public init(_ data: Data, id: KeyPath<Data.Element, ID>, @ChartContentBuilder content: @escaping (Data.Element) -> Content) { fatalError() }
 }
 
 public struct MarkDimension: Sendable {
@@ -179,8 +179,8 @@ public protocol AxisMark: AxisContent {}
     public static func buildBlock<C0: AxisContent, C1: AxisContent, C2: AxisContent>(_ c0: C0, _ c1: C1, _ c2: C2) -> _TupleAxis { _TupleAxis() }
     public static func buildBlock<C0: AxisContent, C1: AxisContent, C2: AxisContent, C3: AxisContent>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3) -> _TupleAxis { _TupleAxis() }
     public static func buildIf<C: AxisContent>(_ content: C?) -> _TupleAxis { _TupleAxis() }
-    public static func buildEither<T: AxisContent, F: AxisContent>(first: T) -> _TupleAxis { _TupleAxis() }
-    public static func buildEither<T: AxisContent, F: AxisContent>(second: F) -> _TupleAxis { _TupleAxis() }
+    public static func buildEither<T: AxisContent>(first: T) -> _TupleAxis { _TupleAxis() }
+    public static func buildEither<F: AxisContent>(second: F) -> _TupleAxis { _TupleAxis() }
 }
 public struct _EmptyAxis: AxisContent {}
 public struct _TupleAxis: AxisContent {}

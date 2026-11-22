@@ -189,6 +189,7 @@ const settingsGarminRoute = createRoute({ getParentRoute: () => settingsRoute, p
 const settingsSyncRoute = createRoute({ getParentRoute: () => settingsRoute, path: '/sync', validateSearch: syncLogSearch, component: lazyRouteComponent(settings, 'SettingsSyncPage') });
 const settingsAppearanceRoute = createRoute({ getParentRoute: () => settingsRoute, path: '/appearance', component: lazyRouteComponent(settings, 'SettingsAppearancePage') });
 const settingsDataRoute = createRoute({ getParentRoute: () => settingsRoute, path: '/data', component: lazyRouteComponent(settings, 'SettingsDataPage') });
+const settingsDevicesRoute = createRoute({ getParentRoute: () => settingsRoute, path: '/devices', component: lazyRouteComponent(settings, 'SettingsDevicesPage') });
 const settingsShortcutsRoute = createRoute({ getParentRoute: () => settingsRoute, path: '/shortcuts', component: lazyRouteComponent(settings, 'SettingsShortcutsPage') });
 
 const devGalleryRoute = createRoute({ getParentRoute: () => appRoute, path: '/dev/gallery', component: lazyRouteComponent(dev, 'GalleryPage') });
@@ -237,6 +238,7 @@ export const routeTree = rootRoute.addChildren([
       settingsSyncRoute,
       settingsAppearanceRoute,
       settingsDataRoute,
+      settingsDevicesRoute,
       settingsShortcutsRoute,
     ]),
     devGalleryRoute,

@@ -24,6 +24,7 @@ import {
   Plus,
   RefreshCw,
   Settings,
+  Smartphone,
   Sparkle,
   Sunrise,
 } from 'lucide-react';
@@ -117,6 +118,7 @@ export function installDefaultCommands(router: AnyRouter, opts: { toggleRail: ()
     { id: 'nav.zones', group: 'Navigate', title: 'Zones & thresholds', subtitle: 'Settings', icon: <Settings />, keywords: ['ftp', 'lthr', 'css'], perform: go('/settings/zones') },
     { id: 'nav.garmin', group: 'Navigate', title: 'Garmin connection', subtitle: 'Settings', icon: <RefreshCw />, perform: go('/settings/garmin') },
     { id: 'nav.synclog', group: 'Navigate', title: 'Sync log', subtitle: 'Settings', icon: <RefreshCw />, perform: go('/settings/sync') },
+    { id: 'nav.devices', group: 'Navigate', title: 'Devices', subtitle: 'Settings', icon: <Smartphone />, keywords: ['iphone', 'ios', 'app', 'mobile', 'phone', 'token', 'revoke'], perform: go('/settings/devices') },
     { id: 'nav.appearance', group: 'Navigate', title: 'Appearance', subtitle: 'Settings', icon: <Settings />, keywords: ['theme', 'dark', 'light'], perform: go('/settings/appearance') },
   ];
 

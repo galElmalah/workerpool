@@ -4,7 +4,7 @@
  */
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Settings } from '@cadence/core/domain';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { api, call } from '../api';
 import { invalidateTraining, qk, queryClient } from '../query';
 import { setUnits } from '../units';
@@ -108,6 +108,17 @@ export function useGarminStatusSync(): void {
     if (data.state === 'error' || data.lastError) return setSyncStatus({ state: 'error', label: 'Sync failed' });
     setSyncStatus({ state: 'idle', lastSyncAt: data.lastSyncAt });
   }, [data, isError, syncing]);
+
+  // Activities that arrive in the background (history import, cron sync) refresh the training
+  // views: without this the calendar keeps whatever it fetched first until the import ends.
+  // The status polls every 4 s while an import runs, so this refreshes at most that often.
+  const imported = data ? `${data.counts.activities}|${data.backfill?.running ? 1 : 0}|${data.lastSyncAt ?? ''}` : null;
+  const seen = useRef<string | null>(null);
+  useEffect(() => {
+    if (imported === null) return;
+    if (seen.current !== null && seen.current !== imported) void invalidateTraining();
+    seen.current = imported;
+  }, [imported]);
 }
 
 const SYNC_KEY = ['garmin', 'sync-now'] as const;

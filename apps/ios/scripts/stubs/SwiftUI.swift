@@ -248,7 +248,7 @@ public struct SafeAreaRegions: OptionSet, Sendable {
 
 public protocol ShapeStyle: Sendable {}
 
-public struct Color: Hashable, CustomStringConvertible, Sendable, ShapeStyle, View {
+public struct Color: Hashable, CustomStringConvertible, Sendable, ShapeStyle {
     public enum RGBColorSpace: Sendable { case sRGB, sRGBLinear, displayP3 }
     public init(_ colorSpace: RGBColorSpace = .sRGB, red: Double, green: Double, blue: Double, opacity: Double = 1) {}
     public init(_ colorSpace: RGBColorSpace = .sRGB, white: Double, opacity: Double = 1) {}
@@ -264,6 +264,8 @@ public struct Color: Hashable, CustomStringConvertible, Sendable, ShapeStyle, Vi
     public static let teal = Color(white: 0), cyan = Color(white: 0), blue = Color(white: 0), indigo = Color(white: 0), purple = Color(white: 0)
     public static let pink = Color(white: 0), brown = Color(white: 0)
     public static let primary = Color(white: 0), secondary = Color(white: 0), accentColor = Color(white: 0)
+}
+extension Color: View {
     public var body: Never { fatalError() }
 }
 extension ShapeStyle where Self == Color {
@@ -324,12 +326,12 @@ public struct Gradient: Hashable, Sendable {
     public init(colors: [Color]) {}
     public init(stops: [Stop]) {}
 }
-public struct LinearGradient: ShapeStyle, View {
+public struct LinearGradient: ShapeStyle {
     public init(gradient: Gradient, startPoint: UnitPoint, endPoint: UnitPoint) {}
     public init(colors: [Color], startPoint: UnitPoint, endPoint: UnitPoint) {}
     public init(stops: [Gradient.Stop], startPoint: UnitPoint, endPoint: UnitPoint) {}
-    public var body: Never { fatalError() }
 }
+extension LinearGradient: View { public var body: Never { fatalError() } }
 extension ShapeStyle where Self == LinearGradient {
     public static func linearGradient(_ gradient: Gradient, startPoint: UnitPoint, endPoint: UnitPoint) -> LinearGradient { LinearGradient(gradient: gradient, startPoint: startPoint, endPoint: endPoint) }
     public static func linearGradient(colors: [Color], startPoint: UnitPoint, endPoint: UnitPoint) -> LinearGradient { LinearGradient(colors: colors, startPoint: startPoint, endPoint: endPoint) }
@@ -426,7 +428,7 @@ public struct ContentTransition: Equatable, Sendable {
     public static let identity = ContentTransition(), opacity = ContentTransition(), interpolate = ContentTransition()
     public static func numericText(countsDown: Bool = false) -> ContentTransition { ContentTransition() }
     @available(iOS 17.0, *) public static func numericText(value: Double) -> ContentTransition { ContentTransition() }
-    public static func symbolEffect<T>(_ effect: T) -> ContentTransition { ContentTransition() }
+    public static func symbolEffect<T: ContentTransitionSymbolEffect & SymbolEffect>(_ effect: T, options: SymbolEffectOptions = .default) -> ContentTransition { ContentTransition() }
     public static var symbolEffect: ContentTransition { ContentTransition() }
 }
 
@@ -762,7 +764,7 @@ public struct AnyLayout: Layout {
 // MARK: - Shapes
 
 public protocol Animatable {}
-public struct Path: Shape, Equatable {
+public struct Path: Equatable, Sendable {
     public init() {}
     public init(_ rect: CGRect) {}
     public init(roundedRect rect: CGRect, cornerRadius: CGFloat, style: RoundedCornerStyle = .continuous) {}
@@ -780,12 +782,14 @@ public struct Path: Shape, Equatable {
     public mutating func closeSubpath() {}
     public var isEmpty: Bool { true }
     public var boundingRect: CGRect { .zero }
+}
+extension Path: Shape {
     public func path(in rect: CGRect) -> Path { self }
 }
 public enum RoundedCornerStyle: Hashable, Sendable { case circular, continuous }
 
 public protocol Shape: Sendable, Animatable, View {
-    func path(in rect: CGRect) -> Path
+    nonisolated func path(in rect: CGRect) -> Path
 }
 extension Shape {
     public var body: _ShapeView<Self, ForegroundStyle> { _ShapeView() }
@@ -1182,13 +1186,14 @@ public struct ContentUnavailableView<Label: View, Description: View, Actions: Vi
     public var body: Never { fatalError() }
 }
 
+public struct TimelineViewDefaultContext {
+    public let date: Date
+    public enum Cadence: Comparable, Sendable { case live, seconds, minutes }
+    public let cadence: Cadence
+}
 public struct TimelineView<Schedule: TimelineSchedule, Content: View>: View {
-    public struct Context {
-        public let date: Date
-        public enum Cadence: Comparable, Sendable { case live, seconds, minutes }
-        public let cadence: Cadence
-    }
-    public init(_ schedule: Schedule, @ViewBuilder content: @escaping (Context) -> Content) {}
+    public typealias Context = TimelineViewDefaultContext
+    public init(_ schedule: Schedule, @ViewBuilder content: @escaping (TimelineViewDefaultContext) -> Content) {}
     public var body: Never { fatalError() }
 }
 public protocol TimelineSchedule {}
@@ -1388,8 +1393,8 @@ public struct ObservedObject<ObjectType: ObservableObject>: DynamicProperty {
     @dynamicMemberLookup public struct Wrapper {
         public subscript<Subject>(dynamicMember keyPath: ReferenceWritableKeyPath<ObjectType, Subject>) -> Binding<Subject> { fatalError() }
     }
-    public init(wrappedValue: ObjectType) {}
-    public init(initialValue: ObjectType) {}
+    public init(wrappedValue: ObjectType) { self.wrappedValue = wrappedValue }
+    public init(initialValue: ObjectType) { self.wrappedValue = initialValue }
     public var wrappedValue: ObjectType
     public var projectedValue: Wrapper { fatalError() }
 }
@@ -1421,6 +1426,7 @@ public struct SceneStorage<Value>: DynamicProperty {
 @propertyWrapper
 public struct FocusState<Value: Hashable>: DynamicProperty {
     @propertyWrapper public struct Binding {
+        public init(wrappedValue: Value) {}
         public var wrappedValue: Value { get { fatalError() } nonmutating set {} }
         public var projectedValue: Binding { self }
     }
@@ -1606,6 +1612,9 @@ public struct BounceSymbolEffect: DiscreteSymbolEffect, IndefiniteSymbolEffect {
 public struct PulseSymbolEffect: DiscreteSymbolEffect, IndefiniteSymbolEffect { public var byLayer: PulseSymbolEffect { self } }
 public struct VariableColorSymbolEffect: DiscreteSymbolEffect, IndefiniteSymbolEffect { public var iterative: VariableColorSymbolEffect { self } }
 public struct ScaleSymbolEffect: IndefiniteSymbolEffect { public var up: ScaleSymbolEffect { self } }
+public protocol ContentTransitionSymbolEffect {}
+public struct ReplaceSymbolEffect: ContentTransitionSymbolEffect, SymbolEffect { public var downUp: ReplaceSymbolEffect { self }; public var upUp: ReplaceSymbolEffect { self }; public var offUp: ReplaceSymbolEffect { self }; public var byLayer: ReplaceSymbolEffect { self }; public var wholeSymbol: ReplaceSymbolEffect { self } }
+extension SymbolEffect where Self == ReplaceSymbolEffect { public static var replace: ReplaceSymbolEffect { .init() } }
 extension SymbolEffect where Self == BounceSymbolEffect { public static var bounce: BounceSymbolEffect { .init() } }
 extension SymbolEffect where Self == PulseSymbolEffect { public static var pulse: PulseSymbolEffect { .init() } }
 extension SymbolEffect where Self == VariableColorSymbolEffect { public static var variableColor: VariableColorSymbolEffect { .init() } }
@@ -1697,13 +1706,13 @@ extension View {
 
     // Background, overlay, clipping
     public func background<V: View>(alignment: Alignment = .center, @ViewBuilder content: () -> V) -> some View { _m }
-    public func background<V: View>(_ background: V, alignment: Alignment = .center) -> some View { _m }
+    @_disfavoredOverload public func background<V: View>(_ background: V, alignment: Alignment = .center) -> some View { _m }  // soft-deprecated in the SDK
     public func background(ignoresSafeAreaEdges edges: Edge.Set = .all) -> some View { _m }
     public func background<S: ShapeStyle>(_ style: S, ignoresSafeAreaEdges edges: Edge.Set = .all) -> some View { _m }
     public func background<S: ShapeStyle, T: Shape>(_ style: S, in shape: T, fillStyle: FillStyle = FillStyle()) -> some View { _m }
     public func background<S: Shape>(in shape: S, fillStyle: FillStyle = FillStyle()) -> some View { _m }
     public func overlay<V: View>(alignment: Alignment = .center, @ViewBuilder content: () -> V) -> some View { _m }
-    public func overlay<V: View>(_ overlay: V, alignment: Alignment = .center) -> some View { _m }
+    @_disfavoredOverload public func overlay<V: View>(_ overlay: V, alignment: Alignment = .center) -> some View { _m }  // soft-deprecated in the SDK
     public func overlay<S: ShapeStyle>(_ style: S, ignoresSafeAreaEdges edges: Edge.Set = .all) -> some View { _m }
     public func overlay<S: ShapeStyle, T: Shape>(_ style: S, in shape: T, fillStyle: FillStyle = FillStyle()) -> some View { _m }
     public func border<S: ShapeStyle>(_ content: S, width: CGFloat = 1) -> some View { _m }
@@ -1796,13 +1805,13 @@ extension View {
     // Lifecycle & events
     public func onAppear(perform action: (() -> Void)? = nil) -> some View { _m }
     public func onDisappear(perform action: (() -> Void)? = nil) -> some View { _m }
-    public func task(priority: TaskPriority = .userInitiated, _ action: @escaping @Sendable () async -> Void) -> some View { _m }
-    public func task<T: Equatable>(id value: T, priority: TaskPriority = .userInitiated, _ action: @escaping @Sendable () async -> Void) -> some View { _m }
+    public func task(priority: TaskPriority = .userInitiated, @_inheritActorContext _ action: @escaping @Sendable () async -> Void) -> some View { _m }
+    public func task<T: Equatable>(id value: T, priority: TaskPriority = .userInitiated, @_inheritActorContext _ action: @escaping @Sendable () async -> Void) -> some View { _m }
     public func onChange<V: Equatable>(of value: V, initial: Bool = false, _ action: @escaping (_ oldValue: V, _ newValue: V) -> Void) -> some View { _m }
     public func onChange<V: Equatable>(of value: V, initial: Bool = false, _ action: @escaping () -> Void) -> some View { _m }
     public func onReceive<P: Publisher>(_ publisher: P, perform action: @escaping (P.Output) -> Void) -> some View where P.Failure == Never { _m }
     public func onOpenURL(perform action: @escaping (URL) -> ()) -> some View { _m }
-    public func refreshable(action: @escaping @Sendable () async -> Void) -> some View { _m }
+    public func refreshable(@_inheritActorContext action: @escaping @Sendable () async -> Void) -> some View { _m }
     public func environment<V>(_ keyPath: WritableKeyPath<EnvironmentValues, V>, _ value: V) -> some View { _m }
     public func environment<T: AnyObject & Observable>(_ object: T?) -> some View { _m }
     public func environmentObject<T: ObservableObject>(_ object: T) -> some View { _m }

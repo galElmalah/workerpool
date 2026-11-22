@@ -346,6 +346,7 @@ struct WorkoutScreen: View {
             let fresh = try await client.setWorkoutNote(id: w.id, text.trimmingCharacters(in: .whitespacesAndNewlines))
             remote.update { var x = $0; x.preNote = fresh.preNote; return x }
             noteState = .saved
+            await model.didWriteQuietly()
         } catch {
             noteState = .failed
         }
