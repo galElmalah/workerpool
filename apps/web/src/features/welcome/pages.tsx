@@ -100,7 +100,7 @@ function StepIndicator({ step, done }: { step: number; done: boolean }) {
                     )}
                   </AnimatePresence>
                 </span>
-                <span className={cn('relative truncate text-label', active ? 'text-fg-1' : complete ? 'text-fg-2' : 'text-fg-3')}>{s.label}</span>
+                <span className={cn('relative truncate text-label', active ? 'text-fg-1' : complete ? 'text-fg-2 max-sm:sr-only' : 'text-fg-3 max-sm:sr-only')}>{s.label}</span>
               </span>
             </li>
           );
