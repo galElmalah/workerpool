@@ -1,7 +1,6 @@
 /**
- * PLACEHOLDER — the calendar engineer replaces this file. Contract (src/shell/README.md):
- * named exports CalendarPage, CalendarMonthPage, CalendarWeekPage, plus the re-exports below, which
- * belong to the day/agenda engineer (./day, ./agenda, ./season, ./event) and must stay as they are.
+ * Calendar routes (src/shell/README.md). The day / agenda / season / event pages belong to the
+ * day & agenda engineer and are re-exported unchanged.
  */
 export { CalendarDayPage } from './day/DayPage';
 export { AgendaPage } from './agenda/AgendaPage';
@@ -9,35 +8,27 @@ export { SeasonPage } from './season/SeasonPage';
 export { EventPage } from './event/EventPage';
 
 import { getRouteApi } from '@tanstack/react-router';
-import { CalendarDays, CalendarRange } from 'lucide-react';
-import { formatIsoWeekLabel, formatMonthYearLong } from '@/lib/format';
-import { PlaceholderPage } from '@/shell/Placeholder';
+import { MonthView } from './month/MonthView';
+import { WeekView } from './week/WeekView';
 
+const calendarApi = getRouteApi('/_app/calendar');
 const weekApi = getRouteApi('/_app/calendar/week/$isoWeek');
 const monthApi = getRouteApi('/_app/calendar/month/$month');
 
+/** /calendar?date= — the infinite month view anchored on `date` (default: today from the API). */
 export function CalendarPage() {
-  return (
-    <PlaceholderPage title="Calendar" variant="compact" width="full" icon={<CalendarDays />}>
-      Infinite week rows with the weekly summary column, drag &amp; drop, quick-add and the month ⇄ week ⇄ day zoom.
-    </PlaceholderPage>
-  );
+  const { date } = calendarApi.useSearch();
+  return <MonthView anchor={date} />;
 }
 
+/** /calendar/month/$month — the same infinite view, anchored on the 1st of the month. */
 export function CalendarMonthPage() {
   const { month } = monthApi.useParams();
-  return (
-    <PlaceholderPage title={formatMonthYearLong(month)} variant="compact" width="full" icon={<CalendarDays />} breadcrumb={[{ label: 'Calendar', link: { to: '/calendar' } }]}>
-      The month view anchored to {formatMonthYearLong(month)}; infinite scroll continues both ways.
-    </PlaceholderPage>
-  );
+  return <MonthView anchor={`${month}-01`} />;
 }
 
+/** /calendar/week/$isoWeek — seven columns of full cards. */
 export function CalendarWeekPage() {
   const { isoWeek } = weekApi.useParams();
-  return (
-    <PlaceholderPage title={formatIsoWeekLabel(isoWeek)} variant="compact" width="full" icon={<CalendarRange />} breadcrumb={[{ label: 'Calendar', link: { to: '/calendar' } }]}>
-      Seven columns of full cards with step profiles, a day metrics row and the week summary header.
-    </PlaceholderPage>
-  );
+  return <WeekView isoWeek={isoWeek} />;
 }

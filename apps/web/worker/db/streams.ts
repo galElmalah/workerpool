@@ -9,6 +9,7 @@
  */
 import type { ActivityStreams } from '@cadence/core/domain';
 import { STREAM_CHANNELS } from '@cadence/core/domain';
+import { bodyBytes } from '../lib/bytes';
 
 /** Decimal places per channel when storing. */
 const DECIMALS: Record<(typeof STREAM_CHANNELS)[number], number> = {
@@ -54,7 +55,7 @@ export function roundStreams(s: ActivityStreams): ActivityStreams {
 }
 
 async function pipe(bytes: Uint8Array, stream: CompressionStream | DecompressionStream): Promise<Uint8Array> {
-  const body = new Response(bytes).body!.pipeThrough(stream);
+  const body = new Response(bodyBytes(bytes)).body!.pipeThrough(stream);
   return new Uint8Array(await new Response(body).arrayBuffer());
 }
 

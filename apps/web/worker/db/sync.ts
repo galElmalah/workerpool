@@ -96,6 +96,9 @@ export async function updateSyncLog(db: D1Database, id: string, patch: Partial<O
 
 // ───────────────────────────── key/value state ─────────────────────────────
 
+/** `sync_state` key of the demo clock (epoch ms; DEMO_MODE only). Set by demo seed, moved by demo/advance. */
+export const DEMO_NOW_KEY = 'demo:now';
+
 export async function getState<T>(db: D1Database, key: string): Promise<T | undefined> {
   const row = await first<{ value: string }>(db, 'SELECT value FROM sync_state WHERE key = ?', key);
   if (!row) return undefined;

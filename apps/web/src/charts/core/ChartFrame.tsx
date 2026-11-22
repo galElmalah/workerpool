@@ -16,7 +16,9 @@ export interface DataTable {
 export function SrTable({ table }: { table: DataTable }) {
   const rows = table.rows.length > 120 ? table.rows.slice(-120) : table.rows;
   return (
-    <table className="sr-only">
+    // Wrapped: a display:table ignores the 1px width of .sr-only and widened the page on mobile.
+    <div className="sr-only">
+    <table>
       {table.caption && <caption>{table.caption}</caption>}
       <thead>
         <tr>
@@ -35,6 +37,7 @@ export function SrTable({ table }: { table: DataTable }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 

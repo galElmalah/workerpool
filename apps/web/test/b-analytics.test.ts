@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { ActivityDetail, CalendarResponse, FitnessDay, WeekSummary, type PlannedWorkout, type ThresholdKind } from '@cadence/core/domain';
 import { addDays, isoWeekOf } from '@cadence/core/time';
-import { encodeFit, generateActivityDetail, generateAthlete, type SynthAthlete } from '../../../packages/garmin/src/synth';
+import { encodeFit, generateActivityDetail, generateAthlete, type SynthAthlete } from '@cadence/garmin/synth';
 import { ingestActivity } from '../worker/services/ingest';
 import { insertWorkouts } from '../worker/db/workouts';
 import { insertEvents, insertMarkers, upsertWellnessDevice } from '../worker/db/furniture';

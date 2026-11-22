@@ -274,6 +274,16 @@ export async function deleteWorkoutsById(env: Env, ids: string[]): Promise<Plann
   if (!victims.length) return [];
   await Promise.allSettled(victims.filter(isOnGarmin).map((w) => unpushWorkout(env, w.id)));
   const victimIds = victims.map((w) => w.id);
+  // Days of the activities about to be released (a manual pair can span dates).
+  const releasedDays: string[] = [];
+  for (const part of chunk(victimIds, 90)) {
+    const rows = await all<{ local_date: string }>(
+      env.DB,
+      `SELECT DISTINCT local_date FROM activities WHERE paired_workout_id IN (${placeholders(part.length)})`,
+      ...part,
+    );
+    releasedDays.push(...rows.map((r) => r.local_date));
+  }
   for (const part of chunk(victimIds, 90)) {
     await env.DB.prepare(
       `UPDATE activities SET paired_workout_id = NULL, pair_manual = 0 WHERE paired_workout_id IN (${placeholders(part.length)})`,
@@ -283,7 +293,7 @@ export async function deleteWorkoutsById(env: Env, ids: string[]): Promise<Plann
   }
   await deleteWorkouts(env.DB, victimIds);
   // Released activities become unplanned, or pair with another workout of their day.
-  await rePairDates(env, victims.map((w) => w.date));
+  await rePairDates(env, [...victims.map((w) => w.date), ...releasedDays]);
   return victims;
 }
 

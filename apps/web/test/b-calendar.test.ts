@@ -4,7 +4,7 @@ import { CalendarResponse, FitnessDay, WeekSummary, type LocalDate, type Planned
 import { buildFitnessSeries } from '@cadence/core/metrics';
 import { addDays, isoWeekOf, weekStart } from '@cadence/core/time';
 import { ingestActivity } from '../worker/services/ingest';
-import { fitnessSeries, weekSummaries } from '../worker/services/analytics';
+import { fitnessSeed, fitnessSeries, weekSummaries } from '../worker/services/analytics';
 import { insertWorkouts } from '../worker/db/workouts';
 import { insertPhases, putWeekNote } from '../worker/db/furniture';
 import { getToday } from '../worker/services/context';
@@ -109,13 +109,11 @@ describe('calendar & week summaries', () => {
     expect(w.bySport.map((s) => s.sport)).toEqual(['bike', 'run', 'swim', 'walk']);
     const bike = w.bySport.find((s) => s.sport === 'bike')!;
     expect(bike).toMatchObject({ plannedSec: 5400, doneSec: 5000, plannedLoad: 80, doneLoad: 70, plannedCount: 1, doneCount: 1, doneDistanceM: 40000 });
-    // End-of-week fitness from the EWMA over daily loads (exp form, τ 42/7, seeded at 0).
-    const expected = buildFitnessSeries({
-      dailyLoad: { [addDays(mon, -6)]: 40, [mon]: 55, [addDays(mon, 2)]: 70, [addDays(mon, 5)]: 20 },
-      from: addDays(mon, 6),
-      to: addDays(mon, 6),
-      today,
-    })[0];
+    // End-of-week fitness from the EWMA over daily loads (exp form, τ 42/7), seeded with the
+    // steady-state auto seed (mean of the first 28 days of history; integration fix #4).
+    const dailyLoad = { [addDays(mon, -6)]: 40, [mon]: 55, [addDays(mon, 2)]: 70, [addDays(mon, 5)]: 20 };
+    const seed = fitnessSeed(new Map(Object.entries(dailyLoad)), today)!;
+    const expected = buildFitnessSeries({ dailyLoad, from: addDays(mon, 6), to: addDays(mon, 6), today, seed })[0];
     expect(w.fitness).toBeCloseTo(expected.fitness, 1);
     expect(w.fatigue).toBeCloseTo(expected.fatigue, 1);
   });

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { Activity, ActivityDetail, ActivityStreams } from '@cadence/core/domain';
-import { generateActivityDetail, generateAthlete, encodeFit, type SynthAthlete } from '../../../packages/garmin/src/synth';
+import { generateActivityDetail, generateAthlete, encodeFit, type SynthAthlete } from '@cadence/garmin/synth';
 import { ingestActivity, recomputeActivities } from '../worker/services/ingest';
 import { getActivityByGarminId } from '../worker/db/activities';
 import { decodeStreams, getStreamsBlob } from '../worker/db/streams';

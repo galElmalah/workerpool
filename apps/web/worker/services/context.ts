@@ -4,12 +4,19 @@ import type { z } from 'zod';
 import type { LocalDate } from '@cadence/core/domain';
 import { todayIn } from '@cadence/core/time';
 import { getSettings } from '../db/settings';
+import { DEMO_NOW_KEY, getState } from '../db/sync';
+import { isDemo } from '../env';
 import { ApiError } from '../lib/http';
 
-/** "Today" in the athlete's timezone (settings.timezone). */
+/**
+ * "Today" in the athlete's timezone (settings.timezone). In demo mode the pinned demo clock
+ * (`sync_state['demo:now']`, epoch ms — set by `POST /demo/seed`, moved by `POST /demo/advance`)
+ * replaces real time, so a seeded demo keeps its "today" and agrees with the sync engine.
+ */
 export async function getToday(env: Env): Promise<LocalDate> {
-  const settings = await getSettings(env.DB);
-  return todayIn(settings.timezone);
+  const [settings, demoMs] = await Promise.all([getSettings(env.DB), isDemo(env) ? getState<number>(env.DB, DEMO_NOW_KEY) : undefined]);
+  const now = typeof demoMs === 'number' && Number.isFinite(demoMs) ? new Date(demoMs) : undefined;
+  return now ? todayIn(settings.timezone, now) : todayIn(settings.timezone);
 }
 
 /** Human-readable summary of zod issues: "date: YYYY-MM-DD; title: Required". */

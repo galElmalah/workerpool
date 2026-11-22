@@ -31,7 +31,7 @@ import {
 import type { GarminMock } from '@cadence/garmin/mock';
 import { getSettings } from '../db/settings';
 import { casGarminCredentials, deleteGarminAuth, getGarminAuth, overwriteGarminCredentials, upsertGarminAuth } from '../db/garmin';
-import { clearQueue, deleteState, deleteStatePrefix, getState, logSync, putState } from '../db/sync';
+import { DEMO_NOW_KEY, clearQueue, deleteState, deleteStatePrefix, getState, logSync, putState } from '../db/sync';
 import { isDemo } from '../env';
 import { decryptJson, encryptJson } from '../lib/crypto';
 import { ApiError } from '../lib/http';
@@ -96,11 +96,10 @@ export interface DemoConfig {
 }
 
 const DEMO_CONFIG_KEY = 'demo:config';
-const DEMO_NOW_KEY = 'demo:now';
 
 /** Mock clock shared by the singleton mock and the demo client (refreshed from D1 on each use). */
 const demoClock = { ms: undefined as number | undefined };
-type SynthModule = typeof import('../../../../packages/garmin/src/synth/index');
+type SynthModule = typeof import('@cadence/garmin/synth');
 export type DemoAthlete = ReturnType<SynthModule['generateAthlete']>;
 let demoMock: { key: string; mock: GarminMock; config: DemoConfig; athlete: DemoAthlete } | undefined;
 
@@ -160,7 +159,7 @@ export async function getDemoMock(env: Env): Promise<{ mock: GarminMock; config:
   const [{ createGarminMock }, synthMod] = await Promise.all([
     import('@cadence/garmin/mock'),
     // The synth generator has no package export yet; import it from source.
-    import('../../../../packages/garmin/src/synth/index'),
+    import('@cadence/garmin/synth'),
   ]);
   const athlete = synthMod.generateAthlete({ seed: config.seed, today: config.athleteToday, months: config.months });
   const mock = createGarminMock({

@@ -32,6 +32,8 @@ import { getToday, validate } from '../services/context';
 import { decorateActivities, withCompliance } from '../services/compliance';
 import { elevationGainOf, ingestActivity, recomputeActivity } from '../services/ingest';
 import { autoPairDates } from '../services/pairing';
+import { bodyBytes } from '../lib/bytes';
+import { MAX_UPLOAD_BYTES, limitBody } from '../middleware/limits';
 
 const ListQuery = z.object({
   from: LocalDate.optional(),
@@ -221,7 +223,7 @@ export const activitiesRoutes = new Hono<AppEnv>()
     if (res.outcome === 'skipped') throw badRequest(res.reason ?? 'Could not create activity', 'ingest_skipped');
     return c.json(await decorated(c.env, res.activityId), 201);
   })
-  .post('/activities/upload', async (c) => {
+  .post('/activities/upload', limitBody(MAX_UPLOAD_BYTES, 'FIT file'), async (c) => {
     const body = new Uint8Array(await c.req.arrayBuffer());
     if (!body.length) throw badRequest('Empty body: send the FIT file (or a zip containing one) as the request body', 'empty_body');
     const fit = extractFitFromDownload(body);
@@ -263,7 +265,7 @@ export const activitiesRoutes = new Hono<AppEnv>()
     if (!blob) throw notFound('Streams');
     const acceptsGzip = /\bgzip\b/.test(c.req.header('accept-encoding') ?? '');
     if (!maxPoints && acceptsGzip) {
-      return new Response(blob.data, {
+      return new Response(bodyBytes(blob.data), {
         headers: {
           'content-type': 'application/json',
           'content-encoding': 'gzip',
@@ -299,7 +301,7 @@ export const activitiesRoutes = new Hono<AppEnv>()
     if (!a) throw notFound('Activity');
     const f = await getFile(c.env.DB, id);
     if (!f) throw notFound('Original file');
-    return c.body(f.data as Uint8Array<ArrayBuffer>, 200, {
+    return c.body(bodyBytes(f.data), 200, {
       'content-type': 'application/vnd.ant.fit',
       'content-disposition': `attachment; filename="${id}.${f.kind}"`,
     });
@@ -336,8 +338,10 @@ export const activitiesRoutes = new Hono<AppEnv>()
     const id = c.req.param('id');
     const a = await getActivity(c.env.DB, id);
     if (!a) throw notFound('Activity');
+    // The released workout may sit on another day (manual cross-date pair): re-pair both days.
+    const w = await c.env.DB.prepare('SELECT date FROM workouts WHERE paired_activity_id = ?').bind(id).first<{ date: string }>();
     await softDeleteActivity(c.env.DB, id);
-    await autoPairDates(c.env, [a.localDate]);
+    await autoPairDates(c.env, w ? [a.localDate, w.date] : [a.localDate]);
     const { pairedWorkoutId: _p, ...rest } = a;
     return c.json({ ...rest, compliance: unplannedCompliance() } as Activity);
   })

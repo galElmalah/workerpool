@@ -1,0 +1,10 @@
+/* Settings sub-nav: the nav stays put across section changes and its active pill morphs
+   (shared names `settings-nav`, `settings-pill`; unique on screen). */
+::view-transition-group(settings-pill) {
+  animation-duration: var(--dur-spring-smooth);
+  animation-timing-function: var(--ease-spring-smooth);
+}
+::view-transition-old(settings-nav),
+::view-transition-new(settings-nav) {
+  animation: none;
+}

@@ -229,9 +229,14 @@ function activityRepo(env: Env): ActivitySyncRepository & { deleted: number } {
       for (const id of ids) {
         const row = await getActivityByGarminId(env.DB, id);
         if (row && !row.deleted) {
-          const day = await env.DB.prepare('SELECT local_date FROM activities WHERE id = ?').bind(row.id).first<{ local_date: string }>();
+          // Its day and, for a manual cross-date pair, the released workout's day.
+          const days = await env.DB.prepare(
+            'SELECT local_date AS d FROM activities WHERE id = ?1 UNION SELECT date AS d FROM workouts WHERE paired_activity_id = ?1',
+          )
+            .bind(row.id)
+            .all<{ d: string }>();
           await softDeleteActivity(env.DB, row.id);
-          if (day) dates.push(day.local_date);
+          dates.push(...days.results.map((r) => r.d));
           repo.deleted++;
         }
       }

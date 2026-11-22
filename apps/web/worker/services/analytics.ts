@@ -19,9 +19,9 @@ import type {
   WeekSummary,
   WellnessDay,
 } from '@cadence/core/domain';
-import { buildFitnessSeries, buildWeekSummaries } from '@cadence/core/metrics';
+import { autoSeed, buildFitnessSeries, buildWeekSummaries, type FitnessSeed } from '@cadence/core/metrics';
 import { weeklyCompliance } from '@cadence/core/workout';
-import { addDays, isoWeekOf, weekEnd, weekStart } from '@cadence/core/time';
+import { addDays, diffDays, isoWeekOf, weekEnd, weekStart } from '@cadence/core/time';
 import { dailyLoads, listActivities } from '../db/activities';
 import { listDayNotes, listEvents, listMarkers, listPhases, listWeekNotes, listWellness } from '../db/furniture';
 import { listWorkouts } from '../db/workouts';
@@ -140,8 +140,25 @@ export function plannedRemainingDaily(workouts: readonly PlannedWorkout[], today
 }
 
 /**
- * Fitness series over [from, to]. The EWMA starts at the first activity ever (daily loads cover
- * the whole history), so values do not depend on `from`.
+ * Steady-state seed for the fitness model (metrics.md §6.4): Fitness = Fatigue = mean daily load
+ * of the first ≤ 28 days of history (rest days count as 0, never past `today`), as the state at
+ * the end of the day before the first activity. A history that starts abruptly (e.g. the first
+ * day of a 12-month backfill) then starts at a believable level instead of 0, with Form ≈ 0
+ * rather than deeply negative for the first weeks. Independent of the requested range.
+ */
+export function fitnessSeed(daily: Map<LocalDate, number>, today: LocalDate): FitnessSeed | undefined {
+  let firstData: LocalDate | undefined;
+  for (const [d, v] of daily) if (v > 0 && d <= today && (!firstData || d < firstData)) firstData = d;
+  if (!firstData) return undefined;
+  const n = Math.max(1, Math.min(28, diffDays(firstData, today) + 1));
+  const value = autoSeed(Array.from({ length: n }, (_, i) => daily.get(addDays(firstData, i)) ?? 0));
+  return { date: addDays(firstData, -1), fitness: value, fatigue: value };
+}
+
+/**
+ * Fitness series over [from, to] — the single code path behind trends, calendar/week summaries
+ * and /today. The EWMA starts at the first activity ever (daily loads cover the whole history),
+ * seeded with {@link fitnessSeed}, so values do not depend on `from`/`to`.
  */
 export function fitnessFrom(
   daily: Map<LocalDate, number>,
@@ -150,7 +167,8 @@ export function fitnessFrom(
   to: LocalDate,
   today: LocalDate,
 ): FitnessDay[] {
-  return buildFitnessSeries({ dailyLoad: daily, plannedLoad: planned, from, to, today }).map(roundFitness);
+  const seed = fitnessSeed(daily, today);
+  return buildFitnessSeries({ dailyLoad: daily, plannedLoad: planned, from, to, today, ...(seed ? { seed } : {}) }).map(roundFitness);
 }
 
 const r1 = (v: number) => Math.round(v * 10) / 10;

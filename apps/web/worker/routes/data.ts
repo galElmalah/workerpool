@@ -7,6 +7,7 @@ import { nowIso } from '../lib/ids';
 import { all, chunk, first, placeholders } from '../db/sql';
 import { listWorkouts } from '../db/workouts';
 import { getToday, validate } from '../services/context';
+import { MAX_IMPORT_BYTES, limitBody } from '../middleware/limits';
 
 /** Bump when the backup layout changes; import accepts versions ≤ this. */
 export const BACKUP_SCHEMA_VERSION = 1;
@@ -90,7 +91,7 @@ export const dataRoutes = new Hono<AppEnv>()
       tables,
     });
   })
-  .post('/import/json', validate('json', Backup), async (c) => {
+  .post('/import/json', limitBody(MAX_IMPORT_BYTES, 'Backup'), validate('json', Backup), async (c) => {
     const backup = c.req.valid('json');
     const db = c.env.DB;
     const unknownTables = Object.keys(backup.tables).filter((t) => !(BACKUP_TABLES as readonly string[]).includes(t));
