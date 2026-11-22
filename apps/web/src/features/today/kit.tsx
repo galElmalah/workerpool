@@ -760,7 +760,7 @@ export function SessionCard({
                 <ComplianceGlyph state={state} />
                 {complianceLabel(state, w?.skipReason)}
               </span>
-              {!detail && time && (
+              {!detail && time && !a && (
                 <>
                   {SEP}
                   <span className="text-fg-3">{time}</span>
@@ -826,11 +826,9 @@ export function SessionCard({
             <SessionStats durationSec={w?.plannedDurationSec} distanceM={w?.plannedDistanceM} load={w?.plannedLoad} sport={m.sport} className="pl-8" />
           ))}
 
-        {a ? (
-          a.sparkline && a.sparkline.length > 1 ? <MiniProfile values={a.sparkline} height={28} tone="fg" className="ml-8" /> : null
-        ) : (
-          <WorkoutProfile workout={w} height={40} className="ml-8" />
-        )}
+        <div className="min-w-0 pl-8 empty:hidden">
+          {a ? a.sparkline && a.sparkline.length > 1 ? <MiniProfile values={a.sparkline} height={28} tone="fg" /> : null : <WorkoutProfile workout={w} height={40} />}
+        </div>
         {!a && w?.preNote && <p className="pl-8 text-body text-fg-2">“{w.preNote}”</p>}
       </Link>
       {logged && (

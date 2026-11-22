@@ -43,7 +43,7 @@ export function TrendsIntensityPage() {
   const weeks = useMemo(() => trimLeading(weekly.data ?? []).slice(-n), [weekly.data, n]);
 
   return (
-    <TrendsFrame title="Intensity" back eyebrow="How hard the training was" controls={<RangeControl value={range} onChange={(r) => set({ range: r })} />}>
+    <TrendsFrame title="Intensity" back eyebrow="How hard the training was" toolbar={<RangeControl value={range} onChange={(r) => set({ range: r })} />}>
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Distribution" value={total?.distribution ? (DIST_LABEL[total.distribution] ?? total.distribution) : '—'} />
         <Tile label="Easy" value={total?.pct ? `${Math.round(total.pct.easy)}%` : '—'} sub="target ≈ 80%" />

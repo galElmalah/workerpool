@@ -320,3 +320,40 @@ export function QuietTable({ head, children, minWidth, className }: { head: { la
 /** Row + cell classes matching QuietTable. */
 export const qtRow = 'h-11 border-b border-line-1 last:border-0';
 export const qtCell = (numeric?: boolean) => cn('pr-4 last:pr-0', numeric && 'text-right');
+
+/**
+ * A titled chart block in the v2 style: `title-3` heading (optionally a link to its sub-page), one
+ * line of description, actions on the right, then the content — on the canvas, no border, no card.
+ */
+export function ChartCard({
+  title,
+  question,
+  to,
+  actions,
+  children,
+  className,
+  aside,
+}: {
+  title: ReactNode;
+  question?: ReactNode;
+  to?: string;
+  toLabel?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  aside?: ReactNode;
+}) {
+  return (
+    <section className={cn('min-w-0', className)}>
+      <header className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 md:mb-5">
+        <div className="min-w-0">
+          <h2 className="text-title-3 text-fg-1">{to ? <TitleLink to={to}>{title}</TitleLink> : title}</h2>
+          {question && <p className="mt-1 max-w-[65ch] text-body text-fg-2">{question}</p>}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      </header>
+      {children}
+      {aside}
+    </section>
+  );
+}

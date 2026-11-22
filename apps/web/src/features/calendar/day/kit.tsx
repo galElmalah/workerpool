@@ -30,7 +30,7 @@ import {
   complianceLabel,
   complianceStyles,
   Input,
-  IntensityPips,
+  IntensityDot,
   KeyStar,
   MiniProfile,
   morphSourceProps,
@@ -268,7 +268,7 @@ export function Stat({ label, value, unit, className, size = 'sm' }: { label: Re
       <span className="text-micro text-fg-3">{label}</span>
       <span className={cn('flex items-baseline gap-1 text-fg-1', size === 'md' ? 'text-stat-md' : 'text-stat-sm')}>
         {value}
-        {unit && <span className="text-label font-[450] text-fg-3">{unit}</span>}
+        {unit && <span className="text-label font-normal text-fg-3">{unit}</span>}
       </span>
     </div>
   );
@@ -401,9 +401,9 @@ export function RpeSegments({ value, onChange }: { value: number | null | undefi
               whileTap={{ scale: 0.92 }}
               transition={spring.snappy}
               className={cn(
-                'relative flex h-12 flex-col items-center justify-end overflow-hidden rounded-sm border pb-1.5 outline-none pointer-coarse:h-14',
+                'relative flex h-12 flex-col items-center justify-end overflow-hidden rounded-sm pb-1.5 outline-none pointer-coarse:h-14',
                 'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus transition-colors duration-(--dur-fast)',
-                sel ? 'border-fg-2' : 'border-line-2 hover:border-line-3',
+                sel ? 'bg-surface-3 ring-1 ring-fg-3 ring-inset' : 'bg-surface-2 hover:bg-surface-3',
               )}
             >
               <motion.span
@@ -414,12 +414,12 @@ export function RpeSegments({ value, onChange }: { value: number | null | undefi
                 animate={{ scaleY: on ? 1 : 0, opacity: on ? 1 : 0 }}
                 transition={{ ...spring.snappy, delay: on ? i * 0.012 : 0 }}
               />
-              <span className={cn('relative text-mono-sm', sel ? 'font-[600] text-fg-1' : on ? 'text-fg-1' : 'text-fg-3')}>{n}</span>
+              <span className={cn('relative text-label', sel ? 'font-semibold text-fg-1' : on ? 'text-fg-1' : 'text-fg-3')}>{n}</span>
             </motion.button>
           );
         })}
       </div>
-      <div className="grid grid-cols-10 text-micro text-fg-3" aria-hidden>
+      <div className="grid grid-cols-10 text-label font-normal text-fg-3" aria-hidden>
         <span className="col-span-3">Very easy</span>
         <span className="col-span-3 text-center">Steady</span>
         <span className="col-span-3 text-center">Hard</span>
@@ -513,12 +513,12 @@ export function ActivityLogger({ activity, compact, className }: { activity: Act
               initial={{ scale: 0.4 }}
               animate={{ scale: 1 }}
               transition={spring.bouncy}
-              className="grid size-6 place-items-center rounded-full bg-accent text-on-accent"
+              className="grid size-6 place-items-center rounded-full bg-surface-3 text-fg-1"
             >
               <Check className="size-3.5" strokeWidth={2.5} />
             </motion.span>
             <span>
-              Logged · RPE <b className="font-[560] text-fg-1">{rpe}</b> · {ACTIVITY_FEEL[(feel ?? 3) - 1]}
+              Logged · RPE <b className="font-semibold text-fg-1">{rpe}</b> · {ACTIVITY_FEEL[(feel ?? 3) - 1]}
               {note.trim() && <span className="text-fg-3"> · “{note.trim().slice(0, 48)}{note.trim().length > 48 ? '…' : ''}”</span>}
             </span>
             <span className="text-label text-fg-3 underline decoration-line-3 underline-offset-4">Edit</span>
@@ -541,7 +541,7 @@ export function DayNoteEditor({ date, initial, minRows = 3, placeholder = 'How d
     <div className="flex flex-col gap-2">
       <Textarea aria-label="Day note" value={body} onChange={(e) => setBody(e.target.value)} minRows={minRows} maxRows={18} placeholder={placeholder} />
       <div className="flex h-5 items-center justify-between">
-        <span className="text-body-sm text-fg-3">Autosaves · shows in the journal</span>
+        <span className="text-body-sm text-fg-3">Saves as you type · shows in the journal</span>
         <SaveIndicator status={status} />
       </div>
     </div>
@@ -625,7 +625,7 @@ export function SendToWatch({ workout, size = 'sm' }: { workout: PlannedWorkout;
         <span className="inline-flex items-center gap-1.5">
           <Watch className="size-3.5 text-fg-3" aria-hidden />
           On your watch
-          <Check className="size-3.5 text-accent-ink" strokeWidth={2.5} aria-hidden />
+          <Check className="size-3.5 text-fg-2" strokeWidth={2.5} aria-hidden />
         </span>
         <button type="button" onClick={() => push.mutate()} className="rounded-xs text-fg-3 underline decoration-line-3 underline-offset-4 outline-none hover:text-fg-1 focus-visible:outline-2 focus-visible:outline-focus">
           Resend
@@ -670,7 +670,7 @@ export function SyncNowButton({ compact }: { compact?: boolean }) {
       }
       disabled={sync.isPending}
     >
-      {!compact && <span className="text-mono-sm">{label}</span>}
+      {!compact && <span className="text-body-sm">{label}</span>}
     </Button>
   );
 }
@@ -696,99 +696,168 @@ export function DayLink({ date, children, className }: { date: LocalDate; childr
 // ───────────────────────── session card (large) ─────────────────────────
 
 const SPORT_LABEL: Record<string, string> = { bike: 'Ride', run: 'Run', swim: 'Swim', row: 'Row', strength: 'Strength', hike: 'Hike', walk: 'Walk', yoga: 'Yoga', ski: 'Ski', other: 'Other' };
+const ENV_LABEL: Record<string, string> = { indoor: 'Indoor', outdoor: 'Outdoor' };
+const SEP = <span aria-hidden className="text-fg-4">·</span>;
 
 /**
- * Large session card for the Today / Day / Agenda pages. Planned → workout page, completed or
- * paired → activity page; both morph (wk-card / wk-glyph / wk-title). Paired shows plan vs actual.
+ * Large session card for the Today / Day pages: ONE surface (no border, no edge rail, nothing
+ * nested). Title first, then one quiet line — status · time · duration · distance-or-load. `detail`
+ * (day page) adds the full stat row and the plan-vs-actual bar. Planned → workout page, completed
+ * or paired → activity page; both morph (wk-card / wk-glyph / wk-title). Key = neutral star.
  */
-export function SessionCard({ card, morphId, showSend = true, showLog = false, className }: { card: CalendarCard; morphId?: string; showSend?: boolean; showLog?: boolean; className?: string }) {
+export function SessionCard({
+  card,
+  morphId,
+  showSend = true,
+  showLog = false,
+  detail = false,
+  className,
+}: {
+  card: CalendarCard;
+  morphId?: string;
+  showSend?: boolean;
+  showLog?: boolean;
+  /** Full stat row + plan-vs-actual bar (day page). Default: one quiet summary line (Today). */
+  detail?: boolean;
+  className?: string;
+}) {
+  const units = useUnits();
   const { workout: w, activity: a, model: m } = card;
   const mid = morphId ?? m.id;
   const on = useIsMorphTarget(mid);
   const state = m.compliance?.state ?? (a ? 'unplanned' : 'planned');
   const s = complianceStyles(state);
   const link = a ? links.activity(a.id) : links.workout(w!.id);
-  const rail = s.rail ?? (m.isKey ? 'bg-accent' : null);
   const time = a ? formatInstantTime(a.startedAt, a.utcOffsetMin) : w?.startTime ? formatClockTime(w.startTime) : null;
+  const dur = a ? a.movingSec || a.durationSec : w?.plannedDurationSec;
+  const distM = a ? a.distanceM : w?.plannedDistanceM;
+  const dist = distM ? distanceParts(distM, m.sport, units) : null;
+  const load = a ? a.load : w?.plannedLoad;
+  const logged = !!a && (a.rpe != null || a.feel != null || !!a.postNote) && !showLog;
+  const send = !a && !!w && showSend && w.status !== 'skipped';
+  const footer = logged || (a && showLog) || send;
   return (
     <div
-      className={cn('spotlight group/sc relative flex min-w-0 flex-col overflow-hidden rounded-lg', s.card, s.dim && 'opacity-60', className)}
+      className={cn('spotlight group/sc relative flex min-w-0 flex-col rounded-lg bg-surface-1 transition-colors duration-(--dur-fast) hover:bg-surface-2/50', className)}
       style={vt(on, 'card')}
       onPointerMove={onSpotlightMove}
     >
-      {rail && <span aria-hidden className={cn('absolute inset-y-3 left-0 w-[3px] rounded-r-full', rail)} />}
       <Link
         {...link}
         {...morphSourceProps(mid)}
-        className="flex flex-col gap-4 rounded-lg p-4 pl-5 outline-none transition-colors duration-(--dur-fast) hover:bg-surface-3/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus md:p-5 md:pl-6"
+        className={cn(
+          'flex flex-col gap-4 rounded-lg p-5 outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus md:p-6',
+          footer && 'pb-4 md:pb-4',
+        )}
       >
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-md border border-line-2 bg-surface-1 text-fg-1" style={vt(on, 'glyph')}>
-            <SportGlyph sport={m.sport} subSport={m.subSport ?? undefined} size={20} />
-          </span>
+          <SportGlyph sport={m.sport} subSport={m.subSport ?? undefined} size={20} className="mt-1 shrink-0 text-fg-2" style={vt(on, 'glyph')} />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex items-center gap-2 text-micro text-fg-3">
-              <span>{SPORT_LABEL[m.sport]}</span>
-              {time && <span className="normal-case tracking-normal">{time}</span>}
-              <span className="flex items-center gap-1">
+            <h3 className={cn('text-title-2 [overflow-wrap:anywhere]', s.dim ? 'text-fg-3' : 'text-fg-1', s.title)} style={vt(on, 'title')}>
+              {m.title}
+            </h3>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body text-fg-2 num">
+              <span className="inline-flex items-center gap-1.5 text-fg-3">
                 <ComplianceGlyph state={state} />
                 {complianceLabel(state, w?.skipReason)}
               </span>
-            </div>
-            <h3 className={cn('text-title-3 text-fg-1', s.title)} style={vt(on, 'title')}>
-              {m.title}
-            </h3>
+              {!detail && time && !a && (
+                <>
+                  {SEP}
+                  <span className="text-fg-3">{time}</span>
+                </>
+              )}
+              {!detail && dur ? (
+                <>
+                  {SEP}
+                  <span className="inline-flex items-center gap-1.5">
+                    <IntensityDot intensity={m.intensity} />
+                    {formatDuration(dur, 'clock')}
+                  </span>
+                </>
+              ) : null}
+              {!detail && (dist || (load != null && load > 0)) && (
+                <>
+                  {SEP}
+                  <span>
+                    {dist ? (
+                      <>
+                        {dist.value}
+                        {NBSP}
+                        <span className="text-fg-3">{dist.unit}</span>
+                      </>
+                    ) : (
+                      <>
+                        {formatLoad(load)}
+                        {NBSP}
+                        <span className="text-fg-3">load</span>
+                      </>
+                    )}
+                  </span>
+                </>
+              )}
+              {detail && time && (
+                <>
+                  {SEP}
+                  <span className="text-fg-3">
+                    {SPORT_LABEL[m.sport]} at {time}
+                  </span>
+                </>
+              )}
+            </p>
           </div>
-          <span className="flex shrink-0 items-center gap-2 pt-1">
-            {m.intensity && <IntensityPips intensity={m.intensity} size="md" />}
-            {m.isKey && <KeyStar pressed readOnly />}
-          </span>
+          {m.isKey && <KeyStar pressed readOnly size="sm" className="mt-1.5" />}
         </div>
 
-        {a ? (
-          <div className="flex flex-col gap-3">
-            <ActivityStats a={a} />
-            {w && a.compliance?.ratio != null && (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-baseline justify-between text-body-sm text-fg-3">
-                  <span>
-                    vs plan · {formatDuration(w.plannedDurationSec, 'clock')}
+        {detail &&
+          (a ? (
+            <div className="flex flex-col gap-4 pl-8">
+              <ActivityStats a={a} />
+              {w && a.compliance?.ratio != null && (
+                <div className="flex max-w-md flex-col gap-1.5">
+                  <span className="text-body-sm text-fg-3 num">
+                    Plan {formatDuration(w.plannedDurationSec, 'clock')}
                     {w.plannedLoad ? ` · ${formatLoad(w.plannedLoad)} load` : ''}
                   </span>
+                  <ComplianceBar ratio={a.compliance.ratio} state={state} showLabel />
                 </div>
-                <ComplianceBar ratio={a.compliance.ratio} state={state} showLabel />
-              </div>
-            )}
-            {a.sparkline && a.sparkline.length > 1 && <MiniProfile values={a.sparkline} height={28} tone="fg" />}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <SessionStats durationSec={w?.plannedDurationSec} distanceM={w?.plannedDistanceM} load={w?.plannedLoad} sport={m.sport} />
-            <WorkoutProfile workout={w} height={44} />
-            {w?.preNote && <p className="border-l-2 border-line-3 pl-3 text-body text-fg-2">{w.preNote}</p>}
-          </div>
-        )}
+              )}
+            </div>
+          ) : (
+            <SessionStats durationSec={w?.plannedDurationSec} distanceM={w?.plannedDistanceM} load={w?.plannedLoad} sport={m.sport} className="pl-8" />
+          ))}
+
+        <div className="min-w-0 pl-8 empty:hidden">
+          {a ? a.sparkline && a.sparkline.length > 1 ? <MiniProfile values={a.sparkline} height={28} tone="fg" /> : null : <WorkoutProfile workout={w} height={40} />}
+        </div>
+        {!a && w?.preNote && <p className="pl-8 text-body text-fg-2">“{w.preNote}”</p>}
       </Link>
-      {(a ? (a.rpe != null || a.feel != null || a.postNote) && !showLog : false) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line-1 px-5 py-3 text-body-sm text-fg-2 md:px-6">
+      {logged && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-5 pb-5 pl-13 text-body-sm text-fg-2 md:px-6 md:pb-6 md:pl-14">
           {a!.rpe != null && (
             <span>
-              RPE <b className="font-[560] text-fg-1">{a!.rpe}</b>
+              RPE <b className="font-semibold text-fg-1">{a!.rpe}</b>
             </span>
           )}
+          {a!.rpe != null && a!.feel != null && SEP}
           {a!.feel != null && <span>Felt {ACTIVITY_FEEL[a!.feel - 1]!.toLowerCase()}</span>}
-          {a!.postNote && <span className="min-w-0 flex-1 truncate text-fg-3">“{a!.postNote}”</span>}
+          {a!.postNote && (
+            <>
+              {(a!.rpe != null || a!.feel != null) && SEP}
+              <span className="min-w-0 flex-1 truncate text-fg-3">“{a!.postNote}”</span>
+            </>
+          )}
         </div>
       )}
       {a && showLog && (
-        <div className="border-t border-line-1 px-4 pt-4 pb-2 md:px-6">
+        <div className="px-5 pb-3 md:px-6 md:pl-14">
           <ActivityLogger activity={a} />
         </div>
       )}
-      {!a && w && showSend && w.status !== 'skipped' && (
-        <div className="flex items-center justify-between gap-3 border-t border-line-1 px-4 py-2.5 md:px-6">
-          <SendToWatch workout={w} />
-          {w.environment !== 'any' && <span className="text-micro text-fg-3">{w.environment}</span>}
+      {send && (
+        <div className="flex items-center gap-3 px-5 pb-5 pl-13 md:px-6 md:pb-6 md:pl-14">
+          <SendToWatch workout={w!} />
+          {w!.environment !== 'any' && <span className="text-body-sm text-fg-3">{ENV_LABEL[w!.environment] ?? w!.environment}</span>}
         </div>
       )}
     </div>
@@ -800,11 +869,11 @@ function ActivityStats({ a }: { a: Activity }) {
   const dist = a.distanceM ? distanceParts(a.distanceM, a.sport, units) : null;
   const pace = a.avgSpeedMps && (a.sport === 'run' || a.sport === 'swim' || a.sport === 'row' || a.sport === 'walk' || a.sport === 'hike') ? paceParts(a.avgSpeedMps, a.sport, units) : null;
   return (
-    <div className="flex flex-wrap gap-x-6 gap-y-2">
+    <div className="flex flex-wrap gap-x-8 gap-y-3">
       <Stat label="Time" value={formatDuration(a.movingSec || a.durationSec, 'clock')} />
       {dist && <Stat label="Distance" value={dist.value} unit={dist.unit} />}
-      <Stat label="Load" value={<span className="text-accent-ink">{formatLoad(a.load)}</span>} />
-      {a.weightedPower ? <Stat label="W. power" value={Math.round(a.weightedPower)} unit="W" /> : pace ? <Stat label="Pace" value={pace.value} unit={pace.unit} /> : null}
+      <Stat label="Load" value={formatLoad(a.load)} />
+      {a.weightedPower ? <Stat label="Weighted power" value={Math.round(a.weightedPower)} unit="W" /> : pace ? <Stat label="Pace" value={pace.value} unit={pace.unit} /> : null}
       {a.avgHr ? <Stat label="Avg HR" value={Math.round(a.avgHr)} unit="bpm" /> : null}
     </div>
   );
@@ -812,20 +881,15 @@ function ActivityStats({ a }: { a: Activity }) {
 
 export function SessionCardSkeleton() {
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-line-2 p-5" aria-hidden>
+    <div className="flex flex-col gap-4 rounded-lg bg-surface-1 p-5 md:p-6" aria-hidden>
       <div className="flex gap-3">
-        <Skeleton className="size-10 rounded-md" />
+        <Skeleton className="size-5 rounded-sm" />
         <div className="flex flex-1 flex-col gap-2">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-5 w-56" />
+          <Skeleton className="h-6 w-64" />
+          <Skeleton className="h-4 w-40" />
         </div>
       </div>
-      <div className="flex gap-6">
-        <Skeleton className="h-9 w-16" />
-        <Skeleton className="h-9 w-16" />
-        <Skeleton className="h-9 w-12" />
-      </div>
-      <Skeleton className="h-11 w-full" />
+      <Skeleton className="ml-8 h-10" />
     </div>
   );
 }

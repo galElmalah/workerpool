@@ -135,20 +135,10 @@ function TodayBody({ d, cards }: { d: TodayData; cards: CalendarCard[] }) {
         </Section>
 
         {otherPending.length > 0 && (
-          <Section stagger={false} title="Log how it went" description="How hard, how it felt. Saved as you go.">
-            <div className="flex flex-col gap-12">
+          <Section stagger={false} title="Log how it went" description="Two taps for each: how hard, how it felt.">
+            <div className="flex flex-col gap-2">
               {otherPending.map((a) => (
-                <div key={a.id} className="flex flex-col gap-4">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <Link {...links.activity(a.id)} className="text-body font-medium text-fg-1 hover:underline">
-                      {a.title}
-                    </Link>
-                    <span className="text-body-sm text-fg-3 num">
-                      {weekdayLong(a.localDate)} · {formatDuration(a.movingSec || a.durationSec, 'clock')}
-                    </span>
-                  </div>
-                  <ActivityLogger activity={a} />
-                </div>
+                <PendingLog key={a.id} activity={a} />
               ))}
             </div>
           </Section>
@@ -170,6 +160,44 @@ function TodayBody({ d, cards }: { d: TodayData; cards: CalendarCard[] }) {
         <UpNext d={d} />
       </aside>
     </PageItem>
+  );
+}
+
+// ───────────────────────── log how it went: one line each until opened ─────────────────────────
+
+function PendingLog({ activity: a }: { activity: TodayData['pendingLogs'][number] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex flex-col">
+      <div className="-mx-2 flex items-center gap-3 rounded-md px-2 py-1.5">
+        <SportGlyph sport={a.sport} size={16} className="shrink-0 text-fg-3" />
+        <Link {...links.activity(a.id)} className="min-w-0 truncate text-body font-medium text-fg-1 hover:underline">
+          {a.title}
+        </Link>
+        <span className="shrink-0 text-body-sm text-fg-3 num">
+          {weekdayLong(a.localDate)} · {formatDuration(a.movingSec || a.durationSec, 'clock')}
+        </span>
+        <Button size="sm" variant={open ? 'ghost' : 'secondary'} className="ml-auto shrink-0" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {open ? 'Close' : 'Log it'}
+        </Button>
+      </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="log"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0, transition: tween('fast', 'in') }}
+            transition={spring.smooth}
+            className="overflow-hidden"
+          >
+            <div className="pt-4 pb-6 sm:pl-7">
+              <ActivityLogger activity={a} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -373,15 +401,19 @@ function WeekSoFar({ d }: { d: TodayData }) {
           </Link>
         ))}
       </div>
+      <Tooltip content={`Load ${formatLoad(wk.doneLoad)} of ${formatLoad(wk.plannedLoad)}${wk.keyPlanned ? ` · ${wk.keyDone} of ${wk.keyPlanned} key sessions` : ''}`}>
+        <div tabIndex={0} className="outline-none">
       <StatBar
         label="Hours"
         value={wk.doneSec}
         max={Math.max(wk.plannedSec, wk.doneSec, 1)}
         format={hm}
         size="md"
-        caption={`of ${hm(wk.plannedSec)} · load ${formatLoad(wk.doneLoad)} of ${formatLoad(wk.plannedLoad)}`}
+        caption={`of ${hm(wk.plannedSec)} planned`}
         ariaLabel={`This week: ${hm(wk.doneSec)} of ${hm(wk.plannedSec)} hours, load ${formatLoad(wk.doneLoad)} of ${formatLoad(wk.plannedLoad)}`}
       />
+        </div>
+      </Tooltip>
     </section>
   );
 }

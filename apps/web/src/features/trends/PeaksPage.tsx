@@ -71,7 +71,7 @@ export function TrendsPeaksPage() {
       title="Peaks"
       back
       eyebrow="Best efforts, curves and thresholds"
-      controls={
+      toolbar={
         <>
           <Segmented aria-label="Sport" size="sm" value={sport} onValueChange={(s) => set({ sport: s })} options={PEAK_SPORTS.map((s) => ({ value: s, label: <span className="inline-flex items-center gap-1.5"><SportGlyph sport={s} size={14} />{s === 'bike' ? 'Ride' : s[0].toUpperCase() + s.slice(1)}</span> }))} />
           <Segmented aria-label="Range" size="sm" value={primary} onValueChange={setPrimary} options={RANGES} />

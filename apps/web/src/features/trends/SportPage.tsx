@@ -47,7 +47,7 @@ export function TrendsSportPage() {
   const sum = (f: (w: (typeof weeks)[number]) => number) => weeks.reduce((a, w) => a + f(w), 0);
 
   return (
-    <TrendsFrame title={SPORT_META[sport].label} back eyebrow={<span className="inline-flex items-center gap-1.5"><SportGlyph sport={sport} size={14} /> Sport trends</span>} controls={<RangeControl value={range} onChange={(r) => set({ range: r })} />}>
+    <TrendsFrame title={SPORT_META[sport].label} back eyebrow={<span className="inline-flex items-center gap-1.5"><SportGlyph sport={sport} size={14} /> Sport trends</span>} toolbar={<RangeControl value={range} onChange={(r) => set({ range: r })} />}>
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Sessions" value={formatNumber(sum((w) => w.bySport[0]?.doneCount ?? 0), 0)} />
         <Tile label="Time" value={fmtHours(sum((w) => w.doneSec) / 3600)} />

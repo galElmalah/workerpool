@@ -23,7 +23,7 @@ import {
   type FitnessSelection,
   type WowItem,
 } from '@/charts';
-import { formatDateMedium, formatDayMonth, formatIsoWeek, formatNumber, formatPercent, formatSigned, weekdayShort } from '@/lib/format';
+import { formatDayMonth, formatIsoWeek, formatNumber, formatPercent, formatSigned, weekdayShort } from '@/lib/format';
 import { useCalendar } from '@/lib/queries/training';
 import { spring, tween } from '@/motion/tokens';
 import { Section, Segmented, Skeleton, StatRow, StatTile } from '@/ui';
@@ -290,10 +290,10 @@ function fitnessSentence(data: FitnessData, today: LocalDate | undefined, rangeD
   const then = days[Math.max(0, ti - rangeDays)];
   if (!now || !then) return null;
   const d = now.fitness - then.fitness;
-  const span = rangeDays >= 300 ? 'over the last year' : rangeDays >= 150 ? 'over the last 6 months' : `over the last ${Math.round(rangeDays / 7)} weeks`;
-  const trend = Math.abs(d) < 1 ? `Fitness held steady ${span}` : `Fitness ${d > 0 ? 'built' : 'eased'} ${formatSigned(d, 0)} ${span}`;
+  const span = rangeDays >= 300 ? 'in a year' : rangeDays >= 150 ? 'in 6 months' : `in ${Math.round(rangeDays / 7)} weeks`;
+  const trend = Math.abs(d) < 1 ? `Fitness held steady ${span}` : `Fitness ${d > 0 ? 'rose' : 'fell'} ${formatNumber(Math.abs(d), 0)} ${span}, to ${formatNumber(now.fitness, 0)}`;
   const next = data.events.find((e) => today && e.date > today && (e.priority === 'A' || e.priority === 'B'));
-  return next ? `${trend}; the dashed line follows your plan to ${next.name} on ${formatDateMedium(next.date)}.` : `${trend}.`;
+  return next ? `${trend}. Dashed lines follow the plan to ${next.name.replace(/ (Triathlon|Marathon)$/, '')} on ${formatDayMonth(next.date)}.` : `${trend}.`;
 }
 
 const RANGE_DAYS: Record<string, number> = { '6w': 42, '12w': 84, '3m': 91, '6m': 182, '1y': 365, all: 730 };

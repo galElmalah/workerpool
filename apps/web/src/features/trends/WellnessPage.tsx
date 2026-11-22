@@ -42,7 +42,7 @@ export function TrendsWellnessPage() {
       title="Wellness"
       back
       eyebrow={latest ? `Readiness today: ${latest.readiness.state === 'green' ? 'ready' : latest.readiness.state === 'amber' ? 'take care' : latest.readiness.state === 'red' ? 'back off' : 'unknown'} · ${q.data?.readinessLabel ?? ''}` : 'HRV · resting HR · sleep · weight'}
-      controls={<Segmented aria-label="Range" size="sm" value={range} onValueChange={(r) => set({ range: r })} options={W_RANGES.map((r) => ({ value: r.value, label: r.label }))} />}
+      toolbar={<Segmented aria-label="Range" size="sm" value={range} onValueChange={(r) => set({ range: r })} options={W_RANGES.map((r) => ({ value: r.value, label: r.label }))} />}
     >
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((s) => (
